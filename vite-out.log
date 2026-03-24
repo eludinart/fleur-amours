@@ -1,0 +1,17 @@
+
+  VITE v6.4.1  ready in 2249 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+19:21:44 [vite] (client) hmr update /src/pages/SessionPage.jsx, /src/index.css
+19:21:58 [vite] (client) hmr update /src/pages/SessionPage.jsx, /src/index.css
+19:31:51 [vite] (client) hmr update /src/pages/SessionPage.jsx, /src/index.css
+19:32:00 [vite] (client) hmr update /src/pages/SessionPage.jsx, /src/index.css
+19:40:55 [vite] vite.config.js changed, restarting server...
+19:40:55 [vite] server restarted.
+19:41:36 [vite] (client) hmr update /src/index.css, /src/contexts/AuthContext.jsx, /src/pages/AdminUsersPage.jsx, /src/pages/CardsPage.jsx, /src/pages/GraphPage.jsx, /src/pages/SciencePage.jsx, /src/pages/DiagnosticPage.jsx, /src/pages/FleurPage.jsx, /src/pages/DuoPage.jsx, /src/pages/StatsPage.jsx, /src/pages/CampaignsPage.jsx, /src/pages/AdminSessionsPage.jsx, /src/pages/SessionPage.jsx
+19:41:38 [vite] (client) hmr invalidate /src/contexts/AuthContext.jsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+19:41:38 [vite] (client) hmr update /src/index.css, /src/App.jsx, /src/pages/LoginPage.jsx, /src/pages/SessionPage.jsx, /src/components/layout/Sidebar.jsx
+19:41:48 [vite] (client) hmr update /src/contexts/AuthContext.jsx, /src/index.css
+19:41:49 [vite] (client) hmr invalidate /src/contexts/AuthContext.jsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+19:41:49 [vite] (client) hmr update /src/index.css, /src/App.jsx, /src/pages/LoginPage.jsx, /src/pages/SessionPage.jsx, /src/components/layout/Sidebar.jsx

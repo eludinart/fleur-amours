@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "740104890020",
+    "firebase_url": "https://generated-motif-192214.firebaseio.com",
+    "project_id": "generated-motif-192214",
+    "storage_bucket": "generated-motif-192214.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:740104890020:android:1dc217809f433b2ca32831",
+        "android_client_info": {
+          "package_name": "com.fleuramours.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "740104890020-rrholfohpv098t54gm3hb7j2q52c2lib.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaIxBdabmzIJ-2DGEFapMz8E-4znDxvUk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "740104890020-6efs40148qjf2rua73nd0528c9polsj1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

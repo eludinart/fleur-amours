@@ -1,0 +1,17 @@
+NOTIFICATIONS PUSH ANDROID - ÉTAPES RAPIDES
+============================================
+
+1. google-services.json : doit être dans android\app\google-services.json
+   (projet actuel : generated-motif-192214, package com.fleuramours.app)
+
+2. COMPTE DE SERVICE (à configurer pour que le backend envoie les push) :
+   - Firebase Console → Paramètres → Comptes de service
+   - Générer une nouvelle clé privée (télécharger le JSON)
+   - Placer le fichier ici : config/fcm-service-account.json
+
+3. Variables d'environnement (.env ou VPS) :
+   FCM_SERVICE_ACCOUNT_JSON=config/fcm-service-account.json
+   FCM_PROJECT_ID peut rester vide (détecté auto via google-services.json)
+
+4. Rebuild : npm run build:apk
+   Puis Android Studio → Build → Assemble Project

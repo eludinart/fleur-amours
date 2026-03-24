@@ -1,0 +1,9 @@
+{
+  "petal":"philautia",
+  "measures":[
+    {"id":"self_care_capacity","type":"scale","range":[0,1],"description":"Capacité à prendre soin de soi"},
+    {"id":"boundary_integrity","type":"scale","range":[0,1],"description":"Capacité à maintenir des limites saines"}
+  ],
+  "scoring":"composite = 0.6*self_care_capacity + 0.4*boundary_integrity",
+  "provenance":"Hypothesis"
+}

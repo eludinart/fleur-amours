@@ -1,0 +1,36 @@
+{
+  "core_model": {
+    "petals": {
+      "list_order": ["agape", "philautia", "mania", "storge", "pragma", "philia", "ludus", "eros"],
+      "zones": {
+        "top": { "petals": ["eros", "agape", "philautia"], "label": "Intention_Energie" },
+        "mid": { "petals": ["mania", "ludus"], "label": "Modulation" },
+        "bottom": { "petals": ["storge", "pragma", "philia"], "label": "Structure_Incarnation" }
+      },
+      "axes_diagonals": [
+        { "name": "Sens_Structure", "pair": ["agape", "pragma"] },
+        { "name": "Identite_Relation", "pair": ["philautia", "philia"] },
+        { "name": "Intensite_Fluidite", "pair": ["mania", "ludus"] },
+        { "name": "Attachement_Attraction", "pair": ["storge", "eros"] }
+      ]
+    },
+    "flower_layers": {
+      "inner": {
+        "label": "Dynamiques_interieures",
+        "definition": "Interactions principalement générées par l'individu (motivations, schémas, régulations internes).",
+        "examples": [
+          "Une montée de Mania issue d'une insécurité interne",
+          "Un déficit de Pragma par évitement personnel"
+        ]
+      },
+      "outer": {
+        "label": "Dynamiques_exterieures",
+        "definition": "Forces venant du contexte (contraintes, pressions, opportunités) perçues par l'individu et interagissant avec les pétales.",
+        "examples": [
+          "Exigences d'un travail qui poussent Pragma",
+          "Climat relationnel externe qui stimule ou érode Storgè"
+        ]
+      }
+    }
+  }
+}

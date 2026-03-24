@@ -1,0 +1,29 @@
+{
+  "subscriptions": {
+    "monthly": {
+      "price_id_env": "STRIPE_PRICE_MONTHLY",
+      "plan_id": "monthly",
+      "label": "Mensuel",
+      "amount_monthly_cents": 990,
+      "amount_cents": 990,
+      "unit": "mois"
+    },
+    "yearly": {
+      "price_id_env": "STRIPE_PRICE_YEARLY",
+      "plan_id": "yearly",
+      "label": "Annuel",
+      "amount_monthly_cents": 790,
+      "amount_cents": 9000,
+      "unit": "an"
+    }
+  },
+  "packs": {
+    "credits_100": {
+      "price_id_env": "STRIPE_PRICE_CREDITS_100",
+      "credits": 100,
+      "label": "100 crédits",
+      "amount_cents": 500,
+      "unit": ""
+    }
+  }
+}

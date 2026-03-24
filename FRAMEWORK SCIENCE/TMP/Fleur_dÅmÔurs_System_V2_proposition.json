@@ -1,0 +1,399 @@
+{
+  "meta": {
+    "name": "Fleur_dÅmÔurs_System_V2_proposition",
+    "version": "0.2.0-proposal",
+    "status": "WORKING_THEORY",
+    "assumptions": [
+      "Ce JSON est une proposition de formalisation (non validée empiriquement).",
+      "Aucune boucle de falsification / mise à jour de confidence n'est introduite ici (volontairement).",
+      "Les termes 'Temps/Climat/Histoire' sont utilisés comme dimensions d'analyse, pas comme vérités objectives."
+    ]
+  },
+  "core_model": {
+    "petals": {
+      "list_order": ["agape", "philautia", "mania", "storge", "pragma", "philia", "ludus", "eros"],
+      "zones": {
+        "top": {
+          "petals": ["eros", "agape", "philautia"],
+          "label": "Intention_Energie"
+        },
+        "mid": {
+          "petals": ["mania", "ludus"],
+          "label": "Modulation"
+        },
+        "bottom": {
+          "petals": ["storge", "pragma", "philia"],
+          "label": "Structure_Incarnation"
+        }
+      },
+      "axes_diagonals": [
+        { "name": "Sens_Structure", "pair": ["agape", "pragma"] },
+        { "name": "Identite_Relation", "pair": ["philautia", "philia"] },
+        { "name": "Intensite_Fluidite", "pair": ["mania", "ludus"] },
+        { "name": "Attachement_Attraction", "pair": ["storge", "eros"] }
+      ]
+    },
+    "flower_layers": {
+      "inner": {
+        "label": "Dynamiques_interieures",
+        "definition": "Interactions principalement générées par l'individu (motivations, schémas, régulations internes).",
+        "examples": [
+          "Une montée de Mania issue d'une insécurité interne",
+          "Un déficit de Pragma par évitement personnel"
+        ]
+      },
+      "outer": {
+        "label": "Dynamiques_exterieures",
+        "definition": "Forces venant du contexte (contraintes, pressions, opportunités) perçues par l'individu et interagissant avec les pétales.",
+        "examples": [
+          "Exigences d'un travail qui poussent Pragma",
+          "Climat relationnel externe qui stimule ou érode Storgè"
+        ]
+      }
+    }
+  },
+  "activation_engine": {
+    "goal": "Déterminer quelles interactions entre pétales sont réellement 'actives' et avec quelle intensité, en tenant compte du Temps, du Climat, de l'orientation (inner/outer) et de la direction.",
+    "inputs": {
+      "petal_scores": {
+        "range": [0, 100],
+        "meaning": "Intensité observée/estimée d'un pétale à un instant t."
+      },
+      "interaction_edge": {
+        "fields_required": [
+          "petal_a",
+          "petal_b",
+          "weight",
+          "type",
+          "directionality",
+          "symmetry",
+          "time_scale",
+          "confidence"
+        ]
+      },
+      "gate_context": {
+        "heart": { "dominant_petals": "array" },
+        "time": { "stage": "string" },
+        "climate": { "factors": "array" },
+        "history": { "trajectory": "string" }
+      },
+      "layer_context": {
+        "inner_weight": { "default": 0.55 },
+        "outer_weight": { "default": 0.45 },
+        "source": "inner|outer|mixed"
+      }
+    },
+    "directionality_model": {
+      "directionality": {
+        "enum": ["A_to_B", "B_to_A", "bidirectional", "none"],
+        "meaning": "Permet d'exprimer causalité directionnelle (ou non)."
+      },
+      "symmetry": {
+        "enum": ["symmetric", "asymmetric"],
+        "meaning": "Si symmetric, l'effet A->B est identique à B->A (rare)."
+      }
+    },
+    "formal_activation": {
+      "notation": {
+        "Sa": "score(petal_a) normalisé [0..1]",
+        "Sb": "score(petal_b) normalisé [0..1]",
+        "W": "weight normalisé [0..1]",
+        "C": "confidence [0..1] (non modifiée ici)",
+        "Tf": "time_factor selon le stade",
+        "Cf": "climate_factor selon le climat",
+        "Lf": "layer_factor selon inner/outer",
+        "Df": "direction_factor selon directionality",
+        "Af": "activation (0..1)",
+        "I": "intensité signée (-1..+1)"
+      },
+      "functions": {
+        "normalize_score": "Sa = clamp(score_a/100, 0, 1)",
+        "base_energy": "E = sqrt(Sa * Sb)",
+        "layer_factor": {
+          "inner": "Lf = inner_weight",
+          "outer": "Lf = outer_weight",
+          "mixed": "Lf = 0.5*(inner_weight+outer_weight)"
+        },
+        "direction_factor": {
+          "A_to_B": "Df(A->B)=1.0 ; Df(B->A)=0.0",
+          "B_to_A": "Df(A->B)=0.0 ; Df(B->A)=1.0",
+          "bidirectional": "Df(A->B)=1.0 ; Df(B->A)=1.0",
+          "none": "Df(A->B)=0.7 ; Df(B->A)=0.7"
+        },
+        "time_factor": "Tf = time_stage_map[stage].activation_multiplier",
+        "climate_factor": "Cf = product_over_factors( factor_map[f].multiplier )  // borné [0.5..1.5]",
+        "activation": "Af = clamp( E * W * Tf * Cf * Lf , 0, 1 )",
+        "signed_intensity": "I = sign(type) * Af * C"
+      },
+      "type_to_sign": {
+        "reinforcing": "+1",
+        "regulating": "-1",
+        "neutral": "0"
+      },
+      "thresholds": {
+        "active_edge_min": 0.18,
+        "strong_edge_min": 0.35,
+        "dominant_edge_min": 0.55,
+        "note": "Seuils à ajuster avec l'usage. Ici valeurs de démarrage."
+      },
+      "outputs": {
+        "active_edges": "liste des interactions où Af >= active_edge_min",
+        "edge_strength_label": "weak|strong|dominant selon seuils",
+        "edge_direction": "A->B, B->A, ou bi"
+      }
+    }
+  },
+  "time_engine": {
+    "goal": "Donner une cinématique simple: transitions d'un stade à un autre et impact sur l'activation.",
+    "status": "PROPOSED_EXAMPLE_CYCLE",
+    "time_stages": [
+      {
+        "id": "graine",
+        "label": "Graine",
+        "activation_multiplier": 0.85,
+        "signature": "Potentiel, faible structuration, signaux faibles",
+        "typical_risks": ["flou", "sur-interprétation", "décision prématurée"]
+      },
+      {
+        "id": "germination",
+        "label": "Germination",
+        "activation_multiplier": 1.0,
+        "signature": "Émergence, essais, premières tensions",
+        "typical_risks": ["dispersion", "mania précoce", "fatigue"]
+      },
+      {
+        "id": "tige",
+        "label": "Tige",
+        "activation_multiplier": 1.1,
+        "signature": "Structuration progressive, choix, stabilisation",
+        "typical_risks": ["rigidification", "pragma surdominant"]
+      },
+      {
+        "id": "bourgeon",
+        "label": "Bourgeon",
+        "activation_multiplier": 1.15,
+        "signature": "Montée en intensité, préparation de bascule",
+        "typical_risks": ["surchauffe", "oscillation", "conflits latents"]
+      },
+      {
+        "id": "floraison",
+        "label": "Floraison",
+        "activation_multiplier": 1.25,
+        "signature": "Expression maximale, visibilité, impact",
+        "typical_risks": ["mania critique", "éros impulsif", "perte de centre"]
+      },
+      {
+        "id": "fruit",
+        "label": "Fruit",
+        "activation_multiplier": 1.05,
+        "signature": "Intégration, récolte, transmission",
+        "typical_risks": ["stagnation", "nostalgie", "perte de ludus"]
+      }
+    ],
+    "transition_model": {
+      "type": "semi_markov",
+      "rules": [
+        {
+          "if": "coherence_index >= 0.62 AND vitality_index >= 0.55",
+          "then": "advance_stage_probability += 0.15"
+        },
+        {
+          "if": "tension_severity.max >= 3 OR instability_flag == true",
+          "then": "regress_stage_probability += 0.20"
+        },
+        {
+          "if": "oscillation_index >= 0.65",
+          "then": "stay_stage_probability += 0.20  // système 'n'arrive pas' à muter"
+        }
+      ],
+      "notes": [
+        "Ce modèle ne 'prédit' pas la vie: il propose une logique de transition pour simuler.",
+        "Les probabilités sont des paramètres à calibrer."
+      ]
+    }
+  },
+  "tensions_taxonomy": {
+    "goal": "Classer les tensions par gravité et type pour prioriser l'action.",
+    "severity_scale": {
+      "0": "Aucune",
+      "1": "Créative (écart fertile)",
+      "2": "Structurelle (friction durable)",
+      "3": "Critique (instabilité / risque de rupture)",
+      "4": "Létale (effondrement / danger immédiat)"
+    },
+    "tension_types": [
+      {
+        "id": "creative",
+        "label": "Créative",
+        "definition": "Tension productrice d'innovation; inconfort maîtrisable; apprentissage.",
+        "default_levers": ["bridge_feedback", "exploration_guidée", "micro_expériences"]
+      },
+      {
+        "id": "structural",
+        "label": "Structurelle",
+        "definition": "Tension liée à la forme du système (règles, contrats, routines, frontières).",
+        "default_levers": ["pragma_clarification", "storge_repair", "contracting"]
+      },
+      {
+        "id": "critical",
+        "label": "Critique",
+        "definition": "Tension qui s'auto-amplifie; oscillation; perte de centre; conflits récurrents.",
+        "default_levers": ["time_delay_intervention", "cooling_protocol", "containment"]
+      },
+      {
+        "id": "lethal",
+        "label": "Létale",
+        "definition": "Tension où la sécurité psychique/physique est en jeu ou où le système s'effondre.",
+        "default_levers": ["stop_protocol", "external_support", "risk_management"]
+      }
+    ],
+    "mapping_rules": [
+      {
+        "if": "mania_score >= 80 AND center_score <= 0.35",
+        "then": { "severity": 3, "type": "critical", "label": "Surchauffe + perte de centre" }
+      },
+      {
+        "if": "pragma_score >= 85 AND ludus_score <= 20",
+        "then": { "severity": 2, "type": "structural", "label": "Rigidification + perte d'exploration" }
+      },
+      {
+        "if": "eros_score >= 80 AND storge_score <= 25",
+        "then": { "severity": 2, "type": "structural", "label": "Attraction sans attachement" }
+      }
+    ]
+  },
+  "stance": {
+    "goal": "Clarifier la frontière descriptif/normatif.",
+    "selected_philosophy": {
+      "mode": "ADAPTATIF_COHERENCE",
+      "definition": "Le modèle n'impose pas un 'équilibre idéal'. Il cherche la cohérence interne ET l'adaptation au contexte.",
+      "principles": [
+        "Un pétale faible n'est pas un problème en soi.",
+        "Un pétale dominant n'est pas à réguler systématiquement.",
+        "Le 'bien' du système est défini par: cohérence, soutenabilité, et capacité d'action.",
+        "La 'pathologie' est définie par: perte de liberté, instabilité chronique, souffrance ou danger."
+      ]
+    }
+  },
+  "epistemic_stratification": {
+    "goal": "Séparer signal, inférence, interprétation pour éviter la soupe mystique.",
+    "layers": [
+      {
+        "id": "L0_measured",
+        "label": "Mesuré / déclaré",
+        "content": ["scores", "réponses questionnaire", "faits datés", "observations comportementales"]
+      },
+      {
+        "id": "L1_inferred",
+        "label": "Inféré (modèle)",
+        "content": ["interactions actives via activation_engine", "indices composites", "flags calculés"]
+      },
+      {
+        "id": "L2_interpreted",
+        "label": "Interprété (narratif)",
+        "content": ["hypothèses de sens", "metaphores", "lecture de trajectoire"]
+      },
+      {
+        "id": "L3_action",
+        "label": "Décision / action",
+        "content": ["leviers choisis", "plan 14 jours", "engagements"]
+      }
+    ],
+    "output_rule": "Chaque sortie doit tagger sa couche épistémique (L0..L3)."
+  },
+  "meta_system_exit": {
+    "goal": "Éviter la dépendance au cadre et l'auto-analyse infinie.",
+    "stop_conditions": [
+      {
+        "id": "sufficient_clarity",
+        "if": "coherence_index >= 0.70 AND tension_severity.max <= 1",
+        "then": "Sortie: passer en mode action sans relecture"
+      },
+      {
+        "id": "analysis_loop_detected",
+        "if": "same_phrase_synthesis_repeats >= 3",
+        "then": "Sortie: stopper l'analyse, choisir 1 levier, tester 7 jours"
+      },
+      {
+        "id": "overheating",
+        "if": "mania_score >= 80 OR oscillation_index >= 0.70",
+        "then": "Sortie: protocole de refroidissement (réduction d'intensité + stabilisation)"
+      }
+    ],
+    "integration_prompt": {
+      "purpose": "Clore la séance avec un ancrage concret.",
+      "template": "Aujourd'hui, je retiens [1 phrase]. Je fais [1 action] avant [date]. Je mesure [1 signal L0] dans 7 jours."
+    }
+  },
+  "composite_indices": {
+    "goal": "Produire un ou plusieurs indices finaux utilisables sans trahir la complexité.",
+    "indices": {
+      "coherence_index": {
+        "range": [0, 1],
+        "definition": "Cohérence systémique globale = centre + cohérence entre zones + faible contradiction interne.",
+        "formula_proposed": "coherence = 0.45*center + 0.30*zone_balance + 0.25*(1 - contradiction)",
+        "components": {
+          "center": "1 - normalized_dispersion(scores)",
+          "zone_balance": "1 - dispersion([mean(top), mean(mid), mean(bottom)])",
+          "contradiction": "mean( active_edges where type == regulating AND Af is high )  // proxy"
+        },
+        "notes": [
+          "Ce n'est pas 'être moyen partout'. C'est réduire les contradictions qui empêchent l'action."
+        ]
+      },
+      "vitality_index": {
+        "range": [0, 1],
+        "definition": "Vitalité dynamique = énergie + plasticité (Ludus) + direction (Eros/Agape) sans surchauffe (Mania).",
+        "formula_proposed": "vitality = clamp( 0.35*energy + 0.25*plasticity + 0.25*direction - 0.15*overheat , 0, 1 )",
+        "components": {
+          "energy": "mean(scores_normalized)",
+          "plasticity": "score(ludus)",
+          "direction": "mean([score(eros), score(agape)])",
+          "overheat": "max(0, score(mania) - 0.70)"
+        },
+        "notes": [
+          "Vitalité ≠ stabilité. Un système peut être vivant et un peu instable."
+        ]
+      },
+      "stability_index": {
+        "range": [0, 1],
+        "definition": "Stabilité = (1 - oscillation) pondérée par centre et Storgè/Pragma.",
+        "formula_proposed": "stability = clamp( 0.40*(1-oscillation) + 0.30*center + 0.30*mean([storge, pragma]) , 0, 1 )"
+      }
+    }
+  },
+  "outputs_contract": {
+    "goal": "Standardiser les sorties du moteur pour app/RAG.",
+    "required_outputs": [
+      {
+        "id": "phrase_synthesis",
+        "layer": "L2_interpreted",
+        "template": "[Dynamique] à [stade], sous [climat], dans [trajectoire]"
+      },
+      {
+        "id": "active_interactions",
+        "layer": "L1_inferred",
+        "fields": ["petal_a", "petal_b", "Af", "I", "type", "direction", "strength_label", "time_scale", "confidence"]
+      },
+      {
+        "id": "tensions_summary",
+        "layer": "L1_inferred",
+        "fields": ["max_severity", "top_tensions", "recommended_levers"]
+      },
+      {
+        "id": "action_plan_14d",
+        "layer": "L3_action",
+        "fields": ["lever_1", "lever_2", "micro_actions", "measurement_L0", "review_date"]
+      },
+      {
+        "id": "indices",
+        "layer": "L1_inferred",
+        "fields": ["coherence_index", "vitality_index", "stability_index"]
+      }
+    ],
+    "non_goals": [
+      "Aucune validation empirique automatique ici.",
+      "Aucune mise à jour de confidence après feedback (non inclus volontairement)."
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "tables":[
+    {"name":"petals","columns":[{"name":"id","type":"varchar(50)"},{"name":"data","type":"json"}]},
+    {"name":"interactions","columns":[{"name":"id","type":"int pk auto_increment"},{"name":"from_petal","type":"varchar(50)"},{"name":"to_petal","type":"varchar(50)"},{"name":"payload","type":"json"},{"name":"indexed_weight","type":"float"}]},
+    {"name":"readings","columns":[{"name":"id","type":"varchar(100)"},{"name":"user_id","type":"int"},{"name":"payload","type":"json"},{"name":"created_at","type":"datetime"},{"name":"search_index","type":"varchar(255)"}]}
+  ],
+  "indexes":[{"table":"interactions","column":"indexed_weight"},{"table":"readings","column":"created_at"}],
+  "notes":"Store provenances in each JSON field; use JSON columns for flexible payloads; add fulltext index on search_index for WP integration."
+}

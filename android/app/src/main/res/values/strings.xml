@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Fleur d\'AmOurs</string>
+    <string name="title_activity_main">Fleur d\'AmOurs</string>
+    <string name="package_name">com.fleuramours.app</string>
+    <string name="custom_url_scheme">com.fleuramours.app</string>
+</resources>

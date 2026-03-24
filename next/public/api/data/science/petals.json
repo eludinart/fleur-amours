@@ -1,0 +1,10 @@
+[
+  {"id":"agape","name":"AGAPÈ","position":1,"summary":"Amour universel et inconditionnel.","light_keywords":["altruisme","compassion"],"shadow_keywords":["dissolution","sacrifice_excessif"],"correspondences":{"element":"Eau","polarity":"feminine"},"provenance":"Documented"},
+  {"id":"philautia","name":"PHILAUTIA","position":2,"summary":"Amour de soi structurant; retour au centre.","light_keywords":["estime_de_soi","soin_personnel"],"shadow_keywords":["narcissisme","isolement"],"correspondences":{"element":"Terre","polarity":"neutral"},"provenance":"Documented"},
+  {"id":"mania","name":"MANIA","position":3,"summary":"Amour obsessionnel, intensité excessive.","light_keywords":["passion_intense"],"shadow_keywords":["possession","jalousie"],"correspondences":{"element":"Feu","polarity":"masculine"},"provenance":"Documented"},
+  {"id":"storge","name":"STORGÈ","position":4,"summary":"Amour familial, attachement naturel.","light_keywords":["tendresse","sécurité"],"shadow_keywords":["possessivité","repli"],"correspondences":{"element":"Terre","polarity":"feminine"},"provenance":"Documented"},
+  {"id":"pragma","name":"PRAGMA","position":5,"summary":"Amour pragmatique et durable.","light_keywords":["engagement","compatibilité"],"shadow_keywords":["routine","froid_affectif"],"correspondences":{"element":"Terre","polarity":"neutral"},"provenance":"Documented"},
+  {"id":"philia","name":"PHILIA","position":6,"summary":"Amour amical et partage de valeurs.","light_keywords":["amitié","solidarité"],"shadow_keywords":["distance","déception"],"correspondences":{"element":"Air","polarity":"neutral"},"provenance":"Documented"},
+  {"id":"ludus","name":"LUDUS","position":7,"summary":"Amour ludique et séduction.","light_keywords":["jeu","flirt"],"shadow_keywords":["superficialité","évitement"],"correspondences":{"element":"Air","polarity":"masculine"},"provenance":"Documented"},
+  {"id":"eros","name":"ÉROS","position":8,"summary":"Amour passionnel et corps.","light_keywords":["désir","intensité"],"shadow_keywords":["consommation","dépendance"],"correspondences":{"element":"Feu","polarity":"masculine"},"provenance":"Documented"}
+]

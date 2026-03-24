@@ -1,0 +1,11 @@
+{
+  "protocol_minimal":"1h30",
+  "steps":[
+    {"step":1,"name":"Contracting","duration":"10min","description":"Intent + consent + ethical guardrails"},
+    {"step":2,"name":"Read 4 Portes","duration":"35min","description":"Coeur / Temps / Climat / Histoire assessment"},
+    {"step":3,"name":"Synthesis Phrase","duration":"10min","description":"Formulate standard phrase"},
+    {"step":4,"name":"Levers & Plan","duration":"25min","description":"Propose 14-day plan with micro-levers"},
+    {"step":5,"name":"Closure","duration":"10min","description":"Commitments, feedback, next steps"}
+  ],
+  "notes":"Protocol ensures reproducibility and ethical alignment (not a diagnostic oracle)."
+}

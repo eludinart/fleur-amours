@@ -1,0 +1,13 @@
+{
+  "lexicon": [
+    {"A":"Agapè","B":"Contribution / Sens"},
+    {"A":"Éros","B":"Expansion / Impact"},
+    {"A":"Philia","B":"Alliance / Coopération"},
+    {"A":"Storgè","B":"Sécurité / Appartenance"},
+    {"A":"Pragma","B":"Gouvernance / Contrat"},
+    {"A":"Ludus","B":"Exploration / Adaptabilité"},
+    {"A":"Mania","B":"Intensité / Risque"},
+    {"A":"Philautia","B":"Alignement / Intégrité"}
+  ],
+  "usage_guideline":"Use A (archétypal) in internal trainings; use B (functional) in external/corporate contexts."
+}

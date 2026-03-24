@@ -1,0 +1,14 @@
+{
+  "version":"v1.1",
+  "laws":[
+    {"id":"L0","title":"Relativité","text":"Diagnostic par écarts; dépend du cœur/temps/climat/histoire.","status":"Documented"},
+    {"id":"L1","title":"Conservation/déplacement","text":"Intensités non exprimées se déplacent/compensent.","status":"Hypothesis"},
+    {"id":"L2","title":"Couplage local","text":"Effets rapides entre pétales voisins; tester pour validation.","status":"Inferred"},
+    {"id":"L3","title":"Axes/paradoxes","text":"Diagonales comme paradoxes structurants.","status":"Hypothesis"},
+    {"id":"L4","title":"Seuils/non-linéarité","text":"Lumière ↔ Ombre; bascules de régime.","status":"Documented"},
+    {"id":"L5","title":"Centre","text":"Centre = indicateur de stabilité (métriques à définir).","status":"Hypothesis"},
+    {"id":"L6","title":"Philautia double","text":"Philautia = pétale + régulateur; deux mesures opératoires.","status":"Documented"}
+  ],
+  "extensions":["asymmetry","time_scales","conditionality"],
+  "provenance_map":{"Documented":"from_manual","Inferred":"derived","Hypothesis":"proposal"}
+}

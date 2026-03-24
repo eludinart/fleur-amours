@@ -1,0 +1,55 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+            "FRAMEWORK DOCS/": true,
+            "FRAMEWORK SCIENCE/": true,
+            "RESULTAT/": true,
+            "SITE ELUDEINART/": true,
+            "Tarot.code-workspace": true,
+            "MANUEL TAROT.xml": true,
+            "wordpress-plugins/": true,
+            ".venv/": true,
+            ".venv-1/": true,
+            "requirements.txt": true,
+            "python_location.txt": true,
+            "scripts/__pycache__/": true,
+            "scripts/__init__.py": true,
+            "scripts/migrations/": true,
+            "scripts/extract_cards_from_pdf.py": true,
+            "scripts/inspect_tables.py": true,
+            "scripts/merge_all_cards.py": true,
+            "scripts/rename_cards_by_ocr.py": true,
+            "scripts/test_db.py": true,
+            "scripts/static/": true,
+            "scripts/optimize-verso.js": true,
+            "tests/": true,
+            "node_modules/": true,
+            "import_err.txt": true,
+            "vite-err.log": true,
+            "vite-out.log": true,
+            "server.log": true,
+            "tmp_app.js": true,
+            ".deploy-cartes/": true,
+            "sync-config.env": true,
+            "ARCHITECTURE-UNIFICATION.md": true,
+            "phpcs.xml.dist": true,
+            ".cursorrules": true
+        },
+        "search.exclude": {
+            "node_modules/": true,
+            ".venv/": true,
+            ".venv-1/": true,
+            "FRAMEWORK DOCS/": true,
+            "FRAMEWORK SCIENCE/": true,
+            "RESULTAT/": true,
+            "next/.next/": true,
+            "android/.gradle/": true,
+            "android/build/": true
+        }
+    }
+}

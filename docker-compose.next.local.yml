@@ -1,0 +1,45 @@
+# Override local : ajoute MariaDB pour npm run docker:next:up
+# Utilise DB_NAME, DB_USER, DB_PASSWORD depuis docker-compose.env
+# Merge : docker compose -f docker-compose.next.yml -f docker-compose.next.local.yml --env-file docker-compose.env up -d
+# Le réseau coolify devient interne (créé par compose) pour que next et mariadb communiquent.
+
+services:
+  mariadb:
+    image: mariadb:11
+    networks:
+      - coolify
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-default}
+      MARIADB_USER: ${DB_USER:-mariadb}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requis}
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requis}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    expose:
+      - "3306"
+    ports:
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  next:
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      MARIADB_HOST: mariadb
+      MARIADB_PORT: "3306"
+      MARIADB_DATABASE: ${DB_NAME:-default}
+      MARIADB_USER: ${DB_USER:-mariadb}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+
+volumes:
+  mariadb_data:
+
+networks:
+  coolify:
+    external: false

@@ -1,0 +1,35 @@
+# Standards Techniques — Projet Fleur d'AmOurs / Cards Manager
+
+## Stack
+- **Backend** : Python 3, FastAPI
+- **Frontend** : JavaScript vanilla, HTML, CSS
+- **Données** : JSON (pas de SQL), fichiers dans `FRAMEWORK SCIENCE/`
+- **Architecture** : API REST, modules séparés (`scripts/api/`, `scripts/services/`)
+
+## Style de code
+- Code propre, commenté en français
+- Typage Python (hints) pour les fonctions publiques
+- Pas de dépendances lourdes sans accord
+
+---
+
+# Directives Systémiques (Fleur d'AmOurs)
+
+- Agis comme un partenaire de réflexion systémique.
+- Priorise la structure globale : ne traite jamais un fichier de manière isolée.
+- Simplifie le code sans réduire sa puissance (Loi de Simplification).
+- En cas de doute technique : « Je ne sais pas » ou demande des précisions (version de lib, etc.).
+
+---
+
+# Optimisation du Contexte
+
+- Ne suggère pas de bibliothèques externes lourdes sans accord.
+- Privilégie les solutions natives (Python stdlib, JS vanilla) pour maintenir l'autonomie du système (Sivana/Ti Spoun).
+- Les chemins racine : `scripts/`, `FRAMEWORK SCIENCE/`, `RESULTAT/`
+
+---
+
+# Déploiement Production
+
+- **Environnements séparés** : www.eludein.art/jardin (Hostinger) et legacy.eludein.art/jardin (VPS) — aucun lien entre eux.

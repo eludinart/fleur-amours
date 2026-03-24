@@ -1,0 +1,62 @@
+# ============================================================
+# Fleur d'AmOurs — Next.js (Phase 1 Migration)
+# Déploiement autonome sur VPS/Coolify — Node uniquement
+# ============================================================
+#
+# Build args (override in Coolify / CI):
+#   VPS autonome : NEXT_PUBLIC_API_TARGET et NEXT_PUBLIC_APP_URL = https://legacy.eludein.art
+#   (aucun lien avec www.eludein.art — environnements séparés)
+#
+
+# Stage 1: Build Next.js
+FROM node:20-slim AS next-build
+WORKDIR /app
+
+# Build args pour rewrites (proxy /api et /cartes)
+ARG NEXT_PUBLIC_API_TARGET=http://localhost:8081
+ARG NEXT_PUBLIC_APP_URL=https://legacy.eludein.art
+ARG NEXT_PUBLIC_API_URL=
+ARG GIT_COMMIT=unknown
+ARG SOURCE_COMMIT=unknown
+ENV NEXT_PUBLIC_API_TARGET=$NEXT_PUBLIC_API_TARGET
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+# Vide = même origine (legacy) — n'appelle plus www.eludein.art
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV USE_NODE_API=true
+
+# Install dependencies
+COPY next/package*.json ./next/
+RUN cd next && npm ci
+
+# Copy source and build
+COPY next/ ./next/
+
+# Version : version.json + commit Git (legacy)
+RUN COMMIT=$SOURCE_COMMIT; [ "$COMMIT" = "unknown" ] && COMMIT=$GIT_COMMIT; \
+    VER=$(node -e "try{console.log(require('./next/public/version.json').version)}catch(e){console.log('0.1.0')}"); \
+    echo "{\"version\":\"$VER\",\"commit\":\"$COMMIT\"}" > ./next/public/build-info.json
+
+RUN cd next && npm run build
+
+# Stage 2: Runtime
+FROM node:20-slim
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+WORKDIR /app
+
+# Copier le build standalone Next.js
+COPY --from=next-build /app/next/.next/standalone ./
+COPY --from=next-build /app/next/.next/static ./.next/static
+COPY --from=next-build /app/next/public ./public
+
+# Variables d'environnement runtime (override dans Coolify)
+ENV USE_NODE_API=true
+ENV JWT_SECRET=
+ENV JWT_EXPIRE_HOURS=720
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]

@@ -1,0 +1,9 @@
+{
+  "id":"reading_example_001",
+  "petal_scores":{"agape":0.6,"philautia":0.4,"mania":0.2,"storge":0.5,"pragma":0.3,"philia":0.45,"ludus":0.2,"eros":0.35},
+  "synthesis_phrase":"Réconciliation à émergence, sous climat stressant, trajectoire cyclique.",
+  "flags":["polarization","low_center"],
+  "interactions":[{"from":"philautia","to":"agape","type":"bridge","weight":0.4}],
+  "timestamp":"2026-02-20T10:00:00Z",
+  "provenance":"Documented+Inferred"
+}

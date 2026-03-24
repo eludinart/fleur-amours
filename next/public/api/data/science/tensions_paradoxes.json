@@ -1,0 +1,8 @@
+{
+  "tensions":[
+    {"name":"Symbolique vs Concret","issue":"Richesse archétypale vs besoin d'opérationnalité","rule":"Illustrer chaque concept par exemples concrets"},
+    {"name":"Langage ésotérique vs Clair","issue":"Risque de pseudoscience","rule":"Utiliser registre B en public, A en interne"},
+    {"name":"Rigidité vs Flexibilité","issue":"Format structuré vs spécificité du cas","rule":"Adapter méthodologie sans déformer le modèle"},
+    {"name":"Intuition vs Méthodologie","issue":"Qualitatif vs exigences de preuve","rule":"Intégrer validation empirique (feedback, indicateurs)"}
+  ]
+}

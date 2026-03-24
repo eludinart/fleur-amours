@@ -1,0 +1,46 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "npm run dev:next",
+    "dev.vps": "node scripts/dev-vps.js",
+    "dev.vps:diagnostic": "node scripts/dev-vps-diagnostic.js",
+    "dev:next": "npm run dev --prefix next",
+    "dev:android": "node scripts/dev-android.js",
+    "dev:android:device": "node scripts/dev-android.js --device",
+    "cap:sync:dev": "cross-env CAP_SERVER_URL=http://10.0.2.2:3001 npx cap sync",
+    "build:apk": "npx cap sync",
+    "setup:push": "node scripts/setup-push-android.js",
+    "serve": "npm run build:next && npm run dev:next",
+    "build:local": "npm run build --prefix next",
+    "build:next": "npm run build --prefix next",
+    "build:next:export": "cross-env CAPACITOR_BUILD=1 npm run build:export --prefix next",
+    "fetch-session": "node scripts/fetch-session.js",
+    "translate-fleur-questions": "node scripts/translate-fleur-questions.js",
+    "grant-admin": "node scripts/grant-admin.js",
+    "version:bump": "node scripts/bump-version.js",
+    "docker:next:build": "docker build -f Dockerfile.next -t fleur-next:latest .",
+    "docker:next:up": "docker compose -f docker-compose.next.yml -f docker-compose.next.local.yml --env-file docker-compose.env up -d"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5",
+    "playwright": "^1.58.2",
+    "sharp": "^0.34.5",
+    "ssh2-sftp-client": "^11.0.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
+    "@capacitor/push-notifications": "^7.0.6",
+    "@openrouter/sdk": "^0.9.11",
+    "framer-motion": "^12.35.2",
+    "react-is": "^19.2.4",
+    "recharts": "^3.8.0",
+    "zod": "^4.3.6"
+  }
+}

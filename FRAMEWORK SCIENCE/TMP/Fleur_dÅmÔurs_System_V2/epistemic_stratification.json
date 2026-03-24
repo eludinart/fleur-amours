@@ -1,0 +1,12 @@
+{
+  "epistemic_stratification": {
+    "goal": "Séparer signal, inférence, interprétation pour éviter la soupe mystique.",
+    "layers": [
+      { "id": "L0_measured", "label": "Mesuré / déclaré", "content": ["scores","réponses questionnaire","faits datés","observations comportementales"] },
+      { "id": "L1_inferred", "label": "Inféré (modèle)", "content": ["interactions actives via activation_engine","indices composites","flags calculés"] },
+      { "id": "L2_interpreted", "label": "Interprété (narratif)", "content": ["hypothèses de sens","metaphores","lecture de trajectoire"] },
+      { "id": "L3_action", "label": "Décision / action", "content": ["leviers choisis","plan 14 jours","engagements"] }
+    ],
+    "output_rule": "Chaque sortie doit tagger sa couche épistémique (L0..L3)."
+  }
+}

@@ -1,0 +1,86 @@
+/**
+ * Connexion MariaDB pour l'API Next.js.
+ * Variables d'environnement : MARIADB_HOST, MARIADB_PORT, MARIADB_DATABASE, MARIADB_USER, MARIADB_PASSWORD, DB_PREFIX
+ * Uniquement MariaDB (MARIADB_*).
+ */
+import mysql from 'mysql2/promise'
+
+const DB_HOST = process.env.MARIADB_HOST ?? 'localhost'
+const DB_PORT = parseInt(process.env.MARIADB_PORT ?? '3306', 10)
+const DB_NAME = process.env.MARIADB_DATABASE ?? 'default'
+const DB_USER = process.env.MARIADB_USER ?? 'mariadb'
+const DB_PASSWORD = process.env.MARIADB_PASSWORD ?? process.env.MARIADB_PASS ?? ''
+const DB_PREFIX = process.env.DB_PREFIX ?? 'wp_'
+
+let pool: mysql.Pool | null = null
+
+export function getPool(): mysql.Pool {
+  if (!pool) {
+    if (!DB_PASSWORD) {
+      throw new Error('MARIADB_PASSWORD requis pour la connexion MariaDB')
+    }
+    pool = mysql.createPool({
+      host: DB_HOST,
+      port: DB_PORT,
+      database: DB_NAME,
+      user: DB_USER,
+      password: DB_PASSWORD,
+      charset: 'utf8mb4',
+      waitForConnections: true,
+      connectionLimit: 3,
+      queueLimit: 5,
+    })
+  }
+  return pool
+}
+
+export function table(name: string): string {
+  return `${DB_PREFIX}${name}`
+}
+
+export function isDbConfigured(): boolean {
+  return !!(DB_HOST && DB_NAME && DB_USER && DB_PASSWORD)
+}
+
+/** Infos de connexion (pour affichage admin, sans mot de passe) */
+export function getDbConnectionInfo(): {
+  host: string
+  port: number
+  database: string
+  user: string
+  prefix: string
+  viaTunnel: boolean
+  tunnelTarget: string
+} {
+  return {
+    host: DB_HOST,
+    port: DB_PORT,
+    database: DB_NAME,
+    user: DB_USER,
+    prefix: DB_PREFIX,
+    viaTunnel: process.env.MARIADB_VIA_TUNNEL === 'true',
+    tunnelTarget: process.env.MARIADB_TUNNEL_TARGET ?? '',
+  }
+}
+
+export async function testConnection(): Promise<boolean> {
+  try {
+    const p = getPool()
+    const [rows] = await p.execute('SELECT 1 as ok')
+    return Array.isArray(rows) && rows.length > 0
+  } catch {
+    return false
+  }
+}
+
+/** Bypass mysql2 strict overload typing for parameterized queries */
+export function exec(
+  pool: mysql.Pool,
+  sql: string,
+  values?: unknown[]
+): Promise<[unknown, unknown]> {
+  return (pool as { execute: (s: string, v?: unknown[]) => Promise<[unknown, unknown]> }).execute(
+    sql,
+    values
+  )
+}

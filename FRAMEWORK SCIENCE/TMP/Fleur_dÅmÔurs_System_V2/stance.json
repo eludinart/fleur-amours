@@ -1,0 +1,15 @@
+{
+  "stance": {
+    "goal": "Clarifier la frontière descriptif/normatif.",
+    "selected_philosophy": {
+      "mode": "ADAPTATIF_COHERENCE",
+      "definition": "Le modèle n'impose pas un 'équilibre idéal'. Il cherche la cohérence interne ET l'adaptation au contexte.",
+      "principles": [
+        "Un pétale faible n'est pas un problème en soi.",
+        "Un pétale dominant n'est pas à réguler systématiquement.",
+        "Le 'bien' du système est défini par: cohérence, soutenabilité, et capacité d'action.",
+        "La 'pathologie' est définie par: perte de liberté, instabilité chronique, souffrance ou danger."
+      ]
+    }
+  }
+}

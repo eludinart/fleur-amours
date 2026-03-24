@@ -1,0 +1,30 @@
+{
+  "activation_engine": {
+    "goal": "Déterminer quelles interactions entre pétales sont réellement 'actives' et avec quelle intensité, en tenant compte du Temps, du Climat, de l'orientation (inner/outer) et de la direction.",
+    "inputs": {
+      "petal_scores": { "range": [0, 100], "meaning": "Intensité observée/estimée d'un pétale à un instant t." },
+      "interaction_edge": { "fields_required": ["petal_a","petal_b","weight","type","directionality","symmetry","time_scale","confidence"] },
+      "gate_context": { "heart": { "dominant_petals": "array" }, "time": { "stage": "string" }, "climate": { "factors": "array" }, "history": { "trajectory": "string" } },
+      "layer_context": { "inner_weight": { "default": 0.55 }, "outer_weight": { "default": 0.45 }, "source": "inner|outer|mixed" }
+    },
+    "directionality_model": {
+      "directionality": { "enum": ["A_to_B","B_to_A","bidirectional","none"] },
+      "symmetry": { "enum": ["symmetric","asymmetric"] }
+    },
+    "formal_activation": {
+      "notation": { "Sa": "score(petal_a) normalisé [0..1]", "Sb": "score(petal_b) normalisé [0..1]", "W": "weight normalisé [0..1]", "C": "confidence [0..1]", "Tf": "time_factor", "Cf": "climate_factor", "Lf": "layer_factor", "Df": "direction_factor", "Af": "activation (0..1)", "I": "intensité signée (-1..+1)" },
+      "functions": {
+        "normalize_score": "Sa = clamp(score_a/100, 0, 1)",
+        "base_energy": "E = sqrt(Sa * Sb)",
+        "layer_factor": { "inner": "Lf = inner_weight", "outer": "Lf = outer_weight", "mixed": "Lf = 0.5*(inner_weight+outer_weight)" },
+        "direction_factor": { "A_to_B": "Df(A->B)=1.0 ; Df(B->A)=0.0", "B_to_A": "Df(A->B)=0.0 ; Df(B->A)=1.0", "bidirectional": "Df(A->B)=1.0 ; Df(B->A)=1.0", "none": "Df(A->B)=0.7 ; Df(B->A)=0.7" },
+        "time_factor": "Tf = time_stage_map[stage].activation_multiplier",
+        "climate_factor": "Cf = product_over_factors( factor_map[f].multiplier )  // borné [0.5..1.5]",
+        "activation": "Af = clamp( E * W * Tf * Cf * Lf , 0, 1 )",
+        "signed_intensity": "I = sign(type) * Af * C"
+      },
+      "type_to_sign": { "reinforcing": "+1", "regulating": "-1", "neutral": "0" },
+      "thresholds": { "active_edge_min": 0.18, "strong_edge_min": 0.35, "dominant_edge_min": 0.55 }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "modules":{
+    "module_1_day":{
+      "duration":"7h",
+      "morning":"3h theory (4 Portes + 8 dynamiques) + plenum case",
+      "afternoon":"3h small-group diagnostics + phrase-syntheses",
+      "closure":"1h restitutions + Q&A"
+    },
+    "practitioner_syllabus_3_days":[
+      "Day1: Fundamentals (axioms, invariants, first practice)",
+      "Day2: Deepening (complex contexts, tension resolution)",
+      "Day3: Certification (supervised sessions, feedback)"
+    ]
+  }
+}

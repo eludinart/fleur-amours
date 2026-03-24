@@ -1,0 +1,17 @@
+{
+  "tensions_taxonomy": {
+    "goal": "Classer les tensions par gravité et type pour prioriser l'action.",
+    "severity_scale": { "0": "Aucune", "1": "Créative (écart fertile)", "2": "Structurelle (friction durable)", "3": "Critique (instabilité / risque de rupture)", "4": "Létale (effondrement / danger immédiat)" },
+    "tension_types": [
+      { "id": "creative", "label": "Créative", "definition": "Tension productrice d'innovation; inconfort maîtrisable; apprentissage.", "default_levers": ["bridge_feedback","exploration_guidée","micro_expériences"] },
+      { "id": "structural", "label": "Structurelle", "definition": "Tension liée à la forme du système (règles, contrats, routines, frontières).", "default_levers": ["pragma_clarification","storge_repair","contracting"] },
+      { "id": "critical", "label": "Critique", "definition": "Tension qui s'auto-amplifie; oscillation; perte de centre; conflits récurrents.", "default_levers": ["time_delay_intervention","cooling_protocol","containment"] },
+      { "id": "lethal", "label": "Létale", "definition": "Tension où la sécurité psychique/physique est en jeu ou où le système s'effondre.", "default_levers": ["stop_protocol","external_support","risk_management"] }
+    ],
+    "mapping_rules": [
+      { "if": "mania_score >= 80 AND center_score <= 0.35", "then": { "severity": 3, "type": "critical", "label": "Surchauffe + perte de centre" } },
+      { "if": "pragma_score >= 85 AND ludus_score <= 20", "then": { "severity": 2, "type": "structural", "label": "Rigidification + perte d'exploration" } },
+      { "if": "eros_score >= 80 AND storge_score <= 25", "then": { "severity": 2, "type": "structural", "label": "Attraction sans attachement" } }
+    ]
+  }
+}

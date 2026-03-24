@@ -1,0 +1,12 @@
+{
+  "definitions":{
+    "center_score":"function on petal weights -> low dispersion = high center",
+    "polarization":"stddev of normalized petal intensities",
+    "oscillation":"autocorrelation over time windows"
+  },
+  "rules":[
+    {"id":"R1","detect":"polarization>0.6 && center_score<0.3","flag":"dominance"},
+    {"id":"R2","detect":"oscillation>threshold","flag":"instability"}
+  ],
+  "provenance":"Hypothesis"
+}

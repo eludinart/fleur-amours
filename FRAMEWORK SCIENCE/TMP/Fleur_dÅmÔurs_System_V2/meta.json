@@ -1,0 +1,12 @@
+{
+  "meta": {
+    "name": "Fleur_dÅmÔurs_System_V2_proposition",
+    "version": "0.2.0-proposal",
+    "status": "WORKING_THEORY",
+    "assumptions": [
+      "Ce JSON est une proposition de formalisation (non validée empiriquement).",
+      "Aucune boucle de falsification / mise à jour de confidence n'est introduite ici (volontairement).",
+      "Les termes 'Temps/Climat/Histoire' sont utilisés comme dimensions d'analyse, pas comme vérités objectives."
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "outputs_contract": {
+    "goal": "Standardiser les sorties du moteur pour app/RAG.",
+    "required_outputs": [
+      { "id": "phrase_synthesis", "layer": "L2_interpreted", "template": "[Dynamique] à [stade], sous [climat], dans [trajectoire]" },
+      { "id": "active_interactions", "layer": "L1_inferred", "fields": ["petal_a","petal_b","Af","I","type","direction","strength_label","time_scale","confidence"] },
+      { "id": "tensions_summary", "layer": "L1_inferred", "fields": ["max_severity","top_tensions","recommended_levers"] },
+      { "id": "action_plan_14d", "layer": "L3_action", "fields": ["lever_1","lever_2","micro_actions","measurement_L0","review_date"] },
+      { "id": "indices", "layer": "L1_inferred", "fields": ["coherence_index","vitality_index","stability_index"] }
+    ],
+    "non_goals": [
+      "Aucune validation empirique automatique ici.",
+      "Aucune mise à jour de confidence après feedback (non inclus volontairement)."
+    ]
+  }
+}

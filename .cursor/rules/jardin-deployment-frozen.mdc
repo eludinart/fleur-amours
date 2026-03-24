@@ -1,0 +1,22 @@
+---
+description: Environnements jardin — autonomie
+alwaysApply: true
+---
+
+# Code /jardin — Environnements autonomes
+
+**Stack Node uniquement** : Next.js + MariaDB. Aucun PHP.
+
+- `https://eludein.art/jardin`
+- `https://www.eludein.art/jardin/`
+- `https://legacy.eludein.art/jardin`
+
+## Environnements séparés
+
+www.eludein.art/jardin (Hostinger) et legacy.eludein.art/jardin (VPS) sont indépendants — pas de liens croisés.
+
+## Périmètre
+
+- **Next.js** : `next/` (basePath `/jardin`, config, composants, vues)
+- **Docker** : `docker-compose.yml`, `docker-compose.next.yml`
+- **Docs** : `docs/DEV-VS-PROD.md`

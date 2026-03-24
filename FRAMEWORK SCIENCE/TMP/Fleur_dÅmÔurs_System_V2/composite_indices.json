@@ -1,0 +1,24 @@
+{
+  "composite_indices": {
+    "goal": "Produire un ou plusieurs indices finaux utilisables sans trahir la complexité.",
+    "indices": {
+      "coherence_index": {
+        "range": [0,1],
+        "definition": "Cohérence systémique globale = centre + cohérence entre zones + faible contradiction interne.",
+        "formula_proposed": "coherence = 0.45*center + 0.30*zone_balance + 0.25*(1 - contradiction)",
+        "components": { "center": "1 - normalized_dispersion(scores)", "zone_balance": "1 - dispersion([mean(top), mean(mid), mean(bottom)])", "contradiction": "mean( active_edges where type == regulating AND Af is high )  // proxy" }
+      },
+      "vitality_index": {
+        "range": [0,1],
+        "definition": "Vitalité dynamique = énergie + plasticité (Ludus) + direction (Eros/Agape) sans surchauffe (Mania).",
+        "formula_proposed": "vitality = clamp( 0.35*energy + 0.25*plasticity + 0.25*direction - 0.15*overheat , 0, 1 )",
+        "components": { "energy": "mean(scores_normalized)", "plasticity": "score(ludus)", "direction": "mean([score(eros), score(agape)])", "overheat": "max(0, score(mania) - 0.70)" }
+      },
+      "stability_index": {
+        "range": [0,1],
+        "definition": "Stabilité = (1 - oscillation) pondérée par centre et Storgè/Pragma.",
+        "formula_proposed": "stability = clamp( 0.40*(1-oscillation) + 0.30*center + 0.30*mean([storge, pragma]) , 0, 1 )"
+      }
+    }
+  }
+}

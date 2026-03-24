@@ -1,0 +1,34 @@
+# Git et IDE
+.git
+.gitignore
+.idea
+.vscode
+.cursor
+
+# Dependencies (éviter node_modules Windows → Linux)
+node_modules
+**/node_modules
+frontend/node_modules
+.venv
+venv
+__pycache__
+
+# Env et secrets (ne pas inclure dans l'image)
+.env
+.env.local
+.env.*.local
+sync-config.env
+
+# Fichiers générés
+*.log
+dist
+.deploy-cartes
+next/.next
+
+# Tests et doc (optionnel)
+tests
+*.md
+docs
+
+# Android (non utilisé dans le conteneur)
+android

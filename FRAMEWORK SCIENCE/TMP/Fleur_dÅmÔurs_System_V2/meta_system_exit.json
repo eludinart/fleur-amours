@@ -1,0 +1,11 @@
+{
+  "meta_system_exit": {
+    "goal": "Éviter la dépendance au cadre et l'auto-analyse infinie.",
+    "stop_conditions": [
+      { "id": "sufficient_clarity", "if": "coherence_index >= 0.70 AND tension_severity.max <= 1", "then": "Sortie: passer en mode action sans relecture" },
+      { "id": "analysis_loop_detected", "if": "same_phrase_synthesis_repeats >= 3", "then": "Sortie: stopper l'analyse, choisir 1 levier, tester 7 jours" },
+      { "id": "overheating", "if": "mania_score >= 80 OR oscillation_index >= 0.70", "then": "Sortie: protocole de refroidissement (réduction d'intensité + stabilisation)" }
+    ],
+    "integration_prompt": { "purpose": "Clore la séance avec un ancrage concret.", "template": "Aujourd'hui, je retiens [1 phrase]. Je fais [1 action] avant [date]. Je mesure [1 signal L0] dans 7 jours." }
+  }
+}

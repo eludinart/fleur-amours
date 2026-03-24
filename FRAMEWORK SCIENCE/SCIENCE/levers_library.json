@@ -1,0 +1,7 @@
+{
+  "levers":[
+    {"id":"bridge_feedback","description":"introduce small shared tasks to create bridge","expected_effect":"increase_bridge_weight","cost":"low"},
+    {"id":"time_delay_intervention","description":"pace interventions to avoid oscillation","expected_effect":"reduce_oscillation","cost":"medium"},
+    {"id":"climate_modulation","description":"change local context (climat) to enable gating","expected_effect":"change_link_type","cost":"medium"}
+  ]
+}

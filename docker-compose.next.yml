@@ -1,0 +1,52 @@
+# Fleur d'AmOurs — Next.js (Phase 1 Migration)
+# Stack Node uniquement — déploiement VPS / Coolify
+# Autonome : MariaDB + Next.js
+#
+# Usage:
+#   1. Copier docker-compose.env.example en docker-compose.env
+#   2. Remplir MARIADB_*, JWT_SECRET, etc.
+#   3. docker compose -f docker-compose.next.yml up -d
+#
+# Coolify : Add Resource → Docker Compose → docker-compose.next.yml
+# Local avec MariaDB : docker compose -f docker-compose.next.yml -f docker-compose.next.local.yml --env-file docker-compose.env up -d
+
+services:
+  next:
+    build:
+      context: .
+      dockerfile: Dockerfile.next
+      args:
+        # VPS autonome : API et app sur legacy (aucun lien avec www.eludein.art)
+        NEXT_PUBLIC_API_TARGET: ${NEXT_PUBLIC_API_TARGET:-https://legacy.eludein.art}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://legacy.eludein.art}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
+    image: fleur-next:latest
+    restart: unless-stopped
+    networks:
+      - coolify
+    ports:
+      - "3002:3000"
+    environment:
+      USE_NODE_API: "true"
+      # MariaDB — requis pour login, sessions, Fleur, etc.
+      MARIADB_HOST: ${MARIADB_HOST:-mariadb}
+      MARIADB_PORT: ${MARIADB_PORT:-3306}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-${DB_NAME:-default}}
+      MARIADB_USER: ${MARIADB_USER:-${DB_USER:-mariadb}}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-${DB_PASSWORD}}
+      DB_PREFIX: ${DB_PREFIX:-wp_}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis}
+      JWT_EXPIRE_HOURS: ${JWT_EXPIRE_HOURS:-720}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_MONTHLY: ${STRIPE_PRICE_MONTHLY:-}
+      STRIPE_PRICE_YEARLY: ${STRIPE_PRICE_YEARLY:-}
+      STRIPE_PRICE_CREDITS_100: ${STRIPE_PRICE_CREDITS_100:-}
+
+networks:
+  coolify:
+    external: true

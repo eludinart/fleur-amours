@@ -1,0 +1,91 @@
+{
+  "four_doors":{
+    "Coeur":"force motrice / tensions",
+    "Temps":"maturité / stade (cycle végétal)",
+    "Climat":"conditions modulantes (interne/externe)",
+    "Histoire":"trajectoire / transformation"
+  },
+  "dynamics":[
+    {"id":"agape","A":"AGAPÈ","B":"Contribution / Sens"},
+    {"id":"eros","A":"ÉROS","B":"Expansion / Impact"},
+    {"id":"philia","A":"PHILIA","B":"Alliance / Coopération"},
+    {"id":"storge","A":"STORGÈ","B":"Sécurité / Appartenance"},
+    {"id":"pragma","A":"PRAGMA","B":"Gouvernance / Contrat"},
+    {"id":"ludus","A":"LUDUS","B":"Exploration / Adaptabilité"},
+    {"id":"mania","A":"MANIA","B":"Intensité / Risque"},
+    {"id":"philautia","A":"PHILAUTIA","B":"Alignement / Intégrité"}
+  ],
+  "stades_vegetaux": [
+   {"name": "LES RACINES", "slug": "les_racines"},
+    {"name": "LA TIGE", "slug": "la_tige"},
+    {"name": "LES FEUILLES", "slug": "les_feuilles"},
+    {"name": "LE BOUTON", "slug": "le_bouton"},
+    {"name": "LA FLEUR", "slug": "la_fleur"},
+    {"name": "LE FRUIT", "slug": "le_fruit"},
+    {"name": "LE POLLEN", "slug": "le_pollen"},
+    {"name": "LE NECTAR", "slug": "le_nectar"},
+    {"name": "LA GRAINE ENDORMIE", "slug": "la_graine_endormie"},
+    {"name": "LA GERMINATION", "slug": "la_germination"}
+  ],
+  "amours": [
+    {"name": "AGAPÈ", "slug": "agape"},
+    {"name": "ÉROS", "slug": "eros"},
+    {"name": "PHILIA", "slug": "philia"},
+    {"name": "STORGÈ", "slug": "storge"},
+    {"name": "PRAGMA", "slug": "pragma"},
+    {"name": "LUDUS", "slug": "ludus"},
+    {"name": "MANIA", "slug": "mania"},
+    {"name": "PHILAUTIA", "slug": "philautia"}
+    ],
+
+    "climats": [
+    {"name": "LE FEU", "slug": "le_feu"},
+    {"name": "L’ÉTHER", "slug": "l_ether"},
+    {"name": "L’EAU", "slug": "l_eau"},
+    {"name": "L’AIR", "slug": "l_air"},
+    {"name": "LA TERRE", "slug": "la_terre"},
+    {"name": "LE MINÉRAL", "slug": "le_mineral"},
+    {"name": "L’ARGILE", "slug": "l_argile"},
+    {"name": "L’HUMUS", "slug": "l_humus"},
+    {"name": "LE CRISTAL", "slug": "le_cristal"},
+    {"name": "LA ROCHE-MÈRE", "slug": "la_roche_mere"},
+    {"name": "LA CENDRE FERTILE", "slug": "la_cendre_fertile"},
+    {"name": "LA SOURCE PROFONDE", "slug": "la_source_profonde"},
+    {"name": "LA PLUIE", "slug": "la_pluie"},
+    {"name": "LA BRUME", "slug": "la_brume"},
+    {"name": "LA VAGUE", "slug": "la_vague"},
+    {"name": "L’OCÉAN", "slug": "l_ocean"},
+    {"name": "LE SOUFFLE", "slug": "le_souffle"},
+    {"name": "LE VENT SOLAIRE", "slug": "le_vent_solaire"},
+    {"name": "L’ÉCHO", "slug": "l_echo"},
+    {"name": "L’ALIZÉ", "slug": "l_alize"},
+    {"name": "LE VERBE", "slug": "le_verbe"},
+    {"name": "LE MESSAGER", "slug": "le_messager"},
+    {"name": "LA BRAISE", "slug": "la_braise"},
+    {"name": "LE CŒUR du feu", "slug": "le_cœur_du_feu"},
+    {"name": "LA FLAMME", "slug": "la_flamme"},
+    {"name": "LA LUMIÈRE", "slug": "la_lumiere"},
+    {"name": "LE SOLEIL INTÉRIEUR", "slug": "le_soleil_interieur"},
+    {"name": "LE VOLCAN", "slug": "le_volcan"},
+    {"name": "L’HARMONIE DES CYCLES", "slug": "l_harmonie_des_cycles"},
+    {"name": "L’INVISIBLE", "slug": "l_invisible"},
+    {"name": "LE MANDALA COSMIQUE", "slug": "le_mandala_cosmique"},
+    {"name": "L’UNITÉ", "slug": "l_unite"},
+    {"name": "LA SOURCE LUMINEUSE", "slug": "la_source_lumineuse"},
+    {"name": "LE SILENCE ÉTOILÉ", "slug": "le_silence_etoile"}
+    ],
+    "vie": [
+    {"name": "L’ABEILLE", "slug": "l_abeille"},
+    {"name": "L’ÂME DU MONDE", "slug": "l_ame_du_monde"},
+    {"name": "L’OFFRANDE", "slug": "l_offrande"},
+    {"name": "LA SPIRALE DE LA VIE", "slug": "la_spirale_de_la_vie"},
+    {"name": "LA DANSE DU MONDE", "slug": "la_danse_du_monde"},
+    {"name": "LA MÉMOIRE DE LA SÈVE", "slug": "la_memoire_de_la_seve"},
+    {"name": "LA NAISSANCE", "slug": "la_naissance"}
+  ],
+  "rules_of_interaction":{
+    "amplify":"moteur + climat convergent -> amplification",
+    "regulate":"climat canalise/encadre la dynamique",
+    "contradict":"climat bloque ou oppose la dynamique"
+  }
+}

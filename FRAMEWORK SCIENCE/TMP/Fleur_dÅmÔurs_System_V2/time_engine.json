@@ -1,0 +1,23 @@
+{
+  "time_engine": {
+    "goal": "Donner une cinématique simple: transitions d'un stade à un autre et impact sur l'activation.",
+    "status": "PROPOSED_EXAMPLE_CYCLE",
+    "time_stages": [
+      { "id": "graine", "label": "Graine", "activation_multiplier": 0.85, "signature": "Potentiel, faible structuration, signaux faibles", "typical_risks": ["flou","sur-interprétation","décision prématurée"] },
+      { "id": "germination", "label": "Germination", "activation_multiplier": 1.0, "signature": "Émergence, essais, premières tensions", "typical_risks": ["dispersion","mania précoce","fatigue"] },
+      { "id": "tige", "label": "Tige", "activation_multiplier": 1.1, "signature": "Structuration progressive, choix, stabilisation", "typical_risks": ["rigidification","pragma surdominant"] },
+      { "id": "bourgeon", "label": "Bourgeon", "activation_multiplier": 1.15, "signature": "Montée en intensité, préparation de bascule", "typical_risks": ["surchauffe","oscillation","conflits latents"] },
+      { "id": "floraison", "label": "Floraison", "activation_multiplier": 1.25, "signature": "Expression maximale, visibilité, impact", "typical_risks": ["mania critique","éros impulsif","perte de centre"] },
+      { "id": "fruit", "label": "Fruit", "activation_multiplier": 1.05, "signature": "Intégration, récolte, transmission", "typical_risks": ["stagnation","nostalgie","perte de ludus"] }
+    ],
+    "transition_model": {
+      "type": "semi_markov",
+      "rules": [
+        { "if": "coherence_index >= 0.62 AND vitality_index >= 0.55", "then": "advance_stage_probability += 0.15" },
+        { "if": "tension_severity.max >= 3 OR instability_flag == true", "then": "regress_stage_probability += 0.20" },
+        { "if": "oscillation_index >= 0.65", "then": "stay_stage_probability += 0.20  // système 'n'arrive pas' à muter" }
+      ],
+      "notes": ["Ce modèle ne 'prédit' pas la vie: il propose une logique de transition pour simuler.", "Les probabilités sont des paramètres à calibrer."]
+    }
+  }
+}
