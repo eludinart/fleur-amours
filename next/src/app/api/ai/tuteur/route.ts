@@ -5,6 +5,13 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
+import { isDbConfigured } from '@/lib/db'
+import {
+  getSapBalance,
+  transactionalSapUpdate,
+  TUTEUR_SAP_COST,
+  SapError,
+} from '@/lib/db-sap'
 import { openrouterCall } from '@/lib/openrouter'
 import { getTuteurPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction } from '@/lib/prompts'
@@ -37,12 +44,15 @@ function enforceCurrentDoorCard(
 }
 
 export async function POST(req: NextRequest) {
+  let userId = ''
   try {
-    await requireAuth(req)
+    ;({ userId } = await requireAuth(req))
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json({ error: e.message }, { status: e.status || 401 })
   }
+  const uid = parseInt(userId, 10)
+  const billTuteurSap = isDbConfigured() && !!process.env.OPENROUTER_API_KEY
 
   let body: {
     transcript?: string
@@ -130,6 +140,19 @@ export async function POST(req: NextRequest) {
 
   const systemPrompt = await getTuteurPrompt()
 
+  if (billTuteurSap && uid > 0) {
+    const bal = await getSapBalance(uid)
+    if (bal < TUTEUR_SAP_COST) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Solde SAP insuffisant (requis ${TUTEUR_SAP_COST} pour un échange avec le Tuteur).`,
+        },
+        { status: 402 }
+      )
+    }
+  }
+
   if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({
       response_a: 'Je vous reçois.',
@@ -180,6 +203,33 @@ export async function POST(req: NextRequest) {
             choices_emerged: String((doorPreview as Record<string, unknown>).choices_emerged ?? ''),
           }
         : null
+
+    if (billTuteurSap && uid > 0) {
+      let debitOk = false
+      let lastDebitErr: unknown = null
+      for (let attempt = 0; attempt < 2 && !debitOk; attempt++) {
+        try {
+          if (attempt > 0) await new Promise((r) => setTimeout(r, 80))
+          await transactionalSapUpdate(uid, TUTEUR_SAP_COST, 'tuteur_turn', 'usage')
+          debitOk = true
+        } catch (e) {
+          lastDebitErr = e
+          if (e instanceof SapError && e.code === 'INSUFFICIENT') {
+            return NextResponse.json(
+              { success: false, error: 'Solde SAP insuffisant.' },
+              { status: 402 }
+            )
+          }
+        }
+      }
+      if (!debitOk) {
+        console.error('[sap] tuteur debit failed after retry', lastDebitErr)
+        return NextResponse.json(
+          { success: false, error: 'Impossible d’enregistrer la consommation SAP.' },
+          { status: 500 }
+        )
+      }
+    }
 
     return NextResponse.json({
       response_a: (result as Record<string, unknown>).response_a ?? 'Je vous reçois.',

@@ -4,6 +4,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { coachPatientsApi } from '@/api/coachPatients'
+import { sapApi } from '@/api/billing'
+import { useAuth } from '@/contexts/AuthContext'
 import { INTENTIONS } from '@/api/social'
 import { FlowerSVG } from '@/components/FlowerSVG'
 import { useStore } from '@/store/useStore'
@@ -20,9 +22,13 @@ function petalsArrayToRecord(petals) {
 }
 
 export default function CoachPatientelePage() {
+  const { isAdmin, isCoach } = useAuth()
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [rechargePid, setRechargePid] = useState(null)
+  const [rechargeAmt, setRechargeAmt] = useState('10')
+  const [rechargeBusy, setRechargeBusy] = useState(false)
 
   const [email, setEmail] = useState('')
   const [intentionId, setIntentionId] = useState(INTENTIONS[0]?.id ?? 'resonance')
@@ -93,6 +99,28 @@ export default function CoachPatientelePage() {
       setError(e?.message ?? 'Impossible d\'envoyer l\'invitation')
     } finally {
       setInviteLoading(false)
+    }
+  }
+
+  async function handleRechargeSap() {
+    const pid = rechargePid
+    if (pid == null) return
+    const n = parseInt(rechargeAmt, 10)
+    if (!n || n < 1) {
+      setError('Montant invalide (minimum 1 SAP).')
+      return
+    }
+    setRechargeBusy(true)
+    setError(null)
+    try {
+      await sapApi.bonusPatient(pid, n, 'bonus_coach_manuel')
+      const r2 = await coachPatientsApi.listMyPatients()
+      setPatients(r2?.patients ?? [])
+      setRechargePid(null)
+    } catch (e) {
+      setError(e?.message ?? 'Impossible de créditer la Sève')
+    } finally {
+      setRechargeBusy(false)
     }
   }
 
@@ -226,6 +254,25 @@ export default function CoachPatientelePage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{p.pseudo}</p>
                         {p.email ? <p className="text-xs text-slate-500 dark:text-slate-400">{p.email}</p> : null}
+                        <div className="flex flex-wrap gap-2 mt-2 items-center">
+                          <span className="text-[10px] px-2 py-1 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-200 border border-violet-200/60 dark:border-violet-800/60 font-semibold">
+                            SAP : {p.sapBalance ?? 0}
+                          </span>
+                          <span
+                            className={`text-[10px] px-2 py-1 rounded-full border font-medium ${
+                              p.acquisitionChannel === 'direct'
+                                ? 'bg-teal-50 dark:bg-teal-950/30 border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-200'
+                                : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200'
+                            }`}
+                            title={
+                              p.acquisitionChannel === 'direct'
+                                ? 'Arrivée via invitation coach — commission marketplace 0 %'
+                                : 'Relation hors invitation — commission marketplace 20 % (indicatif produit)'
+                            }
+                          >
+                            {p.acquisitionChannel === 'direct' ? 'Direct · 0 %' : 'Marketplace · 20 %'}
+                          </span>
+                        </div>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {(p.intentionIds ?? []).map((cid) => (
                             <span
@@ -292,6 +339,18 @@ export default function CoachPatientelePage() {
                         >
                           {rebuildPatientId === p.patientUserId ? 'Recalcul…' : 'Recalculer la science'}
                         </button>
+                        {(isAdmin || isCoach) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRechargePid(p.patientUserId)
+                              setRechargeAmt('10')
+                            }}
+                            className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                          >
+                            Recharger Sève
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -345,6 +404,55 @@ export default function CoachPatientelePage() {
             </div>
           )}
         </section>
+
+        {rechargePid != null && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="recharge-sap-title"
+          >
+            <div className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 p-6 shadow-xl space-y-4">
+              <h2 id="recharge-sap-title" className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                Bonus SAP
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Crédit manuel sur le compte du patient (transparence coach / client).
+              </p>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Montant SAP
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={50000}
+                  value={rechargeAmt}
+                  onChange={(e) => setRechargeAmt(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setRechargePid(null)}
+                  disabled={rechargeBusy}
+                  className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRechargeSap}
+                  disabled={rechargeBusy}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {rechargeBusy ? '…' : 'Créditer'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

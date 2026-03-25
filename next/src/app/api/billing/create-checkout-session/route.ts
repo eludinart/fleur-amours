@@ -50,12 +50,18 @@ export async function POST(req: NextRequest) {
     const payload = token ? jwtDecode(token) : null
     const customerEmail = payload?.email?.trim() || undefined
 
-    const mode = ['monthly', 'yearly'].includes(productId) ? 'subscription' : 'payment'
+    const isSapPack = /^sap_(10|50|100)$/.test(productId)
+    const sapUnits = isSapPack ? parseInt(productId.replace('sap_', ''), 10) : 0
+    const mode =
+      ['monthly', 'yearly'].includes(productId) ? 'subscription' : 'payment'
     const metadata: Record<string, string> = {
       user_id: userId,
       ...(mode === 'subscription'
         ? { plan_id: productId || 'monthly' }
-        : { product_id: productId || 'credits_100' }),
+        : {
+            product_id: productId || 'credits_100',
+            ...(isSapPack && sapUnits > 0 ? { sap_units: String(sapUnits) } : {}),
+          }),
     }
 
     const result = await createCheckoutSession({

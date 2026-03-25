@@ -24,6 +24,27 @@
       "label": "100 crédits",
       "amount_cents": 500,
       "unit": ""
+    },
+    "sap_10": {
+      "price_id_env": "STRIPE_PRICE_SAP_10",
+      "sap_units": 10,
+      "label": "10 SAP",
+      "amount_cents": 0,
+      "unit": ""
+    },
+    "sap_50": {
+      "price_id_env": "STRIPE_PRICE_SAP_50",
+      "sap_units": 50,
+      "label": "50 SAP",
+      "amount_cents": 0,
+      "unit": ""
+    },
+    "sap_100": {
+      "price_id_env": "STRIPE_PRICE_SAP_100",
+      "sap_units": 100,
+      "label": "100 SAP",
+      "amount_cents": 0,
+      "unit": ""
     }
   }
 }

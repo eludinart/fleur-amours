@@ -11,6 +11,7 @@ import { FlowerSVG, PetalSlider, PETAL_DEFS } from '@/components/FlowerSVG'
 import { CrystalTimeline } from '@/components/CrystalTimeline'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { sapApi } from '@/api/billing'
+import { ApiError } from '@/lib/api-client'
 import { useSpeech } from '@/hooks/useSpeech'
 import { useAuth } from '@/contexts/AuthContext'
 import { aiApi } from '@/api/ai'
@@ -544,9 +545,10 @@ function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, a
     }
     try {
       const p = await sapApi.preview('open_door')
-      if (!p?.ok) {
-        const av = p?.available ?? 0
-        window.alert(`Sève insuffisante. Il vous faut 15 Sèves (vous en avez ${av}).`)
+      if (!p?.ok || !p?.available) {
+        const bal = p?.balance ?? 0
+        const cost = p?.cost ?? 15
+        window.alert(`SAP insuffisant. Il vous faut ${cost} SAP (solde actuel : ${bal}).`)
         return
       }
       setSapPreview(p)
@@ -565,12 +567,20 @@ function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, a
     await doEntrer()
   }
 
-  function handleConfirmOpenDoor() {
+  async function handleConfirmOpenDoor() {
     setSapConfirmLoading(true)
-    onStart()
-    setShowOpenDoorConfirm(false)
-    setSapPreview(null)
-    setSapConfirmLoading(false)
+    try {
+      if (!access?.free_access) {
+        await sapApi.deduct('open_door')
+      }
+      onStart()
+    } catch (e) {
+      window.alert(e instanceof ApiError ? e.detail : e?.message || 'Débit SAP impossible.')
+    } finally {
+      setShowOpenDoorConfirm(false)
+      setSapPreview(null)
+      setSapConfirmLoading(false)
+    }
   }
 
   function formatDate(iso) {
@@ -1007,10 +1017,10 @@ function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, a
           action="open_door"
           fromSablier={sapPreview?.from_sablier ?? 15}
           fromCristal={sapPreview?.from_cristal ?? 0}
-          cost={15}
+          cost={sapPreview?.cost ?? 15}
           loading={sapConfirmLoading}
           title="Ouverture de la première porte"
-          bodyTemplate={`L'ouverture de cette porte consomme 15 Sèves. Utilise ${sapPreview?.from_sablier ?? 15} Sèves de Saison et ${sapPreview?.from_cristal ?? 0} Sèves Éternelles. Confirmer ?`}
+          bodyTemplate={`L'ouverture de cette porte consomme ${sapPreview?.cost ?? 15} SAP (solde actuel : ${sapPreview?.balance ?? '—'}). Confirmer ?`}
         />
       )}
 
@@ -1488,6 +1498,13 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
         setLoading(false)
         return
       } catch (e) {
+        if (e instanceof ApiError && e.status === 402) {
+          setHistory(history)
+          setManualText(text)
+          setError(e.detail || 'Solde SAP insuffisant pour le Tuteur.')
+          setLoading(false)
+          return
+        }
         if (attempt < RETRY_MAX) {
           await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)))
           continue

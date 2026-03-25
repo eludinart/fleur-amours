@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { RowDataPacket } from 'mysql2'
 import { requireAdmin } from '@/lib/api-auth'
 import { ApiError } from '@/lib/api-auth'
-import { getPool, table } from '@/lib/db'
+import { getPool, isDbConfigured, table } from '@/lib/db'
+import { transactionalSapUpdate } from '@/lib/db-sap'
 
 interface TotalRow extends RowDataPacket {
   total_accumulated_eternal: number
@@ -95,9 +96,28 @@ export async function POST(req: NextRequest) {
       params
     )
 
+    let sapDelta = sablier + cristal
+    if (cristal > 0 && totalBefore < 200 && totalBefore + cristal >= 200) {
+      sapDelta += 20
+    }
+
+    if (sapDelta > 0 && isDbConfigured()) {
+      try {
+        await transactionalSapUpdate(userId, sapDelta, 'admin_credit_sap', 'bonus')
+      } catch (sapErr) {
+        console.error('[credit-sap] synchronisation wallet SAP échouée', sapErr)
+        return NextResponse.json({
+          ok: true,
+          credited: { sablier, cristal },
+          sap_wallet_sync_error: (sapErr as Error)?.message ?? 'Wallet SAP non mis à jour',
+        })
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       credited: { sablier, cristal },
+      sap_credited: sapDelta > 0 ? sapDelta : 0,
     })
   } catch (err) {
     if (err instanceof ApiError) {

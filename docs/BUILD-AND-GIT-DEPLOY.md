@@ -155,6 +155,22 @@ git push origin main
 
 Remplace `main` par ta branche de déploiement si elle est différente (`production`, etc.).
 
+### Vérifier le dernier commit sur `origin` (utile avant de lire les logs Coolify)
+
+Sous **PowerShell**, enchaîne les commandes avec **`;`** — pas avec **`+`** (sinon tout est passé à `git` et tu obtiens par ex. `unknown switch '1'`).
+
+```powershell
+git fetch origin; git log -1 --oneline origin/main; git rev-parse origin/main
+```
+
+Sous **Bash** :
+
+```bash
+git fetch origin && git log -1 --oneline origin/main && git rev-parse origin/main
+```
+
+Compare le **hash complet** (ex. `16c5765d…`) avec la ligne **commit sha** dans les logs de déploiement Coolify.
+
 ---
 
 ## 5. Déploiement sur legacy (Coolify)
@@ -165,6 +181,8 @@ Le **code** arrive sur le serveur quand tu **push** ; l’**image** ou le **serv
 2. Dans **Coolify**, ouvrir le service associé au Next legacy (souvent nommé « legacy » ou similaire).
 3. Lancer **Redeploy** ou **Rebuild** si le déploiement automatique n’est pas activé ou si tu veux forcer une image neuve.
 4. Attendre la fin du build et du démarrage du conteneur.
+
+Dans les logs, repère la ligne du type **`Importing … (commit sha …)`** : c’est la révision Git que Coolify a réellement prise. Elle doit correspondre à **`origin/main`** (ou à la branche configurée) après ton dernier `git push`.
 
 ### Variables importantes (rappel)
 
@@ -180,7 +198,28 @@ Le **code** arrive sur le serveur quand tu **push** ; l’**image** ou le **serv
 
 ---
 
-## 5. Build Docker en local (optionnel)
+## 6. Dépannage : l’app en prod n’a pas mes dernières modifs (Coolify)
+
+### Message « Build step skipped » + même SHA Git
+
+Si les logs contiennent par exemple :
+
+`No configuration changed & image found (…) with the same Git Commit SHA. Build step skipped.`
+
+alors Coolify **n’a pas relancé** `docker build` / `npm run build` : il a réutilisé une **image déjà construite** pour ce commit. Le conteneur redémarre, mais **aucun code nouveau n’est compilé** pour ce SHA.
+
+- Si ce **SHA** est **plus ancien** que `git rev-parse origin/main` sur ta machine → le déploiement a été fait **avant** ton push, ou Coolify ne pointe pas sur la bonne branche / le bon dépôt. **Redeploy** après avoir vérifié **branche = `main`** (ou celle utilisée en prod) et **`git push`**.
+- Si le SHA affiché **est bien** le dernier sur GitHub mais tu veux quand même **reconstruire** l’image (cache, doute) → dans Coolify, utilise une option du type **Rebuild without cache** / **Clear build** selon ta version, ou modifie légèrement un **build argument** pour forcer un build.
+
+### Contrôle rapide
+
+1. Localement : `git fetch origin; git rev-parse origin/main` (PowerShell) ou équivalent Bash.  
+2. Logs Coolify du **dernier** déploiement : **commit sha** importé = même préfixe que l’étape 1 ?  
+3. Si oui et que l’UI ne change pas : cache navigateur (fenêtre privée, rechargement forcé), ou variables **`NEXT_PUBLIC_*`** (il faut un **rebuild**, pas seulement redémarrer le conteneur).
+
+---
+
+## 7. Build Docker en local (optionnel)
 
 Pour tester l’image Next sans Coolify :
 
@@ -198,8 +237,8 @@ Compose : voir `docker-compose.next.yml` et la doc dans les commentaires en têt
 
 ---
 
-## 7. Résumé en trois lignes
+## 8. Résumé en trois lignes
 
 1. **`npm run build:next`** (ou **`bash scripts/build-and-git.sh`** / **`build-and-push.ps1`**) → en cas d’erreur bizarre, supprimer `next/.next` puis rebuild.  
 2. **`git add -A`** → **`git commit`** → **`git push`** (ou laisser le script section 3 le faire).  
-3. Coolify : **Redeploy / Rebuild** si nécessaire, puis vérifier l’app et `/api/ai/status`.
+3. Coolify : **Redeploy** ; vérifier dans les logs le **commit sha** = **`origin/main`**, et qu’il n’y a pas que **Build step skipped** si tu attends un **nouveau** build → sinon section **6**.

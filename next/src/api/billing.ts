@@ -1,8 +1,39 @@
 import { api } from '@/lib/api-client'
 
+type SapPreviewResult = {
+  ok: boolean
+  available: boolean
+  cost: number
+  balance: number
+  from_sablier: number
+  from_cristal: number
+}
+
 export const sapApi = {
   deduct: (action: string) => api.post('/api/sap/deduct', { action }),
-  preview: (action: string) => api.get(`/api/sap/preview?action=${encodeURIComponent(action)}`),
+  balance: () =>
+    api.get('/api/sap/balance') as Promise<{ success: boolean; data?: { balance: number }; error?: string }>,
+  preview: async (action: string): Promise<SapPreviewResult> => {
+    const r = (await api.get(`/api/sap/preview?action=${encodeURIComponent(action)}`)) as {
+      success?: boolean
+      data?: { ok?: boolean; available?: boolean; cost?: number; balance?: number }
+    }
+    const d = r?.data
+    if (r?.success && d) {
+      const cost = d.cost ?? 0
+      return {
+        ok: d.ok ?? true,
+        available: !!d.available,
+        cost,
+        balance: d.balance ?? 0,
+        from_sablier: cost,
+        from_cristal: 0,
+      }
+    }
+    return { ok: false, available: false, cost: 0, balance: 0, from_sablier: 0, from_cristal: 0 }
+  },
+  bonusPatient: (patientUserId: number, amount: number, reason?: string) =>
+    api.post('/api/sap/bonus', { patient_user_id: patientUserId, amount, reason }),
 }
 
 export const billingApi = {

@@ -12,6 +12,7 @@ import type { RowDataPacket } from 'mysql2'
 import { acceptSeedConnection, sendSeed } from './db-social'
 import { getPool, isDbConfigured, table } from './db'
 import { getScienceProfile } from './science-db'
+import { getSapBalance } from './db-sap'
 
 export type CoachPatient = {
   patientUserId: number
@@ -22,6 +23,9 @@ export type CoachPatient = {
   fleurMoyenne: { petals: number[]; lastUpdated?: string }
   channelId: number | null
   science: Awaited<ReturnType<typeof getScienceProfile>>
+  sapBalance: number
+  /** Relation via invitation coach → Direct (0 % commission côté produit) ; sinon Marketplace (20 %). */
+  acquisitionChannel: 'direct' | 'marketplace'
 }
 
 export type CoachRelationship = {
@@ -62,6 +66,22 @@ async function ensureInvitesTable(): Promise<void> {
       INDEX idx_coach (coach_user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `)
+}
+
+async function patientHasDirectCoachInvite(coachUserId: number, patientUserId: number): Promise<boolean> {
+  if (!isDbConfigured()) return false
+  try {
+    await ensureInvitesTable()
+    const pool = getPool()
+    const t = TBL_INVITES()
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT 1 AS ok FROM ${t} WHERE coach_user_id = ? AND consumed_user_id = ? AND status = 'accepted' LIMIT 1`,
+      [coachUserId, patientUserId]
+    )
+    return (rows?.length ?? 0) > 0
+  } catch {
+    return false
+  }
 }
 
 async function getUserBasics(userId: number): Promise<{ email: string; pseudo: string; avatarEmoji: string }> {
@@ -311,18 +331,7 @@ export async function consumeCoachInvitation(params: {
   return { coachUserId, intentionId }
 }
 
-export async function getCoachPatients(coachUserId: number): Promise<{
-  patients: Array<{
-    patientUserId: number
-    email: string
-    pseudo: string
-    avatarEmoji: string
-    intentionIds: string[]
-    fleurMoyenne: { petals: number[]; lastUpdated?: string }
-    channelId: number | null
-    science: Awaited<ReturnType<typeof getScienceProfile>>
-  }>
-}> {
+export async function getCoachPatients(coachUserId: number): Promise<{ patients: CoachPatient[] }> {
   if (!isDbConfigured()) return { patients: [] }
 
   const pool = getPool()
@@ -381,6 +390,14 @@ export async function getCoachPatients(coachUserId: number): Promise<{
 
     const intentionIds = Array.from(byPatient.get(pid)?.intentionIds ?? [])
 
+    let sapBalance = 0
+    try {
+      sapBalance = await getSapBalance(pid)
+    } catch {
+      sapBalance = 0
+    }
+    const direct = await patientHasDirectCoachInvite(coachUserId, pid)
+
     patients.push({
       patientUserId: pid,
       email: basics.email,
@@ -390,6 +407,8 @@ export async function getCoachPatients(coachUserId: number): Promise<{
       fleurMoyenne,
       channelId,
       science,
+      sapBalance,
+      acquisitionChannel: direct ? 'direct' : 'marketplace',
     })
   }
 

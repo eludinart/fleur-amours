@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { aiApi } from '@/api/ai'
+import { ApiError } from '@/lib/api-client'
 import { sessionsApi } from '@/api/sessions'
 import { toast } from '@/hooks/useToast'
 import { useSpeech } from '@/hooks/useSpeech'
@@ -352,6 +353,13 @@ export function useAiSession({
         setLoading(false)
         return
       } catch (e) {
+        if (e instanceof ApiError && e.status === 402) {
+          setHistory(history)
+          setManualText(text)
+          setError(e.detail || 'Solde SAP insuffisant pour le Tuteur.')
+          setLoading(false)
+          return
+        }
         if (attempt < RETRY_MAX) {
           await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)))
           continue

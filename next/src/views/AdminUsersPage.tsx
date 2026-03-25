@@ -221,11 +221,25 @@ function UserEditPanel({
     }
     setCreditSapBusy(true)
     try {
-      await billingApi.adminCreditSap(user.id, { sablier, cristal })
-      flash(
-        setCreditSapMsg,
-        'Sève créditée. Les nouvelles fonctionnalités (SapGauge, sessions) sont maintenant actives.'
-      )
+      const res = (await billingApi.adminCreditSap(user.id, { sablier, cristal })) as {
+        ok?: boolean
+        sap_wallet_sync_error?: string
+        sap_credited?: number
+      }
+      if (res?.sap_wallet_sync_error) {
+        flash(
+          setCreditSapMsg,
+          `Sablier/Cristal enregistrés. Wallet SAP non synchronisé : ${res.sap_wallet_sync_error}`,
+          'error'
+        )
+      } else {
+        flash(
+          setCreditSapMsg,
+          res?.sap_credited
+            ? `Sève créditée (access + ${res.sap_credited} SAP). SapGauge / sessions alignés.`
+            : 'Sève créditée. Les nouvelles fonctionnalités (SapGauge, sessions) sont maintenant actives.'
+        )
+      }
       setCreditSap({ sablier: '', cristal: '' })
       loadRedemptions()
     } catch (e: unknown) {

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { aiApi } from '@/api/ai'
+import { ApiError } from '@/lib/api-client'
 
 const MAX_RETRIES = 2
 const RETRY_DELAY_MS = 2000
@@ -58,6 +59,12 @@ export function useTuteurSend(options: {
           setRetryCount(0)
           onSuccess(res)
         } catch (e: unknown) {
+          if (e instanceof ApiError && e.status === 402) {
+            setStatus('error')
+            setRetryCount(0)
+            onError(e.detail || 'Solde SAP insuffisant.')
+            return
+          }
           const err = e as { detail?: string; message?: string }
           const rawMessage = err?.detail ?? err?.message ?? ''
 

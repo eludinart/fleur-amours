@@ -80,6 +80,15 @@ export async function createCheckoutSession(params: {
   } else {
     form['payment_intent_data[metadata][user_id]'] = params.metadata.user_id || ''
     form['payment_intent_data[metadata][product_id]'] = params.metadata.product_id || ''
+    for (const [k, v] of Object.entries(params.metadata)) {
+      if (v == null || v === '') continue
+      form[`payment_intent_data[metadata][${k}]`] = String(v)
+    }
+  }
+
+  for (const [k, v] of Object.entries(params.metadata)) {
+    if (v == null || v === '') continue
+    form[`metadata[${k}]`] = String(v)
   }
 
   const data = await stripeFetch('POST', '/checkout/sessions', form)
@@ -87,5 +96,36 @@ export async function createCheckoutSession(params: {
   return {
     url: (data as { url?: string }).url,
     id: (data as { id?: string }).id,
+  }
+}
+
+/** Métadonnées PaymentIntent (remboursements webhook). */
+export async function fetchPaymentIntentMetadata(
+  paymentIntentId: string
+): Promise<Record<string, string> | null> {
+  if (!paymentIntentId?.startsWith('pi_')) return null
+  const data = await stripeFetch('GET', `/payment_intents/${paymentIntentId}`)
+  if (!data) return null
+  const raw = (data as { metadata?: Record<string, unknown> }).metadata
+  if (!raw || typeof raw !== 'object') return {}
+  return Object.fromEntries(
+    Object.entries(raw).map(([k, v]) => [k, String(v ?? '')])
+  )
+}
+
+/** Montants en centimes pour prorata remboursement. */
+export async function fetchChargeAmounts(chargeId: string): Promise<{
+  amount: number
+  amount_refunded: number
+} | null> {
+  if (!chargeId?.startsWith('ch_')) return null
+  const data = await stripeFetch('GET', `/charges/${chargeId}`)
+  if (!data) return null
+  const amount = Number((data as { amount?: unknown }).amount)
+  const amount_refunded = Number((data as { amount_refunded?: unknown }).amount_refunded)
+  if (!Number.isFinite(amount) || amount <= 0) return null
+  return {
+    amount,
+    amount_refunded: Number.isFinite(amount_refunded) ? Math.max(0, amount_refunded) : 0,
   }
 }

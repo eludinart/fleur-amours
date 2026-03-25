@@ -13,6 +13,9 @@ const ENV_MAP: Record<string, string> = {
   STRIPE_PRICE_MONTHLY: process.env.STRIPE_PRICE_MONTHLY || '',
   STRIPE_PRICE_YEARLY: process.env.STRIPE_PRICE_YEARLY || '',
   STRIPE_PRICE_CREDITS_100: process.env.STRIPE_PRICE_CREDITS_100 || '',
+  STRIPE_PRICE_SAP_10: process.env.STRIPE_PRICE_SAP_10 || '',
+  STRIPE_PRICE_SAP_50: process.env.STRIPE_PRICE_SAP_50 || '',
+  STRIPE_PRICE_SAP_100: process.env.STRIPE_PRICE_SAP_100 || '',
 }
 
 type ProductItem = {
@@ -22,6 +25,7 @@ type ProductItem = {
   label: string
   plan_id?: string
   credits?: number
+  sap_units?: number
   amount_cents: number
   unit: string
 }
@@ -61,7 +65,14 @@ export async function GET() {
     })
   }
 
-  type PackItem = { price_id_env: string; label?: string; credits?: number; amount_cents?: number; unit?: string }
+  type PackItem = {
+    price_id_env: string
+    label?: string
+    credits?: number
+    sap_units?: number
+    amount_cents?: number
+    unit?: string
+  }
   const packs = (billingProducts as { packs?: Record<string, PackItem> }).packs ?? {}
   for (const [id, p] of Object.entries(packs)) {
     const priceId = ENV_MAP[p.price_id_env] ?? ''
@@ -87,6 +98,7 @@ export async function GET() {
       price_id: priceId,
       label: p.label ?? id,
       credits: p.credits ?? 0,
+      sap_units: p.sap_units,
       amount_cents,
       unit,
     })

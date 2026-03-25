@@ -4,8 +4,8 @@
 
 ## Statut
 
-- Version: `0.1` (initiale)
-- Dernière mise à jour: `2026-03-25`
+- Version: `0.3`
+- Dernière mise à jour: `2026-03-26`
 
 ## Comment mettre ce document à jour
 
@@ -16,6 +16,7 @@ Quand on change le programme (routes, composants, UX, DB, variables, rôles), je
 - “API & sécurité”
 - “Couche MariaDB (coach/patientèle)”
 - “Config & variables d’environnement”
+- “Build / déploiement (Coolify, Git)” si le flux prod change
 
 Si vous avez un changement fonctionnel important, je vous demanderai au besoin les critères UX attendus avant de l’inscrire.
 
@@ -133,6 +134,28 @@ Concrètement, l’UX applique ces règles:
 
 ---
 
+### 2.4. Annuaire des coachs & contact par messagerie
+
+**Route**
+
+- `/coaches` → `CoachesDirectoryPage` (tableau `protectedPages.coaches` dans `AppShell`)
+
+**Sidebar**
+
+- Entrée **Accompagnement** : lien vers l’annuaire (libellé type « Les accompagnants »), pas le formulaire contact historique.
+
+**UX**
+
+- Liste des coachs via `GET /api/chat/coaches` (`chatApi.coaches()`).
+- Chaque fiche : bloc repliable (`<details>`) pour bio / spécialités / délais, puis CTA **Contacter par message** → navigation vers **`/chat?coach=<wp_user_id>`**.
+
+**Chat côté patient**
+
+- `ChatPage` lit `?coach=` : après chargement de la liste coachs, démarre (ou reprend) la conversation avec ce coach, puis normalise l’URL en `?conv=…` (paramètre `coach` retiré).
+- Type partagé et helpers d’affichage : `next/src/lib/coach-profile.ts` (importés aussi par `ChatPage`).
+
+---
+
 ## 3) Arborescence & composants (cibles pour modifications)
 
 ### 3.1. Routage “AppShell”
@@ -202,6 +225,13 @@ Rôles:
 - UI patientèle coach: invitation + liste patients + rebuild science
 - UI user standard: liste de ses coachs acceptés (et CTA vers `clairiere/:channelId`)
 
+### 3.5. Annuaire coachs (page publique connectée)
+
+Fichiers clés:
+
+- `next/src/views/CoachesDirectoryPage.tsx`
+- `next/src/lib/coach-profile.ts` (type `Coach`, titres, dernière activité, etc.)
+
 ---
 
 ## 4) Configuration technique (Next.js + stack)
@@ -220,6 +250,11 @@ Base path:
 
 - `NEXT_PUBLIC_BASE_PATH` (par défaut `'/jardin'`)
 
+Environnements **séparés** (pas de liens croisés) :
+
+- **www** (ex. Hostinger) : `www.eludein.art/jardin`
+- **legacy / VPS Coolify** : `https://app-fleurdamours.eludein.art/jardin` (sous-domaine avec tiret, ex. `app-fleurdamours`)
+
 Déploiements:
 
 - **Dev local**: `npm run dev.vps`
@@ -227,11 +262,14 @@ Déploiements:
   - Next.js côté local
 - **Prod legacy (VPS Coolify)**:
   - Next.js et MariaDB “dans l’infra” (autonome)
-  - URL publique type : `https://app-fleurdamours.eludein.art/jardin`
+  - Build Docker (`Dockerfile.next` / compose) : les variables **`NEXT_PUBLIC_*`** et **`NEXT_PUBLIC_APP_URL`** (souvent avec suffixe `/jardin`) sont figées **au moment du build** Coolify.
+  - Si les logs Coolify indiquent **« Build step skipped »** pour un commit donné, aucun `next build` n’a été rejoué pour ce SHA : voir **`docs/BUILD-AND-GIT-DEPLOY.md`** §6.
 
-Voir aussi:
+Docs associées (index : **`docs/README.md`**) :
 
-- `docs/DEV-VS-PROD.md`
+- **`docs/BUILD-AND-GIT-DEPLOY.md`** — build local, Git, PowerShell (`build-and-push.ps1`), Bash / SSH, dépannage Coolify
+- **`docs/RECAP-DEV-LEGACY.md`** — mémo dev / tunnel / checklist prod
+- **`docs/DEV-VS-PROD.md`** — différences dev vs prod, OpenRouter
 
 ---
 
@@ -416,6 +454,8 @@ Variables clés (dans `.env`):
 
 Voir:
 
+- `docs/BUILD-AND-GIT-DEPLOY.md` (flux build → push → Coolify, vérification **commit sha** dans les logs)
+- `docs/RECAP-DEV-LEGACY.md`
 - `docs/VERIFICATION-FRONTEND-BACKEND.md`
 - `docs/DEV-VS-PROD.md`
 
@@ -424,6 +464,7 @@ Principaux prérequis:
 - `MARIADB_*` (host/port/db/user/pass) + `DB_PREFIX`
 - `JWT_SECRET`
 - `OPENROUTER_API_KEY`
+- `NEXT_PUBLIC_APP_URL` / `APP_PUBLIC_URL` cohérents avec l’URL publique (inclure `/jardin` si utilisés pour redirections Stripe / liens)
 - fichiers publics nécessaires (ex: `next/public/api/data/all_cards.json`)
 - Stripe webhook secrets si facturation
 
@@ -435,3 +476,4 @@ Principaux prérequis:
 
 `0.2` Refactor session IA: extraction de la logique conversation/tuteur dans `next/src/hooks/useAiSession.ts`, et segmentation de l’affichage de l’étape session via sous-composants (dans `next/src/views/SessionPage.tsx`).
 
+`0.3` Annuaire coachs (`/coaches`, `CoachesDirectoryPage`), profil partagé `coach-profile.ts`, deep link chat `?coach=`, URL prod legacy **app-fleurdamours.eludein.art**, docs **BUILD-AND-GIT-DEPLOY** / **README** docs, rappel Coolify « build skipped » vs SHA Git.

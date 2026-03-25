@@ -37,7 +37,7 @@ export function ConfirmationModal({
 
   const defaultBody =
     bodyTemplate ??
-    `Cette action consomme ${cost} Sèves. Utilise ${fromSablier} Sèves de Saison et ${fromCristal} Sèves Éternelles. Confirmer ?`
+    `Cette action consomme ${cost} SAP (unité Sève du Jardin). Confirmer ?`
 
   const content = (
     <div
