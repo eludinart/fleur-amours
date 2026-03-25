@@ -11,8 +11,8 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   try {
     await requireAdmin(req)
-    const type = req.nextUrl.searchParams.get('type') as 'tuteur' | 'threshold' | null
-    const validType = type === 'tuteur' || type === 'threshold' ? type : undefined
+    const type = req.nextUrl.searchParams.get('type') as 'tuteur' | 'threshold' | 'coach' | null
+    const validType = type === 'tuteur' || type === 'threshold' || type === 'coach' ? type : undefined
     const data = await listPrompts(validType)
     return NextResponse.json({
       prompts: data.prompts,

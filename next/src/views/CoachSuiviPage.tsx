@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { sessionsApi } from '@/api/sessions'
+import { aiApi } from '@/api/ai'
 import { useDebounce } from '@/hooks/useDebounce'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
 
@@ -169,6 +170,9 @@ type SuiviDetailData = {
     door?: string
     resource_card?: string
     session_date?: string
+    kind?: string
+    top_deficit_petal?: string
+    deficit_value?: number
   }>
   sessions: Array<{
     id: string
@@ -182,7 +186,21 @@ type SuiviDetailData = {
     shadow_event_count?: number
     petals?: Record<string, number>
     petals_deficit?: Record<string, number>
+    threshold_snapshot?: Record<string, unknown> | null
+    coach_summary?: string
+    coach_analysis?: string
+    coach_suggestions?: string[]
+    coach_next_steps?: string[]
   }>
+  coach_patient_snapshot?: {
+    coach_summary?: string
+    coach_analysis?: string
+    coach_suggestions?: string[]
+    coach_conversation_prompts?: string[]
+    coach_next_steps?: string[]
+    cached_at?: string
+    provider?: string
+  } | null
 }
 
 function UserDetailPanel({
@@ -195,6 +213,8 @@ function UserDetailPanel({
   const [data, setData] = useState<SuiviDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('fleur')
+  const [patientFicheLoading, setPatientFicheLoading] = useState(false)
+  const [patientFicheError, setPatientFicheError] = useState<string | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -212,6 +232,27 @@ function UserDetailPanel({
   const maxDef = data ? Math.max(...Object.values(data.avg_deficit), 0) : 0.3
   const scale = Math.max(maxPetal, 0.05)
   const sp = data ? shadowPalette(data.max_shadow_level) : null
+  const patientSnapshot = data?.coach_patient_snapshot ?? null
+
+  async function handleGeneratePatientFiche(force = false) {
+    if (!email) return
+    if (patientFicheLoading) return
+    setPatientFicheError(null)
+    setPatientFicheLoading(true)
+    try {
+      await aiApi.coachPatientFiche({ patientEmail: email, force })
+      const refreshed = await sessionsApi.suiviDetail(email)
+      setData(refreshed as any)
+      setTab('patient')
+    } catch (e: unknown) {
+      // best-effort UI
+      const errAny = e as any
+      setPatientFicheError(errAny?.detail ?? errAny?.message ?? "Erreur lors de la génération.")
+    } finally {
+      setPatientFicheLoading(false)
+    }
+  }
+  const coachPatientFicheReady = data?.coach_patient_snapshot ? true : false
 
   return (
     <div
@@ -280,6 +321,7 @@ function UserDetailPanel({
                 id: 'sessions',
                 label: `📋 Sessions${data ? ` (${data.session_count})` : ''}`,
               },
+              { id: 'patient', label: '🧾 Fiche patient' },
             ].map((t) => (
               <button
                 key={t.id}
@@ -425,9 +467,9 @@ function UserDetailPanel({
                       {sp.label}
                     </p>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      {data.shadow_event_count} événement
-                      {data.shadow_event_count > 1 ? 's' : ''} d&apos;ombre sur{' '}
-                      {data.session_count} session
+                      {data.shadow_event_count} signal
+                      {data.shadow_event_count > 1 ? 'x' : ''} (Tuteur et/ou déficit
+                      pétales) sur {data.session_count} session
                       {data.session_count > 1 ? 's' : ''}
                     </p>
                   </div>
@@ -448,6 +490,7 @@ function UserDetailPanel({
                   </p>
                   {data.shadow_events.map((ev, i) => {
                     const p = shadowPalette(ev.level ?? 0)
+                    const isDeficit = ev.kind === 'petal_deficit'
                     return (
                       <div
                         key={i}
@@ -458,7 +501,25 @@ function UserDetailPanel({
                           <span
                             className={`font-semibold text-xs ${p?.text || 'text-slate-500'}`}
                           >
-                            Niv. {ev.level ?? 0} — Tour {ev.turn}
+                            {isDeficit ? (
+                              <>
+                                Déficit pétales (ombre sur la fleur)
+                                {ev.top_deficit_petal ? (
+                                  <>
+                                    {' '}
+                                    — {PETAL_LABELS[ev.top_deficit_petal] ?? ev.top_deficit_petal}
+                                    {typeof ev.deficit_value === 'number'
+                                      ? ` (${Math.round(ev.deficit_value * 100)}%)`
+                                      : ''}
+                                  </>
+                                ) : null}
+                              </>
+                            ) : (
+                              <>
+                                Niv. {ev.level ?? 0}
+                                {ev.turn != null ? ` — Tour ${ev.turn}` : ''}
+                              </>
+                            )}
                           </span>
                           {ev.urgent && (
                             <span className="text-[10px] font-bold bg-red-700/30 text-red-300 px-1.5 py-0.5 rounded">
@@ -482,6 +543,12 @@ function UserDetailPanel({
                             <span className="font-semibold">
                               {ev.resource_card}
                             </span>
+                          </p>
+                        )}
+                        {isDeficit && (
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                            Pas d&apos;événement Tuteur enregistré pour cette session ; la part
+                            d&apos;ombre vient des déficits de pétales sauvegardés dans la session.
                           </p>
                         )}
                       </div>
@@ -508,11 +575,114 @@ function UserDetailPanel({
                 </div>
               )}
             </div>
+          ) : tab === 'patient' ? (
+            <div className="space-y-4">
+              {!patientSnapshot ? (
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
+                  <p className="text-sm text-slate-700 dark:text-slate-200 font-medium">
+                    Fiche patient non générée
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Génère un résumé, une analyse et des pistes d’accompagnement à destination du coach, basé sur l’historique du patient.
+                  </p>
+                  <div className="mt-3 flex gap-3 items-center flex-wrap">
+                    <button
+                      onClick={() => handleGeneratePatientFiche(false)}
+                      disabled={patientFicheLoading}
+                      className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-rose-500 shadow-md hover:opacity-90 disabled:opacity-50"
+                    >
+                      {patientFicheLoading ? 'Génération…' : 'Générer la fiche patient'}
+                    </button>
+                  </div>
+                  {patientFicheError && (
+                    <p className="mt-2 text-xs text-red-400">
+                      {patientFicheError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/10 p-4">
+                    <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">
+                      Résumé
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                      {patientSnapshot.coach_summary ?? ''}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10 p-4">
+                    <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-2">
+                      Analyse (pour le coach)
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                      {patientSnapshot.coach_analysis ?? ''}
+                    </p>
+                  </div>
+
+                  {Array.isArray(patientSnapshot.coach_suggestions) && patientSnapshot.coach_suggestions.length > 0 && (
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                        Suggestions d’accompagnement
+                      </p>
+                      <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200 list-disc pl-5">
+                        {patientSnapshot.coach_suggestions.slice(0, 8).map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {Array.isArray(patientSnapshot.coach_conversation_prompts) && patientSnapshot.coach_conversation_prompts.length > 0 && (
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                        Questions à poser (coach → patient)
+                      </p>
+                      <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200 list-disc pl-5">
+                        {patientSnapshot.coach_conversation_prompts.slice(0, 8).map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {Array.isArray(patientSnapshot.coach_next_steps) && patientSnapshot.coach_next_steps.length > 0 && (
+                    <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/10 p-4">
+                      <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">
+                        Prochaines relances (coach)
+                      </p>
+                      <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200 list-disc pl-5">
+                        {patientSnapshot.coach_next_steps.slice(0, 6).map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 items-center flex-wrap">
+                    <button
+                      onClick={() => handleGeneratePatientFiche(true)}
+                      disabled={patientFicheLoading}
+                      className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-slate-700 hover:bg-slate-600 disabled:opacity-50"
+                    >
+                      {patientFicheLoading ? 'Régénération…' : 'Régénérer'}
+                    </button>
+                    {patientSnapshot.cached_at && (
+                      <p className="text-xs text-slate-400">
+                        Enregistré le {formatDate(String(patientSnapshot.cached_at))}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="space-y-3">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 {data.session_count} session
                 {data.session_count > 1 ? 's' : ''}
+              </p>
+              <p className="text-[10px] text-slate-500">
+                Fiche patient générée : {coachPatientFicheReady ? 'Oui' : 'Non'}
               </p>
               {data.sessions.map((s) => {
                 const sp2 = shadowPalette(s.max_shadow_level ?? 0)
@@ -557,6 +727,24 @@ function UserDetailPanel({
                             &quot;{s.first_words}&quot;
                           </p>
                         )}
+                        {s.threshold_snapshot &&
+                          typeof s.threshold_snapshot.door_reason === 'string' &&
+                          s.threshold_snapshot.door_reason.trim() && (
+                            <p className="text-[10px] text-violet-600 dark:text-violet-400 mt-1.5 leading-snug line-clamp-3">
+                              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                                Seuil IA :{' '}
+                              </span>
+                              {s.threshold_snapshot.door_reason}
+                            </p>
+                          )}
+                        {s.threshold_snapshot &&
+                          typeof s.threshold_snapshot.first_question === 'string' &&
+                          s.threshold_snapshot.first_question.trim() && (
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 italic line-clamp-2">
+                              Q. {s.threshold_snapshot.first_question}
+                            </p>
+                          )}
+                        {/* La fiche coach principale est la "Fiche patient" (onglet patient), générée par patient. */}
                         <div className="flex gap-3 mt-1 text-[10px] text-slate-400">
                           <span>{s.turn_count} tours</span>
                           <span>{formatDuration(s.duration_seconds)}</span>
@@ -590,6 +778,14 @@ type SuiviUser = {
   shadow_urgent?: boolean
   shadow_event_count?: number
   avg_petals: Record<string, number>
+  avg_deficit?: Record<string, number>
+}
+
+const DEFICIT_OMBRE_MIN = 0.02
+
+function userHasDeficitShadow(u: SuiviUser): boolean {
+  if (!u.avg_deficit) return false
+  return PETAL_KEYS.some((k) => (u.avg_deficit?.[k] ?? 0) >= DEFICIT_OMBRE_MIN)
 }
 
 function UserCard({
@@ -600,7 +796,9 @@ function UserCard({
   onClick: () => void
 }) {
   const sp = shadowPalette(user.max_shadow_level ?? 0)
-  const hasShadow = (user.max_shadow_level ?? 0) >= 1
+  const hasTuteurShadow = (user.max_shadow_level ?? 0) >= 1 || (user.shadow_event_count ?? 0) > 0
+  const hasDeficit = userHasDeficitShadow(user)
+  const hasShadow = hasTuteurShadow || hasDeficit
 
   return (
     <button
@@ -609,13 +807,15 @@ function UserCard({
         user.shadow_urgent
           ? 'border-red-700/50 bg-red-950/10 hover:bg-red-950/20'
           : hasShadow
-            ? `${sp?.border || ''} ${sp?.bg || ''} hover:brightness-110`
+            ? hasTuteurShadow && sp
+              ? `${sp.border} ${sp.bg} hover:brightness-110`
+              : 'border-amber-700/35 bg-amber-950/15 hover:bg-amber-950/25 dark:border-amber-600/40'
             : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-violet-300 dark:hover:border-violet-700'
       }`}
     >
       <div className="flex items-center gap-3">
         <div className="shrink-0">
-          <MiniFlower petals={user.avg_petals} deficit={{}} />
+          <MiniFlower petals={user.avg_petals} deficit={user.avg_deficit ?? {}} />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -623,11 +823,16 @@ function UserCard({
             <span className="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate">
               {user.email}
             </span>
-            {sp && (
+            {hasTuteurShadow && sp && (
               <span
                 className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border ${sp.bg} ${sp.text} ${sp.border}`}
               >
                 {sp.icon} Niv. {user.max_shadow_level}
+              </span>
+            )}
+            {hasDeficit && !hasTuteurShadow && (
+              <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border border-amber-600/40 bg-amber-950/20 text-amber-300">
+                🌗 Déficit pétales
               </span>
             )}
           </div>
@@ -675,7 +880,12 @@ function GlobalStats({ users }: { users: SuiviUser[] }) {
   if (!users.length) return null
 
   const total = users.length
-  const withShadow = users.filter((u) => (u.max_shadow_level ?? 0) >= 1).length
+  const withShadow = users.filter(
+    (u) =>
+      (u.max_shadow_level ?? 0) >= 1 ||
+      (u.shadow_event_count ?? 0) > 0 ||
+      userHasDeficitShadow(u)
+  ).length
   const urgent = users.filter((u) => u.shadow_urgent).length
   const totalSessions = users.reduce((s, u) => s + u.session_count, 0)
 
@@ -873,7 +1083,9 @@ export default function CoachSuiviPage() {
             />
           </div>
           <button
+            type="button"
             onClick={() => setShadowOnly((v) => !v)}
+            title="Filtre : utilisateurs avec détections Tuteur (niveau d’ombre) ou déficit notable sur au moins un pétale (part d’ombre sur la fleur)."
             className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-2 ${
               shadowOnly
                 ? 'bg-rose-600 text-white'
@@ -899,7 +1111,7 @@ export default function CoachSuiviPage() {
           )}
         </div>
 
-        {!shadowOnly && !debouncedSearch && users && users.length > 1 && (
+        {!debouncedSearch && users && users.length > 1 && (
           <GlobalStats users={users} />
         )}
 

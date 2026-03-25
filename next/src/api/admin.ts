@@ -48,6 +48,16 @@ export const adminApi = {
       active_tuteur_id: activeTuteurId != null ? String(activeTuteurId) : null,
       active_threshold_id: activeThresholdId != null ? String(activeThresholdId) : null,
     }),
+  setActivePromptsWithCoach: (
+    activeTuteurId: string | number | null,
+    activeThresholdId: string | number | null,
+    activeCoachId: string | number | null
+  ) =>
+    api.post('/api/admin/prompts/set-active', {
+      active_tuteur_id: activeTuteurId != null ? String(activeTuteurId) : null,
+      active_threshold_id: activeThresholdId != null ? String(activeThresholdId) : null,
+      active_coach_id: activeCoachId != null ? String(activeCoachId) : null,
+    }),
   seedDefaults: () => api.post('/api/admin/prompts/seed-defaults', {}),
   importFromFile: () => api.post('/api/admin/prompts/import-from-file', {}),
   getAnalyzeMoodPrompt: () => api.get('/api/admin/prompts/analyze-mood'),

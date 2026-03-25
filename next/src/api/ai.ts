@@ -13,6 +13,10 @@ export const aiApi = {
     api.post('/api/ai/door-intro', payload),
   plan14j: (payload: Record<string, unknown>) =>
     api.post('/api/ai/plan14j', payload),
+  coachFiche: (payload: { sessionId: string | number; force?: boolean }) =>
+    api.post('/api/ai/coach-fiche', payload),
+  coachPatientFiche: (payload: { patientEmail: string; force?: boolean; coachUserId?: string | number }) =>
+    api.post('/api/ai/coach-patient-fiche', payload),
   cardContext: (payload: Record<string, unknown>) =>
     api.post('/api/ai/card-context', payload),
   cardQuestion: (payload: Record<string, unknown>) =>

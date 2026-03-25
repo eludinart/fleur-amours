@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/api-auth'
 import { seedDefaults } from '@/lib/prompts-db'
-import { TUTEUR_SYSTEM_PROMPT, THRESHOLD_SYSTEM_PROMPT } from '@/lib/prompts'
+import { TUTEUR_SYSTEM_PROMPT, THRESHOLD_SYSTEM_PROMPT, COACH_SYSTEM_PROMPT } from '@/lib/prompts'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,10 +15,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}))
     const tuteur = (body.tuteur as string) || TUTEUR_SYSTEM_PROMPT
     const threshold = (body.threshold as string) || THRESHOLD_SYSTEM_PROMPT
-    if (!tuteur && !threshold) {
-      return NextResponse.json({ error: 'tuteur ou threshold requis' }, { status: 400 })
+    const coach = (body.coach as string) || COACH_SYSTEM_PROMPT
+    if (!tuteur && !threshold && !coach) {
+      return NextResponse.json({ error: 'tuteur ou threshold ou coach requis' }, { status: 400 })
     }
-    const ids = await seedDefaults(tuteur, threshold)
+    const ids = await seedDefaults(tuteur, threshold, coach)
     return NextResponse.json({ saved: true, ids })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

@@ -35,8 +35,11 @@ export async function save(body: Record<string, unknown>): Promise<{ id: number 
   const pool = getPool()
   await ensureTable()
   const t = tbl()
-  const sql = `INSERT INTO ${t} (email, first_words, door_suggested, petals_json, history_json, cards_json, anchors_json, plan14j_json, doors_locked, turn_count, status, duration_seconds)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  const stepDataJson = Object.prototype.hasOwnProperty.call(body, 'step_data')
+    ? JSON.stringify(body.step_data)
+    : null
+  const sql = `INSERT INTO ${t} (email, first_words, door_suggested, petals_json, history_json, cards_json, anchors_json, plan14j_json, step_data_json, doors_locked, turn_count, status, duration_seconds)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   const values = [
     body.email ?? null,
     body.first_words ?? '',
@@ -46,6 +49,7 @@ export async function save(body: Record<string, unknown>): Promise<{ id: number 
     JSON.stringify(body.cards_drawn ?? []),
     JSON.stringify(body.anchors ?? []),
     JSON.stringify(body.plan14j ?? null),
+    stepDataJson,
     body.doors_locked ?? '',
     parseInt(String(body.turn_count ?? 0), 10),
     body.status ?? 'completed',
@@ -265,6 +269,7 @@ export async function getById(id: number, email?: string): Promise<Record<string
     history: JSON.parse(r.history_json || '[]'),
     cards_drawn: cards,
     anchors: JSON.parse(r.anchors_json || '[]'),
+    plan14j: JSON.parse(r.plan14j_json || 'null'),
     step_data: JSON.parse(r.step_data_json || 'null'),
     doors_locked: r.doors_locked ? r.doors_locked.split(',') : [],
     turn_count: Number(r.turn_count),

@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
     if (!type || !name) {
       return NextResponse.json({ error: 'type et name requis' }, { status: 400 })
     }
-    if (type !== 'tuteur' && type !== 'threshold') {
-      return NextResponse.json({ error: 'type doit être tuteur ou threshold' }, { status: 400 })
+    if (type !== 'tuteur' && type !== 'threshold' && type !== 'coach') {
+      return NextResponse.json({ error: 'type doit être tuteur, threshold ou coach' }, { status: 400 })
     }
     const id = await createPrompt(type, name, content)
     return NextResponse.json({ id }, { status: 201 })

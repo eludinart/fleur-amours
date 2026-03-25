@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}))
     const tuteur = body.active_tuteur_id != null ? parseInt(String(body.active_tuteur_id), 10) : null
     const threshold = body.active_threshold_id != null ? parseInt(String(body.active_threshold_id), 10) : null
-    await setActivePrompts(tuteur || null, threshold || null)
+    const coach = body.active_coach_id != null ? parseInt(String(body.active_coach_id), 10) : null
+    await setActivePrompts(tuteur || null, threshold || null, coach || null)
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

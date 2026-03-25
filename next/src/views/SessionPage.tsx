@@ -26,6 +26,7 @@ import { ExportPlan14j } from '@/components/ExportPlan14j'
 import { TranslatableContent } from '@/components/TranslatableContent'
 import { NoteCard } from '@/components/NoteCard'
 import { AlertBox, AlertBoxLink } from '@/components/AlertBox'
+import { thresholdSnapshotFromThresholdData } from '@/lib/session-threshold-snapshot'
 
 // ── Helper : trouver une carte par nom dans les portes ─────────
 function findCardByName(name) {
@@ -1064,6 +1065,8 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded }) {
   const [text, setText]     = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError]   = useState(quotaExceeded ? 'quota_exceeded' : '')
+  /** Après analyse IA : afficher résumé + suggestion avant d’entrer en session (données déjà persistées). */
+  const [gateReady, setGateReady] = useState(null)
   const baseAtStartRef     = useRef('')
 
   useEffect(() => {
@@ -1090,7 +1093,8 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded }) {
     try {
       const res = await aiApi.threshold({ first_words: words })
       const payload = { firstWords: words, ...res }
-      // Sauvegarder la session en in_progress pour permettre la reprise
+      const threshold_snapshot = thresholdSnapshotFromThresholdData(payload, { withCachedAt: true })
+      // Sauvegarder la session en in_progress pour permettre la reprise (+ cache seuil en DB)
       try {
         const saved = await sessionsApi.save({
           email: userEmail || null,
@@ -1104,6 +1108,7 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded }) {
           turn_count: 0,
           status: 'in_progress',
           duration_seconds: 0,
+          step_data: threshold_snapshot ? { threshold_snapshot } : undefined,
         })
         if (saved?.id) payload.sessionId = saved.id
       } catch (saveErr) {
@@ -1113,12 +1118,18 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded }) {
           return
         }
       }
-      onThresholdComplete(payload)
+      setGateReady(payload)
     } catch (e) {
       setError(e.detail ?? e.message ?? t('session.connectionError'))
     } finally {
       setLoading(false)
     }
+  }
+
+  function confirmEnterSession() {
+    if (!gateReady) return
+    onThresholdComplete(gateReady)
+    setGateReady(null)
   }
 
   return (
@@ -1171,10 +1182,10 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded }) {
             <MicButton listening={listening} supported={supported} onToggle={toggleMic} size="lg" />
           )}
           <button
-            onClick={handleSubmit}
-            disabled={!text.trim() || loading || quotaExceeded}
+            onClick={gateReady ? confirmEnterSession : handleSubmit}
+            disabled={(!text.trim() && !gateReady) || loading || quotaExceeded}
             className={`flex-1 py-4 rounded-xl font-bold text-base transition-all duration-300 active:scale-[0.98]
-              ${text.trim() && !loading && !quotaExceeded
+              ${((text.trim() || gateReady) && !loading && !quotaExceeded)
                 ? 'bg-gradient-to-r from-violet-500 to-rose-500 text-white shadow-lg shadow-violet-500/20 hover:scale-[1.01]'
                 : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
             {loading ? (
@@ -1182,10 +1193,54 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded }) {
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 {t('session.tuteurWelcoming')}
               </span>
-            ) : t('session.enterSession')}
+            ) : gateReady ? (
+              t('session.thresholdContinue')
+            ) : (
+              t('session.analyzeThreshold')
+            )}
           </button>
         </div>
       </div>
+
+      {gateReady && (
+        <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50/40 dark:bg-violet-950/20 p-4 space-y-3">
+          <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest">
+            {t('session.thresholdAnalysisTitle')}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {t('session.thresholdSuggestedDoor')} :
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300">
+              {DOOR_MAP[gateReady.door_suggested]?.subtitle ?? gateReady.door_suggested}
+            </span>
+            {gateReady.provider && (
+              <span className="text-[10px] text-slate-400">({gateReady.provider})</span>
+            )}
+          </div>
+          {gateReady.door_reason && (
+            <div>
+              <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">
+                {t('session.thresholdWhy')}
+              </p>
+              <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                {gateReady.door_reason}
+              </p>
+            </div>
+          )}
+          {gateReady.first_question && (
+            <div>
+              <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">
+                {t('session.thresholdFirstQuestion')}
+              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-300 italic leading-relaxed">
+                « {gateReady.first_question} »
+              </p>
+            </div>
+          )}
+          <p className="text-[10px] text-slate-400">{t('session.thresholdCacheHint')}</p>
+        </div>
+      )}
 
       {error === 'quota_exceeded' && (
         <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-800 dark:text-amber-200 space-y-2">
@@ -1361,7 +1416,9 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
     const lockedToUse = Array.isArray(overrides.doors_locked) ? overrides.doors_locked : (overrides.doors_locked ? overrides.doors_locked.split(',') : lockedDoors)
     const cardsToUse = overrides.cards_drawn ?? drawnCards.map(d => ({ door: d.door, card_name: d.card.name }))
     const doorToUse = overrides.currentDoor ?? currentDoor
+    const tsnap = thresholdSnapshotFromThresholdData(thresholdData)
     const stepData = {
+      ...(tsnap ? { threshold_snapshot: tsnap } : {}),
       currentDoor: doorToUse,
       drawnCards: cardsToUse,
       lockedDoors: Array.isArray(lockedToUse) ? lockedToUse : lockedDoors,
@@ -1696,6 +1753,11 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
         lockedDoors,
         turnCount: turn,
         sessionId: thresholdData?.sessionId,
+        currentDoor,
+        doorTurn,
+        doorTurnAtCardDraw,
+        maxShadowLevel,
+        shadowEvents,
       })
       return
     }
@@ -1720,6 +1782,11 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
         lockedDoors: [...lockedDoors, currentDoor],
         turnCount: turn,
         sessionId: thresholdData?.sessionId,
+        currentDoor,
+        doorTurn,
+        doorTurnAtCardDraw,
+        maxShadowLevel,
+        shadowEvents,
       })
       return
     }
@@ -1802,6 +1869,11 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
       lockedDoors,
       turnCount: turn,
       sessionId: thresholdData?.sessionId,
+      currentDoor,
+      doorTurn,
+      doorTurnAtCardDraw,
+      maxShadowLevel,
+      shadowEvents,
     })
   }
 
@@ -3126,6 +3198,22 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
       const elapsed = sessionMeta.startTime
         ? Math.round((Date.now() - sessionMeta.startTime) / 1000)
         : 0
+      const tsnap = sessionMeta.threshold_snapshot || null
+      const step_data = {
+        ...(tsnap ? { threshold_snapshot: tsnap } : {}),
+        currentDoor: sessionMeta.currentDoor ?? null,
+        drawnCards: (drawnCardsWithDetails || []).map((d) => ({
+          door: d.door,
+          card_name: d.card?.name ?? '',
+        })),
+        lockedDoors: Array.isArray(sessionMeta.lockedDoors) ? sessionMeta.lockedDoors : [],
+        petalsDeficit: petalsDeficit || {},
+        petalsHistory: petalsHistory || [],
+        doorTurn: sessionMeta.doorTurn ?? 0,
+        doorTurnAtCardDraw: sessionMeta.doorTurnAtCardDraw ?? null,
+        shadowEvents: sessionMeta.shadowEvents || [],
+        maxShadowLevel: sessionMeta.maxShadowLevel ?? 0,
+      }
       const payload = {
         petals,
         history,
@@ -3136,6 +3224,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
         turn_count: sessionMeta.turnCount || 0,
         status: 'completed',
         duration_seconds: elapsed,
+        step_data,
       }
       if (sessionMeta.sessionId) {
         await sessionsApi.update({ id: sessionMeta.sessionId, ...payload })
@@ -3512,11 +3601,21 @@ export default function SessionPage() {
     setResumeError('')
     try {
       const session = await sessionsApi.get(sessionId)
+      const stepDataResume = session.step_data || {}
+      const snap = stepDataResume.threshold_snapshot
+      const doorKey = session.door_suggested ?? snap?.door_suggested ?? 'love'
       setThresholdData({
-        firstWords: session.first_words,
-        door_suggested: session.door_suggested ?? 'love',
-        door_reason: DOOR_MAP[session.door_suggested]?.subtitle ?? '',
-        first_question: "Qu'est-ce qui est le plus vivant pour vous en ce moment ?",
+        firstWords: session.first_words || snap?.first_words || '',
+        door_suggested: doorKey,
+        door_reason:
+          snap?.door_reason ||
+          DOOR_MAP[doorKey]?.subtitle ||
+          '',
+        first_question:
+          snap?.first_question ||
+          "Qu'est-ce qui est le plus vivant pour vous en ce moment ?",
+        card_group_hint: snap?.card_group_hint,
+        provider: snap?.provider,
         sessionId: session.id,
       })
       const locked = session.doors_locked || []
@@ -3629,6 +3728,12 @@ export default function SessionPage() {
             doorSuggested: thresholdData?.door_suggested || null,
             lockedDoors: finalState.lockedDoors || [],
             turnCount: finalState.turnCount || 0,
+            currentDoor: finalState.currentDoor,
+            doorTurn: finalState.doorTurn,
+            doorTurnAtCardDraw: finalState.doorTurnAtCardDraw,
+            shadowEvents: finalState.shadowEvents || [],
+            maxShadowLevel: finalState.maxShadowLevel ?? 0,
+            threshold_snapshot: thresholdSnapshotFromThresholdData(thresholdData) ?? undefined,
           }}
         />
       )}

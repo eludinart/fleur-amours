@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { sessionsApi } from '@/api/sessions'
+import { aiApi } from '@/api/ai'
 import { parseLever } from '@/utils/levers'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
 import { FOUR_DOORS } from '@/data/tarotCards'
@@ -135,6 +136,24 @@ type Session = {
     }>
   }
   step_data?: {
+    threshold_snapshot?: {
+      first_words?: string
+      door_suggested?: string
+      door_reason?: string
+      first_question?: string
+      card_group_hint?: string
+      provider?: string
+      cached_at?: string
+    }
+    coach_snapshot?: {
+      coach_summary?: string
+      coach_analysis?: string
+      coach_suggestions?: string[]
+      coach_conversation_prompts?: string[]
+      coach_next_steps?: string[]
+      provider?: string
+      cached_at?: string
+    }
     shadowEvents?: Array<{
       turn?: number
       level?: number
@@ -151,11 +170,14 @@ type Session = {
 function SessionDetailModal({
   session,
   onClose,
+  onRefresh,
 }: {
   session: Session
   onClose: () => void
+  onRefresh?: (id: string) => Promise<void>
 }) {
   const [tab, setTab] = useState('conversation')
+  const [coachLoading, setCoachLoading] = useState(false)
 
   if (!session) return null
 
@@ -163,12 +185,27 @@ function SessionDetailModal({
   const maxShadowLevel = session.step_data?.maxShadowLevel ?? 0
   const hasShadow = shadowEvents.length > 0 || maxShadowLevel >= 1
   const petalsDeficit = session.step_data?.petalsDeficit || {}
+  const coachSnapshot = (session.step_data as any)?.coach_snapshot ?? null
+
+  async function handleGenerateCoach(force = false) {
+    if (coachLoading) return
+    setCoachLoading(true)
+    try {
+      await aiApi.coachFiche({ sessionId: session.id, force })
+      if (onRefresh) await onRefresh(String(session.id))
+    } catch {
+      // ignore (UI best-effort)
+    } finally {
+      setCoachLoading(false)
+    }
+  }
 
   const tabs = [
     { id: 'conversation', label: 'Echanges' },
     { id: 'flower', label: 'Fleur' },
     { id: 'anchors', label: 'Ancres' },
     { id: 'plan', label: 'Plan 14j' },
+    { id: 'coach', label: 'Coach (session)' },
     ...(hasShadow
       ? [{ id: 'shadows' as const, label: `🌑 Ombres (${shadowEvents.length})` }]
       : []),
@@ -243,6 +280,35 @@ function SessionDetailModal({
                   <p className="text-sm text-slate-700 dark:text-slate-200 italic">
                     {session.first_words}
                   </p>
+                </div>
+              )}
+              {session.step_data?.threshold_snapshot && (
+                <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/40 dark:bg-violet-950/15 p-3 space-y-2">
+                  <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest">
+                    Analyse seuil (cache DB — pas de rappel IA)
+                  </p>
+                  {session.step_data.threshold_snapshot.door_reason && (
+                    <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed">
+                      {session.step_data.threshold_snapshot.door_reason}
+                    </p>
+                  )}
+                  {session.step_data.threshold_snapshot.first_question && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                      1re question : «{' '}
+                      {session.step_data.threshold_snapshot.first_question} »
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2 text-[10px] text-slate-400">
+                    {session.step_data.threshold_snapshot.provider && (
+                      <span>Source : {session.step_data.threshold_snapshot.provider}</span>
+                    )}
+                    {session.step_data.threshold_snapshot.cached_at && (
+                      <span>
+                        Enregistré :{' '}
+                        {formatDate(session.step_data.threshold_snapshot.cached_at)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
               <ConversationViewer history={session.history || []} />
@@ -544,6 +610,74 @@ function SessionDetailModal({
                   )}
                 </>
               )}
+            </div>
+          )}
+
+          {tab === 'coach' && (
+            <div className="space-y-4">
+              {!coachSnapshot ? (
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-4">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
+                    Fiche coach (session) non générée.
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Cliquez sur « Générer » pour créer un résumé, une analyse et des suggestions pour l’accompagnement (par session).
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {coachSnapshot.coach_summary && (
+                    <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/10 p-4">
+                      <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1.5">
+                        Résumé coach
+                      </p>
+                      <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                        {String(coachSnapshot.coach_summary)}
+                      </p>
+                    </div>
+                  )}
+
+                  {coachSnapshot.coach_analysis && (
+                    <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10 p-4">
+                      <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1.5">
+                        Analyse (pour le coach)
+                      </p>
+                      <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                        {String(coachSnapshot.coach_analysis)}
+                      </p>
+                    </div>
+                  )}
+
+                  {Array.isArray(coachSnapshot.coach_suggestions) &&
+                    coachSnapshot.coach_suggestions.length > 0 && (
+                      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                          Suggestions d’accompagnement
+                        </p>
+                        <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200 list-disc pl-5">
+                          {coachSnapshot.coach_suggestions.slice(0, 10).map((s: any, i: number) => (
+                            <li key={i}>{String(s)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                </div>
+              )}
+
+              <div className="flex gap-3 items-center flex-wrap">
+                <button
+                  onClick={() => handleGenerateCoach(true)}
+                  disabled={coachLoading || !session?.id}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-rose-500 shadow-md hover:opacity-90 disabled:opacity-50"
+                >
+                  {coachLoading ? 'Génération…' : coachSnapshot ? 'Régénérer la fiche coach' : 'Générer la fiche coach'}
+                </button>
+                {coachSnapshot?.cached_at && (
+                  <span className="text-xs text-slate-400">
+                    Enregistré le {formatDate(String(coachSnapshot.cached_at))}
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
@@ -1069,6 +1203,7 @@ export default function AdminSessionsPage() {
         <SessionDetailModal
           session={selected}
           onClose={() => setSelected(null)}
+          onRefresh={(id) => openDetail(id)}
         />
       )}
     </div>

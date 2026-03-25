@@ -154,7 +154,15 @@ export async function GET(req: NextRequest) {
         avgDeficit[k] = avgDeficit[k] / n
       }
 
-      if (shadowOnly && (max_shadow_level ?? 0) < 1 && shadow_event_count === 0) continue
+      // « Ombre » côté produit = événements Tuteur OU déficits de pétales (part d’ombre sur la fleur)
+      const DEFICIT_OMBRE_MIN = 0.02
+      const has_petal_deficit_shadow = petalKeys.some(
+        (k) => (avgDeficit[k] ?? 0) >= DEFICIT_OMBRE_MIN
+      )
+      const has_tuteur_shadow =
+        (max_shadow_level ?? 0) >= 1 || shadow_event_count > 0
+
+      if (shadowOnly && !has_tuteur_shadow && !has_petal_deficit_shadow) continue
 
       users.push({
         email,

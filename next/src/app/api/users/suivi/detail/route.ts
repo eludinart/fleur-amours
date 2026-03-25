@@ -5,12 +5,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminOrCoach } from '@/lib/api-auth'
 import { getPool, isDbConfigured, table } from '@/lib/db'
 import type { RowDataPacket } from 'mysql2'
+import { getCoachPatientSnapshot } from '@/lib/db-coach-patient-fiches'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    const { userId, isAdmin } = await requireAdminOrCoach(req)
+    const { userId, isAdmin, isCoach } = await requireAdminOrCoach(req)
 
     const emailQuery = String(new URL(req.url).searchParams.get('email') ?? '').trim()
     const emailNorm = String(emailQuery ?? '').trim().toLowerCase()
@@ -22,10 +23,27 @@ export async function GET(req: NextRequest) {
 
     const pool = getPool()
     const tSessions = table('fleur_sessions')
+    const coachUserId = isCoach ? parseInt(userId, 10) : null
+    const coachPatientSnapshotPromise =
+      coachUserId && emailNorm ? getCoachPatientSnapshot({ coachUserId, patientEmail: emailNorm }) : Promise.resolve(null)
 
     const petalKeys = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
+    const DEFICIT_OMBRE_MIN = 0.02
     const normalizeEmail = (s: string) => String(s ?? '').trim().toLowerCase()
     const emptyPetals: Record<string, number> = Object.fromEntries(petalKeys.map((k) => [k, 0]))
+
+    function sessionHasPetalDeficitShadow(deficit: Record<string, number>): boolean {
+      return petalKeys.some((k) => Number(deficit?.[k] ?? 0) >= DEFICIT_OMBRE_MIN)
+    }
+
+    function readStepShadowEvents(stepData: Record<string, unknown> | null): unknown[] {
+      if (!stepData || typeof stepData !== 'object') return []
+      const camel = (stepData as { shadowEvents?: unknown }).shadowEvents
+      const snake = (stepData as { shadow_events?: unknown }).shadow_events
+      if (Array.isArray(camel) && camel.length > 0) return camel
+      if (Array.isArray(snake) && snake.length > 0) return snake
+      return []
+    }
 
     function safeParseJson<T>(raw: unknown, fallback: T): T {
       try {
@@ -99,6 +117,7 @@ export async function GET(req: NextRequest) {
         petal_evolution: [],
         shadow_events: [],
         sessions: [],
+        coach_patient_snapshot: await coachPatientSnapshotPromise,
       })
     }
 
@@ -117,6 +136,9 @@ export async function GET(req: NextRequest) {
       door?: string
       resource_card?: string | null
       session_date?: string
+      kind?: string
+      top_deficit_petal?: string
+      deficit_value?: number
     }> = []
 
     const sessions: Array<{
@@ -131,33 +153,64 @@ export async function GET(req: NextRequest) {
       shadow_event_count?: number
       petals?: Record<string, number>
       petals_deficit?: Record<string, number>
+      threshold_snapshot?: Record<string, unknown> | null
+      coach_summary?: string
+      coach_analysis?: string
+      coach_suggestions?: string[]
+      coach_next_steps?: string[]
     }> = []
 
     for (const r of sessionsRows) {
       const createdAt = (r as any)?.created_at ? String((r as any).created_at) : undefined
       const petals = safeParseJson<Record<string, number>>((r as any)?.petals_json ?? '{}', {})
       const stepData = safeParseJson<any>((r as any)?.step_data_json ?? null, null)
-      const petalsDeficit = safeParseJson<Record<string, number>>(stepData?.petalsDeficit ?? {}, {})
+      const petalsDeficit = safeParseJson<Record<string, number>>(
+        stepData?.petalsDeficit ?? stepData?.petals_deficit ?? {},
+        {}
+      )
       const sMax = Number(stepData?.maxShadowLevel ?? stepData?.max_shadow_level ?? 0) || 0
       max_shadow_level = Math.max(max_shadow_level, sMax)
 
-      const shadowEvents = Array.isArray(stepData?.shadowEvents) ? stepData.shadowEvents : []
-      shadow_event_count += shadowEvents.filter((ev: any) => Number(ev?.level ?? 0) >= 1).length
+      const shadowEvents = readStepShadowEvents(stepData)
+      let tuteurEventsThisSession = 0
       for (const ev of shadowEvents) {
-        const level = Number(ev?.level ?? 0) || 0
-        if (level >= 1 && ev?.urgent) shadow_urgent = true
+        const level = Number((ev as any)?.level ?? (ev as any)?.shadow_level ?? 0) || 0
+        if (level >= 1 && (ev as any)?.urgent) shadow_urgent = true
         if (sMax >= 4) shadow_urgent = true
 
         if (level >= 1) {
+          tuteurEventsThisSession += 1
+          shadow_event_count += 1
           shadow_events.push({
             level: level,
-            turn: ev?.turn ?? undefined,
-            urgent: !!ev?.urgent,
-            door: ev?.door ?? undefined,
-            resource_card: ev?.resource_card ?? null,
+            turn: (ev as any)?.turn ?? undefined,
+            urgent: !!(ev as any)?.urgent,
+            door: (ev as any)?.door ?? undefined,
+            resource_card: (ev as any)?.resource_card ?? null,
             session_date: createdAt,
+            kind: 'tuteur',
           })
         }
+      }
+
+      // Même logique que la liste suivi : déficit pétales = signal d'ombre même sans événement Tuteur persisté
+      let deficitOnlySignal = 0
+      if (sessionHasPetalDeficitShadow(petalsDeficit) && tuteurEventsThisSession === 0) {
+        deficitOnlySignal = 1
+        shadow_event_count += 1
+        const topPetal = petalKeys.reduce(
+          (best, k) =>
+            Number(petalsDeficit?.[k] ?? 0) > Number(petalsDeficit?.[best] ?? 0) ? k : best,
+          petalKeys[0]
+        )
+        const topVal = Number(petalsDeficit?.[topPetal] ?? 0) || 0
+        shadow_events.push({
+          level: 1,
+          session_date: createdAt,
+          kind: 'petal_deficit',
+          top_deficit_petal: topPetal,
+          deficit_value: topVal,
+        })
       }
 
       for (const k of petalKeys) {
@@ -172,6 +225,16 @@ export async function GET(req: NextRequest) {
         deficit: deficitRecord,
       })
 
+      const thSnap =
+        stepData && typeof stepData === 'object' && (stepData as { threshold_snapshot?: unknown }).threshold_snapshot
+          ? ((stepData as { threshold_snapshot: Record<string, unknown> }).threshold_snapshot as Record<string, unknown>)
+          : null
+
+      const coachSnap =
+        stepData && typeof stepData === 'object' && (stepData as { coach_snapshot?: unknown }).coach_snapshot
+          ? ((stepData as { coach_snapshot: Record<string, unknown> }).coach_snapshot as Record<string, unknown>)
+          : null
+
       sessions.push({
         id: Number((r as any)?.id ?? 0),
         created_at: createdAt,
@@ -180,10 +243,21 @@ export async function GET(req: NextRequest) {
         first_words: (r as any)?.first_words ?? undefined,
         turn_count: Number((r as any)?.turn_count ?? 0),
         duration_seconds: Number((r as any)?.duration_seconds ?? 0),
-        max_shadow_level: sMax,
-        shadow_event_count: shadowEvents.length,
+        max_shadow_level: Math.max(sMax, deficitOnlySignal ? 1 : 0),
+        shadow_event_count: tuteurEventsThisSession + deficitOnlySignal,
         petals: petals && typeof petals === 'object' ? petals : {},
         petals_deficit: deficitRecord,
+        threshold_snapshot: thSnap,
+        coach_summary: coachSnap && typeof coachSnap === 'object' ? String(coachSnap.coach_summary ?? '') : undefined,
+        coach_analysis: coachSnap && typeof coachSnap === 'object' ? String(coachSnap.coach_analysis ?? '') : undefined,
+        coach_suggestions:
+          coachSnap && typeof coachSnap === 'object' && Array.isArray((coachSnap as any).coach_suggestions)
+            ? ((coachSnap as any).coach_suggestions as string[]).slice(0, 20)
+            : undefined,
+        coach_next_steps:
+          coachSnap && typeof coachSnap === 'object' && Array.isArray((coachSnap as any).coach_next_steps)
+            ? ((coachSnap as any).coach_next_steps as string[]).slice(0, 10)
+            : undefined,
       })
     }
 
@@ -191,6 +265,11 @@ export async function GET(req: NextRequest) {
     for (const k of petalKeys) {
       avg_petals[k] = avg_petals[k] / n
       avg_deficit[k] = avg_deficit[k] / n
+    }
+
+    const hasPetalDeficitShadowAvg = petalKeys.some((k) => (avg_deficit[k] ?? 0) >= DEFICIT_OMBRE_MIN)
+    if (hasPetalDeficitShadowAvg && max_shadow_level < 1) {
+      max_shadow_level = 1
     }
 
     // Chronologie : UI s'attend à une évolution dans l'ordre des sessions (du plus ancien au plus récent)
@@ -211,6 +290,7 @@ export async function GET(req: NextRequest) {
       sessions,
       // Champs supplémentaires possibles côté UI (non requis mais pratiques)
       shadow_urgent,
+      coach_patient_snapshot: await coachPatientSnapshotPromise,
     })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

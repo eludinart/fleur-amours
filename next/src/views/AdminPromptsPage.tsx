@@ -6,17 +6,26 @@ import { adminApi } from '@/api/admin'
 const TYPE_LABELS: Record<string, string> = {
   tuteur: "Prompt Tuteur (dialogue principal)",
   threshold: "Prompt Seuil (premiers mots, porte d'entrée)",
+  coach: "Prompt Coach (fiche de synthèse & accompagnement)",
 }
 
 type Prompt = { id: number; type: string; name: string; content?: string }
 
-type ActivePrompts = { active_tuteur_id: number | null; active_threshold_id: number | null }
+type ActivePrompts = {
+  active_tuteur_id: number | null
+  active_threshold_id: number | null
+  active_coach_id: number | null
+}
 
 type EditModal = { id?: number; type: string; name: string; content?: string }
 
 export default function AdminPromptsPage() {
   const [prompts, setPrompts] = useState<Prompt[]>([])
-  const [active, setActive] = useState<ActivePrompts>({ active_tuteur_id: null, active_threshold_id: null })
+  const [active, setActive] = useState<ActivePrompts>({
+    active_tuteur_id: null,
+    active_threshold_id: null,
+    active_coach_id: null,
+  })
   const [dbConfigured, setDbConfigured] = useState<boolean>(true)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -24,6 +33,7 @@ export default function AdminPromptsPage() {
   const [editModal, setEditModal] = useState<EditModal | null>(null)
   const [selectedTuteur, setSelectedTuteur] = useState<number | null>(null)
   const [selectedThreshold, setSelectedThreshold] = useState<number | null>(null)
+  const [selectedCoach, setSelectedCoach] = useState<number | null>(null)
   const [analyzeMoodContent, setAnalyzeMoodContent] = useState('')
   const [analyzeMoodLoading, setAnalyzeMoodLoading] = useState(false)
 
@@ -37,6 +47,7 @@ export default function AdminPromptsPage() {
         setActive(a)
         setSelectedTuteur(a.active_tuteur_id ?? null)
         setSelectedThreshold(a.active_threshold_id ?? null)
+        setSelectedCoach((a as any).active_coach_id ?? null)
         setDbConfigured(d.db_configured ?? true)
       })
       .catch((e: { detail?: string; message?: string }) => {
@@ -117,9 +128,17 @@ export default function AdminPromptsPage() {
   async function handleActivate() {
     setBusy(true)
     try {
-      await adminApi.setActivePrompts(selectedTuteur || null, selectedThreshold || null)
-      setActive({ active_tuteur_id: selectedTuteur, active_threshold_id: selectedThreshold })
-      showMessage('Couple activé en production. Les prochaines sessions utiliseront ces prompts.')
+      await adminApi.setActivePromptsWithCoach(
+        selectedTuteur || null,
+        selectedThreshold || null,
+        selectedCoach || null
+      )
+      setActive({
+        active_tuteur_id: selectedTuteur,
+        active_threshold_id: selectedThreshold,
+        ...(selectedCoach != null ? { active_coach_id: selectedCoach } : { active_coach_id: null }),
+      } as any)
+      showMessage('Prompts activés en production. Les prochaines sessions utiliseront le couple tuteur/seuil + le prompt coach.')
       load()
     } catch (e: unknown) {
       const err = e as { detail?: string; message?: string }
@@ -131,6 +150,7 @@ export default function AdminPromptsPage() {
 
   const tuteurPrompts = prompts.filter((p) => p.type === 'tuteur')
   const thresholdPrompts = prompts.filter((p) => p.type === 'threshold')
+  const coachPrompts = prompts.filter((p) => p.type === 'coach')
 
   if (loading) {
     return (
@@ -286,6 +306,21 @@ export default function AdminPromptsPage() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Coach</label>
+            <select
+              value={selectedCoach ?? ''}
+              onChange={(e) => setSelectedCoach(e.target.value ? Number(e.target.value) : null)}
+              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm min-w-[180px]"
+            >
+              <option value="">— Aucun —</option>
+              {coachPrompts.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} {(active as any).active_coach_id === p.id ? '✓' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             onClick={handleActivate}
             disabled={busy}
@@ -296,8 +331,8 @@ export default function AdminPromptsPage() {
         </div>
       </section>
 
-      {(['tuteur', 'threshold'] as const).map((type) => {
-        const list = type === 'tuteur' ? tuteurPrompts : thresholdPrompts
+      {(['tuteur', 'threshold', 'coach'] as const).map((type) => {
+        const list = type === 'tuteur' ? tuteurPrompts : type === 'threshold' ? thresholdPrompts : coachPrompts
         return (
           <section key={type} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 p-5">
             <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-3">
@@ -335,7 +370,7 @@ export default function AdminPromptsPage() {
               onClick={() => setEditModal({ type, name: '', content: '' })}
               className="mt-3 text-sm text-violet-600 dark:text-violet-400 font-medium hover:underline"
             >
-              + Ajouter un prompt {type === 'tuteur' ? 'Tuteur' : 'Seuil'}
+              + Ajouter un prompt {type === 'tuteur' ? 'Tuteur' : type === 'threshold' ? 'Seuil' : 'Coach'}
             </button>
           </section>
         )
@@ -345,7 +380,9 @@ export default function AdminPromptsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-xl">
             <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
-              {editModal.id ? 'Modifier le prompt' : `Nouveau prompt ${editModal.type === 'tuteur' ? 'Tuteur' : 'Seuil'}`}
+              {editModal.id ? 'Modifier le prompt' : `Nouveau prompt ${
+                editModal.type === 'tuteur' ? 'Tuteur' : editModal.type === 'threshold' ? 'Seuil' : 'Coach'
+              }`}
             </h4>
             <div className="space-y-4">
               <div>

@@ -9,6 +9,7 @@ import {
   TUTEUR_SYSTEM_PROMPT,
   THRESHOLD_SYSTEM_PROMPT,
   ANALYZE_MOOD_SYSTEM_PROMPT,
+  COACH_SYSTEM_PROMPT,
 } from './prompts'
 
 const OVERRIDES_PATHS = [
@@ -19,6 +20,7 @@ async function readOverrides(): Promise<{
   tuteur?: string
   threshold?: string
   analyze_mood?: string
+  coach?: string
 } | null> {
   for (const p of OVERRIDES_PATHS) {
     try {
@@ -54,4 +56,13 @@ export async function getAnalyzeMoodPrompt(): Promise<string> {
   const overrides = await readOverrides()
   if (overrides?.analyze_mood) return overrides.analyze_mood
   return ANALYZE_MOOD_SYSTEM_PROMPT
+}
+
+/** Prompt Coach : DB > overrides > constante */
+export async function getCoachPrompt(): Promise<string> {
+  const { coach } = await getActiveContent()
+  if (coach) return coach
+  const overrides = await readOverrides()
+  if (overrides?.coach) return overrides.coach
+  return COACH_SYSTEM_PROMPT
 }

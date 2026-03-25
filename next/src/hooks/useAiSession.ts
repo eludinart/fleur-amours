@@ -6,6 +6,7 @@ import { aiApi } from '@/api/ai'
 import { ApiError } from '@/lib/api-client'
 import { sessionsApi } from '@/api/sessions'
 import { toast } from '@/hooks/useToast'
+import { thresholdSnapshotFromThresholdData } from '@/lib/session-threshold-snapshot'
 import { useSpeech } from '@/hooks/useSpeech'
 import { FOUR_DOORS } from '@/data/tarotCards'
 import { PETAL_DEFS } from '@/components/FlowerSVG'
@@ -200,7 +201,9 @@ export function useAiSession({
       }))
     const doorToUse = overrides.currentDoor ?? currentDoor
 
+    const tsnap = thresholdSnapshotFromThresholdData(thresholdData)
     const stepData = {
+      ...(tsnap ? { threshold_snapshot: tsnap } : {}),
       currentDoor: doorToUse,
       drawnCards: cardsToUse,
       lockedDoors: Array.isArray(lockedToUse) ? lockedToUse : lockedDoors,
@@ -573,6 +576,11 @@ export function useAiSession({
         lockedDoors,
         turnCount: turn,
         sessionId: thresholdData?.sessionId,
+        currentDoor,
+        doorTurn,
+        doorTurnAtCardDraw,
+        maxShadowLevel,
+        shadowEvents,
       })
       return
     }
@@ -599,6 +607,11 @@ export function useAiSession({
         lockedDoors: [...lockedDoors, currentDoor],
         turnCount: turn,
         sessionId: thresholdData?.sessionId,
+        currentDoor,
+        doorTurn,
+        doorTurnAtCardDraw,
+        maxShadowLevel,
+        shadowEvents,
       })
       return
     }

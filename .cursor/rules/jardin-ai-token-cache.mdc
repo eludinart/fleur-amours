@@ -1,0 +1,27 @@
+---
+description: Réduire les coûts tokens OpenRouter — persister analyses/résumés en base et réutiliser avant tout nouvel appel IA.
+globs: next/src/app/api/**/*.ts,next/src/lib/**/*.ts,next/src/hooks/useAi*.ts
+alwaysApply: true
+---
+
+# IA / tokens — cache et persistance (Jardin)
+
+## Principe
+
+Toute sortie structurée d’un modèle (résumé, analyse, plan, synthèse porte, contexte seuil, suggestions) qui peut être **réaffichée** ou **réinjectée** plus tard doit être **stockée côté serveur** (MariaDB / JSON colonne ou `step_data`) dès la **première** génération réussie.
+
+**Ne pas** rappeler le modèle avec le même historique complet pour reproduire une information déjà calculée si une version figée existe en base.
+
+## Patterns attendus
+
+1. **Écrire tôt** : dès que l’API route produit un résultat utile (ex. `threshold`, `plan14j`, résumé de porte), inclure ce résultat dans le payload de sauvegarde session (`step_data`, colonnes dédiées, ou JSON existant).
+2. **Fusionner les mises à jour** : les `update` de `step_data` doivent **conserver** les blocs cache (ex. `threshold_snapshot`) en les réémargeant depuis le client ou via merge serveur si le client ne les renvoie pas.
+3. **Lire avant d’appeler** : pour les flux « reprise », « fiche coach », « admin », charger d’abord la DB ; n’appeler OpenRouter que si la donnée manque ou qu’une invalidation explicite s’applique (changement de contenu source).
+4. **Clés stables** : documenter dans le JSON un `cached_at` / `provider` pour le debug ; en cas d’évolution de prompt majeure, prévoir version ou invalidation manuelle.
+5. **Coût SAP / billing** : les routes facturées (ex. tuteur) restent inchangées ; le cache concerne surtout **réutilisation** et **affichage** (pas de double facturation pour réafficher un plan déjà en `plan14j_json`).
+
+## Fichiers de référence
+
+- Persistance session : `next/src/lib/db-sessions.ts`, champs `step_data_json`, `plan14j_json`.
+- Reprise utilisateur : `SessionPage` + `sessionsApi.get`.
+- Cas typique cache seuil : `step_data.threshold_snapshot` (porte, raison, première question, fournisseur).
