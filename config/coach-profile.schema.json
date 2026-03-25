@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eludein.art/schemas/coach-profile.schema.json",
+  "title": "CoachProfile",
+  "type": "object",
+  "required": [
+    "id",
+    "slug",
+    "public",
+    "identity",
+    "expertise",
+    "support",
+    "trust",
+    "display",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable coach identifier, e.g. coach-eludein"
+    },
+    "slug": {
+      "type": "string",
+      "description": "Public slug used in URLs and tracking"
+    },
+    "public": {
+      "type": "boolean",
+      "description": "If false, profile is hidden from users"
+    },
+    "identity": {
+      "type": "object",
+      "required": ["display_name", "headline", "short_bio", "long_bio", "languages"],
+      "properties": {
+        "display_name": { "type": "string", "maxLength": 80 },
+        "headline": { "type": "string", "maxLength": 120 },
+        "short_bio": { "type": "string", "maxLength": 220 },
+        "long_bio": { "type": "string", "maxLength": 2500 },
+        "languages": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 40 },
+          "minItems": 1
+        },
+        "photo_url": { "type": "string", "maxLength": 300 }
+      },
+      "additionalProperties": false
+    },
+    "expertise": {
+      "type": "object",
+      "required": ["specialties", "approaches", "can_help_with", "not_for"],
+      "properties": {
+        "specialties": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 80 },
+          "minItems": 1
+        },
+        "approaches": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 120 },
+          "minItems": 1
+        },
+        "can_help_with": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 120 },
+          "minItems": 1
+        },
+        "not_for": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 120 }
+        },
+        "years_experience": { "type": "integer", "minimum": 0, "maximum": 60 }
+      },
+      "additionalProperties": false
+    },
+    "support": {
+      "type": "object",
+      "required": ["response_time", "availability", "session_style", "message_tone"],
+      "properties": {
+        "response_time": {
+          "type": "object",
+          "required": ["label", "target_hours"],
+          "properties": {
+            "label": { "type": "string", "maxLength": 60 },
+            "target_hours": { "type": "integer", "minimum": 1, "maximum": 168 }
+          },
+          "additionalProperties": false
+        },
+        "availability": {
+          "type": "object",
+          "required": ["timezone", "weekly_windows"],
+          "properties": {
+            "timezone": { "type": "string", "maxLength": 60 },
+            "weekly_windows": {
+              "type": "array",
+              "items": { "type": "string", "maxLength": 120 }
+            }
+          },
+          "additionalProperties": false
+        },
+        "session_style": { "type": "string", "maxLength": 300 },
+        "message_tone": { "type": "string", "maxLength": 180 }
+      },
+      "additionalProperties": false
+    },
+    "trust": {
+      "type": "object",
+      "required": ["confidentiality_note", "ethics_note"],
+      "properties": {
+        "confidentiality_note": { "type": "string", "maxLength": 300 },
+        "ethics_note": { "type": "string", "maxLength": 300 },
+        "certifications": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 120 }
+        },
+        "disclaimer": { "type": "string", "maxLength": 300 }
+      },
+      "additionalProperties": false
+    },
+    "display": {
+      "type": "object",
+      "required": [
+        "show_in_chat_header",
+        "show_in_coach_picker",
+        "show_in_contact_page",
+        "show_full_profile_link"
+      ],
+      "properties": {
+        "show_in_chat_header": { "type": "boolean" },
+        "show_in_coach_picker": { "type": "boolean" },
+        "show_in_contact_page": { "type": "boolean" },
+        "show_full_profile_link": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "updated_at": {
+      "type": "string",
+      "description": "ISO-8601 timestamp"
+    }
+  },
+  "additionalProperties": false
+}

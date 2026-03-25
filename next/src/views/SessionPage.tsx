@@ -1392,24 +1392,36 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
     await sendToTuteurWithCard(text, currentCard.name, currentDoor)
   }
 
+  const lastFailedTextRef = useRef('')
+  const RETRY_MAX = 2
+  const RETRY_DELAY_MS = 2000
+
   async function sendToTuteurWithCard(text, cardName, cardGroup) {
-    setLoading(true); setError('')
-    const userMsg    = { role: 'user', content: text }
+    const userMsg = { role: 'user', content: text }
     const newHistory = [...history, userMsg]
+    setError('')
+    setHistory(newHistory)
+    setManualText('')
+    reset()
+    setLoading(true)
+    lastFailedTextRef.current = text
 
-    try {
-      const res = await aiApi.tuteur({
-        card_name:        cardName === '__no_card__' ? `Porte : ${cardGroup}` : cardName,
-        card_group:       cardGroup,
-        transcript:       text,
-        history:          history,
-        current_petals:   petals,
-        overridden_petals: Object.fromEntries([...overriddenPetals].map(id => [id, petals[id]])),
-        locked_doors:     lockedDoors,
-        turn:             turn,
-      })
+    const payload = {
+      card_name: cardName === '__no_card__' ? `Porte : ${cardGroup}` : cardName,
+      card_group: cardGroup,
+      transcript: text,
+      history: history,
+      current_petals: petals,
+      overridden_petals: Object.fromEntries([...overriddenPetals].map(id => [id, petals[id]])),
+      locked_doors: lockedDoors,
+      turn,
+    }
 
-      // Historique pour l'évolution (état avant mise à jour)
+    for (let attempt = 0; attempt <= RETRY_MAX; attempt++) {
+      try {
+        const res = await aiApi.tuteur(payload)
+
+        // Historique pour l'évolution (état avant mise à jour)
       setPetalsHistory(prev => [...prev, { petals: { ...petals }, petalsDeficit: { ...petalsDeficit } }])
 
       // Respecter les overrides
@@ -1472,10 +1484,29 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
         toast(`IA : OpenRouter indisponible (${res._openrouter_error}). Mode dégradé actif.`, 'warning')
       }
 
-    } catch (e) {
-      setError(e.detail ?? e.message ?? t('session.connectionTutorError'))
-    } finally {
-      setLoading(false)
+        setLoading(false)
+        return
+      } catch (e) {
+        if (attempt < RETRY_MAX) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)))
+          continue
+        }
+        setHistory(history)
+        setManualText(text)
+        setError(t('session.tutorErrorSoft'))
+        setLoading(false)
+      }
+    }
+  }
+
+  function handleRetrySend() {
+    const text = lastFailedTextRef.current || manualText
+    if (!text.trim()) return
+    setError('')
+    if (!currentCard) {
+      sendToTuteurWithCard(text, '__no_card__', currentDoor)
+    } else {
+      sendToTuteurWithCard(text, currentCard.name, currentDoor)
     }
   }
 
@@ -2557,8 +2588,16 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
           )}
 
           {error && (
-            <div className="rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 p-3 text-sm text-red-600 dark:text-red-400">
-              {error}
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 text-sm text-amber-800 dark:text-amber-200 space-y-3">
+              <p>{error}</p>
+              <p className="text-xs text-amber-600 dark:text-amber-300">{t('session.tutorErrorSavedHint')}</p>
+              <button
+                type="button"
+                onClick={handleRetrySend}
+                className="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold text-sm hover:bg-amber-600 transition-colors"
+              >
+                {t('session.tutorErrorRetry')}
+              </button>
             </div>
           )}
 

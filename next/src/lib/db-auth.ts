@@ -21,6 +21,17 @@ export type UserRecord = {
   profile_public?: boolean
   points_de_rosee?: number
   avatar_graine_id?: string | null
+  coach_headline?: string | null
+  coach_short_bio?: string | null
+  coach_long_bio?: string | null
+  coach_specialties?: string[]
+  coach_languages?: string[]
+  coach_response_time_label?: string | null
+  coach_response_time_hours?: number | null
+  coach_is_listed?: boolean
+  coach_years_experience?: number | null
+  coach_reviews_label?: string | null
+  coach_verified?: boolean
 }
 
 async function getWpRole(userId: number): Promise<string> {
@@ -84,6 +95,17 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
     'fleur_profile_public',
     'fleur_points_de_rosee',
     'fleur_avatar_graine_id',
+    'fleur_coach_headline',
+    'fleur_coach_short_bio',
+    'fleur_coach_long_bio',
+    'fleur_coach_specialties',
+    'fleur_coach_languages',
+    'fleur_coach_response_time_label',
+    'fleur_coach_response_time_hours',
+    'fleur_coach_is_listed',
+    'fleur_coach_years_experience',
+    'fleur_coach_reviews_label',
+    'fleur_coach_verified',
   ]
   const placeholders = keys.map(() => '?').join(', ')
   const [rows] = await pool.execute<RowDataPacket[]>(
@@ -101,6 +123,33 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
   ;(out as Record<string, unknown>).profile_public = (meta.fleur_profile_public ?? '') === '1'
   ;(out as Record<string, unknown>).points_de_rosee = parseInt(meta.fleur_points_de_rosee ?? '5', 10)
   ;(out as Record<string, unknown>).avatar_graine_id = meta.fleur_avatar_graine_id || null
+  ;(out as Record<string, unknown>).coach_headline = meta.fleur_coach_headline || null
+  ;(out as Record<string, unknown>).coach_short_bio = meta.fleur_coach_short_bio || null
+  ;(out as Record<string, unknown>).coach_long_bio = meta.fleur_coach_long_bio || null
+  try {
+    ;(out as Record<string, unknown>).coach_specialties = meta.fleur_coach_specialties
+      ? JSON.parse(meta.fleur_coach_specialties)
+      : []
+  } catch {
+    ;(out as Record<string, unknown>).coach_specialties = []
+  }
+  try {
+    ;(out as Record<string, unknown>).coach_languages = meta.fleur_coach_languages
+      ? JSON.parse(meta.fleur_coach_languages)
+      : []
+  } catch {
+    ;(out as Record<string, unknown>).coach_languages = []
+  }
+  ;(out as Record<string, unknown>).coach_response_time_label = meta.fleur_coach_response_time_label || null
+  ;(out as Record<string, unknown>).coach_response_time_hours = meta.fleur_coach_response_time_hours
+    ? parseInt(meta.fleur_coach_response_time_hours, 10)
+    : null
+  ;(out as Record<string, unknown>).coach_is_listed = (meta.fleur_coach_is_listed ?? '1') !== '0'
+  ;(out as Record<string, unknown>).coach_years_experience = meta.fleur_coach_years_experience
+    ? parseInt(meta.fleur_coach_years_experience, 10)
+    : null
+  ;(out as Record<string, unknown>).coach_reviews_label = meta.fleur_coach_reviews_label || null
+  ;(out as Record<string, unknown>).coach_verified = (meta.fleur_coach_verified ?? '0') === '1'
 }
 
 export async function authLogin(login: string, password: string): Promise<UserRecord> {
@@ -336,6 +385,60 @@ export async function updateProfile(
   if (Object.prototype.hasOwnProperty.call(body, 'avatar_graine_id')) {
     const gid = String(body.avatar_graine_id ?? '').trim().slice(0, 50)
     await upsertUsermeta(userId, 'fleur_avatar_graine_id', gid)
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_headline')) {
+    const v = String(body.coach_headline ?? '').trim().slice(0, 120)
+    await upsertUsermeta(userId, 'fleur_coach_headline', v)
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_short_bio')) {
+    const v = String(body.coach_short_bio ?? '').trim().slice(0, 280)
+    await upsertUsermeta(userId, 'fleur_coach_short_bio', v)
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_long_bio')) {
+    const v = String(body.coach_long_bio ?? '').trim().slice(0, 2500)
+    await upsertUsermeta(userId, 'fleur_coach_long_bio', v)
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_specialties')) {
+    const src = Array.isArray(body.coach_specialties) ? body.coach_specialties : []
+    const values = src
+      .map((x) => String(x ?? '').trim())
+      .filter(Boolean)
+      .slice(0, 12)
+      .map((x) => x.slice(0, 80))
+    await upsertUsermeta(userId, 'fleur_coach_specialties', JSON.stringify(values))
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_languages')) {
+    const src = Array.isArray(body.coach_languages) ? body.coach_languages : []
+    const values = src
+      .map((x) => String(x ?? '').trim())
+      .filter(Boolean)
+      .slice(0, 8)
+      .map((x) => x.slice(0, 40))
+    await upsertUsermeta(userId, 'fleur_coach_languages', JSON.stringify(values))
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_response_time_label')) {
+    const v = String(body.coach_response_time_label ?? '').trim().slice(0, 60)
+    await upsertUsermeta(userId, 'fleur_coach_response_time_label', v)
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_response_time_hours')) {
+    const n = parseInt(String(body.coach_response_time_hours ?? ''), 10)
+    const safe = !isNaN(n) && n >= 1 && n <= 168 ? n : 24
+    await upsertUsermeta(userId, 'fleur_coach_response_time_hours', String(safe))
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_is_listed')) {
+    await upsertUsermeta(userId, 'fleur_coach_is_listed', body.coach_is_listed ? '1' : '0')
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_years_experience')) {
+    const n = parseInt(String(body.coach_years_experience ?? ''), 10)
+    const safe = !isNaN(n) && n >= 0 && n <= 60 ? n : 0
+    await upsertUsermeta(userId, 'fleur_coach_years_experience', String(safe))
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_reviews_label')) {
+    const v = String(body.coach_reviews_label ?? '').trim().slice(0, 120)
+    await upsertUsermeta(userId, 'fleur_coach_reviews_label', v)
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_verified')) {
+    await upsertUsermeta(userId, 'fleur_coach_verified', body.coach_verified ? '1' : '0')
   }
   return authMe(userId)
 }

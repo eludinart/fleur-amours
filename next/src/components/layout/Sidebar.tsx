@@ -50,7 +50,7 @@ function buildNavGroups(
 
   const accompagnerItems: NavItem[] = [
     { to: '/chat', label: translate('nav.chat'), icon: '💬', end: false, title: translate('nav.chatTooltip') },
-    { to: '/contact', label: translate('contactMe'), icon: '✉️', end: false, title: translate('nav.contactTooltip') },
+    { to: '/coaches', label: translate('nav.coachesDirectory'), icon: '🌿', end: false, title: translate('nav.coachesDirectoryTooltip') },
   ]
 
   const compteItems: NavItem[] = [
@@ -79,16 +79,20 @@ function buildNavGroups(
     })
   }
 
-  if (isCoach && !isAdmin) {
+  if (isCoach || isAdmin) {
+    const coachNavItems: NavItem[] = [
+      { to: '/?view=coach', label: translate('nav.coachDashboard'), icon: '💬', title: translate('nav.coachDashboardTooltip') },
+    ]
+    // Pour coach ET admin : les éléments "accompagnement coach" vivent dans le sous-menu COACH.
+    coachNavItems.push(
+      { to: '/admin/messages', label: translate('nav.coachMessages'), icon: '✉️', title: translate('nav.coachMessagesTooltip') },
+      { to: '/admin/chat', label: translate('nav.coachChat'), icon: '💬', title: translate('nav.coachChatTooltip') }
+    )
     groups.push({
       label: translate('nav.coachSection'),
       collapsible: true,
-      defaultOpen: true,
-      items: [
-        { to: '/?view=coach', label: translate('nav.coachDashboard'), icon: '💬', title: translate('nav.coachDashboardTooltip') },
-        { to: '/admin/messages', label: translate('nav.coachMessages'), icon: '✉️' },
-        { to: '/admin/chat', label: translate('nav.coachChat'), icon: '💬' },
-      ],
+      defaultOpen: isCoach || isAdmin,
+      items: coachNavItems,
     })
   }
 
@@ -101,8 +105,7 @@ function buildNavGroups(
         { to: '/admin', label: translate('nav.adminDashboard'), icon: '📊', end: true },
         { to: '/admin/sessions', label: translate('nav.adminSessions'), icon: '📋' },
         { to: '/admin/tirages', label: translate('nav.adminTirages'), icon: '🎴' },
-        { to: '/admin/messages', label: translate('nav.adminMessages'), icon: '✉️' },
-        { to: '/admin/chat', label: translate('nav.adminChat'), icon: '💬' },
+        { to: '/admin/science', label: translate('nav.adminScience'), icon: '🧬' },
         { to: '/admin/users', label: translate('nav.adminUsers'), icon: '👥' },
         { to: '/admin/prompts', label: translate('nav.adminPrompts'), icon: '✏️' },
         { to: '/admin/promo', label: translate('nav.adminPromo'), icon: '🎁' },

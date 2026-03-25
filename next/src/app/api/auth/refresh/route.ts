@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { authMe } from '@/lib/db-auth'
-import { jwtDecode, jwtEncode } from '@/lib/jwt'
+import { jwtDecodeForRefresh, jwtEncode } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     if (!token) {
       return NextResponse.json({ error: 'Authentification requise' }, { status: 401 })
     }
-    const payload = jwtDecode(token)
+    const payload = jwtDecodeForRefresh(token)
     if (!payload) {
       return NextResponse.json({ error: 'Token invalide ou expiré' }, { status: 401 })
     }

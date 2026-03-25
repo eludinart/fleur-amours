@@ -20,12 +20,14 @@ const STUB_RESPONSES: Record<string, unknown> = {
   'notifications/register_push_token': { ok: true },
   'notifications/admin_list': { items: [], total: 0 },
   'notifications/admin_delete': { ok: true },
-  'chat/conversations/start': { id: '0' },
-  'chat/conversations/my': { conversations: [] },
+  'chat/conversations/start': { id: '0', status: 'open', closed_by_role: null },
+  'chat/conversations/my': {
+    conversations: [],
+  },
   'chat/conversations/list': { conversations: [], total: 0 },
   'chat/conversations/close': { ok: true },
   'chat/conversations/delete': { ok: true },
-  'chat/messages': { items: [] },
+  'chat/messages': { items: [], assigned_coach_id: null, status: 'open', closed_by_role: null },
   'chat/send': null, // traité spécialement en POST avec le body
   'chat/mark_read': { ok: true },
   'chat/unread': { count: 0 },

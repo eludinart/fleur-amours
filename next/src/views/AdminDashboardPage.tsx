@@ -797,6 +797,7 @@ export default function AdminDashboardPage() {
               <ShortcutCard to="/admin/analytics" label="Analytics & Profiling" icon="📊" />
               <ShortcutCard to="/admin/suivi" label="Suivi utilisateurs" icon="🌸" />
               <ShortcutCard to="/admin/sessions" label="Sessions IA" icon="📋" />
+              <ShortcutCard to="/admin/science" label="Science de la Fleur" icon="🧬" />
               <ShortcutCard to="/admin/messages" label="Messages" icon="✉️" />
               <ShortcutCard to="/admin/chat" label="Chat" icon="💬" />
               <ShortcutCard to="/admin/users" label="Utilisateurs" icon="👥" />

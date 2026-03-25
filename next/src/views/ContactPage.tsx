@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { contactApi } from '@/api/contact'
+import { ContactAccompanimentChatCtas } from '@/components/contact/ContactAccompanimentChatCtas'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 
@@ -136,6 +137,8 @@ export function ContactPage() {
             {t('contact.pageSubtitle')}
           </p>
         </div>
+
+        <ContactAccompanimentChatCtas />
 
         <div className="rounded-2xl bg-violet-50/60 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800 p-5 text-sm text-violet-800 dark:text-violet-200 space-y-2">
           <p className="font-medium">{t('contact.whyTitle')}</p>

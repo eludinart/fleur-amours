@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { chatApi } from '@/api/chat'
+import { t } from '@/i18n'
 
 function formatTime(iso: string | null | undefined): string {
   if (!iso) return ''
@@ -24,6 +26,7 @@ type Conversation = {
   user_id?: number
   user_email?: string
   status?: string
+  closed_by_role?: string | null
   unread_count?: number
   last_message_at?: string
   created_at?: string
@@ -39,6 +42,8 @@ type Message = {
 }
 
 export default function AdminChatPage() {
+  const searchParams = useSearchParams()
+  const emailParam = searchParams?.get('email') ?? null
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selected, setSelected] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -55,13 +60,15 @@ export default function AdminChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
+  const effectiveStatus = emailParam ? '' : statusFilter
+
   const loadConversations = useCallback(() => {
     setLoadingConvs(true)
-    chatApi.listConversations({ status: statusFilter, per_page: 50 })
+    chatApi.listConversations({ status: effectiveStatus, per_page: 50 })
       .then((res) => setConversations((res as { items?: Conversation[] })?.items ?? []))
       .catch(() => setConversations([]))
       .finally(() => setLoadingConvs(false))
-  }, [statusFilter])
+  }, [effectiveStatus])
 
   useEffect(() => { loadConversations() }, [loadConversations])
   useEffect(() => {
@@ -69,12 +76,24 @@ export default function AdminChatPage() {
     return () => clearInterval(t)
   }, [loadConversations])
 
+  useEffect(() => {
+    if (!emailParam || conversations.length === 0) return
+    const email = emailParam.toLowerCase().trim()
+    const match = conversations.find((c) => (c.user_email ?? '').toLowerCase() === email)
+    if (match) setSelected(match)
+  }, [emailParam, conversations])
+
   const loadMessages = useCallback(async (convId: number, since: string | null) => {
     try {
       const res = await chatApi.messages(String(convId), since ?? undefined)
       const items = ((res as { items?: Message[] })?.items ?? []) as Message[]
       if (items.length > 0) {
-        setMessages((prev) => (since ? [...prev, ...items] : items))
+        setMessages((prev) => {
+          if (!since) return items
+          const existingIds = new Set(prev.map((m) => String(m.id)))
+          const newItems = items.filter((m) => !existingIds.has(String(m.id)))
+          return newItems.length > 0 ? [...prev, ...newItems] : prev
+        })
         lastMsgAt.current = items[items.length - 1].created_at ?? null
         await chatApi.markRead(String(convId), 'coach')
         scrollToBottom()
@@ -132,8 +151,12 @@ export default function AdminChatPage() {
   async function closeConversation(convId: number) {
     try {
       await chatApi.closeConversation(String(convId))
-      setConversations((prev) => prev.map((c) => (c.id === convId ? { ...c, status: 'closed' } : c)))
-      if (selected?.id === convId) setSelected((prev) => (prev ? { ...prev, status: 'closed' } : null))
+      setConversations((prev) =>
+        prev.map((c) => (c.id === convId ? { ...c, status: 'closed', closed_by_role: 'coach' } : c))
+      )
+      if (selected?.id === convId) {
+        setSelected((prev) => (prev ? { ...prev, status: 'closed', closed_by_role: 'coach' } : null))
+      }
     } catch {
       /* silent */
     }
@@ -188,6 +211,11 @@ export default function AdminChatPage() {
             conversations.map((c) => {
               const unread = (c.unread_count ?? 0) > 0
               const convClosed = c.status === 'closed'
+              const closedByTeam =
+                convClosed &&
+                (c.closed_by_role === 'coach' ||
+                  c.closed_by_role == null ||
+                  String(c.closed_by_role).trim() === '')
               return (
                 <div key={c.id} className="relative group">
                   <button
@@ -206,9 +234,16 @@ export default function AdminChatPage() {
                         <span className={`shrink-0 w-2 h-2 rounded-full ${convClosed ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-500'}`} />
                       )}
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      {c.last_message_at ? formatRelative(c.last_message_at) : formatRelative(c.created_at)}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                      <p className="text-[10px] text-slate-400">
+                        {c.last_message_at ? formatRelative(c.last_message_at) : formatRelative(c.created_at)}
+                      </p>
+                      {closedByTeam ? (
+                        <span className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-slate-200/90 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                          {t('chat.listClosedByTeam')}
+                        </span>
+                      ) : null}
+                    </div>
                   </button>
                   {convClosed && (
                     <button
@@ -248,7 +283,13 @@ export default function AdminChatPage() {
                 {selected.user_email || `Utilisateur #${selected.user_id}`}
               </p>
               <p className="text-xs text-slate-500">
-                {isClosed ? 'Conversation clôturée' : 'Conversation ouverte'}
+                {isClosed
+                  ? selected.closed_by_role === 'coach' ||
+                    selected.closed_by_role == null ||
+                    String(selected.closed_by_role).trim() === ''
+                    ? t('chat.adminHeaderClosedByTeam')
+                    : t('chat.adminHeaderClosed')
+                  : t('chat.adminHeaderOpen')}
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
@@ -271,14 +312,18 @@ export default function AdminChatPage() {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-2 bg-slate-50/50 dark:bg-slate-950/30">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-2 bg-slate-100 dark:bg-slate-900">
             {messages.length === 0 && (
-              <div className="text-center py-8 text-sm text-slate-400">Aucun message</div>
+              <div className="flex flex-col items-center justify-center min-h-[200px] text-center">
+                <span className="text-4xl mb-3 text-slate-300 dark:text-slate-600">💬</span>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Aucun message</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">La conversation commencera ici</p>
+              </div>
             )}
-            {messages.map((m) => {
+            {messages.map((m, i) => {
               const isCoach = m.sender_role === 'coach'
               return (
-                <div key={String(m.id)} className={`flex ${isCoach ? 'justify-end' : 'justify-start'}`}>
+                <div key={m._optimistic ? `opt-${i}-${m.id}` : `msg-${i}-${m.id}`} className={`flex ${isCoach ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[90%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-sm ${
                     isCoach
                       ? 'bg-violet-600 text-white rounded-br-md'

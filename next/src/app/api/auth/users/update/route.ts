@@ -28,16 +28,18 @@ export async function POST(req: NextRequest) {
       ])
     }
     if (body.app_role !== undefined) {
-      try {
-        const appRoleTbl = table('fleur_app_roles')
-        await pool.execute(
-          `INSERT INTO ${appRoleTbl} (user_id, app_role) VALUES (?, ?)
-           ON DUPLICATE KEY UPDATE app_role = ?`,
-          [id, body.app_role, body.app_role]
-        )
-      } catch {
-        // Table fleur_app_roles peut ne pas exister
-      }
+      const appRoleTbl = table('fleur_app_roles')
+      await pool.execute(`
+        CREATE TABLE IF NOT EXISTS ${appRoleTbl} (
+          user_id BIGINT UNSIGNED PRIMARY KEY,
+          app_role VARCHAR(50) NOT NULL DEFAULT 'user'
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+      `)
+      await pool.execute(
+        `INSERT INTO ${appRoleTbl} (user_id, app_role) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE app_role = ?`,
+        [id, body.app_role, body.app_role]
+      )
     }
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {

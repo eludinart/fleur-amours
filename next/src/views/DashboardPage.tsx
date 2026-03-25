@@ -15,6 +15,7 @@ import {
   InsightCard,
   GhostComparator,
   SèveTracker,
+  DashboardCoachingChats,
 } from '@/components/dashboard'
 import { BuyTarotCTA } from '@/components/BuyTarotCTA'
 
@@ -33,7 +34,7 @@ import { useAuth } from '@/contexts/AuthContext'
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
 export function DashboardPage() {
-  const { user } = useAuth()
+  const { user, isAdmin, isCoach } = useAuth()
   useStore((s) => s.locale)
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -103,6 +104,14 @@ export function DashboardPage() {
             <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboardSubtitle')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {(isAdmin || isCoach) && (
+              <Link
+                href="/?view=coach"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/35 text-sm font-semibold text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100/80 dark:hover:bg-emerald-950/50 transition-colors"
+              >
+                <span>💬</span> {t('nav.coachDashboard')}
+              </Link>
+            )}
             <Link
               href="/presentation"
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -112,6 +121,8 @@ export function DashboardPage() {
             <BuyTarotCTA />
           </div>
         </motion.header>
+
+        <DashboardCoachingChats />
 
         {(() => {
           const hasSessionInProgress = currentSession?.status === 'in_progress'

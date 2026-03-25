@@ -117,8 +117,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const isAdmin = user?.app_role === 'admin' || user?.wp_role === 'administrator' || false
-  const isCoach = user?.app_role === 'coach' || false
+  const norm = (v: unknown) => (v == null ? '' : String(v).trim().toLowerCase())
+  const appRole = norm(user?.app_role)
+  const wpRole = norm(user?.wp_role)
+  const jwtRole = norm((user as Record<string, unknown> | null)?.role)
+  const isAdmin =
+    appRole === 'admin' ||
+    wpRole === 'administrator' ||
+    jwtRole === 'admin' ||
+    false
+  const isCoach = appRole === 'coach' || jwtRole === 'coach'
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, isAdmin, isCoach }}>

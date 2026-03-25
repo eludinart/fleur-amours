@@ -327,7 +327,7 @@ export async function fetchDashboardData() {
 
 export const dashboardApi = {
   fetchData: fetchDashboardData,
-  getInsight: (petals: Record<string, number>) =>
-    api.post('/api/ai/dashboard-insight', { petals }),
+  getInsight: (petals: Record<string, number>, locale = 'fr') =>
+    api.post('/api/ai/dashboard-insight', { petals, locale }),
   getTrend: (snapshots: unknown[]) => api.post('/api/ai/dashboard-trend', { snapshots }),
 }

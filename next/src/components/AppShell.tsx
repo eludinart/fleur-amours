@@ -12,6 +12,7 @@ import { HomePage } from '@/views/HomePage'
 import { PresentationPage } from '@/views/PresentationPage'
 import { AccountPage } from '@/views/AccountPage'
 import { ContactPage } from '@/views/ContactPage'
+import { CoachesDirectoryPage } from '@/views/CoachesDirectoryPage'
 import { ChatPage } from '@/views/ChatPage'
 import NotificationsPage from '@/views/NotificationsPage'
 import NotificationPreferencesPage from '@/views/NotificationPreferencesPage'
@@ -23,6 +24,7 @@ import SciencePage from '@/views/SciencePage'
 import MatrixPage from '@/views/MatrixPage'
 import TarotPage from '@/views/TarotPage'
 import SessionPage from '@/views/SessionPage'
+import { SessionErrorBoundary } from '@/components/SessionErrorBoundary'
 import FleurPage from '@/views/FleurPage'
 import DuoPage from '@/views/DuoPage'
 import MesFleursPage from '@/views/MesFleursPage'
@@ -43,6 +45,7 @@ import AdminPromoPage from '@/views/AdminPromoPage'
 import AdminNotificationsPage from '@/views/AdminNotificationsPage'
 import AdminUsersPage from '@/views/AdminUsersPage'
 import AdminSessionsPage from '@/views/AdminSessionsPage'
+import AdminSciencePage from '@/views/AdminSciencePage'
 import CoachSuiviPage from '@/views/CoachSuiviPage'
 
 const AdminAnalyticsPage = dynamic(
@@ -112,7 +115,7 @@ function LocaleSync() {
 
 function AppRoutes() {
   const pathname = usePathname()
-  const { user, loading } = useAuth()
+  const { user, loading, isAdmin, isCoach } = useAuth()
   const segments = getPathSegments(pathname?.replace(basePath, '') || '')
   const route = segments[0] || 'home'
   const subRoute = segments[1]
@@ -225,7 +228,9 @@ function AppRoutes() {
     session: (
       <ProtectedLayout>
         <Layout>
-          <SessionPage />
+          <SessionErrorBoundary>
+            <SessionPage />
+          </SessionErrorBoundary>
         </Layout>
       </ProtectedLayout>
     ),
@@ -264,10 +269,25 @@ function AppRoutes() {
         </Layout>
       </ProtectedLayout>
     ),
+    coaches: (
+      <ProtectedLayout>
+        <Layout>
+          <CoachesDirectoryPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
     chat: (
       <ProtectedLayout>
         <Layout>
-          <ChatPage />
+          <Suspense
+            fallback={
+              <div className="flex-1 min-h-0 flex items-center justify-center">
+                <span className="w-8 h-8 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
+              </div>
+            }
+          >
+            <ChatPage />
+          </Suspense>
         </Layout>
       </ProtectedLayout>
     ),
@@ -393,6 +413,13 @@ function AppRoutes() {
         <ProtectedLayout adminOrCoach>
           <Layout>
             <AdminAnalyticsPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+      science: (
+        <ProtectedLayout adminOnly>
+          <Layout>
+            <AdminSciencePage />
           </Layout>
         </ProtectedLayout>
       ),

@@ -185,7 +185,7 @@ export default function PrairiePage() {
     fetchFleurs()
   }, [fetchFleurs])
 
-  // Ouvrir un profil depuis le lien Mon Sanctuaire (?profile=userId)
+  // Ouvrir un profil depuis le lien Mon Jardin (?profile=userId)
   useEffect(() => {
     if (appliedUrlParamsRef.current || loading) return
     const profileUserId = searchParams.get('profile')

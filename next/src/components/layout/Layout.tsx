@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Sidebar } from './Sidebar'
 import { ToastContainer } from './Toast'
+import { ImpersonationBanner } from '../ImpersonationBanner'
 import { SapGauge } from '../SapGauge'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -83,6 +84,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <ImpersonationBanner />
         <header
           ref={headerRef}
           className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 min-w-0 overflow-hidden relative z-10"

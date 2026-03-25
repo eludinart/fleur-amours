@@ -2,21 +2,31 @@
  * La Clairière (social / canaux chat) — MariaDB.
  */
 import type { RowDataPacket } from 'mysql2'
-import { getPool, table } from './db'
+import { exec, getPool, table } from './db'
 
 const PRESENCE_ONLINE_SECONDS = 300
 
 function isOnlineFromLastSeen(lastSeenAt: string): boolean {
   if (!lastSeenAt) return false
-  const normalized = String(lastSeenAt).trim().replace(' ', 'T')
-  const ts = new Date(normalized).getTime()
+  const s = String(lastSeenAt).trim()
+  let ts: number
+  // Stored format from our code: 'YYYY-MM-DD HH:mm:ss' (UTC without timezone marker)
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) {
+    ts = new Date(s.replace(' ', 'T') + 'Z').getTime()
+  } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
+    // Some environments may store ISO without timezone marker
+    ts = new Date(s + 'Z').getTime()
+  } else {
+    ts = new Date(s).getTime()
+  }
   if (isNaN(ts)) return false
   return (Date.now() - ts) / 1000 <= PRESENCE_ONLINE_SECONDS
 }
 
 async function touchSocialPresence(pool: Awaited<ReturnType<typeof getPool>>, userId: number): Promise<void> {
   if (userId <= 0) return
-  const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  // Persist with timezone marker to avoid server timezone issues.
+  const now = new Date().toISOString()
   const tbl = table('usermeta')
   const [existing] = await pool.execute<RowDataPacket[]>(
     `SELECT umeta_id FROM ${tbl} WHERE user_id = ? AND meta_key = 'fleur_social_last_seen_at'`,
@@ -33,6 +43,12 @@ async function touchSocialPresence(pool: Awaited<ReturnType<typeof getPool>>, us
       [userId, now]
     )
   }
+}
+
+/** Heartbeat navigateur (Layout) : met à jour la présence pour La Clairière, la Prairie et le chat coach. */
+export async function recordSocialPresenceHeartbeat(userId: number): Promise<void> {
+  const pool = getPool()
+  await touchSocialPresence(pool, userId)
 }
 
 /** Récupère les canaux de dialogue (La Clairière) de l'utilisateur */
@@ -238,6 +254,87 @@ export async function getChannelMessages(
   }))
 }
 
+/** Récupère le timestamp de la dernière activité (created_at) du canal. */
+export async function getChannelLastMessageAt(channelId: number, userId: string): Promise<string | null> {
+  const pool = getPool()
+  const uid = parseInt(userId, 10)
+  if (!uid) throw new Error('user_id requis')
+  if (!channelId) throw new Error('channel_id requis')
+
+  // Maintenir la cohérence présence (même logique que getChannelMessages)
+  await touchSocialPresence(pool, uid)
+
+  const tCh = table('fleur_chat_channels')
+  const t = table(P2P_MESSAGES_TABLE)
+
+  const [chRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT user_a, user_b FROM ${tCh} WHERE id = ?`,
+    [channelId]
+  )
+  if (!chRows?.length) throw new Error('Canal introuvable')
+  const ch = chRows[0]
+  const ua = Number(ch.user_a)
+  const ub = Number(ch.user_b)
+  if (uid !== ua && uid !== ub) throw new Error('Accès non autorisé à ce canal')
+
+  await ensureMessagesTable(pool)
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT MAX(created_at) as last_at FROM ${t} WHERE channel_id = ?`,
+    [channelId]
+  )
+  const r = rows?.[0]
+  const last = r?.last_at ? String(r.last_at) : null
+  return last && last.trim() ? last : null
+}
+
+/** Messages d'un canal après un curseur created_at (pour incrémental). */
+export async function getChannelMessagesSince(
+  channelId: number,
+  userId: string,
+  since: string
+): Promise<ChannelMessage[]> {
+  const pool = getPool()
+  const uid = parseInt(userId, 10)
+  if (!uid) throw new Error('user_id requis')
+  if (!channelId) throw new Error('channel_id requis')
+  if (!since) throw new Error('since requis')
+
+  await touchSocialPresence(pool, uid)
+
+  const tCh = table('fleur_chat_channels')
+  const t = table(P2P_MESSAGES_TABLE)
+
+  const [chRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT user_a, user_b FROM ${tCh} WHERE id = ?`,
+    [channelId]
+  )
+  if (!chRows?.length) throw new Error('Canal introuvable')
+  const ch = chRows[0]
+  const ua = Number(ch.user_a)
+  const ub = Number(ch.user_b)
+  if (uid !== ua && uid !== ub) throw new Error('Accès non autorisé à ce canal')
+
+  await ensureMessagesTable(pool)
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id, sender_id, body, card_slug, temperature, created_at
+     FROM ${t}
+     WHERE channel_id = ? AND created_at > ?
+     ORDER BY created_at ASC`,
+    [channelId, since]
+  )
+
+  return (rows ?? []).map((r) => ({
+    id: Number(r.id),
+    senderId: Number(r.sender_id),
+    body: r.body ? String(r.body) : null,
+    cardSlug: r.card_slug ? String(r.card_slug) : null,
+    temperature: r.temperature ? String(r.temperature) : null,
+    createdAt: String(r.created_at ?? ''),
+  }))
+}
+
 /** Envoie un message dans un canal P2P */
 export async function sendChannelMessage(
   channelId: number,
@@ -396,11 +493,26 @@ export async function createClairiereMessageNotification(
   const title = 'Nouveau message'
 
   try {
-    const [insert] = await pool.execute(
-      `INSERT INTO ${tNotif} (type, title, body, action_url, recipient_type, recipient_id, priority, source_type, source_id) VALUES (?, ?, ?, ?, 'user', ?, 'normal', 'clairiere_channel', ?)`,
-      ['chat_new_message', title, bodyText, actionUrl, recipientId, channelId]
-    )
-    const notifId = (insert as { insertId?: number })?.insertId
+    let notifId: number | undefined
+    for (const [sql, vals] of [
+      [
+        `INSERT INTO ${tNotif} (type, title, body, action_url, recipient_type, recipient_id, priority, source_type, source_id, channel_id) VALUES (?, ?, ?, ?, 'user', ?, 'normal', 'clairiere_channel', ?, ?)`,
+        ['chat_new_message', title, bodyText, actionUrl, recipientId, channelId, channelId] as unknown[],
+      ],
+      [
+        `INSERT INTO ${tNotif} (type, title, body, action_url, recipient_type, recipient_id, priority, source_type, source_id) VALUES (?, ?, ?, ?, 'user', ?, 'normal', 'clairiere_channel', ?)`,
+        ['chat_new_message', title, bodyText, actionUrl, recipientId, channelId] as unknown[],
+      ],
+    ]) {
+      try {
+        const insertRes = await exec(pool, String(sql), vals as unknown[])
+        const insert = insertRes[0] as { insertId?: number } | null
+        notifId = insert?.insertId
+        break
+      } catch {
+        /* essayer la variante suivante */
+      }
+    }
     let recipientEmail: string | null = null
     if (notifId) {
       const [userRows] = await pool.execute<RowDataPacket[]>(
@@ -408,10 +520,24 @@ export async function createClairiereMessageNotification(
         [recipientId]
       )
       recipientEmail = userRows?.[0]?.user_email ?? null
-      await pool.execute(
-        `INSERT INTO ${tDeliv} (notification_id, user_id, user_email) VALUES (?, ?, ?)`,
-        [notifId, recipientId, recipientEmail]
-      )
+      try {
+        await pool.execute(
+          `INSERT INTO ${tDeliv} (notification_id, user_id, user_email, channel_id) VALUES (?, ?, ?, ?)`,
+          [notifId, recipientId, recipientEmail, channelId]
+        )
+      } catch (delivErr: unknown) {
+        const dm = String((delivErr as Error)?.message ?? '')
+        if (dm.includes('Unknown column') && dm.includes('channel_id')) {
+          try {
+            await pool.execute(
+              `INSERT INTO ${tDeliv} (notification_id, user_id, user_email) VALUES (?, ?, ?)`,
+              [notifId, recipientId, recipientEmail]
+            )
+          } catch {
+            /* schéma incompatible */
+          }
+        }
+      }
     }
     try {
       const { sendFcmPush } = await import('./fcm')

@@ -1,0 +1,62 @@
+{
+  "id": "coach-eludein",
+  "slug": "eludein",
+  "public": true,
+  "identity": {
+    "display_name": "Coach Eludein",
+    "headline": "Accompagnement relationnel et transitions de vie",
+    "short_bio": "Je vous aide a clarifier vos ressentis, mieux communiquer et poser des actions concretes dans vos relations.",
+    "long_bio": "A REMPLIR PAR LE COACH: parcours, posture, methode, type d'accompagnement, ce qui vous differencie, style d'echange.",
+    "languages": ["fr-FR"],
+    "photo_url": ""
+  },
+  "expertise": {
+    "specialties": [
+      "Communication de couple",
+      "Confiance et limites",
+      "Transitions affectives"
+    ],
+    "approaches": [
+      "Ecoute active",
+      "Questionnement guide",
+      "Plan d'action progressif"
+    ],
+    "can_help_with": [
+      "Mieux comprendre une dynamique relationnelle",
+      "Sortir d'un blocage de communication",
+      "Traverser une phase de changement"
+    ],
+    "not_for": [
+      "Urgence medicale",
+      "Urgence psychiatrique"
+    ],
+    "years_experience": 0
+  },
+  "support": {
+    "response_time": {
+      "label": "Repond sous 24h",
+      "target_hours": 24
+    },
+    "availability": {
+      "timezone": "Europe/Paris",
+      "weekly_windows": [
+        "Lundi-Vendredi: 09:00-18:00"
+      ]
+    },
+    "session_style": "Messages concis, progressifs et orientés passage a l'action.",
+    "message_tone": "Chaleureux, clair, sans jugement."
+  },
+  "trust": {
+    "confidentiality_note": "Espace confidentiel et respectueux.",
+    "ethics_note": "Accompagnement non medical et non juridique.",
+    "certifications": [],
+    "disclaimer": "En cas d'urgence, contactez les services d'aide locaux."
+  },
+  "display": {
+    "show_in_chat_header": true,
+    "show_in_coach_picker": true,
+    "show_in_contact_page": true,
+    "show_full_profile_link": true
+  },
+  "updated_at": "2026-03-24T00:00:00Z"
+}

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import { sessionsApi } from '@/api/sessions'
+import { useDebounce } from '@/hooks/useDebounce'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
 
 const PETAL_LABELS: Record<string, string> = {
@@ -248,6 +250,23 @@ function UserDetailPanel({
             >
               ✕
             </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mt-3">
+            <Link
+              href={`/admin/chat?email=${encodeURIComponent(email)}`}
+              onClick={onClose}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors"
+            >
+              💬 Ouvrir le chat
+            </Link>
+            <Link
+              href={`/admin/messages?search=${encodeURIComponent(email)}`}
+              onClick={onClose}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            >
+              ✉️ Messages contact
+            </Link>
           </div>
 
           <div className="flex gap-1 mt-3">
@@ -777,31 +796,25 @@ function GlobalStats({ users }: { users: SuiviUser[] }) {
 export default function CoachSuiviPage() {
   const [users, setUsers] = useState<SuiviUser[] | null>(null)
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [shadowOnly, setShadowOnly] = useState(false)
   const [sort, setSort] = useState('last_session')
   const [selected, setSelected] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+  const debouncedSearch = useDebounce(searchInput, 300)
 
   const load = useCallback(() => {
     setLoading(true)
     sessionsApi
-      .suivi({ search: search || undefined, shadow: shadowOnly, sort })
+      .suivi({ search: debouncedSearch || undefined, shadow: shadowOnly, sort })
       .then((r) => setUsers((r as { users?: SuiviUser[] }).users || []))
       .catch(() => setUsers([]))
       .finally(() => setLoading(false))
-  }, [search, shadowOnly, sort])
+  }, [debouncedSearch, shadowOnly, sort])
 
   useEffect(() => {
     load()
   }, [load])
-
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  function handleSearch(v: string) {
-    setSearch(v)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {}, 300)
-  }
 
   const urgentCount = users?.filter((u) => u.shadow_urgent).length ?? 0
 
@@ -838,8 +851,8 @@ export default function CoachSuiviPage() {
             <input
               ref={searchRef}
               type="text"
-              value={search}
-              onChange={(e) => handleSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Rechercher par email…"
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
             />
@@ -871,7 +884,7 @@ export default function CoachSuiviPage() {
           )}
         </div>
 
-        {!shadowOnly && !search && users && users.length > 1 && (
+        {!shadowOnly && !debouncedSearch && users && users.length > 1 && (
           <GlobalStats users={users} />
         )}
 

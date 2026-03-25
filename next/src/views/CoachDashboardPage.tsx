@@ -25,11 +25,11 @@ function StatCard({ label, value, sub, to, icon, color }: { label: string; value
         </div>
         <span className="text-2xl opacity-70">{icon}</span>
       </div>
-      {to && (
-        <Link href={to} className="mt-3 inline-block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+      {to ? (
+        <span className="mt-3 inline-block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline">
           Voir les détails →
-        </Link>
-      )}
+        </span>
+      ) : null}
     </div>
   )
   if (to) return <Link href={to} className="block">{content}</Link>

@@ -53,4 +53,9 @@ export const adminApi = {
   getAnalyzeMoodPrompt: () => api.get('/api/admin/prompts/analyze-mood'),
   saveAnalyzeMoodPrompt: (content: string) =>
     api.post('/api/admin/prompts/analyze-mood', { content }),
+
+  getScienceConfig: () => api.get('/api/admin/science/config') as Promise<any>,
+  saveScienceConfig: (config: Record<string, unknown>) => api.post('/api/admin/science/config', config),
+  rebuildScienceProfile: (params: { user_id: number; locale?: string; petals?: Record<string, number> }) =>
+    api.post('/api/admin/science/rebuild', params),
 }

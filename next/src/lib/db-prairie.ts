@@ -9,15 +9,24 @@ const PRESENCE_ONLINE_SECONDS = 300
 
 function isOnlineFromLastSeen(lastSeenAt: string): boolean {
   if (!lastSeenAt) return false
-  const normalized = String(lastSeenAt).trim().replace(' ', 'T')
-  const ts = new Date(normalized).getTime()
+  const s = String(lastSeenAt).trim()
+  let ts: number
+  // Stored format from our code: 'YYYY-MM-DD HH:mm:ss' (UTC without timezone marker)
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) {
+    ts = new Date(s.replace(' ', 'T') + 'Z').getTime()
+  } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
+    ts = new Date(s + 'Z').getTime()
+  } else {
+    ts = new Date(s).getTime()
+  }
   if (isNaN(ts)) return false
   return (Date.now() - ts) / 1000 <= PRESENCE_ONLINE_SECONDS
 }
 
 async function touchSocialPresence(pool: Awaited<ReturnType<typeof getPool>>, userId: number): Promise<void> {
   if (userId <= 0) return
-  const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  // Persist with timezone marker to avoid server timezone issues.
+  const now = new Date().toISOString()
   const tbl = table('usermeta')
   const [existing] = await pool.execute<RowDataPacket[]>(
     `SELECT umeta_id FROM ${tbl} WHERE user_id = ? AND meta_key = 'fleur_social_last_seen_at'`,

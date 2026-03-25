@@ -1,7 +1,18 @@
 import { api } from '@/lib/api-client'
 
 export const chatApi = {
-  startConversation: () => api.post('/api/chat/conversations/start', {}),
+  coaches: () => api.get('/api/chat/coaches'),
+  coachByUserId: (wpUserId: number) =>
+    api.get(`/api/chat/coaches/by-id?user_id=${encodeURIComponent(String(wpUserId))}`),
+  startConversation: (coachId?: number | null) => {
+    const body =
+      coachId === undefined
+        ? {}
+        : coachId === null
+          ? { coach_id: null }
+          : { coach_id: coachId }
+    return api.post('/api/chat/conversations/start', body)
+  },
   myConversations: () => api.get('/api/chat/conversations/my'),
   listConversations: (params: Record<string, unknown> = {}) => {
     const clean = Object.fromEntries(

@@ -19,3 +19,17 @@ export function jwtDecode(token: string): { sub: string; role?: string; email?: 
     return null
   }
 }
+
+/** Vérifie la signature sans rejeter les tokens expirés (pour le refresh). */
+export function jwtDecodeForRefresh(token: string): { sub: string; role?: string; email?: string } | null {
+  try {
+    const decoded = jwt.verify(token, SECRET, { ignoreExpiration: true }) as {
+      sub: string
+      role?: string
+      email?: string
+    }
+    return decoded
+  } catch {
+    return null
+  }
+}

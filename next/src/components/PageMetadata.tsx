@@ -22,6 +22,7 @@ const routeMeta: Record<
   presentation: { title: 'Présentation', descKey: 'presentation.welcomeSubtitle' },
   account: { titleKey: 'accountTitle', descKey: 'sap.desc' },
   contact: { titleKey: 'contact.pageTitle', descKey: 'contact.pageSubtitle' },
+  coaches: { titleKey: 'coaches.pageTitle', descKey: 'coaches.pageSubtitle' },
   prairie: { titleKey: 'prairie.grandJardin', descKey: 'prairie.optInBody' },
   clairiere: { titleKey: 'social.clairiere', descKey: 'social.clairiereDesc' },
   'mes-fleurs': { titleKey: 'mesFleurs.title', descKey: 'mesFleurs.subtitle' },

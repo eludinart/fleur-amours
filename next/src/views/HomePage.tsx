@@ -7,25 +7,24 @@ import { DashboardPage } from '@/views/DashboardPage'
 import CoachDashboardPage from '@/views/CoachDashboardPage'
 import AdminDashboardPage from '@/views/AdminDashboardPage'
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
-
 function ViewSwitcher({
   view,
-  isCoach,
+  showCoachTab,
   isAdmin,
   onSelect,
 }: {
   view: string
-  isCoach: boolean
+  /** Dashboard coach : rôle coach OU admin (les admins utilisent les mêmes outils côté API). */
+  showCoachTab: boolean
   isAdmin: boolean
   onSelect: (v: string) => void
 }) {
   return (
-    <div className="flex flex-wrap gap-2 mb-4">
+    <div className="flex flex-row flex-nowrap gap-2 mb-4 overflow-x-auto pb-1 scroll-smooth [scrollbar-width:thin]">
       <button
         type="button"
         onClick={() => onSelect('user')}
-        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0 ${
           view === 'user'
             ? 'bg-violet-600 text-white'
             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -33,11 +32,11 @@ function ViewSwitcher({
       >
         🏡 {t('nav.home') ?? 'Mon Jardin'}
       </button>
-      {isCoach && (
+      {showCoachTab && (
         <button
           type="button"
           onClick={() => onSelect('coach')}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0 ${
             view === 'coach'
               ? 'bg-violet-600 text-white'
               : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -50,7 +49,7 @@ function ViewSwitcher({
         <button
           type="button"
           onClick={() => onSelect('admin')}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0 ${
             view === 'admin'
               ? 'bg-violet-600 text-white'
               : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -67,6 +66,7 @@ export function HomePage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { isAdmin, isCoach } = useAuth()
+  const showCoachTab = isCoach || isAdmin
   const viewParam = searchParams?.get?.('view') ?? 'user'
   const view = ['user', 'coach', 'admin'].includes(viewParam)
     ? viewParam
@@ -80,10 +80,10 @@ export function HomePage() {
     router.replace(q ? `${pathname || '/'}?${q}` : (pathname || '/'))
   }
 
-  if (view === 'coach' && isCoach) {
+  if (view === 'coach' && showCoachTab) {
     return (
       <div className="flex-1 min-h-0 flex flex-col">
-        <ViewSwitcher view={view} isCoach={isCoach} isAdmin={!!isAdmin} onSelect={setView} />
+        <ViewSwitcher view={view} showCoachTab={showCoachTab} isAdmin={!!isAdmin} onSelect={setView} />
         <CoachDashboardPage />
       </div>
     )
@@ -91,7 +91,7 @@ export function HomePage() {
   if (view === 'admin' && isAdmin) {
     return (
       <div className="flex-1 min-h-0 flex flex-col">
-        <ViewSwitcher view={view} isCoach={!!isCoach} isAdmin={isAdmin} onSelect={setView} />
+        <ViewSwitcher view={view} showCoachTab={showCoachTab} isAdmin={isAdmin} onSelect={setView} />
         <AdminDashboardPage />
       </div>
     )
@@ -100,7 +100,7 @@ export function HomePage() {
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       {(isCoach || isAdmin) && (
-        <ViewSwitcher view={view} isCoach={!!isCoach} isAdmin={!!isAdmin} onSelect={setView} />
+        <ViewSwitcher view={view} showCoachTab={showCoachTab} isAdmin={!!isAdmin} onSelect={setView} />
       )}
       <DashboardPage />
     </div>

@@ -172,8 +172,67 @@ function resizeImageToDataUrl(
   })
 }
 
+function insertInTextarea(
+  ref: React.RefObject<HTMLTextAreaElement | null>,
+  value: string,
+  onChange: (next: string) => void,
+  template: string,
+  maxLen: number
+) {
+  const el = ref.current
+  if (!el) {
+    onChange((value + template).slice(0, maxLen))
+    return
+  }
+  const start = el.selectionStart ?? value.length
+  const end = el.selectionEnd ?? value.length
+  const next = (value.slice(0, start) + template + value.slice(end)).slice(0, maxLen)
+  onChange(next)
+  requestAnimationFrame(() => {
+    const pos = Math.min(start + template.length, next.length)
+    el.focus()
+    el.setSelectionRange(pos, pos)
+  })
+}
+
+function RichTextToolbar({
+  onInsert,
+}: {
+  onInsert: (template: string) => void
+}) {
+  const btn = 'text-[11px] px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600 bg-white/70 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200'
+  return (
+    <div className="flex flex-wrap gap-1.5 mb-1.5">
+      <button type="button" onClick={() => onInsert('**texte en gras**')} className={btn}><strong>B</strong></button>
+      <button type="button" onClick={() => onInsert('*texte en italique*')} className={btn}><em>I</em></button>
+      <button type="button" onClick={() => onInsert('\n- point 1\n- point 2')} className={btn}>Liste</button>
+      <button type="button" onClick={() => onInsert('\n\nTitre:\n')} className={btn}>Titre</button>
+      <button type="button" onClick={() => onInsert('\n\nExemple concret: ')} className={btn}>Exemple</button>
+      <button type="button" onClick={() => onInsert('\n\nResultat attendu: ')} className={btn}>Resultat</button>
+    </div>
+  )
+}
+
+function coachCompletionScore(form: {
+  coach_headline: string
+  coach_short_bio: string
+  coach_long_bio: string
+  coach_specialties: string
+  coach_languages: string
+  coach_response_time_label: string
+}) {
+  let score = 0
+  if (form.coach_headline.trim().length >= 20) score += 1
+  if (form.coach_short_bio.trim().length >= 80) score += 1
+  if (form.coach_long_bio.trim().length >= 200) score += 1
+  if (form.coach_specialties.split(',').map((s) => s.trim()).filter(Boolean).length >= 2) score += 1
+  if (form.coach_languages.split(',').map((s) => s.trim()).filter(Boolean).length >= 1) score += 1
+  if (form.coach_response_time_label.trim().length >= 8) score += 1
+  return score
+}
+
 export function AccountPage() {
-  const { user, logout, refreshUser, isAdmin } = useAuth()
+  const { user, logout, refreshUser, isAdmin, isCoach } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -203,6 +262,17 @@ export function AccountPage() {
     avatar: null as string | null,
     avatar_emoji: null as string | null,
     profile_public: false,
+    coach_headline: '',
+    coach_short_bio: '',
+    coach_long_bio: '',
+    coach_specialties: '',
+    coach_languages: '',
+    coach_response_time_label: 'Repond sous 24h',
+    coach_response_time_hours: 24,
+    coach_is_listed: true,
+    coach_years_experience: 0,
+    coach_reviews_label: '',
+    coach_verified: false,
   })
   const [prairieOptInModalOpen, setPrairieOptInModalOpen] = useState(false)
   const [prairieOptInSaving, setPrairieOptInSaving] = useState(false)
@@ -212,7 +282,17 @@ export function AccountPage() {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileError, setProfileError] = useState('')
   const [profileSuccess, setProfileSuccess] = useState(false)
+  const [profileTab, setProfileTab] = useState<'user' | 'coach' | 'admin'>('user')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const coachShortBioRef = useRef<HTMLTextAreaElement>(null)
+  const coachLongBioRef = useRef<HTMLTextAreaElement>(null)
+  const hasCoachTab = isCoach || isAdmin
+  const coachScore = coachCompletionScore(profileForm)
+
+  useEffect(() => {
+    if (profileTab === 'coach' && !hasCoachTab) setProfileTab('user')
+    if (profileTab === 'admin' && !isAdmin) setProfileTab('user')
+  }, [profileTab, hasCoachTab, isAdmin])
 
   useEffect(() => {
     billingApi
@@ -236,6 +316,21 @@ export function AccountPage() {
           avatar: (prof?.avatar ?? null) as string | null,
           avatar_emoji: (prof?.avatar_emoji ?? null) as string | null,
           profile_public: (prof?.profile_public ?? false) as boolean,
+          coach_headline: (prof?.coach_headline ?? '') as string,
+          coach_short_bio: (prof?.coach_short_bio ?? '') as string,
+          coach_long_bio: (prof?.coach_long_bio ?? '') as string,
+          coach_specialties: Array.isArray(prof?.coach_specialties)
+            ? (prof?.coach_specialties as string[]).join(', ')
+            : '',
+          coach_languages: Array.isArray(prof?.coach_languages)
+            ? (prof?.coach_languages as string[]).join(', ')
+            : 'fr-FR',
+          coach_response_time_label: ((prof?.coach_response_time_label ?? 'Repond sous 24h') as string),
+          coach_response_time_hours: Number(prof?.coach_response_time_hours ?? 24),
+          coach_is_listed: (prof?.coach_is_listed ?? true) as boolean,
+          coach_years_experience: Number(prof?.coach_years_experience ?? 0),
+          coach_reviews_label: (prof?.coach_reviews_label ?? '') as string,
+          coach_verified: (prof?.coach_verified ?? false) as boolean,
         })
       })
       .catch(() => {
@@ -250,12 +345,34 @@ export function AccountPage() {
     setProfileError('')
     setProfileSuccess(false)
     try {
+      if ((isCoach || isAdmin) && profileTab === 'coach') {
+        if (!profileForm.coach_headline.trim() || !profileForm.coach_short_bio.trim()) {
+          throw new Error('Veuillez renseigner au minimum le titre et la presentation courte du coach.')
+        }
+      }
       const updated = await authApi.updateMyProfile({
         name: profileForm.name,
         pseudo: profileForm.pseudo || null,
         bio: profileForm.bio || null,
         avatar: profileForm.avatar || null,
         avatar_emoji: profileForm.avatar_emoji || null,
+        coach_headline: profileForm.coach_headline || null,
+        coach_short_bio: profileForm.coach_short_bio || null,
+        coach_long_bio: profileForm.coach_long_bio || null,
+        coach_specialties: profileForm.coach_specialties
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        coach_languages: profileForm.coach_languages
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        coach_response_time_label: profileForm.coach_response_time_label || null,
+        coach_response_time_hours: profileForm.coach_response_time_hours || 24,
+        coach_is_listed: !!profileForm.coach_is_listed,
+        coach_years_experience: profileForm.coach_years_experience || 0,
+        coach_reviews_label: profileForm.coach_reviews_label || null,
+        coach_verified: !!profileForm.coach_verified,
       })
       setProfile(updated as Record<string, unknown>)
       await refreshUser()
@@ -432,7 +549,48 @@ export function AccountPage() {
               {t('account.profileDesc')}
             </p>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setProfileTab('user')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                profileTab === 'user'
+                  ? 'border-violet-500 bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-200'
+                  : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-violet-300'
+              }`}
+            >
+              Profil utilisateur
+            </button>
+            {hasCoachTab && (
+              <button
+                type="button"
+                onClick={() => setProfileTab('coach')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                  profileTab === 'coach'
+                    ? 'border-violet-500 bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-200'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-violet-300'
+                }`}
+              >
+                Profil coach
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setProfileTab('admin')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                  profileTab === 'admin'
+                    ? 'border-violet-500 bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-200'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-violet-300'
+                }`}
+              >
+                Profil admin
+              </button>
+            )}
+          </div>
           <form onSubmit={handleProfileSave} className="space-y-4">
+            {profileTab === 'user' && (
+              <>
             <div className="space-y-3">
               <div className="flex items-start gap-4">
                 <div className="shrink-0">
@@ -604,8 +762,8 @@ export function AccountPage() {
                   }))
                 }
                 placeholder={t('account.bioPlaceholder')}
-                rows={3}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-none"
+                rows={5}
+                className="w-full min-h-[130px] px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-[15px] leading-relaxed focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-y"
               />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 {profileForm.bio.length}/500 — {t('account.bioHint')}
@@ -678,30 +836,306 @@ export function AccountPage() {
                     ✓ {t('account.prairieVisible')}
                   </span>
                 )}
-                {isAdmin && (user as { email?: string })?.email && (
+              </div>
+            )}
+              </>
+            )}
+            {profileTab === 'coach' && hasCoachTab && (
+              <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/20 p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-violet-800 dark:text-violet-200">
+                  Fiche coach (visible aux utilisateurs)
+                </h3>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                  Ces informations sont utilisees pour aider les utilisateurs a choisir leur coach dans la section Accompagnement.
+                </p>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Titre / positionnement
+                  </label>
+                  <input
+                    type="text"
+                    value={profileForm.coach_headline}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, coach_headline: e.target.value.slice(0, 120) }))}
+                    placeholder="Ex: Accompagnement relationnel et transitions de vie"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+                  />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    Conseil: explicitez votre promesse en 1 phrase (public + resultat).
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Presentation courte
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setProfileForm((f) => ({
+                        ...f,
+                        coach_short_bio:
+                          "J'aide les personnes et les couples a clarifier leurs blocages relationnels, retrouver une communication apaisée et poser des actions concretes en quelques echanges progressifs.",
+                      }))}
+                      className="text-[11px] px-2 py-1 rounded-md border border-violet-300/60 dark:border-violet-700/60 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30"
+                    >
+                      Inserer un exemple
+                    </button>
+                  </div>
+                  <RichTextToolbar
+                    onInsert={(template) =>
+                      insertInTextarea(
+                        coachShortBioRef,
+                        profileForm.coach_short_bio,
+                        (next) => setProfileForm((f) => ({ ...f, coach_short_bio: next })),
+                        template,
+                        280
+                      )
+                    }
+                  />
+                  <textarea
+                    ref={coachShortBioRef}
+                    value={profileForm.coach_short_bio}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, coach_short_bio: e.target.value.slice(0, 280) }))}
+                    rows={6}
+                    placeholder="2-3 phrases pour expliquer votre accompagnement."
+                    className="w-full min-h-[180px] max-h-[520px] px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[15px] leading-relaxed focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-y"
+                  />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {profileForm.coach_short_bio.length}/280 — Formatage simple: gras, italique, listes. Coin bas-droit pour agrandir la zone.
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Presentation detaillee
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setProfileForm((f) => ({
+                        ...f,
+                        coach_long_bio:
+                          "Approche:\n- Ecoute active et sans jugement\n- Clarification des besoins et limites\n\nMethode:\n- Diagnostic en messages\n- Plan d'action progressif sur 2 a 4 semaines\n\nCe que vous obtenez:\n- Plus de clarte emotionnelle\n- Des mots concrets pour communiquer\n- Une trajectoire relationnelle plus stable",
+                      }))}
+                      className="text-[11px] px-2 py-1 rounded-md border border-violet-300/60 dark:border-violet-700/60 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30"
+                    >
+                      Inserer une structure type
+                    </button>
+                  </div>
+                  <RichTextToolbar
+                    onInsert={(template) =>
+                      insertInTextarea(
+                        coachLongBioRef,
+                        profileForm.coach_long_bio,
+                        (next) => setProfileForm((f) => ({ ...f, coach_long_bio: next })),
+                        template,
+                        2500
+                      )
+                    }
+                  />
+                  <textarea
+                    ref={coachLongBioRef}
+                    value={profileForm.coach_long_bio}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, coach_long_bio: e.target.value.slice(0, 2500) }))}
+                    rows={14}
+                    placeholder="Votre posture, methode, ce qui vous differencie."
+                    className="w-full min-h-[320px] px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[15px] leading-relaxed focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-y max-h-[min(70vh,900px)]"
+                  />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {profileForm.coach_long_bio.length}/2500 — Astuce: structurez par sections (approche, methode, benefices). Coin bas-droit pour agrandir la zone.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-3">
+                    <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Apercu presentation courte</p>
+                    <p className="text-[12px] whitespace-pre-wrap text-slate-700 dark:text-slate-200 min-h-[56px]">
+                      {profileForm.coach_short_bio || 'Votre texte apparaitra ici.'}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-3">
+                    <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Qualite de la fiche</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-2 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${coachScore >= 5 ? 'bg-emerald-500' : coachScore >= 3 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                          style={{ width: `${Math.round((coachScore / 6) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-slate-600 dark:text-slate-300">{coachScore}/6</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Visez 5/6 minimum pour une fiche convaincante.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Specialites (separees par virgules)
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.coach_specialties}
+                      onChange={(e) => setProfileForm((f) => ({ ...f, coach_specialties: e.target.value }))}
+                      placeholder="Communication, couple, limites..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Langues (separees par virgules)
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.coach_languages}
+                      onChange={(e) => setProfileForm((f) => ({ ...f, coach_languages: e.target.value }))}
+                      placeholder="fr-FR, en-US"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Delai de reponse (texte)
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.coach_response_time_label}
+                      onChange={(e) => setProfileForm((f) => ({ ...f, coach_response_time_label: e.target.value.slice(0, 60) }))}
+                      placeholder="Repond sous 24h"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Delai cible (heures)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={168}
+                      value={profileForm.coach_response_time_hours}
+                      onChange={(e) => {
+                        const n = parseInt(e.target.value || '24', 10)
+                        setProfileForm((f) => ({ ...f, coach_response_time_hours: Number.isNaN(n) ? 24 : Math.min(168, Math.max(1, n)) }))
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Annees d&apos;experience
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={60}
+                      value={profileForm.coach_years_experience}
+                      onChange={(e) => {
+                        const n = parseInt(e.target.value || '0', 10)
+                        setProfileForm((f) => ({ ...f, coach_years_experience: Number.isNaN(n) ? 0 : Math.min(60, Math.max(0, n)) }))
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Note / avis (texte court)
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.coach_reviews_label}
+                      onChange={(e) => setProfileForm((f) => ({ ...f, coach_reviews_label: e.target.value.slice(0, 120) }))}
+                      placeholder="Ex: 4.9/5 · 120 avis verifies"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+                    />
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={profileForm.coach_verified}
+                      onChange={(e) => setProfileForm((f) => ({ ...f, coach_verified: e.target.checked }))}
+                      className="mt-1 rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-400"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Coach verifie par l&apos;equipe
+                      </span>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Badge de confiance affiche cote utilisateur.
+                      </p>
+                    </div>
+                  </label>
+                )}
+
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profileForm.coach_is_listed}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, coach_is_listed: e.target.checked }))}
+                    className="mt-1 rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-400"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Afficher ce profil dans le choix du coach
+                    </span>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Si desactive, vous restez coach mais vous n'apparaissez plus dans la liste de selection utilisateur.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            )}
+            {profileTab === 'admin' && isAdmin && (
+              <div className="rounded-xl border border-amber-300/70 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-900/20 p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                  Profil admin
+                </h3>
+                <p className="text-[12px] text-slate-700 dark:text-slate-200">
+                  En tant qu&apos;admin, vous avez aussi le role coach. Utilisez l&apos;onglet <strong>Profil coach</strong> pour regler votre fiche publique.
+                </p>
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={async () => {
-                      setForceVisibleLoading(true)
-                      try {
-                        await prairieApi.forceVisible((user as { email: string }).email)
-                        setProfileSuccess(true)
-                        setTimeout(() => setProfileSuccess(false), 3000)
-                        await refreshUser()
-                      } catch (err) {
-                        setProfileError(
-                          (err as Error)?.message || t('account.profileError')
-                        )
-                      } finally {
-                        setForceVisibleLoading(false)
-                      }
-                    }}
-                    disabled={forceVisibleLoading}
-                    className="text-xs px-3 py-1.5 rounded-lg border border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50"
+                    onClick={() => router.push('/admin')}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-amber-500/50 text-amber-700 dark:text-amber-300 hover:bg-amber-100/60 dark:hover:bg-amber-900/30"
                   >
-                    {forceVisibleLoading ? '…' : t('account.prairieForceVisible')}
+                    Ouvrir le dashboard admin
                   </button>
-                )}
+                  {(user as { email?: string })?.email && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setForceVisibleLoading(true)
+                        try {
+                          await prairieApi.forceVisible((user as { email: string }).email)
+                          setProfileSuccess(true)
+                          setTimeout(() => setProfileSuccess(false), 3000)
+                          await refreshUser()
+                        } catch (err) {
+                          setProfileError((err as Error)?.message || t('account.profileError'))
+                        } finally {
+                          setForceVisibleLoading(false)
+                        }
+                      }}
+                      disabled={forceVisibleLoading}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50"
+                    >
+                      {forceVisibleLoading ? '…' : t('account.prairieForceVisible')}
+                    </button>
+                  )}
+                </div>
               </div>
             )}
             <PrairieOptInModal
@@ -737,13 +1171,15 @@ export function AccountPage() {
                 {t('account.profileSaved')}
               </p>
             )}
-            <button
-              type="submit"
-              disabled={profileSaving}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-rose-500 text-white font-semibold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
-            >
-              {profileSaving ? '…' : t('common.save')}
-            </button>
+            {profileTab !== 'admin' && (
+              <button
+                type="submit"
+                disabled={profileSaving}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-rose-500 text-white font-semibold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                {profileSaving ? '…' : t('common.save')}
+              </button>
+            )}
           </form>
         </div>
 

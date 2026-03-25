@@ -80,6 +80,9 @@ function UserEditPanel({
   onClose: () => void
 }) {
   const [appRole, setAppRole] = useState(user.app_role || 'user')
+  useEffect(() => {
+    setAppRole(user.app_role || 'user')
+  }, [user.app_role])
   const [roleSaving, setRoleSaving] = useState(false)
   const [roleMsg, setRoleMsg] = useState<{ text: string; type: string } | null>(null)
   const [redemptions, setRedemptions] = useState<Redemption[] | null>(null)
@@ -877,6 +880,15 @@ export default function AdminUsersPage() {
   useEffect(() => {
     loadUsers()
   }, [loadUsers])
+
+  useEffect(() => {
+    if (editing && users?.items) {
+      const fresh = users.items.find((u) => u.id === editing.id)
+      if (fresh && (fresh.app_role !== editing.app_role || fresh.wp_role !== editing.wp_role)) {
+        setEditing(fresh)
+      }
+    }
+  }, [users, editing?.id])
 
   function getRedemption(userId: number): Redemption | null {
     const userReds = redemptions.filter((r) => r.user_id === userId)

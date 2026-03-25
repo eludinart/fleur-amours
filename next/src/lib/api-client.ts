@@ -44,13 +44,13 @@ export class ApiError extends Error {
   }
 }
 
-let _refreshPromise: Promise<boolean> | null = null
+let _refreshPromise: Promise<string | null> | null = null
 
-async function _tryRefreshToken(): Promise<boolean> {
+async function _tryRefreshToken(): Promise<string | null> {
   if (_refreshPromise) return _refreshPromise
   _refreshPromise = (async () => {
     const token = getAuthToken()
-    if (!token) return false
+    if (!token) return null
     try {
       const res = await fetch(`${getBase()}/api/auth/refresh`, {
         method: 'POST',
@@ -59,15 +59,16 @@ async function _tryRefreshToken(): Promise<boolean> {
           Authorization: `Bearer ${token}`,
         },
       })
-      if (!res.ok) return false
+      if (!res.ok) return null
       const data = await res.json()
-      if (data.token && typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', data.token)
-        return true
+      const newToken = data?.token
+      if (newToken && typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', newToken)
+        return newToken
       }
-      return false
+      return null
     } catch {
-      return false
+      return null
     } finally {
       _refreshPromise = null
     }
@@ -78,11 +79,12 @@ async function _tryRefreshToken(): Promise<boolean> {
 async function request(
   path: string,
   options: RequestInit & { headers?: Record<string, string> } = {},
-  _isRetry = false
+  _isRetry = false,
+  _tokenOverride: string | null = null
 ): Promise<unknown> {
   const base = getBase()
   const url = path.startsWith('http') ? path : `${base}${path}`
-  const token = getAuthToken()
+  const token = _tokenOverride ?? getAuthToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -107,8 +109,8 @@ async function request(
     !path.includes('/auth/refresh') &&
     !path.includes('/auth/register')
   ) {
-    const refreshed = await _tryRefreshToken()
-    if (refreshed) return request(path, options, true)
+    const newToken = await _tryRefreshToken()
+    if (newToken) return request(path, options, true, newToken)
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')

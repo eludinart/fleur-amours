@@ -17,6 +17,7 @@ const LABELS: Record<string, string> = {
   [`${basePath}/dreamscape`]: 'dreamscape',
   [`${basePath}/dreamscape/historique`]: 'dreamscapeHistorique.history',
   [`${basePath}/contact`]: 'contact',
+  [`${basePath}/coaches`]: 'nav.coachesDirectory',
   [`${basePath}/chat`]: 'chat',
   [`${basePath}/account`]: 'account',
   [`${basePath}/presentation`]: 'presentation',

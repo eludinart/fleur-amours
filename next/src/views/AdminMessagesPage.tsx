@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { contactApi } from '@/api/contact'
 import { useDebounce } from '@/hooks/useDebounce'
 
@@ -161,9 +162,10 @@ function MessageDetailModal({ message: initial, onClose, onUpdate }: { message: 
 }
 
 export default function AdminMessagesPage() {
+  const searchParams = useSearchParams()
   const [list, setList] = useState<MessageList | null>(null)
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams?.get('search') ?? '')
   const [statusFilter, setStatusFilter] = useState('')
   const [selected, setSelected] = useState<ContactMessage | null>(null)
   const [loadingList, setLoadingList] = useState(true)
