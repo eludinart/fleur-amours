@@ -1,6 +1,6 @@
 # Build local, Git et déploiement (legacy VPS)
 
-Ce document décrit le flux habituel : **vérifier le build Next.js**, **commiter / pousser sur Git**, puis **déployer sur le VPS legacy** (Coolify). Pour le détail dev tunnel SSH et variables d’environnement, voir aussi [`RECAP-DEV-LEGACY.md`](./RECAP-DEV-LEGACY.md) et [`DEV-VS-PROD.md`](./DEV-VS-PROD.md).
+Ce document décrit le flux habituel : **vérifier le build Next.js**, **commiter / pousser sur Git**, puis **déployer sur le VPS legacy** (Coolify). Un **résumé + commandes PowerShell** est aussi dans [`RECAP-DEV-LEGACY.md`](./RECAP-DEV-LEGACY.md) (section *Aide*). Index des docs : [`README.md`](./README.md). Pour le tunnel dev SSH et les variables d’environnement : [`RECAP-DEV-LEGACY.md`](./RECAP-DEV-LEGACY.md), [`DEV-VS-PROD.md`](./DEV-VS-PROD.md).
 
 ---
 
@@ -41,7 +41,89 @@ Puis relancer le build.
 
 ---
 
-## 3. Git : préparer le commit
+## 3. Tout-en-un : build + Git + push (scripts)
+
+Deux scripts font **dans l’ordre** : vérifier qu’aucun fichier sensible n’est dans le statut → **`npm run build:next`** → **`git add -A`** → **`git commit`** → **`git push`** vers la branche courante.
+
+### Windows (PowerShell) — depuis ta machine, dossier du repo
+
+Ouvre **PowerShell** dans la racine du dépôt (celle qui contient `next\` et `package.json`). Par exemple :
+
+1. Dans l’Explorateur de fichiers : va dans `c:\workspace` (ou ton clone), **Shift + clic droit** → **Ouvrir dans le terminal** / **Ouvrir la fenêtre PowerShell ici**.
+2. Ou dans une console déjà ouverte :
+
+```powershell
+cd c:\workspace
+```
+
+*(Adapte le chemin si ton clone n’est pas `c:\workspace`.)*
+
+Puis lance le script :
+
+```powershell
+.\scripts\build-and-push.ps1 -CommitMessage "feat: ma livraison"
+```
+
+**Si PowerShell refuse d’exécuter les scripts** (`running scripts is disabled`), une fois pour toutes pour ton utilisateur :
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+**Sans changer de répertoire** (chemin absolu vers le script, le script se place tout seul à la racine du repo) :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "c:\workspace\scripts\build-and-push.ps1" -CommitMessage "feat: ma livraison"
+```
+
+Options utiles (à ajouter comme paramètres) :
+
+- **`-SkipBuild`** : seulement commit + push (pas de `npm run build:next`).
+- **`-NoPush`** : build + commit, sans `git push`.
+
+Exemple sans push (tu pousseras plus tard) :
+
+```powershell
+.\scripts\build-and-push.ps1 -CommitMessage "wip: sauvegarde" -NoPush
+```
+
+### Linux, macOS, WSL, Git Bash — ou **une commande SSH**
+
+Script : [`scripts/build-and-git.sh`](../scripts/build-and-git.sh).
+
+```bash
+# Depuis la racine du repo
+bash scripts/build-and-git.sh "feat: ma livraison"
+```
+
+Variables d’environnement :
+
+- **`SKIP_BUILD=1`** : pas de build, uniquement git (si tu as déjà buildé).
+- **`NO_PUSH=1`** : build + commit, sans push.
+
+**Exemple en une ligne SSH** (machine distante où le clone du repo est déjà présent ; adapte utilisateur, hôte et chemin) :
+
+```bash
+ssh utilisateur@serveur 'cd /chemin/vers/workspace && bash scripts/build-and-git.sh "chore: deploy"'
+```
+
+Avec build sauté (tu as déjà validé le build ailleurs) :
+
+```bash
+ssh utilisateur@serveur 'cd /chemin/vers/workspace && SKIP_BUILD=1 bash scripts/build-and-git.sh "chore: sync"'
+```
+
+### npm (si `bash` est disponible, ex. Git Bash)
+
+```bash
+npm run build:git:push -- "feat: message de commit"
+```
+
+Sous **cmd.exe** sans Bash, utilise plutôt **`build-and-push.ps1`** ci-dessus.
+
+---
+
+## 4. Git : préparer le commit (à la main)
 
 ### Vérifier les changements
 
@@ -75,11 +157,11 @@ Remplace `main` par ta branche de déploiement si elle est différente (`product
 
 ---
 
-## 4. Déploiement sur legacy (Coolify)
+## 5. Déploiement sur legacy (Coolify)
 
 Le **code** arrive sur le serveur quand tu **push** ; l’**image** ou le **service** est reconstruit selon ta config Coolify.
 
-1. **Push Git** (étape 3).
+1. **Push Git** (section 3 ou 4).
 2. Dans **Coolify**, ouvrir le service associé au Next legacy (souvent nommé « legacy » ou similaire).
 3. Lancer **Redeploy** ou **Rebuild** si le déploiement automatique n’est pas activé ou si tu veux forcer une image neuve.
 4. Attendre la fin du build et du démarrage du conteneur.
@@ -116,8 +198,8 @@ Compose : voir `docker-compose.next.yml` et la doc dans les commentaires en têt
 
 ---
 
-## 6. Résumé en trois lignes
+## 7. Résumé en trois lignes
 
-1. `npm run build:next` → en cas d’erreur bizarre, supprimer `next/.next` puis rebuild.  
-2. `git add -A` → `git commit` → `git push origin <branche>`.  
+1. **`npm run build:next`** (ou **`bash scripts/build-and-git.sh`** / **`build-and-push.ps1`**) → en cas d’erreur bizarre, supprimer `next/.next` puis rebuild.  
+2. **`git add -A`** → **`git commit`** → **`git push`** (ou laisser le script section 3 le faire).  
 3. Coolify : **Redeploy / Rebuild** si nécessaire, puis vérifier l’app et `/api/ai/status`.

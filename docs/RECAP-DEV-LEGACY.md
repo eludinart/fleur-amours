@@ -4,6 +4,24 @@
 - Environnements autonomes : `app-fleurdamours.eludein.art/jardin` et `www.eludein.art/jardin` sont independants (pas de liens croises).
 - Stack : uniquement **Next.js + MariaDB** (Node), pas de PHP.
 
+## Aide : build, Git et déploiement
+
+Guide détaillé (build Next, Git, Coolify, **PowerShell depuis Windows**, scripts Bash / SSH) : [**BUILD-AND-GIT-DEPLOY.md**](./BUILD-AND-GIT-DEPLOY.md).
+
+**Sur ta machine Windows**, à la racine du dépôt (ex. `c:\workspace`) :
+
+```powershell
+.\scripts\build-and-push.ps1 -CommitMessage "feat: ma livraison"
+```
+
+Sans te placer dans le dossier du repo (chemin à adapter) :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "c:\workspace\scripts\build-and-push.ps1" -CommitMessage "feat: ma livraison"
+```
+
+Si PowerShell bloque les scripts : `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`. Options du script : `-SkipBuild`, `-NoPush`. Tout le détail est dans **BUILD-AND-GIT-DEPLOY.md**.
+
 ## 1) Pre-requis (communs)
 1. Repo Git a jour (branche de travail `main` ou autre, selon ton workflow).
 2. Ne pas commiter de secrets / artefacts :
@@ -98,6 +116,9 @@ node next/scripts/run-migration-010.js --production
    - Session porte suivante (si l’UI progresse, le flux est bon)
 
 ## 4) Pousser en Git (flux standard)
+
+Tu peux enchaîner build + `add` + `commit` + `push` avec le script PowerShell (section **Aide** ci-dessus) au lieu des commandes manuelles.
+
 ### 4.1 Verifier l’etat
 ```bash
 git status

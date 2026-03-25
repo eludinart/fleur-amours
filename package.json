@@ -18,6 +18,7 @@
     "translate-fleur-questions": "node scripts/translate-fleur-questions.js",
     "grant-admin": "node scripts/grant-admin.js",
     "version:bump": "node scripts/bump-version.js",
+    "build:git:push": "bash scripts/build-and-git.sh",
     "docker:next:build": "docker build -f Dockerfile.next -t fleur-next:latest .",
     "docker:next:up": "docker compose -f docker-compose.next.yml -f docker-compose.next.local.yml --env-file docker-compose.env up -d"
   },
