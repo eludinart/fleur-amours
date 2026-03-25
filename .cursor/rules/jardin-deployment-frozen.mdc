@@ -9,11 +9,11 @@ alwaysApply: true
 
 - `https://eludein.art/jardin`
 - `https://www.eludein.art/jardin/`
-- `https://legacy.eludein.art/jardin`
+- `https://app-fleurdamours.eludein.art/jardin`
 
 ## Environnements séparés
 
-www.eludein.art/jardin (Hostinger) et legacy.eludein.art/jardin (VPS) sont indépendants — pas de liens croisés.
+www.eludein.art/jardin (Hostinger) et app-fleurdamours.eludein.art/jardin (VPS legacy) sont indépendants — pas de liens croisés.
 
 ## Périmètre
 

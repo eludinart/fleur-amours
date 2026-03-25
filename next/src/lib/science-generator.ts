@@ -5,6 +5,8 @@ import { getMyConversations, getMessages } from './db-chat'
 import { getChannelMessages, getChannelMessagesSince, getChannelLastMessageAt, getMyChannels } from './db-social'
 import { my as myDreamscapes } from './db-dreamscape'
 import { my as myTarotReadings } from './db-tarot'
+import { my as mySessions } from './db-sessions'
+import { getMyResults, getResult, getDuoResult } from './db-fleur'
 
 type ScienceAIOutput = {
   facts: Array<{
@@ -166,6 +168,147 @@ export async function generateScienceProfile(params: {
 
   const labelFn = confidenceLabel(config)
   const names = petalLabel(locale)
+
+  async function collectPetalsAggregateFromDB(): Promise<Record<string, number>> {
+    // Reproduire l'idée de `petals_aggregate` côté serveur avec les flags admin.
+    // Objectif : le score de pétales (v) ne dépend plus du client.
+    const PETAL_IDS_LOCAL: PetalId[] = [...PETAL_IDS]
+    const CARD_TO_PETAL_LOCAL: Record<string, string> = {
+      Agapè: 'agape',
+      Philautia: 'philautia',
+      Mania: 'mania',
+      Storgè: 'storge',
+      Pragma: 'pragma',
+      Philia: 'philia',
+      Ludus: 'ludus',
+      Éros: 'eros',
+    }
+    const init: Record<PetalId, number> = {
+      agape: 0,
+      philautia: 0,
+      mania: 0,
+      storge: 0,
+      pragma: 0,
+      philia: 0,
+      ludus: 0,
+      eros: 0,
+    }
+    const petalsAggregate: Record<PetalId, number> = { ...init }
+    let petalsCount = 0
+
+    function scoresTo01(scores: Record<string, number> | undefined, maxScale = 5) {
+      if (!scores) return {} as Record<string, number>
+      const out: Record<string, number> = {}
+      for (const p of PETAL_IDS_LOCAL) {
+        out[p] = Math.min(1, Math.max(0, (scores[p] ?? 0) / maxScale))
+      }
+      return out
+    }
+
+    // Fleur / Ma Fleur / Duo
+    const includeSolo = config.include_solo_fleur || config.include_ma_fleur
+    const includeDuo = config.include_duo
+    if (includeSolo || includeDuo) {
+      try {
+        const fleurRes = await getMyResults(String(params.userId))
+        const fleurItems = (fleurRes as any)?.items ?? []
+        for (const item of (fleurItems as Array<Record<string, unknown>>).slice(0, 20)) {
+          const type = String(item.type ?? '')
+          if (type === 'duo') {
+            if (!includeDuo) continue
+            const token = String(item.token ?? '').trim()
+            if (!token) continue
+            const duo = await getDuoResult(token)
+            const personA = duo?.person_a as any
+            const scores = (personA?.scores ?? personA) as Record<string, number> | undefined
+            const p01 = scoresTo01(scores, 5)
+            PETAL_IDS_LOCAL.forEach((p) => {
+              petalsAggregate[p] += p01[p] ?? 0
+            })
+            petalsCount++
+          } else {
+            if (!includeSolo) continue
+            const id = Number(item.id ?? 0)
+            if (!id) continue
+            const res = await getResult(id, String(params.userId))
+            const scores = (res?.scores ?? res) as Record<string, number> | undefined
+            const p01 = scoresTo01(scores, 5)
+            PETAL_IDS_LOCAL.forEach((p) => {
+              petalsAggregate[p] += p01[p] ?? 0
+            })
+            petalsCount++
+          }
+        }
+      } catch {
+        // best-effort
+      }
+    }
+
+    // Sessions (plan14j) — proxy principal pour l'évolution du profil
+    if (config.include_petals_aggregate) {
+      try {
+        const sessionsRes = await mySessions(params.userEmail)
+        const items = (sessionsRes as any)?.items ?? []
+        for (const s of items as Array<Record<string, unknown>>) {
+          const p = s?.petals as Record<string, number> | undefined
+          if (!p || typeof p !== 'object') continue
+          PETAL_IDS_LOCAL.forEach((id) => {
+            petalsAggregate[id] += Math.min(1, Math.max(0, Number(p[id] ?? 0)))
+          })
+          petalsCount++
+        }
+      } catch {
+        // best-effort
+      }
+    }
+
+    // Tirages
+    if (config.include_tarot_1card || config.include_tarot_4doors) {
+      try {
+        const readingsRes = await myTarotReadings(String(params.userId), params.userEmail)
+        const items = (readingsRes as any)?.items ?? []
+        for (const r of items as Array<Record<string, unknown>>) {
+          const type = String(r.type ?? 'simple')
+          if (type === 'four' && !config.include_tarot_4doors) continue
+          if (type !== 'four' && !config.include_tarot_1card) continue
+
+          const card = (r as any).card ?? ((r as any).cards as any[])?.[0]
+          const name = card?.name ? String(card.name) : ''
+          if (name && CARD_TO_PETAL_LOCAL[name]) {
+            petalsAggregate[CARD_TO_PETAL_LOCAL[name] as PetalId] += 0.5
+            petalsCount++
+          }
+        }
+      } catch {
+        // best-effort
+      }
+    }
+
+    // Promenade onirique
+    if (config.include_dreamscape) {
+      try {
+        const dreamRes = await myDreamscapes(String(params.userId))
+        const items = (dreamRes as any)?.items ?? []
+        for (const d of items as Array<Record<string, unknown>>) {
+          const p = d?.petals as Record<string, number> | undefined
+          if (!p || typeof p !== 'object') continue
+          PETAL_IDS_LOCAL.forEach((id) => {
+            petalsAggregate[id] += Math.min(1, Math.max(0, Number(p[id] ?? 0)))
+          })
+          petalsCount++
+        }
+      } catch {
+        // best-effort
+      }
+    }
+
+    const petalsMax = Math.max(...Object.values(petalsAggregate), 0.01)
+    const petals_aggregate: Record<PetalId, number> = {} as any
+    PETAL_IDS_LOCAL.forEach((p) => {
+      petals_aggregate[p] = Math.min(1, petalsAggregate[p] / petalsMax)
+    })
+    return petals_aggregate as Record<string, number>
+  }
 
   // Cache (si DB dispo)
   if (db_configured && !params.force) {
@@ -528,6 +671,13 @@ export async function generateScienceProfile(params: {
     }
   }
 
+  // Petals baseline (v) — côté serveur quand c’est possible.
+  // On fait ça avant la construction Facts/Hypothèses.
+  let petalsBaseline: Record<string, number> = params.petals ?? {}
+  if (db_configured && config.include_petals_aggregate) {
+    petalsBaseline = await collectPetalsAggregateFromDB()
+  }
+
   const evidenceByPetal: Record<PetalId, { score: number; refs: string[] }> = {
     agape: { score: 0, refs: [] },
     philautia: { score: 0, refs: [] },
@@ -561,7 +711,7 @@ export async function generateScienceProfile(params: {
 
   if (config.include_petals_aggregate) {
     for (const petal of PETAL_IDS) {
-      const v = clamp01(Number(params.petals?.[petal] ?? 0))
+      const v = clamp01(Number(petalsBaseline?.[petal] ?? 0))
       const evidenceScore = evidenceByPetal[petal]?.score ?? 0
       const confidence = clamp01(0.68 * v + 0.32 * evidenceScore)
       candidates.push({ petal, confidence, evidenceRefs: evidenceByPetal[petal].refs })

@@ -22,6 +22,7 @@ import {
 } from 'recharts'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
 import { sessionsApi } from '@/api/sessions'
+import { useAuth } from '@/contexts/AuthContext'
 
 const PETAL_COLORS: Record<string, string> = {
   agape: '#f43f5e',
@@ -622,6 +623,10 @@ function DashboardSkeleton() {
 }
 
 type AnalyticsData = {
+  scope?: 'all' | 'patients'
+  scope_label?: string
+  scope_coach_user_id?: number | null
+  scope_patient_count?: number | null
   total_users?: number
   total_sessions?: number
   completed_sessions?: number
@@ -643,6 +648,7 @@ type AnalyticsData = {
 }
 
 export default function AdminAnalyticsPage() {
+  const { isAdmin, isCoach } = useAuth()
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -684,6 +690,43 @@ export default function AdminAnalyticsPage() {
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
               Indicateurs globaux · Dynamiques de la Fleur · Parts d&apos;ombre
             </p>
+            {/* Périmètre — pour éviter toute ambiguïté coach vs admin */}
+            {(isCoach || isAdmin) && (
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${
+                    (data?.scope ?? (isAdmin ? 'all' : 'patients')) === 'all'
+                      ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300'
+                      : 'border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200'
+                  }`}
+                  title="Périmètre des données affichées"
+                >
+                  <span className="text-[11px]">
+                    {(data?.scope ?? (isAdmin ? 'all' : 'patients')) === 'all' ? '🌍' : '🧑‍🌾'}
+                  </span>
+                  <span>
+                    {data?.scope_label ??
+                      ((data?.scope ?? (isAdmin ? 'all' : 'patients')) === 'all'
+                        ? 'Toutes les sessions'
+                        : 'Patientèle du coach')}
+                  </span>
+                  {data?.scope_patient_count != null &&
+                    (data?.scope ?? (isAdmin ? 'all' : 'patients')) === 'patients' && (
+                      <span className="opacity-80">
+                        · {data.scope_patient_count} patient
+                        {data.scope_patient_count > 1 ? 's' : ''}
+                      </span>
+                    )}
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  (Pour le détail par personne :{' '}
+                  <Link href="/admin/suivi" className="underline">
+                    Suivi individuel
+                  </Link>
+                  )
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button

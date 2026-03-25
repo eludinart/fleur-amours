@@ -16,9 +16,9 @@ services:
       context: .
       dockerfile: Dockerfile.next
       args:
-        # VPS autonome : API et app sur legacy (aucun lien avec www.eludein.art)
-        NEXT_PUBLIC_API_TARGET: ${NEXT_PUBLIC_API_TARGET:-https://legacy.eludein.art}
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://legacy.eludein.art}
+        # VPS autonome : API et app sur app-fleurdamours (aucun lien avec www.eludein.art)
+        NEXT_PUBLIC_API_TARGET: ${NEXT_PUBLIC_API_TARGET:-https://app-fleurdamours.eludein.art}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://app-fleurdamours.eludein.art/jardin}
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
         GIT_COMMIT: ${GIT_COMMIT:-unknown}
         SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}

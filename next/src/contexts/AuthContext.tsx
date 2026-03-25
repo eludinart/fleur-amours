@@ -9,7 +9,7 @@ type AuthContextValue = {
   user: User
   loading: boolean
   login: (loginId: string, password: string) => Promise<User>
-  register: (email: string, password: string, name?: string) => Promise<User>
+  register: (email: string, password: string, name?: string, inviteToken?: string) => Promise<User>
   logout: () => void
   refreshUser: () => Promise<void>
   isAdmin: boolean
@@ -83,8 +83,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return u
   }
 
-  const register = async (email: string, password: string, name = '') => {
-    const { token, user: u } = (await authApi.register(email, password, name)) as { token: string; user: Record<string, unknown> }
+  const register = async (email: string, password: string, name = '', inviteToken?: string) => {
+    const { token, user: u } = (await authApi.register(email, password, name, inviteToken)) as {
+      token: string
+      user: Record<string, unknown>
+    }
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', token)
       localStorage.setItem('auth_user', JSON.stringify(u))

@@ -47,6 +47,7 @@ import AdminUsersPage from '@/views/AdminUsersPage'
 import AdminSessionsPage from '@/views/AdminSessionsPage'
 import AdminSciencePage from '@/views/AdminSciencePage'
 import CoachSuiviPage from '@/views/CoachSuiviPage'
+import CoachPatientelePage from '@/views/CoachPatientelePage'
 
 const AdminAnalyticsPage = dynamic(
   () => import('@/views/AdminAnalyticsPage').then((m) => m.default),
@@ -353,6 +354,13 @@ function AppRoutes() {
           </Layout>
         </ProtectedLayout>
       ),
+      patientele: (
+        <ProtectedLayout adminOrCoach>
+          <Layout>
+            <CoachPatientelePage />
+          </Layout>
+        </ProtectedLayout>
+      ),
       sessions: (
         <ProtectedLayout adminOnly>
           <Layout>
@@ -433,6 +441,67 @@ function AppRoutes() {
         </div>
       </Suspense>
     )
+  }
+
+  // Coach routes (coach-only space; still uses shared pages)
+  if (route === 'coach') {
+    const coachSubRoute = subRoute || ''
+    const coachPages: Record<string, React.ReactNode> = {
+      '': (
+        <ProtectedLayout adminOrCoach>
+          <Layout>
+            <CoachSuiviPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+      suivi: (
+        <ProtectedLayout adminOrCoach>
+          <Layout>
+            <CoachSuiviPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+      analytics: (
+        <ProtectedLayout adminOrCoach>
+          <Layout>
+            <AdminAnalyticsPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+      patientele: (
+        <ProtectedLayout adminOrCoach>
+          <Layout>
+            <CoachPatientelePage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+      messages: (
+        <ProtectedLayout adminOrCoach>
+          <Layout>
+            <AdminMessagesPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+      chat: (
+        <ProtectedLayout adminOrCoach>
+          <Layout>
+            <AdminChatPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+    }
+
+    const coachPage = coachPages[coachSubRoute] ?? coachPages[''] ?? coachPages.suivi
+    if (coachPage) {
+      return (
+        <Suspense fallback={<PageFallback />}>
+          <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
+            <LocaleSync />
+            {coachPage}
+          </div>
+        </Suspense>
+      )
+    }
   }
 
   // Stats, campaigns, diagnostic, etc. (protected or admin)

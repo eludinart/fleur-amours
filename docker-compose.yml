@@ -53,7 +53,7 @@ services:
       DB_PREFIX: ${DB_PREFIX:-wp_}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis}
       JWT_EXPIRE_HOURS: ${JWT_EXPIRE_HOURS:-720}
-      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-https://legacy.eludein.art/jardin}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-https://app-fleurdamours.eludein.art/jardin}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}

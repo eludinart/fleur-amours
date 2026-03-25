@@ -17,6 +17,7 @@ import { aiApi } from '@/api/ai'
 import { sessionsApi } from '@/api/sessions'
 import { billingApi } from '@/api/billing'
 import { toast } from '@/hooks/useToast'
+import { useAiSession } from '@/hooks/useAiSession'
 import { FOUR_DOORS, BACK_IMG, getCardTranslated, getDoorTranslated } from '@/data/tarotCards'
 import { BuyTarotCTA } from '@/components/BuyTarotCTA'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
@@ -1199,7 +1200,7 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded }) {
 // ÉTAPE 3 : SESSION — organique, cartes émergentes
 // ═══════════════════════════════════════════════════════════════
 
-function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard }) {
+function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDrawCard }) {
   const locale = useStore((s) => s.locale)
   // ── État conversation ─────────────────────────────────────
   const [turn, setTurn]               = useState(initialState?.turn ?? 0)
@@ -2654,6 +2655,414 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
         @keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         @keyframes cardReveal { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
       `}</style>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ÉTAPE 3 : SESSION — refactor IA (hook + sous-composants)
+// Note: UI simplifiée mais flux complet (tuteur, cartes, résumés).
+// ═══════════════════════════════════════════════════════════════
+function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard }) {
+  const [cardModal, setCardModal] = useState(null)
+
+  const ai = useAiSession({
+    thresholdData,
+    initialState,
+    onComplete,
+    cardModal,
+  })
+
+  const {
+    listening,
+    interimText,
+    supported,
+    toggleMic,
+    stop,
+    setManualText,
+    effectiveText,
+    textToSend,
+
+    turn,
+    petals,
+    petalsDeficit,
+    petalsHistory,
+    history,
+    aiMessage,
+    loading,
+    error,
+    threadContext,
+
+    currentDoor,
+    currentCard,
+    drawnCards,
+    doorTurn,
+    lockedDoors,
+    pendingSuggestion,
+    fallbackSuggestion,
+    fallbackSuggestionDismissed,
+    doorIntroMessage,
+    preDrawnCard,
+
+    showCardDraw,
+    setShowCardDraw,
+    doorLocked,
+    showSummaryPanel,
+    showInputWithSummary,
+    setShowInputWithSummary,
+    doorSummary,
+    summaryLoading,
+
+    overriddenPetals,
+    handlePetalOverride,
+
+    sendToTuteur,
+    handleRetrySend,
+    handleCardDrawn,
+    confirmDoorTransition,
+    clearPendingSuggestion,
+    dismissFallbackSuggestion,
+    clearPreDrawnCard,
+
+    cardContext,
+    cardContextLoading,
+
+    shadowPetalId,
+    displayMessage,
+  } = ai
+
+  const localeDoor = DOOR_MAP[currentDoor] ?? FOUR_DOORS[0]
+
+  function SessionLeftColumn({ flowerSize = 320 }) {
+    return (
+      <div className="hidden lg:block lg:sticky lg:top-4 lg:self-start min-w-0 h-full overflow-y-auto overflow-x-hidden">
+        <div className="space-y-4 p-4 lg:p-0">
+          <div className="flex flex-col items-center w-full shrink-0">
+            <FlowerSVG
+              petals={petals}
+              petalsDeficit={petalsDeficit}
+              petalsEvolution={petalsHistory.length > 0 ? petalsHistory[petalsHistory.length - 1] : null}
+              size={flowerSize}
+              animate
+              showLabels
+              overriddenPetals={overriddenPetals}
+              highlightId={aiMessage?.explore_petal ?? undefined}
+            />
+          </div>
+
+          {(Object.values(petalsDeficit || {}).some((v) => (v ?? 0) > 0.05) || petalsHistory.length > 0) && (
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 text-center flex items-center justify-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                <span>{t('session.rises')}</span>
+              </span>
+              <span className="text-slate-300 dark:text-slate-600">|</span>
+              <span className="inline-flex items-center gap-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 dark:bg-red-500" />
+                <span>{t('session.tensions')}</span>
+              </span>
+            </p>
+          )}
+
+          <SovereigntyPanel
+            petals={petals}
+            overriddenPetals={overriddenPetals}
+            onChange={handlePetalOverride}
+            autoOpen={false}
+            shadowPetalId={shadowPetalId}
+          />
+
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/40 p-3">
+            <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+              {t('session.drawnCards')}
+            </p>
+            <div className="grid grid-cols-4 gap-2 mt-2">
+              {FOUR_DOORS.map((d) => {
+                const dd = d.key
+                const drawn = drawnCards.find((x) => x.door === dd)
+                return (
+                  <div key={dd} className="flex flex-col items-center gap-0.5">
+                    {drawn?.card ? (
+                      <div className="w-14 h-20 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                        {drawn.card.img ? (
+                          <img src={drawn.card.img} alt={drawn.card.name} className="w-full h-full object-contain" />
+                        ) : (
+                          <span className="text-[10px] text-slate-600 dark:text-slate-300 text-center leading-tight break-words">
+                            {drawn.card.name}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-14 h-20 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/30 flex items-center justify-center">
+                        <img src={BACK_IMG} alt="" className="w-full h-full object-contain" />
+                      </div>
+                    )}
+                    <span className={`text-[9px] font-medium ${d.color}`}>{d.subtitle}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {threadContext && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest px-1">
+                {t('session.liveThreads')}
+              </p>
+              <LiveThreads threadContext={threadContext} />
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  function SessionRightColumn() {
+    return (
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
+        <div className={`rounded-2xl border-2 ${localeDoor.border} p-4 flex gap-3 items-center w-full shrink-0`}>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <p className={`text-xs font-bold ${localeDoor.color}`}>{localeDoor.subtitle}</p>
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
+                {t('session.doorXof4', { n: lockedDoors.length + 1 })}
+              </span>
+            </div>
+            {currentCard ? <p className="font-semibold text-sm truncate">{currentCard.name}</p> : <p className="text-xs text-slate-400 italic">Pas encore de carte</p>}
+            <p className="text-[10px] text-slate-500 mt-1">Échange {turn}</p>
+          </div>
+        </div>
+
+        {aiMessage?.shadow_detected && (
+          <div className="rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 p-4 mt-4">
+            <p className="text-xs font-bold text-rose-700 dark:text-rose-300">
+              {t('session.shadowNeedAccompaniment')}
+            </p>
+            {displayMessage.reflection && (
+              <div className="mt-3">
+                <TranslatableContent
+                  text={displayMessage.reflection}
+                  className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed italic"
+                  as="p"
+                />
+              </div>
+            )}
+            <a
+              href="/contact"
+              className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl font-semibold text-sm bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:opacity-90 transition-colors"
+            >
+              {t('session.requestAccompaniment')} →
+            </a>
+          </div>
+        )}
+
+        {/* Message du Tuteur */}
+        <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50 to-white dark:from-violet-950/10 dark:to-slate-900 p-5 space-y-3 mt-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-violet-500 uppercase tracking-widest">✦ {t('session.tuteur')}</p>
+            {turn > 0 && <span className="text-[10px] text-slate-400">Échange {turn}</span>}
+          </div>
+          <p className="text-base leading-[1.6] italic text-slate-700 dark:text-slate-200 break-words">
+            {!aiMessage && doorIntroMessage ? `Prenez un instant pour sentir ce qui se passe en vous. ${(doorIntroMessage.response_a || '').trim()}` : displayMessage.response_a}
+          </p>
+          {displayMessage.response_b && (
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed break-words border-t border-violet-100 dark:border-violet-900 pt-2">
+              {displayMessage.response_b}
+            </p>
+          )}
+          {displayMessage.reflection && (
+            <div className="flex items-start gap-2 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 px-3 py-2">
+              <span className="text-teal-500 text-sm mt-0.5">⚖</span>
+              <TranslatableContent text={displayMessage.reflection} className="text-xs text-teal-700 dark:text-teal-300 leading-relaxed italic min-w-0" as="p" />
+            </div>
+          )}
+          <div className="rounded-xl bg-white dark:bg-slate-800 border border-violet-100 dark:border-violet-900 p-4">
+            <p className="text-sm md:text-base font-semibold text-slate-800 dark:text-slate-100 leading-[1.6] break-words">{displayMessage.question}</p>
+          </div>
+        </div>
+
+        {/* Suggestion de carte */}
+        {((pendingSuggestion ||
+          (doorTurn >= 3 && !currentCard && !drawnCards.some((d) => d.door === currentDoor) && !fallbackSuggestionDismissed && fallbackSuggestion))) &&
+          !showCardDraw &&
+          !doorLocked &&
+          !showSummaryPanel &&
+          lockedDoors.length < 4 && (
+            <div className="w-fit max-w-full self-start shrink-0 mt-4">
+              <CardSuggestionPanel
+                suggestion={pendingSuggestion || fallbackSuggestion}
+                onAccept={() => {
+                  const displayedSugg = pendingSuggestion || fallbackSuggestion
+                  const d = DOOR_MAP[currentDoor] ?? localeDoor
+                  let card = null
+
+                  if (displayedSugg?.card_name) {
+                    card = d.group.find((c) => (c.name || '').toLowerCase() === (displayedSugg.card_name || '').toLowerCase())
+                  }
+
+                  if (!card) {
+                    card = preDrawnCard ?? d.group[Math.floor(Math.random() * d.group.length)]
+                  }
+
+                  handleCardDrawn(card, currentDoor)
+                  clearPendingSuggestion()
+                  clearPreDrawnCard()
+                }}
+                onRandomDraw={() => {
+                  const d = DOOR_MAP[currentDoor] ?? localeDoor
+                  const card = d.group[Math.floor(Math.random() * d.group.length)]
+                  handleCardDrawn(card, currentDoor, { isRandomDraw: true })
+                  clearPendingSuggestion()
+                  clearPreDrawnCard()
+                }}
+                onSkip={() => {
+                  if (pendingSuggestion) clearPendingSuggestion()
+                  else dismissFallbackSuggestion()
+                }}
+              />
+            </div>
+          )}
+
+        {/* Tirage */}
+        {showCardDraw && lockedDoors.length < 4 && (
+          <div className="w-fit max-w-full self-start shrink-0 mt-4">
+            <CardDrawPanel
+              door={localeDoor}
+              onDrawn={(card) => {
+                handleCardDrawn(card, currentDoor, { isRandomDraw: true })
+                clearPreDrawnCard()
+              }}
+              preDrawnCard={preDrawnCard}
+              onBeforeDraw={onBeforeDrawCard}
+            />
+          </div>
+        )}
+
+        {/* Input */}
+        {!doorLocked && !showCardDraw && (!showSummaryPanel || showInputWithSummary) && (
+          <div className="space-y-2 py-4 md:py-3 shrink-0 w-full mt-4">
+            <div className="space-y-2">
+              <textarea
+                value={effectiveText}
+                onChange={(e) => {
+                  if (listening) stop()
+                  setManualText(e.target.value)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey || !e.shiftKey) && textToSend.trim() && !loading) {
+                    e.preventDefault()
+                    if (listening) stop()
+                    sendToTuteur(textToSend)
+                  }
+                }}
+                placeholder={listening ? t('session.speaking') : supported ? t('session.speakOrWrite') : t('session.writeResponse')}
+                rows={3}
+                disabled={loading}
+                inputMode="text"
+                autoComplete="off"
+                spellCheck={!listening}
+                className={`w-full px-4 py-3 rounded-xl border text-base sm:text-sm focus:outline-none focus:ring-2 resize-none leading-relaxed disabled:opacity-50 overflow-y-auto transition-colors
+                  ${
+                    listening
+                      ? 'border-rose-400 dark:border-rose-600 bg-rose-50/40 dark:bg-rose-950/20 focus:ring-rose-400/40'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-violet-400/40'
+                  }`}
+              />
+              <div className="flex gap-2 items-center">
+                {supported && <MicButton listening={listening} supported={supported} onToggle={toggleMic} />}
+                <button
+                  onClick={() => sendToTuteur(textToSend)}
+                  disabled={!textToSend.trim() || loading}
+                  className={`flex-1 h-11 rounded-xl flex items-center justify-center font-semibold text-sm transition-all active:scale-95
+                    ${textToSend.trim() && !loading ? 'bg-gradient-to-r from-violet-500 to-rose-500 text-white shadow-md' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}
+                  title="Envoyer (Entrée)"
+                  aria-label="Envoyer"
+                >
+                  {loading ? (
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {loading && <p className="text-xs text-violet-400 italic text-center animate-pulse">{t('session.tuteurListening')}</p>}
+          </div>
+        )}
+
+        {/* Erreur */}
+        {error && (
+          <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 text-sm text-amber-800 dark:text-amber-200 space-y-3 mt-4">
+            <p>{error}</p>
+            <p className="text-xs text-amber-600 dark:text-amber-300">{t('session.tutorErrorSavedHint')}</p>
+            <button
+              type="button"
+              onClick={handleRetrySend}
+              className="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold text-sm hover:bg-amber-600 transition-colors"
+            >
+              {t('session.tutorErrorRetry')}
+            </button>
+          </div>
+        )}
+
+        {/* Résumé de porte */}
+        {showSummaryPanel && !doorLocked && (
+          <div className="mt-4">
+            <DoorSummaryPanel
+              door={localeDoor}
+              summary={doorSummary}
+              onConfirm={confirmDoorTransition}
+              loading={summaryLoading}
+              isLastDoor={lockedDoors.length === 3}
+              card={currentCard}
+            />
+            {!showInputWithSummary && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowInputWithSummary(true)}
+                  className="w-full py-3 rounded-xl text-sm font-semibold border-2 border-dashed border-violet-300 dark:border-violet-600 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors"
+                >
+                  {t('session.continueExchanges')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Bouton tirer une carte */}
+        {!doorLocked && !showCardDraw && !showSummaryPanel && lockedDoors.length < 4 && !currentCard && !pendingSuggestion && doorTurn >= 6 && (
+          <div className="flex gap-2 flex-wrap mt-4">
+            <button
+              onClick={() => setShowCardDraw(true)}
+              className={`flex-1 min-w-[140px] py-2 rounded-xl text-xs font-semibold border ${localeDoor.border} ${localeDoor.color} bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors`}
+            >
+              🎴 {t('session.drawCard')}
+            </button>
+          </div>
+        )}
+
+        {/* Transition automatique */}
+        {doorLocked && lockedDoors.length < 4 && (
+          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-4 text-center mt-4">
+            <p className="text-sm text-emerald-700 dark:text-emerald-300 animate-pulse">
+              {lockedDoors.length === 3 ? t('session.preparingSynthPlan') : t('session.passingToNextDoor')}
+            </p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto h-full flex flex-col min-h-0">
+      <div className="grid lg:grid-cols-[420px,1fr] gap-5 flex-1 min-h-0 min-w-0 overflow-hidden">
+        <SessionLeftColumn />
+        <SessionRightColumn />
+      </div>
     </div>
   )
 }

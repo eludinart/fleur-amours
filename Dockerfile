@@ -7,12 +7,12 @@
 FROM node:20-slim AS next-build
 WORKDIR /app
 
-ARG NEXT_PUBLIC_APP_URL=https://legacy.eludein.art
+ARG NEXT_PUBLIC_APP_URL=https://app-fleurdamours.eludein.art/jardin
 ARG NEXT_PUBLIC_API_URL=
 ARG GIT_COMMIT=unknown
 ARG SOURCE_COMMIT=unknown
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
-# Vide = même origine (legacy.eludein.art) — n'appelle plus www.eludein.art
+# Vide = même origine (VPS app-fleurdamours) — n'appelle plus www.eludein.art
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV USE_NODE_API=true
 

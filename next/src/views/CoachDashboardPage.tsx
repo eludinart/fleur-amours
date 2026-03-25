@@ -147,10 +147,10 @@ export default function CoachDashboardPage() {
             <section>
               <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Raccourcis</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <ShortcutCard to="/admin/analytics" label="Analytics & Profiling" icon="📊" />
-                <ShortcutCard to="/admin/suivi" label="Suivi des utilisateurs" icon="🌸" />
-                <ShortcutCard to="/admin/messages" label="Messages" icon="✉️" />
-                <ShortcutCard to="/admin/chat" label="Chat" icon="💬" />
+                <ShortcutCard to="/coach/analytics" label="Vue globale" icon="📊" />
+                <ShortcutCard to="/coach/suivi" label="Suivi individuel" icon="🌸" />
+                <ShortcutCard to="/coach/messages" label="Messages" icon="✉️" />
+                <ShortcutCard to="/coach/chat" label="Chat" icon="💬" />
               </div>
             </section>
           </>

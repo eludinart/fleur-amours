@@ -13,7 +13,7 @@
 # ============================================================
 
 param(
-    [string]$ApiUrl    = "",         # URL de l'app (ex. https://www.eludein.art/jardin ou https://legacy.eludein.art/jardin)
+    [string]$ApiUrl    = "",         # URL de l'app (ex. https://www.eludein.art/jardin ou https://app-fleurdamours.eludein.art/jardin)
     [string]$ServerUrl = "",         # CAP_SERVER_URL pour Capacitor (optionnel)
     [switch]$Release   = $false,     # Build Release (signé) vs Debug
     [switch]$SkipBuild = $false      # Sauter le build React (si déjà à jour)

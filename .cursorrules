@@ -32,4 +32,4 @@
 
 # Déploiement Production
 
-- **Environnements séparés** : www.eludein.art/jardin (Hostinger) et legacy.eludein.art/jardin (VPS) — aucun lien entre eux.
+- **Environnements séparés** : www.eludein.art/jardin (Hostinger) et app-fleurdamours.eludein.art/jardin (VPS legacy) — aucun lien entre eux.

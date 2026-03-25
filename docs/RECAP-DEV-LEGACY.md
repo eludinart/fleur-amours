@@ -1,7 +1,7 @@
 # Recap Dev vs Legacy (VPS Coolify)
 
 ## 0) Rappel de périmètre (important)
-- Environnements autonomes : `legacy.eludein.art/jardin` et `www.eludein.art/jardin` sont independants (pas de liens croises).
+- Environnements autonomes : `app-fleurdamours.eludein.art/jardin` et `www.eludein.art/jardin` sont independants (pas de liens croises).
 - Stack : uniquement **Next.js + MariaDB** (Node), pas de PHP.
 
 ## 1) Pre-requis (communs)
@@ -53,10 +53,10 @@ npm run dev.vps
 ### 2.5 Rappels IA (OpenRouter)
 - Si OpenRouter n’est pas correctement configure, certaines portes/actions peuvent rester bloquées.
 - Verifier :
-  - `https://legacy.eludein.art/jardin/api/ai/status`
+  - `https://app-fleurdamours.eludein.art/jardin/api/ai/status`
   - Si `provider: "mock"`, la cle OpenRouter n’est pas utilisable.
 
-## 3) Legacy (VPS Coolify) : `legacy.eludein.art/jardin`
+## 3) Legacy (VPS Coolify) : `app-fleurdamours.eludein.art/jardin`
 
 ### 3.1 Ce qu’il faut configurer dans Coolify
 Au minimum (variables d’environnement) :
@@ -91,9 +91,9 @@ node next/scripts/run-migration-010.js --production
 
 ### 3.4 Checks apres deploy
 1. Ouvrir :
-   - `https://legacy.eludein.art/jardin/`
+   - `https://app-fleurdamours.eludein.art/jardin/`
 2. Verifier la status IA :
-   - `https://legacy.eludein.art/jardin/api/ai/status`
+   - `https://app-fleurdamours.eludein.art/jardin/api/ai/status`
 3. Smoke test parcours :
    - Session porte suivante (si l’UI progresse, le flux est bon)
 

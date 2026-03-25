@@ -16,6 +16,7 @@ import {
   GhostComparator,
   SèveTracker,
   DashboardCoachingChats,
+  DashboardMyCoaches,
 } from '@/components/dashboard'
 import { BuyTarotCTA } from '@/components/BuyTarotCTA'
 
@@ -123,6 +124,8 @@ export function DashboardPage() {
         </motion.header>
 
         <DashboardCoachingChats />
+
+        <DashboardMyCoaches />
 
         {(() => {
           const hasSessionInProgress = currentSession?.status === 'in_progress'

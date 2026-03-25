@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-import { useId } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { scoresToPetals } from '@/components/FlowerSVG'
 import { t } from '@/i18n'
 
@@ -47,8 +47,17 @@ export function FleurSociale({
 }) {
   const uid = useId().replace(/:/g, '')
   const petals = scoresToPetals(scores)
-  const now = Date.now()
   const lastAt = lastActivityAt ? new Date(lastActivityAt).getTime() : 0
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Important: éviter Date.now() pendant le rendu (SSR + hydration) pour ne pas
+  // générer d’écart de markup. On calcule un "now" stable tant que le composant
+  // n'est pas monté, puis on rafraîchit après.
+  const now = mounted ? Date.now() : lastAt
   const daysSince = (now - lastAt) / (24 * 60 * 60 * 1000)
   const brightness = Math.max(0.4, Math.min(1, 1.2 - daysSince * 0.15))
 

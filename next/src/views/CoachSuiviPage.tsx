@@ -833,6 +833,21 @@ export default function CoachSuiviPage() {
               Indicateurs de la Fleur d&apos;AmOurs · Parts de lumière et
               d&apos;ombre
             </p>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200"
+                title="Périmètre des utilisateurs affichés"
+              >
+                🧑‍🌾 Patientèle du coach
+              </span>
+              <span className="text-[10px] text-slate-400">
+                (Pour la vue globale :{' '}
+                <Link href="/coach/analytics" className="underline">
+                  Vue globale
+                </Link>
+                )
+              </span>
+            </div>
           </div>
           {urgentCount > 0 && (
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-950/30 border border-red-700/60">

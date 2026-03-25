@@ -3,7 +3,7 @@
 ## Contexte
 
 - **Dev local** : `npm run dev.vps` → tunnel SSH vers MariaDB VPS + Next.js (3001).
-- **Prod legacy** : VPS Coolify (legacy.eludein.art) — Next.js + MariaDB. Autonome.
+- **Prod legacy** : VPS Coolify (app-fleurdamours.eludein.art) — Next.js + MariaDB. Autonome.
 
 ## Différences techniques
 
@@ -15,7 +15,7 @@
 
 ## Environnements autonomes
 
-**legacy.eludein.art** et **www.eludein.art/jardin** sont indépendants : pas de liens croisés.
+**app-fleurdamours.eludein.art** (VPS legacy) et **www.eludein.art/jardin** sont indépendants : pas de liens croisés.
 
 ## Checklist dev local (npm run dev.vps)
 
@@ -38,7 +38,7 @@
 **Causes possibles** :
 
 1. **OpenRouter indisponible**
-   - Vérifier : `https://legacy.eludein.art/jardin/api/ai/status` → si `provider: "mock"`, OpenRouter n'est pas utilisé.
+   - Vérifier : `https://app-fleurdamours.eludein.art/jardin/api/ai/status` → si `provider: "mock"`, OpenRouter n'est pas utilisé.
    - **Solution** : Vérifier `OPENROUTER_API_KEY` dans les variables d'environnement Coolify.
 
 2. **Console navigateur**

@@ -3,8 +3,11 @@ import { api } from '@/lib/api-client'
 export const authApi = {
   login: (login: string, password: string) =>
     api.post('/api/auth/login', { login, password }) as Promise<{ token: string; user: Record<string, unknown> }>,
-  register: (email: string, password: string, name = '') =>
-    api.post('/api/auth/register', { email, password, name }) as Promise<{ token: string; user: Record<string, unknown> }>,
+  register: (email: string, password: string, name = '', inviteToken?: string) =>
+    api.post('/api/auth/register', { email, password, name, invite_token: inviteToken }) as Promise<{
+      token: string
+      user: Record<string, unknown>
+    }>,
   refresh: () => api.post('/api/auth/refresh', {}) as Promise<{ token: string }>,
   me: () => api.get('/api/auth/me') as Promise<Record<string, unknown>>,
   users: (params: { page?: number; per_page?: number; search?: string; role?: string } = {}) => {

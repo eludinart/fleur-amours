@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
@@ -14,8 +14,9 @@ export function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const from = searchParams.get('from') || basePath
+  const inviteToken = (searchParams.get('invite_token') ?? '').trim()
 
-  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [mode, setMode] = useState<'login' | 'register'>(inviteToken ? 'register' : 'login')
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -23,15 +24,34 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    if (inviteToken) setMode('register')
+  }, [inviteToken])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
       if (mode === 'register') {
-        await register(loginId.trim(), password, name.trim())
+        await register(loginId.trim(), password, name.trim(), inviteToken || undefined)
       } else {
         await login(loginId, password)
+
+        // Si l'utilisateur arrive via un lien d'invitation, consommer le token après login.
+        if (inviteToken) {
+          const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+          if (authToken) {
+            await fetch(`${basePath}/api/coach/patients/accept-invite`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${authToken}`,
+              },
+              body: JSON.stringify({ invite_token: inviteToken }),
+            })
+          }
+        }
       }
       const target = (from.startsWith('/') ? from : `/${from}`).replace(/^\/jardin\/?/, '/') || '/'
       router.replace(target)

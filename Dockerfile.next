@@ -4,7 +4,7 @@
 # ============================================================
 #
 # Build args (override in Coolify / CI):
-#   VPS autonome : NEXT_PUBLIC_API_TARGET et NEXT_PUBLIC_APP_URL = https://legacy.eludein.art
+#   VPS autonome : NEXT_PUBLIC_API_TARGET = origine ; NEXT_PUBLIC_APP_URL = public URL avec basePath (/jardin)
 #   (aucun lien avec www.eludein.art — environnements séparés)
 #
 
@@ -13,8 +13,8 @@ FROM node:20-slim AS next-build
 WORKDIR /app
 
 # Build args pour rewrites (proxy /api et /cartes)
-ARG NEXT_PUBLIC_API_TARGET=http://localhost:8081
-ARG NEXT_PUBLIC_APP_URL=https://legacy.eludein.art
+ARG NEXT_PUBLIC_API_TARGET=https://app-fleurdamours.eludein.art
+ARG NEXT_PUBLIC_APP_URL=https://app-fleurdamours.eludein.art/jardin
 ARG NEXT_PUBLIC_API_URL=
 ARG GIT_COMMIT=unknown
 ARG SOURCE_COMMIT=unknown
