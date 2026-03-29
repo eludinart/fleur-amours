@@ -829,25 +829,41 @@ export function ChatPage() {
           )}
 
           <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => setSelectedCoachId(null)}
-              className={`w-full px-4 py-4 rounded-2xl border text-left transition-colors ${
+            <div
+              className={`rounded-2xl border transition-colors ${
                 selectedCoachId === null
                   ? 'border-violet-500 bg-violet-50 dark:bg-violet-950/40 ring-2 ring-violet-400/30'
-                  : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/50 hover:border-violet-300 dark:hover:border-violet-600'
+                  : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/50'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl shrink-0" aria-hidden>
-                  🌿
-                </span>
-                <div>
-                  <p className="font-semibold text-slate-900 dark:text-white">{t('chat.teamOptionTitle')}</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">{t('chat.teamOptionDesc')}</p>
+              <button
+                type="button"
+                onClick={() => setSelectedCoachId(null)}
+                className="w-full px-4 py-4 text-left rounded-2xl"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl shrink-0" aria-hidden>
+                    🌿
+                  </span>
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-white">{t('chat.teamOptionTitle')}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">{t('chat.teamOptionDesc')}</p>
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+              {selectedCoachId === null && (
+                <div className="px-4 pb-4">
+                  <button
+                    type="button"
+                    onClick={() => startConv(null)}
+                    disabled={loading}
+                    className="w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors shadow-lg shadow-violet-600/25 text-sm"
+                  >
+                    {loading ? '…' : t('chat.startConversation')}
+                  </button>
+                </div>
+              )}
+            </div>
 
             {coaches.map((c, idx) => {
               const selected = selectedCoachId === c.id
@@ -1040,19 +1056,24 @@ export function ChatPage() {
                       ) : null}
                     </div>
                   </details>
+
+                  {selected && (
+                    <div className="px-4 pb-4">
+                      <button
+                        type="button"
+                        onClick={() => startConv(c.id)}
+                        disabled={loading}
+                        className="w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors shadow-lg shadow-violet-600/25 text-sm"
+                      >
+                        {loading ? '…' : t('chat.startConversation')}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={() => startConv(selectedCoachId)}
-            disabled={loading}
-            className="w-full py-3.5 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors shadow-lg shadow-violet-600/25"
-          >
-            {loading ? '…' : t('chat.startConversation')}
-          </button>
         </div>
       </div>
     )
