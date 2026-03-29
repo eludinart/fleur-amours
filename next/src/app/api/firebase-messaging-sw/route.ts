@@ -46,11 +46,22 @@ firebase.initializeApp(${JSON.stringify(config)});
 
 const messaging = firebase.messaging();
 
+function fleurWithBasePath(raw) {
+  var bp = '${basePath}';
+  if (bp.slice(-1) === '/') bp = bp.slice(0, -1);
+  if (!raw || raw === '/') return bp;
+  var s = String(raw);
+  if (s.indexOf('http') === 0) return s;
+  var r = s.charAt(0) === '/' ? s : '/' + s;
+  if (r === bp || r.indexOf(bp + '/') === 0) return r;
+  return bp + r;
+}
+
 // Notifications en arrière-plan (app fermée ou minimisée)
 messaging.onBackgroundMessage(function(payload) {
   const title = payload.notification?.title || "Fleur d'Amours";
   const body = payload.notification?.body || '';
-  const actionUrl = payload.data?.action_url || '${basePath}';
+  var path = fleurWithBasePath(payload.data?.action_url || '${basePath}');
 
   self.registration.showNotification(title, {
     body: body,
@@ -58,22 +69,24 @@ messaging.onBackgroundMessage(function(payload) {
     badge: '${icon}',
     tag: 'fleur-message',
     renotify: true,
-    data: { url: actionUrl },
+    data: { url: path },
   });
 });
 
-// Clic sur la notification : ouvre l'app
+// Clic sur la notification : ouvre l'app (chemin toujours avec basePath /jardin)
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  const url = event.notification.data?.url || '${basePath}';
+  var path = fleurWithBasePath(event.notification.data?.url || '${basePath}');
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
-      for (const client of clientList) {
-        if (client.url.includes('${basePath}') && 'focus' in client) {
+      for (var i = 0; i < clientList.length; i++) {
+        var client = clientList[i];
+        if (client.url.indexOf('${basePath}') !== -1 && 'focus' in client) {
           return client.focus();
         }
       }
-      return clients.openWindow(url);
+      var toOpen = path.indexOf('http') === 0 ? path : (self.location.origin + path);
+      return clients.openWindow(toOpen);
     })
   );
 });

@@ -213,10 +213,18 @@ export async function sendFcmPush(
     const host = process.env.APP_HOST ?? process.env.VIRTUAL_HOST ?? ''
     appUrl = host ? `https://${host}` : ''
   }
-  const safeLink = (rel: string | null) => {
-    if (!rel) return appUrl ? `${appUrl}${basePath}` : null
+  /** Chemins en DB (ex. /clairiere/5) n'incluent pas toujours basePath (/jardin). */
+  const withBasePath = (rel: string | null): string => {
+    const bp = basePath.replace(/\/$/, '')
+    if (!rel || rel === '/') return bp
     if (rel.startsWith('http')) return rel
-    return appUrl ? `${appUrl}${rel}` : null
+    const r = rel.startsWith('/') ? rel : `/${rel}`
+    if (r === bp || r.startsWith(`${bp}/`)) return r
+    return `${bp}${r}`
+  }
+  const safeLink = (rel: string | null) => {
+    if (!appUrl) return null
+    return `${appUrl}${withBasePath(rel)}`
   }
   const link = safeLink(actionUrl)
   const icon = appUrl ? `${appUrl}${basePath}/juste-la-fleur.png` : `${basePath}/juste-la-fleur.png`
