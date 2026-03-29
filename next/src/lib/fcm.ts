@@ -29,6 +29,18 @@ function getProjectId(): string {
 }
 
 function getServiceAccount(): { client_email?: string; private_key?: string } | null {
+  // Support base64 pour éviter les problèmes de newlines dans les env vars Coolify
+  const b64Val = process.env.FCM_SERVICE_ACCOUNT_B64 ?? ''
+  if (b64Val) {
+    try {
+      const decoded = Buffer.from(b64Val, 'base64').toString('utf8')
+      const parsed = JSON.parse(decoded) as { client_email?: string; private_key?: string }
+      if (parsed.client_email && parsed.private_key) return parsed
+    } catch {
+      console.warn('[FCM] Impossible de décoder FCM_SERVICE_ACCOUNT_B64')
+    }
+  }
+
   const envVal = process.env.FCM_SERVICE_ACCOUNT_JSON ?? ''
   let json: string
 
