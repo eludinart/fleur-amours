@@ -60,7 +60,7 @@ export async function listContactMessages(params: {
   const offset = (Math.max(1, page) - 1) * per_page
 
   const whereClause = status ? 'WHERE status = ?' : ''
-  const whereParams: unknown[] = status ? [status] : []
+  const whereParams: (string | number)[] = status ? [status] : []
 
   const [[{ total }]] = await pool.execute<RowDataPacket[]>(
     `SELECT COUNT(*) AS total FROM ${TBL()} ${whereClause}`,
