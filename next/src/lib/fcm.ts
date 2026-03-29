@@ -28,71 +28,116 @@ function getProjectId(): string {
   return ''
 }
 
-function getServiceAccount(): { client_email?: string; private_key?: string } | null {
-  // Support base64 pour éviter les problèmes de newlines dans les env vars Coolify
-  const b64Val = process.env.FCM_SERVICE_ACCOUNT_B64 ?? ''
-  if (b64Val) {
+/** Base64 « Coolify-safe » : enlève espaces / retours à la ligne, padding, variantes URL-safe */
+function decodeBase64ToUtf8(raw: string): string | null {
+  let s = raw.trim().replace(/^\uFEFF/, '')
+  s = s.replace(/\s+/g, '')
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1)
+  }
+  s = s.replace(/-/g, '+').replace(/_/g, '/')
+  const pad = s.length % 4
+  if (pad) s += '='.repeat(4 - pad)
+  try {
+    const buf = Buffer.from(s, 'base64')
+    if (buf.length < 50) return null
+    return buf.toString('utf8')
+  } catch {
+    return null
+  }
+}
+
+function parseServiceAccountJsonString(json: string): { client_email?: string; private_key?: string } | null {
+  let s = json.trim().replace(/^\uFEFF/, '')
+  // Valeur entière = chaîne JSON échappée (une couche de plus)
+  if (s.startsWith('"') && s.endsWith('"') && s.includes('\\"type\\"')) {
     try {
-      const decoded = Buffer.from(b64Val, 'base64').toString('utf8')
-      const parsed = JSON.parse(decoded) as { client_email?: string; private_key?: string }
-      if (parsed.client_email && parsed.private_key) return parsed
+      s = JSON.parse(s) as string
     } catch {
-      console.warn('[FCM] Impossible de décoder FCM_SERVICE_ACCOUNT_B64')
+      /* ignore */
+    }
+  }
+  try {
+    const parsed = JSON.parse(s) as { client_email?: string; private_key?: string }
+    if (parsed.client_email && parsed.private_key) return parsed
+  } catch {
+    /* suite */
+  }
+  try {
+    const fixed = s.replace(/"private_key"\s*:\s*"([\s\S]*?)(?<!\\)"/g, (_, key: string) => {
+      return `"private_key":"${key.replace(/\n/g, '\\n')}"`
+    })
+    const parsed = JSON.parse(fixed) as { client_email?: string; private_key?: string }
+    if (parsed.client_email && parsed.private_key) return parsed
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+function getServiceAccount(): { client_email?: string; private_key?: string } | null {
+  // 1) Fichier monté (secret Docker / Coolify file mount) — le plus fiable
+  const filePath = (process.env.FCM_SERVICE_ACCOUNT_FILE ?? '').trim()
+  if (filePath) {
+    const abs = filePath.startsWith('/') ? filePath : resolve(process.cwd(), filePath)
+    if (existsSync(abs)) {
+      try {
+        const parsed = parseServiceAccountJsonString(readFileSync(abs, 'utf8'))
+        if (parsed) return parsed
+      } catch {
+        console.warn('[FCM] FCM_SERVICE_ACCOUNT_FILE illisible :', abs)
+      }
+    } else {
+      console.warn('[FCM] FCM_SERVICE_ACCOUNT_FILE introuvable :', abs)
     }
   }
 
-  const envVal = process.env.FCM_SERVICE_ACCOUNT_JSON ?? ''
-  let json: string
+  // 2) Base64 (sans retours à la ligne ni espaces après normalisation)
+  const b64Raw = process.env.FCM_SERVICE_ACCOUNT_B64 ?? ''
+  if (b64Raw.trim()) {
+    const decoded = decodeBase64ToUtf8(b64Raw)
+    if (decoded) {
+      const parsed = parseServiceAccountJsonString(decoded)
+      if (parsed) return parsed
+    }
+    console.warn('[FCM] FCM_SERVICE_ACCOUNT_B64 invalide après normalisation (espaces/newlines retirés). Vérifier la copie ou utiliser FCM_SERVICE_ACCOUNT_FILE.')
+  }
+
+  // 3) JSON brut dans l’env ou chemin vers fichier
+  const envVal = (process.env.FCM_SERVICE_ACCOUNT_JSON ?? '').trim()
+  let json: string | null = null
 
   if (envVal.startsWith('{')) {
     json = envVal
   } else if (envVal) {
-    const path = resolve(process.cwd(), envVal.replace(/^\.\//, ''))
-    if (!existsSync(path)) {
-      console.warn('[FCM] Fichier service account introuvable :', path)
-      return null
+    const p = resolve(process.cwd(), envVal.replace(/^\.\//, ''))
+    if (existsSync(p)) {
+      try {
+        json = readFileSync(p, 'utf8')
+      } catch {
+        /* ignore */
+      }
     }
-    try {
-      json = readFileSync(path, 'utf8')
-    } catch {
-      return null
-    }
-  } else {
+  }
+  if (!json) {
     const defaultPath = resolve(process.cwd(), '..', 'config', 'fcm-service-account.json')
-    if (!existsSync(defaultPath)) {
-      console.warn('[FCM] FCM_SERVICE_ACCOUNT_JSON non défini et config/fcm-service-account.json absent')
-      return null
-    }
-    try {
-      json = readFileSync(defaultPath, 'utf8')
-    } catch {
-      return null
+    if (existsSync(defaultPath)) {
+      try {
+        json = readFileSync(defaultPath, 'utf8')
+      } catch {
+        /* ignore */
+      }
     }
   }
 
-  // Tentative 1 : parse direct
-  try {
-    const parsed = JSON.parse(json) as { client_email?: string; private_key?: string }
-    if (parsed.client_email && parsed.private_key) return parsed
-  } catch {
-    // Tentative 2 : Coolify peut insérer de vraies newlines dans la private_key
-    // On les réencapsule proprement
-    try {
-      const fixed = json
-        // Remplace les vraies newlines DANS les valeurs de string JSON par \n
-        .replace(/"private_key"\s*:\s*"([\s\S]*?)(?<!\\)"/g, (_, key: string) => {
-          return `"private_key":"${key.replace(/\n/g, '\\n')}"`
-        })
-      const parsed = JSON.parse(fixed) as { client_email?: string; private_key?: string }
-      if (parsed.client_email && parsed.private_key) return parsed
-    } catch {
-      /* ignore */
-    }
-    console.warn('[FCM] Impossible de parser FCM_SERVICE_ACCOUNT_JSON — vérifier le format dans Coolify')
+  if (json) {
+    const parsed = parseServiceAccountJsonString(json)
+    if (parsed) return parsed
+    console.warn('[FCM] Impossible de parser FCM_SERVICE_ACCOUNT_JSON — préférer FCM_SERVICE_ACCOUNT_FILE ou B64 sur une seule ligne sans guillemets autour.')
     return null
   }
 
-  console.warn('[FCM] Service account parsé mais client_email ou private_key manquant')
+  console.warn('[FCM] Aucune source compte de service (FCM_SERVICE_ACCOUNT_FILE / _B64 / _JSON / config local)')
   return null
 }
 
@@ -118,7 +163,11 @@ async function getAccessToken(): Promise<string | null> {
       assertion: token,
     }).toString(),
   })
-  if (!res.ok) return null
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '')
+    console.warn('[FCM] OAuth2 token error', res.status, errBody.slice(0, 300))
+    return null
+  }
   const data = (await res.json()) as { access_token?: string }
   return data.access_token ?? null
 }
