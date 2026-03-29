@@ -9,6 +9,7 @@ import { chatApi } from '@/api/chat'
 import { toast } from '@/hooks/useToast'
 import { billingApi } from '@/api/billing'
 import { AlertBox, AlertBoxLink } from '@/components/AlertBox'
+import { ContextualHint } from '@/components/ContextualHint'
 import { t } from '@/i18n'
 import {
   type Coach,
@@ -88,13 +89,49 @@ function formatHistoryRelative(iso: string | null | undefined, tf: typeof t): st
   return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+type StaffKind = 'user' | 'assigned_coach' | 'admin' | 'coach_other'
+
 type Message = {
   id: string
   conversation_id?: string
+  sender_id?: number
   sender_role: string
+  sender_display_name?: string | null
+  staff_kind?: StaffKind
   content: string
   created_at: string
   _optimistic?: boolean
+}
+
+function effectiveStaffKindPatient(m: Message, assignedCoachId: number | null): StaffKind {
+  if (m.staff_kind) return m.staff_kind
+  if (m.sender_role === 'user') return 'user'
+  const sid = m.sender_id
+  if (assignedCoachId != null && sid != null && sid === assignedCoachId) return 'assigned_coach'
+  return 'assigned_coach'
+}
+
+function patientStaffBubbleStyle(kind: StaffKind): string {
+  if (kind === 'admin') {
+    return 'bg-amber-50 dark:bg-amber-950/45 border-amber-200/90 dark:border-amber-700/50 text-amber-950 dark:text-amber-50 rounded-bl-md'
+  }
+  if (kind === 'coach_other') {
+    return 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/90 dark:border-indigo-700/50 text-indigo-950 dark:text-indigo-100 rounded-bl-md'
+  }
+  return 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-bl-md'
+}
+
+function patientStaffFooterClass(kind: StaffKind): string {
+  if (kind === 'admin') return 'text-amber-800/90 dark:text-amber-200/90'
+  if (kind === 'coach_other') return 'text-indigo-800/85 dark:text-indigo-200/85'
+  return 'text-slate-600 dark:text-slate-300'
+}
+
+function patientStaffFooterText(kind: StaffKind, m: Message, tf: typeof t): string {
+  const name = (m.sender_display_name ?? '').trim() || tf('chat.staffBubbleCoachNoName')
+  if (kind === 'admin') return tf('chat.patientBubbleFooterAdmin', { name })
+  if (kind === 'coach_other') return tf('chat.patientBubbleFooterOther', { name })
+  return tf('chat.patientBubbleFooterCoach', { name })
 }
 
 function groupByDate(messages: Message[]) {
@@ -128,6 +165,7 @@ export function ChatPage() {
     id: string
     status?: string
     closed_by_role?: string | null
+    assigned_coach_id?: number | null
   } | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
@@ -244,7 +282,10 @@ export function ChatPage() {
         setConv((prev) => {
           const idStr = String(convId)
           const sameId = prev != null && String(prev.id) === idStr
-          const hasMeta = res.status !== undefined || res.closed_by_role !== undefined
+          const hasMeta =
+            res.status !== undefined ||
+            res.closed_by_role !== undefined ||
+            res.assigned_coach_id !== undefined
           if (!hasMeta) return prev
 
           if (!sameId) {
@@ -252,11 +293,14 @@ export function ChatPage() {
               id: idStr,
               status: res.status ?? 'open',
               closed_by_role: res.closed_by_role !== undefined ? res.closed_by_role : null,
+              assigned_coach_id:
+                res.assigned_coach_id !== undefined ? res.assigned_coach_id : null,
             }
           }
           const next = { ...prev }
           if (res.status !== undefined) next.status = res.status
           if (res.closed_by_role !== undefined) next.closed_by_role = res.closed_by_role
+          if (res.assigned_coach_id !== undefined) next.assigned_coach_id = res.assigned_coach_id
           return next
         })
         const items = res?.items ?? []
@@ -353,6 +397,7 @@ export function ChatPage() {
         id: idStr,
         status: row.status,
         closed_by_role: row.closed_by_role ?? null,
+        assigned_coach_id: row.assigned_coach_id,
       })
       setShowCoachPicker(false)
       replaceChatQuery({ convId: idStr })
@@ -434,6 +479,7 @@ export function ChatPage() {
           id: idStr,
           status: pick.status,
           closed_by_role: pick.closed_by_role ?? null,
+          assigned_coach_id: pick.assigned_coach_id,
         })
 
         if (!needLoad) {
@@ -513,6 +559,7 @@ export function ChatPage() {
             const next = { ...prev }
             if (row.status !== undefined) next.status = row.status
             if (row.closed_by_role !== undefined) next.closed_by_role = row.closed_by_role
+            if (row.assigned_coach_id !== undefined) next.assigned_coach_id = row.assigned_coach_id
             return next
           })
         })
@@ -1104,6 +1151,10 @@ export function ChatPage() {
   }
 
   const grouped = groupByDate(messages)
+  const assignedCoachIdForMsgs =
+    conv?.assigned_coach_id != null && conv.assigned_coach_id > 0
+      ? conv.assigned_coach_id
+      : activeCoach?.id ?? null
   const isClosed = conv?.status === 'closed'
   /** Avant `closed_by_role`, seuls coach/admin clôturaient — on affiche le même libellé. */
   const closedByCoachOrLegacy =
@@ -1316,6 +1367,7 @@ export function ChatPage() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-2 bg-slate-100 dark:bg-slate-900">
+        <ContextualHint hintId="ctx_chat_coach" messageKey="onboarding.contextual.chat" className="mb-1" />
         {closedByCoachOrLegacy && (
           <div
             role="status"
@@ -1350,6 +1402,8 @@ export function ChatPage() {
             )
           }
           const isUser = item.sender_role === 'user'
+          const staffKind = effectiveStaffKindPatient(item, assignedCoachIdForMsgs)
+          const staffBubble = patientStaffBubbleStyle(staffKind)
           return (
             <div
               key={`chat-msg-${i}`}
@@ -1359,15 +1413,16 @@ export function ChatPage() {
                 className={`max-w-[90%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-sm shadow-sm ${
                   isUser
                     ? 'bg-violet-600 text-white rounded-br-md'
-                    : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-bl-md'
+                    : staffBubble
                 } ${item._optimistic ? 'opacity-70' : ''}`}
               >
-                <p className={`whitespace-pre-wrap ${isUser ? 'text-white' : 'text-slate-900 dark:text-slate-100'}`}>{item.content}</p>
+                <p className={`whitespace-pre-wrap ${isUser ? 'text-white' : ''}`}>{item.content}</p>
                 <p
                   className={`text-[10px] mt-1 ${
-                    isUser ? 'text-violet-200' : 'text-slate-600 dark:text-slate-300'
+                    isUser ? 'text-violet-200' : patientStaffFooterClass(staffKind)
                   }`}
                 >
+                  {!isUser ? `${patientStaffFooterText(staffKind, item, t)} · ` : ''}
                   {formatTime(item.created_at)}
                 </p>
               </div>

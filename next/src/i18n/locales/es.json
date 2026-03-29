@@ -200,7 +200,23 @@
     "sessionIntroContinue": "Entendido, continuar",
     "sapFirstTimeTitle": "La Savia",
     "sapFirstTimeDesc": "La moneda de uso de la app. El Reloj se regenera cada mes, el Cristal se acumula. Se usa para puertas, tiradas, etc.",
-    "sapFirstTimeLink": "Ver Mi cuenta"
+    "sapFirstTimeLink": "Ver Mi cuenta",
+    "wizardStep": "Paso {current} / {total}",
+    "skip": "Omitir",
+    "back": "Atrás",
+    "postRegisterWaysTitle": "Tres formas de avanzar en el Jardín",
+    "postRegisterNavTitle": "Encontrar las herramientas",
+    "postRegisterNavBody": "El menú ☰ en móvil abre toda la navegación; en pantalla grande los mismos enlaces están en la barra lateral. Los accesos arriba siguen útiles para ir rápido.",
+    "postRegisterCreditsTitle": "Savia y compras",
+    "postRegisterCreditsBody": "La Savia sirve para puertas de sesión, tiradas y algunas acciones. Tu saldo aparece arriba a la derecha; créditos, suscripciones y packs en Mi cuenta y aquí en la Tienda.",
+    "hintDismissAria": "Cerrar este consejo",
+    "contextual": {
+      "dashboard": "Consejo: todo el recorrido (Flor, tirada, sesión, chat…) está en el menú. Puedes cerrar este aviso cuando ya no lo necesites.",
+      "boutique": "El pago va por Stripe; los créditos se actualizan al volver al sitio. Ciérralo cuando te quede claro.",
+      "chat": "Escribe con contexto y calma, como a alguien de confianza. Las respuestas suelen llegar en 24h — puedes cerrar este recordatorio.",
+      "mesFleurs": "Aquí ves tus cuestionarios Mi Flor y Dúo terminados; toca una fila para reabrir el resultado.",
+      "coaches": "Abre una ficha para leer el perfil; el botón de mensaje abre conversación si el coach lo acepta."
+    }
   },
 
   "dashboard": {
@@ -880,6 +896,16 @@
     "adminHeaderOpen": "Conversación abierta",
     "adminHeaderClosed": "Conversación cerrada",
     "adminHeaderClosedByTeam": "Cerrada por el equipo de acompañamiento",
+    "adminHeaderCoachAssigned": "Acompañante: {name}",
+    "adminHeaderCoachAssignedNoName": "Acompañante asignado (perfil n.° {id})",
+    "adminHeaderCoachPool": "Acompañante: cola del equipo (sin asignar)",
+    "staffBubbleAdmin": "Equipo · {name}",
+    "staffBubbleAssignedCoach": "{name}",
+    "staffBubbleCoachOther": "{name} · otro acompañante",
+    "staffBubbleCoachNoName": "Acompañante",
+    "patientBubbleFooterCoach": "{name}",
+    "patientBubbleFooterAdmin": "{name} · equipo",
+    "patientBubbleFooterOther": "{name} · otro acompañante",
     "conversationHistoryToggle": "Mis conversaciones de acompañamiento",
     "pickerOngoingEyebrow": "En curso — retomar",
     "pickerOngoingTitleOne": "1 conversación para retomar ya",
@@ -968,7 +994,11 @@
     "switchToRegister": "Crear una cuenta",
     "switchToLogin": "¿Ya tienes cuenta? Conectarse",
     "registerHint": "Tu cuenta será la misma que en la web (mismos identificadores)",
-    "loginHint": "Usa los mismos identificadores que tu cuenta en la web"
+    "loginHint": "Usa los mismos identificadores que tu cuenta en la web",
+    "registerOnboardingTitle": "Al crear tu cuenta",
+    "registerOnboarding1": "Accedes al cuestionario Mi Flor, sesiones guiadas, tiradas y chat con un acompañante.",
+    "registerOnboarding2": "Tus datos son privados; controlas la visibilidad en la Pradera desde Mi cuenta.",
+    "registerOnboarding3": "Tras el registro, una guía breve explica la navegación y la Savia — puedes omitirla si quieres."
   },
 
   "notification": {

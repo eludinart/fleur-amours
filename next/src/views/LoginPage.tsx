@@ -10,6 +10,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
 export function LoginPage() {
   useStore((s) => s.locale)
+  const setHasSeenOnboardingTour = useStore((s) => s.setHasSeenOnboardingTour)
   const { login, register } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -41,6 +42,7 @@ export function LoginPage() {
     try {
       if (mode === 'register') {
         await register(loginId.trim(), password, name.trim(), inviteToken || undefined)
+        setHasSeenOnboardingTour(false)
       } else {
         await login(loginId, password)
 
@@ -96,6 +98,18 @@ export function LoginPage() {
           className="rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-white/40 dark:border-slate-700/60 shadow-xl p-6 space-y-4"
           autoComplete="off"
         >
+          {mode === 'register' && (
+            <div className="rounded-xl border border-violet-200/50 dark:border-violet-700/40 bg-violet-50/40 dark:bg-violet-950/25 px-3.5 py-3 space-y-2">
+              <p className="text-xs font-semibold text-violet-800 dark:text-violet-200">
+                {t('login.registerOnboardingTitle')}
+              </p>
+              <ul className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 space-y-1.5 list-disc pl-4 leading-snug">
+                <li>{t('login.registerOnboarding1')}</li>
+                <li>{t('login.registerOnboarding2')}</li>
+                <li>{t('login.registerOnboarding3')}</li>
+              </ul>
+            </div>
+          )}
           {error && (
             <div className="rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-600 dark:text-red-400">
               {error}

@@ -352,6 +352,7 @@ export async function listConversations(
   await ensureTables(pool)
   const tConv = table(TBL_CONV)
   const tMsg = table(TBL_MSG)
+  const tUsers = table('users')
   const status = opts.status ?? 'open'
   const perPage = Math.min(100, Math.max(1, opts.per_page ?? 50))
 
@@ -384,9 +385,10 @@ export async function listConversations(
 
   const rowsRes = await exec(
     pool,
-    `SELECT id, user_id, user_email, status, assigned_coach_id, created_at, last_message_at, unread_count
+    `SELECT id, user_id, user_email, status, assigned_coach_id, closed_by_role, created_at, last_message_at, unread_count, assigned_coach_display_name
      FROM (
        SELECT c.id, c.user_id, c.user_email, c.status, c.assigned_coach_id, c.closed_by_role, c.created_at, c.updated_at,
+              coach_u.display_name as assigned_coach_display_name,
               (SELECT MAX(created_at) FROM ${tMsg} m WHERE m.conversation_id = c.id) as last_message_at,
               (
                 SELECT COUNT(*) FROM ${tMsg} m
@@ -399,6 +401,7 @@ export async function listConversations(
               ) as unread_count,
               ${dedupeRank} as rn
        FROM ${tConv} c
+       LEFT JOIN ${tUsers} coach_u ON coach_u.ID = c.assigned_coach_id
        WHERE ${where}
      ) ranked
      WHERE ranked.rn = 1
@@ -414,6 +417,10 @@ export async function listConversations(
     user_email: r.user_email ?? '',
     status: r.status ?? 'open',
     assigned_coach_id: r.assigned_coach_id != null ? Number(r.assigned_coach_id) : null,
+    assigned_coach_display_name:
+      r.assigned_coach_display_name != null && String(r.assigned_coach_display_name).trim() !== ''
+        ? String(r.assigned_coach_display_name).trim()
+        : null,
     closed_by_role:
       r.closed_by_role != null && String(r.closed_by_role).trim() !== '' ? String(r.closed_by_role) : null,
     created_at: r.created_at ?? null,
@@ -520,26 +527,59 @@ export async function markCoachConversationsRead(params: {
   return { updated }
 }
 
+export type ChatStaffKind = 'user' | 'assigned_coach' | 'admin' | 'coach_other'
+
+export function staffKindForMessage(
+  senderRole: string,
+  senderId: number,
+  assignedCoachId: number | null,
+  adminSenderIds: Set<number>
+): ChatStaffKind {
+  if (senderRole === 'user') return 'user'
+  if (adminSenderIds.has(senderId)) return 'admin'
+  if (assignedCoachId != null && senderId === assignedCoachId) return 'assigned_coach'
+  return 'coach_other'
+}
+
+export type ChatMessageRow = {
+  id: number
+  sender_id: number
+  sender_role: string
+  sender_display_name: string | null
+  content: string
+  created_at: string
+}
+
 /** Messages d'une conversation */
 export async function getMessages(
   conversationId: number,
   since?: string | null
-): Promise<Array<{ id: number; sender_role: string; content: string; created_at: string }>> {
+): Promise<ChatMessageRow[]> {
   const pool = getPool()
   await ensureTables(pool)
   const tMsg = table(TBL_MSG)
-  let sql = `SELECT id, sender_role, content, created_at FROM ${tMsg} WHERE conversation_id = ?`
+  const tUsers = table('users')
+  let sql = `SELECT m.id, m.sender_id, m.sender_role, m.content, m.created_at,
+       u.display_name AS sender_display_name
+     FROM ${tMsg} m
+     LEFT JOIN ${tUsers} u ON u.ID = m.sender_id
+     WHERE m.conversation_id = ?`
   const params: (string | number | boolean | null)[] = [conversationId]
   if (since) {
-    sql += ' AND created_at > ?'
+    sql += ' AND m.created_at > ?'
     params.push(since)
   }
-  sql += ' ORDER BY created_at ASC'
+  sql += ' ORDER BY m.created_at ASC'
   const rowsRes = await exec(pool, sql, params)
   const rows = (rowsRes[0] ?? []) as RowDataPacket[]
   return rows.map((r) => ({
     id: Number(r.id),
+    sender_id: Number(r.sender_id ?? 0),
     sender_role: String(r.sender_role ?? 'user'),
+    sender_display_name:
+      r.sender_display_name != null && String(r.sender_display_name).trim() !== ''
+        ? String(r.sender_display_name).trim()
+        : null,
     content: String(r.content ?? ''),
     created_at: String(r.created_at ?? ''),
   }))
@@ -551,11 +591,12 @@ export async function sendMessage(
   senderId: number,
   senderRole: 'user' | 'coach',
   content: string
-): Promise<{ id: number; conversation_id: number; sender_role: string; content: string; created_at: string }> {
+): Promise<ChatMessageRow & { conversation_id: number }> {
   const pool = getPool()
   await ensureTables(pool)
   const tConv = table(TBL_CONV)
   const tMsg = table(TBL_MSG)
+  const tUsers = table('users')
 
   if (senderRole === 'coach') {
     await pool.execute(
@@ -569,14 +610,23 @@ export async function sendMessage(
   )
   const id = Number((ins as unknown as { insertId: number }).insertId)
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, conversation_id, sender_role, content, created_at FROM ${tMsg} WHERE id = ?`,
+    `SELECT m.id, m.conversation_id, m.sender_id, m.sender_role, m.content, m.created_at,
+            u.display_name AS sender_display_name
+     FROM ${tMsg} m
+     LEFT JOIN ${tUsers} u ON u.ID = m.sender_id
+     WHERE m.id = ?`,
     [id]
   )
   const r = rows[0]
   return {
     id: Number(r.id),
     conversation_id: Number(r.conversation_id),
+    sender_id: Number(r.sender_id ?? senderId),
     sender_role: String(r.sender_role),
+    sender_display_name:
+      r.sender_display_name != null && String(r.sender_display_name).trim() !== ''
+        ? String(r.sender_display_name).trim()
+        : null,
     content: String(r.content),
     created_at: String(r.created_at ?? ''),
   }

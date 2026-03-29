@@ -122,6 +122,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('auth_user', JSON.stringify(u))
       // Signal pour PushNotificationManager : déclencher le setup push juste après inscription
       if (u?.id) sessionStorage.setItem(`push_just_logged_in_${u.id}`, '1')
+      // Accueil guidé une fois connecté (OnboardingTour)
+      try {
+        sessionStorage.setItem('fleur_post_register_onboarding', '1')
+      } catch {
+        /* ignore */
+      }
     }
     setUser(u)
     scheduleRefresh(forceLogout)

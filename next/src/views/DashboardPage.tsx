@@ -26,6 +26,7 @@ const EvolutionChart = dynamic(
 )
 import { DashboardSkeleton } from '@/components/DashboardSkeleton'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { ContextualHint } from '@/components/ContextualHint'
 import { InfoBubble } from '@/components/InfoBubble'
 import { fetchDashboardData } from '@/api/dashboard'
 import { t } from '@/i18n'
@@ -103,6 +104,9 @@ export function DashboardPage() {
             <Breadcrumbs />
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">{t('dashboard.title')}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboardSubtitle')}</p>
+            <div className="mt-3 max-w-xl">
+              <ContextualHint hintId="ctx_dashboard_nav" messageKey="onboarding.contextual.dashboard" />
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {(isAdmin || isCoach) && (

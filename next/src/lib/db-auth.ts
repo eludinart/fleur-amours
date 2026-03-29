@@ -231,6 +231,53 @@ export async function authMe(userId: number): Promise<UserRecord> {
   return out
 }
 
+function wpRoleFromCapsMeta(capsSerialized: string | null): string {
+  if (!capsSerialized || typeof capsSerialized !== 'string') return 'subscriber'
+  const re = /s:\d+:"([^"]+)";i:\d+;/g
+  const roles: string[] = []
+  let m
+  while ((m = re.exec(capsSerialized)) !== null) roles.push(m[1])
+  const priority = ['administrator', 'editor', 'author', 'contributor', 'subscriber']
+  for (const r of priority) {
+    if (roles.includes(r)) return r
+  }
+  return roles[0] || 'subscriber'
+}
+
+function effectiveAppRoleFromCapsRow(appRoleRow: string | null | undefined, capsSerialized: string | null): string {
+  const ar = appRoleRow ? String(appRoleRow).trim() : ''
+  if (ar) return ar
+  const wp = wpRoleFromCapsMeta(capsSerialized)
+  return wp === 'administrator' ? 'admin' : 'user'
+}
+
+/** IDs avec rôle effectif admin (fleur_app_roles ou WP administrator), pour classifier les messages coach. */
+export async function batchUserIdsWithAdminAccess(userIds: number[]): Promise<Set<number>> {
+  const ids = [...new Set(userIds.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0))]
+  if (ids.length === 0) return new Set()
+  const pool = getPool()
+  const prefix = process.env.DB_PREFIX || 'wp_'
+  const usersTbl = table('users')
+  const rolesTbl = table('fleur_app_roles')
+  const metaTbl = table('usermeta')
+  const capKey = `${prefix}capabilities`
+  const placeholders = ids.map(() => '?').join(', ')
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT u.ID as id, r.app_role as app_role,
+            (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = ? LIMIT 1) as caps
+     FROM ${usersTbl} u
+     LEFT JOIN ${rolesTbl} r ON r.user_id = u.ID
+     WHERE u.ID IN (${placeholders})`,
+    [capKey, ...ids]
+  )
+  const admins = new Set<number>()
+  for (const r of rows) {
+    const eff = effectiveAppRoleFromCapsRow(r.app_role as string | null, r.caps as string | null)
+    if (eff === 'admin' || eff === 'administrator') admins.add(Number(r.id))
+  }
+  return admins
+}
+
 export async function authRegister(
   email: string,
   password: string,

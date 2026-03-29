@@ -3,9 +3,9 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { ensureChatSchema, getMessages } from '@/lib/db-chat'
+import { ensureChatSchema, getMessages, staffKindForMessage } from '@/lib/db-chat'
+import { batchUserIdsWithAdminAccess, authMe } from '@/lib/db-auth'
 import { getPool, table } from '@/lib/db'
-import { authMe } from '@/lib/db-auth'
 import type { RowDataPacket } from 'mysql2'
 import { isDbConfigured } from '@/lib/db'
 
@@ -63,10 +63,19 @@ export async function GET(req: NextRequest) {
       conv.assigned_coach_id != null && String(conv.assigned_coach_id).trim() !== ''
         ? Number(conv.assigned_coach_id)
         : null
+    const coachSenderIds = [
+      ...new Set(
+        messages.filter((m) => m.sender_role !== 'user').map((m) => m.sender_id)
+      ),
+    ]
+    const adminIds = await batchUserIdsWithAdminAccess(coachSenderIds)
     const items = messages.map((m) => ({
       id: String(m.id),
       conversation_id: String(convId),
+      sender_id: m.sender_id,
       sender_role: m.sender_role,
+      sender_display_name: m.sender_display_name,
+      staff_kind: staffKindForMessage(m.sender_role, m.sender_id, assignedCoachId, adminIds),
       content: m.content,
       created_at: m.created_at,
     }))

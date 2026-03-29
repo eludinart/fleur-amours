@@ -225,7 +225,23 @@
     "sessionIntroContinue": "Comprendre et continuer",
     "sapFirstTimeTitle": "La Sève",
     "sapFirstTimeDesc": "La monnaie d'usage de l'app. Le Sablier se régénère chaque mois, le Cristal s'accumule. Utilisés pour les portes, tirages, etc.",
-    "sapFirstTimeLink": "Voir Mon compte"
+    "sapFirstTimeLink": "Voir Mon compte",
+    "wizardStep": "Étape {current} / {total}",
+    "skip": "Passer",
+    "back": "Retour",
+    "postRegisterWaysTitle": "Trois façons d'avancer dans le Jardin",
+    "postRegisterNavTitle": "Retrouver les outils",
+    "postRegisterNavBody": "Le menu ☰ sur mobile ouvre toute la navigation ; sur grand écran, les mêmes liens sont dans la barre latérale. Les raccourcis en haut restent visibles pour aller vite.",
+    "postRegisterCreditsTitle": "Sève et achats",
+    "postRegisterCreditsBody": "La Sève sert aux portes des sessions, aux tirages et à certaines actions. Ton solde apparaît en haut à droite ; détail des crédits, abonnements et packs dans Mon compte et ici à la Boutique.",
+    "hintDismissAria": "Fermer ce conseil",
+    "contextual": {
+      "dashboard": "Astuce : tout le parcours (Fleur, tirage, session, chat…) est dans le menu. Tu pourras fermer ce bandeau quand tu n'en as plus besoin.",
+      "boutique": "Les achats passent par Stripe ; les crédits se mettent à jour après retour sur le site. Ferme ce message quand c'est clair.",
+      "chat": "Écris comme tu le ferais à un proche : contexte, question, rythme souhaité. Les réponses arrivent sous 24 h en général — tu peux refermer ce rappel.",
+      "mesFleurs": "Tes questionnaires Ma Fleur et Duo terminés sont listés ici ; touche une ligne pour rouvrir le résultat.",
+      "coaches": "Ouvre une fiche pour voir le profil ; le bouton message ouvre une conversation si le coach l'accepte."
+    }
   },
 
   "dashboard": {
@@ -906,6 +922,16 @@
     "adminHeaderOpen": "Conversation ouverte",
     "adminHeaderClosed": "Conversation clôturée",
     "adminHeaderClosedByTeam": "Clôturée par l’équipe (côté accompagnement)",
+    "adminHeaderCoachAssigned": "Accompagnant : {name}",
+    "adminHeaderCoachAssignedNoName": "Accompagnant assigné (profil n°{id})",
+    "adminHeaderCoachPool": "Accompagnant : file d’équipe (non assigné)",
+    "staffBubbleAdmin": "Équipe · {name}",
+    "staffBubbleAssignedCoach": "{name}",
+    "staffBubbleCoachOther": "{name} · autre accompagnant",
+    "staffBubbleCoachNoName": "Accompagnant",
+    "patientBubbleFooterCoach": "{name}",
+    "patientBubbleFooterAdmin": "{name} · équipe",
+    "patientBubbleFooterOther": "{name} · autre accompagnant",
     "conversationHistoryToggle": "Mes conversations d’accompagnement",
     "pickerOngoingEyebrow": "En cours — reprendre",
     "pickerOngoingTitleOne": "1 conversation à reprendre tout de suite",
@@ -994,7 +1020,11 @@
     "switchToRegister": "Créer un compte",
     "switchToLogin": "Déjà un compte ? Se connecter",
     "registerHint": "Votre compte sera identique à celui du site web (même identifiants)",
-    "loginHint": "Utilisez les mêmes identifiants que votre compte sur le site web"
+    "loginHint": "Utilisez les mêmes identifiants que votre compte sur le site web",
+    "registerOnboardingTitle": "En créant ton compte",
+    "registerOnboarding1": "Tu accèdes au questionnaire Ma Fleur, aux sessions guidées, aux tirages et au chat avec un accompagnant.",
+    "registerOnboarding2": "Tes données restent privées ; tu gères la visibilité Prairie dans Mon compte.",
+    "registerOnboarding3": "Après l'inscription, un court guide t'explique la navigation et la Sève — tu peux le passer si tu préfères."
   },
 
   "notification": {

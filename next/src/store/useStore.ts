@@ -26,6 +26,9 @@ interface StoreState {
   setSapTooltipSeen: (v: boolean) => void
   hasSeenOnboardingTour: boolean
   setHasSeenOnboardingTour: (v: boolean) => void
+  /** IDs persistés : indices contextuels fermés par l'utilisateur */
+  dismissedContextualHints: string[]
+  dismissContextualHint: (id: string) => void
   hasCompletedFirstFleur: boolean
   setHasCompletedFirstFleur: (v: boolean) => void
   hasDoneFirstTirage: boolean
@@ -74,6 +77,13 @@ export const useStore = create<StoreState>()(
       setSapTooltipSeen: (v) => set({ sapTooltipSeen: v }),
       hasSeenOnboardingTour: false,
       setHasSeenOnboardingTour: (v) => set({ hasSeenOnboardingTour: v }),
+      dismissedContextualHints: [],
+      dismissContextualHint: (id) =>
+        set((s) =>
+          s.dismissedContextualHints.includes(id)
+            ? s
+            : { dismissedContextualHints: [...s.dismissedContextualHints, id] }
+        ),
       hasCompletedFirstFleur: false,
       setHasCompletedFirstFleur: (v) => set({ hasCompletedFirstFleur: v }),
       hasDoneFirstTirage: false,
@@ -107,7 +117,7 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: 'fleur-amours-store',
-      version: 7,
+      version: 8,
       migrate: (persistedState: unknown) => {
         const s = persistedState as Record<string, unknown>
         if (!s) return undefined
@@ -123,6 +133,9 @@ export const useStore = create<StoreState>()(
           hasCompletedFirstSession: s.hasCompletedFirstSession ?? false,
           fontSizePreference: s.fontSizePreference ?? 'normal',
           locale: s.locale ?? 'fr',
+          dismissedContextualHints: Array.isArray(s.dismissedContextualHints)
+            ? s.dismissedContextualHints
+            : [],
         }
       },
       partialize: (state) => ({
@@ -137,6 +150,7 @@ export const useStore = create<StoreState>()(
         hasCompletedFirstSession: state.hasCompletedFirstSession,
         fontSizePreference: state.fontSizePreference,
         locale: state.locale,
+        dismissedContextualHints: state.dismissedContextualHints,
       }),
     }
   )

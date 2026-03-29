@@ -202,7 +202,23 @@
     "sessionIntroContinue": "Got it, continue",
     "sapFirstTimeTitle": "Sap",
     "sapFirstTimeDesc": "The app's usage currency. The Hourglass resets each month, the Crystal accumulates. Used for doors, readings, etc.",
-    "sapFirstTimeLink": "View My account"
+    "sapFirstTimeLink": "View My account",
+    "wizardStep": "Step {current} / {total}",
+    "skip": "Skip",
+    "back": "Back",
+    "postRegisterWaysTitle": "Three ways to move forward in the Garden",
+    "postRegisterNavTitle": "Finding your way around",
+    "postRegisterNavBody": "The ☰ menu on mobile opens full navigation; on larger screens the same links are in the sidebar. The shortcuts at the top stay handy for quick access.",
+    "postRegisterCreditsTitle": "Sap and purchases",
+    "postRegisterCreditsBody": "Sap powers session doors, readings and some actions. Your balance shows top-right; credits, subscriptions and packs are detailed in My account and here in the Shop.",
+    "hintDismissAria": "Dismiss this tip",
+    "contextual": {
+      "dashboard": "Tip: the full journey (Flower, reading, session, chat…) lives in the menu. You can dismiss this banner when you no longer need it.",
+      "boutique": "Checkout runs through Stripe; credits update after you return to the site. Dismiss when this is clear.",
+      "chat": "Write as you would to someone you trust: context, question, preferred pace. Replies usually arrive within 24h — you can close this reminder.",
+      "mesFleurs": "Your completed My Flower and Duo questionnaires are listed here; tap a row to reopen the result.",
+      "coaches": "Open a card to read the profile; the message button starts a conversation when the coach accepts."
+    }
   },
 
   "dashboard": {
@@ -882,6 +898,16 @@
     "adminHeaderOpen": "Open conversation",
     "adminHeaderClosed": "Closed conversation",
     "adminHeaderClosedByTeam": "Closed by the coaching team",
+    "adminHeaderCoachAssigned": "Coach: {name}",
+    "adminHeaderCoachAssignedNoName": "Assigned coach (profile #{id})",
+    "adminHeaderCoachPool": "Coach: team queue (unassigned)",
+    "staffBubbleAdmin": "Team · {name}",
+    "staffBubbleAssignedCoach": "{name}",
+    "staffBubbleCoachOther": "{name} · other coach",
+    "staffBubbleCoachNoName": "Coach",
+    "patientBubbleFooterCoach": "{name}",
+    "patientBubbleFooterAdmin": "{name} · team",
+    "patientBubbleFooterOther": "{name} · other coach",
     "conversationHistoryToggle": "My coaching conversations",
     "pickerOngoingEyebrow": "In progress — resume",
     "pickerOngoingTitleOne": "1 conversation to pick up right now",
@@ -970,7 +996,11 @@
     "switchToRegister": "Create an account",
     "switchToLogin": "Already have an account? Sign in",
     "registerHint": "Your account will be the same as on the website (same credentials)",
-    "loginHint": "Use the same credentials as your website account"
+    "loginHint": "Use the same credentials as your website account",
+    "registerOnboardingTitle": "When you create your account",
+    "registerOnboarding1": "You get My Flower, guided sessions, readings and chat with a coach.",
+    "registerOnboarding2": "Your data stays private; you control Prairie visibility in My account.",
+    "registerOnboarding3": "After sign-up, a short guide explains navigation and Sap — you can skip it if you prefer."
   },
 
   "notification": {

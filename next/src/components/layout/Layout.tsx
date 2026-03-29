@@ -15,6 +15,7 @@ import { billingApi } from '@/api/billing'
 import { socialApi } from '@/api/social'
 import NotificationCenter from '../NotificationCenter'
 import { LanguageSelector } from './LanguageSelector'
+import { OnboardingTour } from '../OnboardingTour'
 import { t } from '@/i18n'
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -159,6 +160,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       <ToastContainer />
+      {user ? <OnboardingTour /> : null}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { fleurApi } from '@/api/fleur'
+import { ContextualHint } from '@/components/ContextualHint'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 
@@ -76,6 +77,9 @@ export default function MesFleursPage() {
         <p className="text-sm text-slate-500">
           {t('mesFleurs.subtitle')}
         </p>
+        <div className="mt-4 text-left max-w-md mx-auto">
+          <ContextualHint hintId="ctx_mes_fleurs" messageKey="onboarding.contextual.mesFleurs" />
+        </div>
       </div>
 
       {error && (

@@ -6,6 +6,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { billingApi } from '@/api/billing'
 import { SapWallet } from '@/components/dashboard/SapWallet'
+import { ContextualHint } from '@/components/ContextualHint'
 import { t } from '@/i18n'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
@@ -130,6 +131,9 @@ export default function BoutiquePage() {
             {t('prairie.boutique')}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('prairie.boutiqueSubtitle')}</p>
+          <div className="mt-4">
+            <ContextualHint hintId="ctx_boutique_sap" messageKey="onboarding.contextual.boutique" />
+          </div>
         </div>
 
         {loading ? (

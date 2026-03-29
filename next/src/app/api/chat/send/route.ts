@@ -3,9 +3,9 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { notifyCoachChatNewMessage, sendMessage } from '@/lib/db-chat'
+import { notifyCoachChatNewMessage, sendMessage, staffKindForMessage } from '@/lib/db-chat'
 import { getPool, table } from '@/lib/db'
-import { authMe } from '@/lib/db-auth'
+import { authMe, batchUserIdsWithAdminAccess } from '@/lib/db-auth'
 import type { RowDataPacket } from 'mysql2'
 import { isDbConfigured } from '@/lib/db'
 
@@ -33,7 +33,10 @@ export async function POST(req: NextRequest) {
         {
           id: `stub-${Date.now()}`,
           conversation_id: String(convId),
+          sender_id: uid,
           sender_role: senderRole,
+          sender_display_name: null as string | null,
+          staff_kind: senderRole === 'user' ? 'user' : 'assigned_coach',
           content,
           created_at: new Date().toISOString(),
         },
@@ -73,11 +76,32 @@ export async function POST(req: NextRequest) {
 
     const msg = await sendMessage(convId, uid, senderRole, content)
     void notifyCoachChatNewMessage(convId, senderRole, uid, content)
+
+    const [convAfter] = await pool.execute<RowDataPacket[]>(
+      `SELECT assigned_coach_id FROM ${tConv} WHERE id = ?`,
+      [convId]
+    )
+    const assignedAfter =
+      convAfter[0]?.assigned_coach_id != null && String(convAfter[0].assigned_coach_id).trim() !== ''
+        ? Number(convAfter[0].assigned_coach_id)
+        : null
+    const adminSet =
+      senderRole === 'coach'
+        ? await batchUserIdsWithAdminAccess([uid])
+        : new Set<number>()
+    const staff_kind =
+      senderRole === 'user'
+        ? 'user'
+        : staffKindForMessage(msg.sender_role, msg.sender_id, assignedAfter, adminSet)
+
     return NextResponse.json(
       {
         id: String(msg.id),
         conversation_id: String(msg.conversation_id),
+        sender_id: msg.sender_id,
         sender_role: msg.sender_role,
+        sender_display_name: msg.sender_display_name,
+        staff_kind,
         content: msg.content,
         created_at: msg.created_at,
       },

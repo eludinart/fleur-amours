@@ -9,6 +9,7 @@ import {
   coachPseudoHandle,
   formatCoachLastSeenLabel,
 } from '@/lib/coach-profile'
+import { ContextualHint } from '@/components/ContextualHint'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 
@@ -252,6 +253,7 @@ export function CoachesDirectoryPage() {
         <header className="space-y-2">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('coaches.pageTitle')}</h1>
           <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{t('coaches.pageSubtitle')}</p>
+          <ContextualHint hintId="ctx_coaches_directory" messageKey="onboarding.contextual.coaches" className="mt-3" />
         </header>
 
         {coaches.length === 0 ? (

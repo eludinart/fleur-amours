@@ -28,24 +28,65 @@ type Conversation = {
   user_email?: string
   status?: string
   closed_by_role?: string | null
+  assigned_coach_id?: number | null
+  /** display_name WordPress du coach assigné (LEFT JOIN users) */
+  assigned_coach_display_name?: string | null
   unread_count?: number
   last_message_at?: string
   created_at?: string
 }
 
+type StaffKind = 'user' | 'assigned_coach' | 'admin' | 'coach_other'
+
 type Message = {
   id: string | number
   conversation_id?: number
+  sender_id?: number
   sender_role?: string
+  sender_display_name?: string | null
+  staff_kind?: StaffKind
   content?: string
   created_at?: string
   _optimistic?: boolean
+}
+
+function effectiveStaffKind(m: Message): StaffKind {
+  if (m.staff_kind) return m.staff_kind
+  if (m.sender_role === 'user') return 'user'
+  return 'assigned_coach'
+}
+
+function staffBubbleClasses(kind: StaffKind, isStaff: boolean): string {
+  if (!isStaff) {
+    return 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-bl-md'
+  }
+  if (kind === 'admin') {
+    return 'bg-amber-600 dark:bg-amber-700 text-white rounded-br-md border border-amber-700/40'
+  }
+  if (kind === 'coach_other') {
+    return 'bg-indigo-600 dark:bg-indigo-700 text-white rounded-br-md border border-indigo-700/40'
+  }
+  return 'bg-violet-600 text-white rounded-br-md'
+}
+
+function staffFooterText(kind: StaffKind, m: Message): string {
+  const name = (m.sender_display_name ?? '').trim() || t('chat.staffBubbleCoachNoName')
+  if (kind === 'admin') return `${t('chat.staffBubbleAdmin', { name })} · `
+  if (kind === 'coach_other') return `${t('chat.staffBubbleCoachOther', { name })} · `
+  return `${t('chat.staffBubbleAssignedCoach', { name })} · `
 }
 
 export default function AdminChatPage() {
   const searchParams = useSearchParams()
   const emailParam = searchParams?.get('email') ?? null
   const { isAdmin, isCoach, user } = useAuth()
+  const myUserId = user && typeof user.id === 'number' ? user.id : Number(user?.id ?? 0)
+  const myName =
+    user && typeof user.name === 'string'
+      ? user.name
+      : typeof user?.display_name === 'string'
+        ? user.display_name
+        : ''
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selected, setSelected] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -65,12 +106,25 @@ export default function AdminChatPage() {
 
   const effectiveStatus = emailParam ? '' : statusFilter
 
-  const loadConversations = useCallback(() => {
-    setLoadingConvs(true)
-    chatApi.listConversations({ status: effectiveStatus, per_page: 50 })
-      .then((res) => setConversations((res as { items?: Conversation[] })?.items ?? []))
-      .catch(() => setConversations([]))
-      .finally(() => setLoadingConvs(false))
+  const loadConversations = useCallback((opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoadingConvs(true)
+    chatApi
+      .listConversations({ status: effectiveStatus, per_page: 50 })
+      .then((res) => {
+        const items = (res as { items?: Conversation[] })?.items ?? []
+        setConversations(items)
+        setSelected((prev) => {
+          if (!prev) return prev
+          const row = items.find((c) => c.id === prev.id)
+          return row ? { ...prev, ...row } : prev
+        })
+      })
+      .catch(() => {
+        if (!opts?.silent) setConversations([])
+      })
+      .finally(() => {
+        if (!opts?.silent) setLoadingConvs(false)
+      })
   }, [effectiveStatus])
 
   // Init : pour éviter d'afficher d'anciens messages comme "non lus"
@@ -144,10 +198,20 @@ export default function AdminChatPage() {
     const content = text.trim()
     setText('')
     setSending(true)
+    const optimisticAssigned =
+      selected.assigned_coach_id != null && selected.assigned_coach_id > 0
+        ? Number(selected.assigned_coach_id)
+        : null
+    let optimisticKind: StaffKind = 'assigned_coach'
+    if (isAdmin) optimisticKind = 'admin'
+    else if (optimisticAssigned != null && myUserId !== optimisticAssigned) optimisticKind = 'coach_other'
     const optimistic: Message = {
       id: `opt-${Date.now()}`,
       conversation_id: selected.id,
+      sender_id: myUserId || undefined,
       sender_role: 'coach',
+      sender_display_name: myName.trim() || null,
+      staff_kind: optimisticKind,
       content,
       created_at: new Date().toISOString(),
       _optimistic: true,
@@ -159,6 +223,7 @@ export default function AdminChatPage() {
       setMessages((prev) => prev.map((m) => (m.id === optimistic.id ? saved : m)))
       lastMsgAt.current = saved.created_at ?? null
       setConversations((prev) => prev.map((c) => (c.id === selected.id ? { ...c, last_message_at: saved.created_at } : c)))
+      void loadConversations({ silent: true })
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id))
       setText(content)
@@ -263,7 +328,23 @@ export default function AdminChatPage() {
                       </div>
                       <span className={`shrink-0 w-2 h-2 rounded-full ${convClosed ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-500'}`} />
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                    <div className="flex flex-col gap-0.5 mt-0.5">
+                      {(c.assigned_coach_id != null && c.assigned_coach_id > 0) ? (
+                        (c.assigned_coach_display_name ?? '').trim() ? (
+                          <p className="text-[10px] font-medium text-violet-600 dark:text-violet-400 truncate pr-1">
+                            {t('chat.adminHeaderCoachAssigned', { name: (c.assigned_coach_display_name ?? '').trim() })}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] font-medium text-violet-600/80 dark:text-violet-400/80 truncate pr-1">
+                            {t('chat.adminHeaderCoachAssignedNoName', { id: c.assigned_coach_id })}
+                          </p>
+                        )
+                      ) : (
+                        <p className="text-[10px] text-slate-500 dark:text-slate-500 truncate pr-1">
+                          {t('chat.adminHeaderCoachPool')}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-1.5">
                       <p className="text-[10px] text-slate-400">
                         {c.last_message_at ? formatRelative(c.last_message_at) : formatRelative(c.created_at)}
                       </p>
@@ -272,6 +353,7 @@ export default function AdminChatPage() {
                           {t('chat.listClosedByTeam')}
                         </span>
                       ) : null}
+                      </div>
                     </div>
                   </button>
                   {convClosed && (
@@ -314,7 +396,22 @@ export default function AdminChatPage() {
               <p className="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate">
                 {selected.user_email || `Utilisateur #${selected.user_id}`}
               </p>
-              <p className="text-xs text-slate-500">
+              {(selected.assigned_coach_id != null && selected.assigned_coach_id > 0) ? (
+                (selected.assigned_coach_display_name ?? '').trim() ? (
+                  <p className="text-[11px] font-medium text-violet-600 dark:text-violet-400 truncate mt-0.5">
+                    {t('chat.adminHeaderCoachAssigned', { name: (selected.assigned_coach_display_name ?? '').trim() })}
+                  </p>
+                ) : (
+                  <p className="text-[11px] font-medium text-violet-600/85 dark:text-violet-400/85 truncate mt-0.5">
+                    {t('chat.adminHeaderCoachAssignedNoName', { id: selected.assigned_coach_id })}
+                  </p>
+                )
+              ) : (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  {t('chat.adminHeaderCoachPool')}
+                </p>
+              )}
+              <p className="text-xs text-slate-500 mt-0.5">
                 {isClosed
                   ? selected.closed_by_role === 'coach' ||
                     selected.closed_by_role == null ||
@@ -353,17 +450,23 @@ export default function AdminChatPage() {
               </div>
             )}
             {messages.map((m, i) => {
-              const isCoach = m.sender_role === 'coach'
+              const isStaff = m.sender_role === 'coach'
+              const kind = effectiveStaffKind(m)
+              const bubble = staffBubbleClasses(kind, isStaff)
+              const footerMuted =
+                kind === 'admin'
+                  ? 'text-amber-100'
+                  : kind === 'coach_other'
+                    ? 'text-indigo-100'
+                    : isStaff
+                      ? 'text-violet-200'
+                      : 'text-slate-400'
               return (
-                <div key={m._optimistic ? `opt-${i}-${m.id}` : `msg-${i}-${m.id}`} className={`flex ${isCoach ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[90%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-sm ${
-                    isCoach
-                      ? 'bg-violet-600 text-white rounded-br-md'
-                      : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-bl-md'
-                  } ${m._optimistic ? 'opacity-70' : ''}`}>
-                    <p className="whitespace-pre-wrap">{m.content}</p>
-                    <p className={`text-[10px] mt-1 ${isCoach ? 'text-violet-200' : 'text-slate-400'}`}>
-                      {isCoach ? 'Coach · ' : ''}{formatTime(m.created_at)}
+                <div key={m._optimistic ? `opt-${i}-${m.id}` : `msg-${i}-${m.id}`} className={`flex ${isStaff ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[90%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-sm shadow-sm ${bubble} ${m._optimistic ? 'opacity-70' : ''}`}>
+                    <p className={`whitespace-pre-wrap ${isStaff && kind !== 'user' ? 'text-white' : ''}`}>{m.content}</p>
+                    <p className={`text-[10px] mt-1 ${footerMuted}`}>
+                      {isStaff ? staffFooterText(kind, m) : ''}{formatTime(m.created_at)}
                     </p>
                   </div>
                 </div>
