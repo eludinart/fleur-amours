@@ -120,7 +120,19 @@ function LocaleSync() {
 
 function PushNotificationManager() {
   const { user } = useAuth()
-  usePushNotifications(user?.id ? Number(user.id) : null)
+  const userId = user?.id ? Number(user.id) : null
+  const { triggerAfterLogin } = usePushNotifications(userId)
+
+  // Déclencher immédiatement après un login/register dans la même session
+  useEffect(() => {
+    if (!userId) return
+    const key = `push_just_logged_in_${userId}`
+    if (sessionStorage.getItem(key)) {
+      triggerAfterLogin(userId)
+      sessionStorage.removeItem(key)
+    }
+  }, [userId, triggerAfterLogin])
+
   return null
 }
 

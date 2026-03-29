@@ -102,10 +102,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: Record<string, unknown>
     }
     if (typeof window !== 'undefined') {
-      // Sur Capacitor : stocker le token (le cookie ne fonctionne pas cross-origin)
-      // Sur web      : le cookie httpOnly est posé par le serveur, pas besoin de localStorage
       if (isCapacitor()) localStorage.setItem('auth_token', token)
       localStorage.setItem('auth_user', JSON.stringify(u))
+      // Signal pour PushNotificationManager : déclencher le setup push juste après login
+      if (u?.id) sessionStorage.setItem(`push_just_logged_in_${u.id}`, '1')
     }
     setUser(u)
     scheduleRefresh(forceLogout)
@@ -120,6 +120,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       if (isCapacitor()) localStorage.setItem('auth_token', token)
       localStorage.setItem('auth_user', JSON.stringify(u))
+      // Signal pour PushNotificationManager : déclencher le setup push juste après inscription
+      if (u?.id) sessionStorage.setItem(`push_just_logged_in_${u.id}`, '1')
     }
     setUser(u)
     scheduleRefresh(forceLogout)
