@@ -307,6 +307,63 @@ export async function startConversation(
   return { id, status: 'open', closed_by_role: null }
 }
 
+/**
+ * Crée ou retrouve la conversation d’un patient (email WP) pour l’UI coach/admin « Ouvrir le chat ».
+ * Coach : fixe assigned_coach_id sur le staff courant pour que le fil apparaisse dans sa liste.
+ * Admin : ne modifie pas l’assignation sur une ligne existante.
+ */
+export async function ensureConversationForPatientByEmail(params: {
+  patientEmail: string
+  staffUserId: number
+  isAdmin: boolean
+  isCoach: boolean
+}): Promise<{ id: number; created: boolean }> {
+  const pool = getPool()
+  await ensureTables(pool)
+  const tUsers = table('users')
+  const tConv = table(TBL_CONV)
+  const emailNorm = String(params.patientEmail ?? '')
+    .trim()
+    .toLowerCase()
+  if (!emailNorm || !emailNorm.includes('@')) {
+    throw new Error('Email invalide')
+  }
+
+  const [urows] = await pool.execute<RowDataPacket[]>(
+    `SELECT ID, user_email FROM ${tUsers} WHERE LOWER(TRIM(user_email)) = ? LIMIT 1`,
+    [emailNorm]
+  )
+  if (!urows.length) {
+    throw new Error('Aucun compte WordPress pour cet email')
+  }
+  const userId = Number(urows[0].ID)
+  const userEmail = String(urows[0].user_email ?? params.patientEmail).trim()
+
+  const [existing] = await pool.execute<RowDataPacket[]>(
+    `SELECT id FROM ${tConv} WHERE user_id = ? AND status != 'deleted' ORDER BY id DESC LIMIT 1`,
+    [userId]
+  )
+
+  if (existing.length > 0) {
+    const id = Number(existing[0].id)
+    if (params.isCoach && !params.isAdmin) {
+      await pool.execute(`UPDATE ${tConv} SET assigned_coach_id = ? WHERE id = ?`, [
+        params.staffUserId,
+        id,
+      ])
+    }
+    return { id, created: false }
+  }
+
+  const insertAssigned = params.isCoach && !params.isAdmin ? params.staffUserId : null
+  const [ins] = await pool.execute(
+    `INSERT INTO ${tConv} (user_id, user_email, status, assigned_coach_id) VALUES (?, ?, 'open', ?)`,
+    [userId, userEmail, insertAssigned]
+  )
+  const id = Number((ins as unknown as { insertId: number }).insertId)
+  return { id, created: true }
+}
+
 /** Conversations de l'utilisateur (pour ChatPage) */
 export async function getMyConversations(userId: number, userEmail: string): Promise<
   Array<{

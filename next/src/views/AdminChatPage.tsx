@@ -98,20 +98,32 @@ export default function AdminChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgAt = useRef<string | null>(null)
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const listPollSlowRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const refreshListAfterSendRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    return () => {
+      if (refreshListAfterSendRef.current) clearTimeout(refreshListAfterSendRef.current)
+    }
+  }, [])
   const initReadDoneRef = useRef(false)
   /** Conversation ouverte : le poll liste ne doit pas réinjecter un badge « non lu » serveur (course markRead / timing). */
   const selectedIdRef = useRef<number | null>(null)
+  /** Ignore les réponses API messages si l’utilisateur a changé de conversation entre-temps. */
+  const messagesTargetConvRef = useRef<number | null>(null)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
   const effectiveStatus = emailParam ? '' : statusFilter
+  const listPerPage = emailParam ? 500 : 50
+  /** Une tentative ensure_for_patient par navigation email (évite boucles). */
+  const ensurePatientAttemptedRef = useRef(false)
 
   const loadConversations = useCallback((opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoadingConvs(true)
     chatApi
-      .listConversations({ status: effectiveStatus, per_page: 50 })
+      .listConversations({ status: effectiveStatus, per_page: listPerPage })
       .then((res) => {
         const items = (res as { items?: Conversation[] })?.items ?? []
         const openId = selectedIdRef.current
@@ -132,7 +144,41 @@ export default function AdminChatPage() {
       .finally(() => {
         if (!opts?.silent) setLoadingConvs(false)
       })
-  }, [effectiveStatus])
+  }, [effectiveStatus, listPerPage])
+
+  useEffect(() => {
+    ensurePatientAttemptedRef.current = false
+  }, [emailParam])
+
+  // Patient depuis le suivi : créer / rattacher la conv si absente de la liste (jamais ouverte côté patient, ou autre coach).
+  useEffect(() => {
+    if (!emailParam?.trim()) return
+    if (loadingConvs) return
+    if (!isAdmin && !isCoach) return
+    const email = emailParam.toLowerCase().trim()
+    const hasMatch = conversations.some((c) => (c.user_email ?? '').toLowerCase() === email)
+    if (hasMatch) return
+    if (ensurePatientAttemptedRef.current) return
+    ensurePatientAttemptedRef.current = true
+    setError('')
+    void chatApi
+      .ensureForPatient(emailParam.trim())
+      .then(() => loadConversations({ silent: true }))
+      .catch((err: unknown) => {
+        const ex = err as { detail?: string; message?: string }
+        setError(
+          (ex.detail || ex.message || '').trim() ||
+            'Impossible d’ouvrir le chat pour ce patient.'
+        )
+      })
+  }, [
+    emailParam,
+    loadingConvs,
+    conversations,
+    isAdmin,
+    isCoach,
+    loadConversations,
+  ])
 
   // Init : pour éviter d'afficher d'anciens messages comme "non lus"
   // après mise en place du suivi (coach_last_read_at == NULL).
@@ -151,22 +197,33 @@ export default function AdminChatPage() {
       })
   }, [emailParam, isAdmin, isCoach, user, loadConversations])
 
-  useEffect(() => { loadConversations() }, [loadConversations])
   useEffect(() => {
-    const t = setInterval(loadConversations, 15000)
-    return () => clearInterval(t)
+    loadConversations()
   }, [loadConversations])
 
+  useEffect(() => {
+    if (listPollSlowRef.current) clearInterval(listPollSlowRef.current)
+    const ms = selected?.id ? 30000 : 20000
+    listPollSlowRef.current = setInterval(() => loadConversations({ silent: true }), ms)
+    return () => {
+      if (listPollSlowRef.current) clearInterval(listPollSlowRef.current)
+    }
+  }, [loadConversations, selected?.id])
+
+  // Ne pas setSelected(match) si l’id est déjà le bon : une nouvelle référence relançait l’effet
+  // [selected] → setConversations → conversations → boucle "Maximum update depth".
   useEffect(() => {
     if (!emailParam || conversations.length === 0) return
     const email = emailParam.toLowerCase().trim()
     const match = conversations.find((c) => (c.user_email ?? '').toLowerCase() === email)
-    if (match) setSelected(match)
+    if (!match) return
+    setSelected((prev) => (prev?.id === match.id ? prev : match))
   }, [emailParam, conversations])
 
   const loadMessages = useCallback(async (convId: number, since: string | null) => {
     try {
       const res = await chatApi.messages(String(convId), since ?? undefined)
+      if (messagesTargetConvRef.current !== convId) return
       const items = ((res as { items?: Message[] })?.items ?? []) as Message[]
       if (items.length > 0) {
         setMessages((prev) => {
@@ -178,33 +235,43 @@ export default function AdminChatPage() {
         lastMsgAt.current = items[items.length - 1].created_at ?? null
         scrollToBottom()
       }
-      // Toujours marquer lu après un fetch réussi tant qu'on affiche le fil : évite le badge qui
-      // revient à chaque poll liste (markRead n'était pas appelé si items vide en mode since).
-      await chatApi.markRead(String(convId), 'coach')
+      if (messagesTargetConvRef.current !== convId) return
+      // markRead seulement si chargement initial ou nouveaux messages : moins de charge DB / réseau
+      if (!since || items.length > 0) {
+        await chatApi.markRead(String(convId), 'coach')
+      }
     } catch {
       /* silent */
     }
   }, [scrollToBottom])
 
+  // IMPORTANT : dépendre uniquement de l’id, pas de l’objet `selected` — sinon chaque poll liste
+  // qui fait { ...prev, ...row } relançait cet effet, vidait les messages et rechargeait tout le fil.
+  const selectedConvId = selected?.id ?? null
+
   useEffect(() => {
-    if (!selected) {
+    if (!selectedConvId) {
       selectedIdRef.current = null
+      messagesTargetConvRef.current = null
       return
     }
-    selectedIdRef.current = selected.id
+    selectedIdRef.current = selectedConvId
+    messagesTargetConvRef.current = selectedConvId
     lastMsgAt.current = null
     setMessages([])
-    setConversations((prev) => prev.map((c) => (c.id === selected.id ? { ...c, unread_count: 0 } : c)))
-    void chatApi.markRead(String(selected.id), 'coach').catch(() => {})
-    loadMessages(selected.id, null)
+    setConversations((prev) =>
+      prev.map((c) => (c.id === selectedConvId ? { ...c, unread_count: 0 } : c))
+    )
+    void chatApi.markRead(String(selectedConvId), 'coach').catch(() => {})
+    void loadMessages(selectedConvId, null)
     if (pollTimer.current) clearInterval(pollTimer.current)
-    pollTimer.current = setInterval(() => loadMessages(selected.id, lastMsgAt.current), 10000)
+    pollTimer.current = setInterval(() => {
+      void loadMessages(selectedConvId, lastMsgAt.current)
+    }, 8000)
     return () => {
       if (pollTimer.current) clearInterval(pollTimer.current)
     }
-  }, [selected, loadMessages])
-
-  useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
+  }, [selectedConvId, loadMessages])
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
@@ -237,7 +304,11 @@ export default function AdminChatPage() {
       setMessages((prev) => prev.map((m) => (m.id === optimistic.id ? saved : m)))
       lastMsgAt.current = saved.created_at ?? null
       setConversations((prev) => prev.map((c) => (c.id === selected.id ? { ...c, last_message_at: saved.created_at } : c)))
-      void loadConversations({ silent: true })
+      if (refreshListAfterSendRef.current) clearTimeout(refreshListAfterSendRef.current)
+      refreshListAfterSendRef.current = setTimeout(() => {
+        refreshListAfterSendRef.current = null
+        void loadConversations({ silent: true })
+      }, 600)
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id))
       setText(content)

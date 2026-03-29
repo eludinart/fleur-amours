@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
 import { sessionsApi } from '@/api/sessions'
 import { aiApi } from '@/api/ai'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -210,6 +211,8 @@ function UserDetailPanel({
   email: string
   onClose: () => void
 }) {
+  const { isAdmin } = useAuth()
+  const staffChatBase = isAdmin ? '/admin/chat' : '/coach/chat'
   const [data, setData] = useState<SuiviDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('fleur')
@@ -295,7 +298,7 @@ function UserDetailPanel({
 
           <div className="flex flex-wrap gap-2 mt-3">
             <Link
-              href={`/admin/chat?email=${encodeURIComponent(email)}`}
+              href={`${staffChatBase}?email=${encodeURIComponent(email)}`}
               onClick={onClose}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors"
             >

@@ -14,6 +14,8 @@ export const chatApi = {
     return api.post('/api/chat/conversations/start', body)
   },
   myConversations: () => api.get('/api/chat/conversations/my'),
+  ensureForPatient: (email: string) =>
+    api.post('/api/chat/conversations/ensure_for_patient', { email }),
   listConversations: (params: Record<string, unknown> = {}) => {
     const clean = Object.fromEntries(
       Object.entries(params).filter(
