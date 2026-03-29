@@ -92,31 +92,65 @@ export async function sendFcmPush(
   actionUrl: string | null
 ): Promise<number> {
   const projectId = getProjectId()
-  if (!projectId) return 0
+  if (!projectId) {
+    console.warn('[FCM] FCM_PROJECT_ID manquant')
+    return 0
+  }
   const accessToken = await getAccessToken()
-  if (!accessToken) return 0
+  if (!accessToken) {
+    console.warn('[FCM] Impossible d\'obtenir un access token (service account invalide ?)')
+    return 0
+  }
 
   const { getPool, table } = await import('./db')
   const pool = getPool()
   const t = table('fleur_push_tokens')
 
   const [rows] = await pool.execute(
-    `SELECT token FROM ${t} WHERE (user_id = ? OR (user_email IS NOT NULL AND user_email = ?)) AND token IS NOT NULL AND token != ''`,
+    `SELECT token, platform FROM ${t} WHERE (user_id = ? OR (user_email IS NOT NULL AND user_email = ?)) AND token IS NOT NULL AND token != ''`,
     [userId ?? 0, userEmail ?? '']
   )
-  const tokens = ((rows ?? []) as { token: string }[]).map((r) => r.token).filter(Boolean)
-  if (tokens.length === 0) return 0
+  const tokenRows = ((rows ?? []) as { token: string; platform?: string }[]).filter((r) => r.token)
+  if (tokenRows.length === 0) {
+    console.warn(`[FCM] Aucun token pour userId=${userId} email=${userEmail}`)
+    return 0
+  }
+
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  const link = actionUrl
+    ? (actionUrl.startsWith('http') ? actionUrl : `${appUrl}${actionUrl}`)
+    : `${appUrl}${basePath}`
 
   const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`
   let sent = 0
-  for (const token of tokens) {
-    const message = {
+  for (const { token, platform } of tokenRows) {
+    const isWeb = platform === 'web'
+    const message: Record<string, unknown> = {
       token,
       notification: { title, body },
       data: { action_url: actionUrl ?? '' },
+      // Config Android native
       android: {
-        notification: { channel_id: 'fleur_default' },
+        notification: { channel_id: 'fleur_default', sound: 'default' },
+        priority: 'high',
       },
+    }
+    // Config Web Push (PWA) — obligatoire pour les tokens navigateur
+    if (isWeb) {
+      message.webpush = {
+        headers: { Urgency: 'high' },
+        notification: {
+          title,
+          body,
+          icon: `${appUrl}${basePath}/juste-la-fleur.png`,
+          badge: `${appUrl}${basePath}/juste-la-fleur.png`,
+          requireInteraction: false,
+          tag: 'fleur-message',
+          renotify: true,
+        },
+        fcm_options: { link },
+      }
     }
     const res = await fetch(url, {
       method: 'POST',
@@ -128,7 +162,14 @@ export async function sendFcmPush(
     })
     if (res.ok) {
       const data = (await res.json()) as { error?: unknown }
-      if (!data.error) sent++
+      if (!data.error) {
+        sent++
+      } else {
+        console.warn('[FCM] Erreur réponse token', token.slice(0, 20), data.error)
+      }
+    } else {
+      const errText = await res.text().catch(() => '')
+      console.warn('[FCM] HTTP error', res.status, token.slice(0, 20), errText.slice(0, 200))
     }
   }
   return sent
