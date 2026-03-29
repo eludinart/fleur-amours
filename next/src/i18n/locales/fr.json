@@ -132,6 +132,8 @@
     "boutique": "La Boutique des Saisons",
     "session": "Explorer ma Fleur",
     "fleur": "Ma Fleur",
+    "fleurBeta": "Ma Fleur 2-Beta",
+    "fleurBetaTooltip": "Questionnaire court (12 questions) par les 4 Portes — version expérimentale.",
     "duo": "Duo",
     "mesFleurs": "Mes Fleurs",
     "tirages": "Tirages",
@@ -536,6 +538,35 @@
     }
   },
 
+  "fleurBeta": {
+    "doorTitle": "Par quelle Porte entrez-vous ?",
+    "doorSubtitle": "Même cartographie que les 4 Portes du Jardin (Cœur, Temps, Climat, Histoire).",
+    "banner": "Version bêta : parcours court pour tester la dynamique des pétales.",
+    "quizTitle": "Les 12 questions",
+    "quizDesc": "{count} questions, archétypales — quatre niveaux de réponse.",
+    "quizScaleExplain": "Chaque question mesure une seule chose : à quel point l’affirmation vous correspond, de « peu pas du tout » à « tout à fait ».",
+    "questionsShort": "questions",
+    "drawFlower": "Voir ma Fleur",
+    "changeDoor": "Changer de Porte",
+    "resultTitle": "Votre Fleur 2-Beta",
+    "versionLabel": "Questionnaire 2-beta — exploration",
+    "newRun": "Nouveau passage",
+    "classicFleur": "Ma Fleur classique (24 questions)",
+    "choice0": "Peu / pas du tout",
+    "choice1": "Un peu",
+    "choice2": "Beaucoup",
+    "choice3": "Tout à fait / pleinement",
+    "aiReading": "Lecture approfondie (IA)",
+    "interpretationHeading": "Interprétation de votre Fleur 2-Beta",
+    "referenceDetails": "Référence : les 8 formes d’amour (textes + scores)",
+    "aiBlockSynthesis": "Synthèse",
+    "aiBlockTensions": "Mouvements & tensions",
+    "aiBlockOpening": "Ouverture",
+    "regenerateAi": "Régénérer la lecture IA",
+    "regenerating": "Régénération…",
+    "regenerateHint": "Après un changement de questionnaire ou pour une autre tournure, relancez l’analyse (nouvel appel modèle, les crédits usuels s’appliquent)."
+  },
+
   "mesFleurs": {
     "title": "Mes Fleurs",
     "subtitle": "Consultez vos explorations Ma Fleur et DUO.",
@@ -550,6 +581,7 @@
     "with": "avec",
     "deleteConfirm": "Supprimer définitivement {label} ?",
     "thisFleur": "cette Ma Fleur",
+    "thisFleurBeta": "cette Ma Fleur 2-Beta",
     "thisDuo": "cette Fleur DUO",
     "loadError": "Impossible de charger vos explorations.",
     "deleteError": "Impossible de supprimer."

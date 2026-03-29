@@ -41,6 +41,7 @@ export type ScienceConfig = {
   include_duo: boolean
   include_chat_clairiere: boolean
   include_chat_coach: boolean
+  include_fleur_beta: boolean
 
   // Extraction evidence
   evidence_initial_max_messages: number
@@ -65,6 +66,7 @@ const DEFAULT_CONFIG: ScienceConfig = {
   include_duo: true,
   include_chat_clairiere: true,
   include_chat_coach: true,
+  include_fleur_beta: true,
 
   evidence_initial_max_messages: 60,
   evidence_update_max_messages: 30,
@@ -93,6 +95,7 @@ async function ensureTables(): Promise<boolean> {
       include_duo TINYINT NOT NULL DEFAULT 1,
       include_chat_clairiere TINYINT NOT NULL DEFAULT 1,
       include_chat_coach TINYINT NOT NULL DEFAULT 1,
+      include_fleur_beta TINYINT NOT NULL DEFAULT 1,
 
       evidence_initial_max_messages INT NOT NULL DEFAULT 60,
       evidence_update_max_messages INT NOT NULL DEFAULT 30,
@@ -143,6 +146,13 @@ async function ensureTables(): Promise<boolean> {
     // ignore
   }
 
+  try {
+    await pool.execute(`ALTER TABLE ${TBL_CONFIG()} ADD COLUMN include_fleur_beta TINYINT NOT NULL DEFAULT 1`)
+  } catch (e: unknown) {
+    const msg = String((e as Error)?.message ?? '')
+    if (!/Duplicate column/i.test(msg)) throw e
+  }
+
   return true
 }
 
@@ -188,6 +198,7 @@ export async function getScienceConfig(): Promise<{ config: ScienceConfig; db_co
     include_duo: toBool(r?.include_duo),
     include_chat_clairiere: toBool(r?.include_chat_clairiere),
     include_chat_coach: toBool(r?.include_chat_coach),
+    include_fleur_beta: r?.include_fleur_beta == null ? DEFAULT_CONFIG.include_fleur_beta : toBool(r?.include_fleur_beta),
 
     evidence_initial_max_messages: Number(r?.evidence_initial_max_messages ?? DEFAULT_CONFIG.evidence_initial_max_messages),
     evidence_update_max_messages: Number(r?.evidence_update_max_messages ?? DEFAULT_CONFIG.evidence_update_max_messages),
@@ -222,6 +233,7 @@ export async function setScienceConfig(partial: Partial<ScienceConfig>): Promise
       include_duo = ?,
       include_chat_clairiere = ?,
       include_chat_coach = ?,
+      include_fleur_beta = ?,
       evidence_initial_max_messages = ?,
       evidence_update_max_messages = ?,
       science_profile_ttl_minutes = ?,
@@ -241,6 +253,7 @@ export async function setScienceConfig(partial: Partial<ScienceConfig>): Promise
       c.include_duo ? 1 : 0,
       c.include_chat_clairiere ? 1 : 0,
       c.include_chat_coach ? 1 : 0,
+      c.include_fleur_beta ? 1 : 0,
       c.evidence_initial_max_messages,
       c.evidence_update_max_messages,
       c.science_profile_ttl_minutes,

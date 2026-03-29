@@ -109,6 +109,8 @@
     "boutique": "La Tienda de las Estaciones",
     "session": "Explorar mi Flor",
     "fleur": "Mi Flor",
+    "fleurBeta": "Mi Flor 2-Beta",
+    "fleurBetaTooltip": "Cuestionario corto (12 preguntas) por las 4 Puertas — experimental.",
     "duo": "Dúo",
     "mesFleurs": "Mis Flores",
     "tirages": "Tiradas",
@@ -511,6 +513,35 @@
     }
   },
 
+  "fleurBeta": {
+    "doorTitle": "¿Por qué Puerta entras?",
+    "doorSubtitle": "El mismo mapa que las 4 Puertas del Jardín (Corazón, Tiempo, Clima, Historia).",
+    "banner": "Beta: recorrido breve para explorar la dinámica de los pétalos.",
+    "quizTitle": "Las 12 preguntas",
+    "quizDesc": "{count} preguntas arquetípicas — cuatro niveles de respuesta.",
+    "quizScaleExplain": "Cada pregunta mide una sola cosa: hasta qué punto la afirmación te corresponde, de « en absoluto » a « plenamente ».",
+    "questionsShort": "preguntas",
+    "drawFlower": "Ver mi Flor",
+    "changeDoor": "Cambiar de Puerta",
+    "resultTitle": "Tu Flor 2-Beta",
+    "versionLabel": "Cuestionario 2-beta — exploración",
+    "newRun": "Nuevo paso",
+    "classicFleur": "Mi Flor clásica (24 preguntas)",
+    "choice0": "Poco / en absoluto",
+    "choice1": "Un poco",
+    "choice2": "Mucho",
+    "choice3": "Por completo / plenamente",
+    "aiReading": "Lectura en profundidad (IA)",
+    "interpretationHeading": "Interpretación de tu Flor 2-Beta",
+    "referenceDetails": "Referencia: las 8 formas de amor (textos + puntuaciones)",
+    "aiBlockSynthesis": "Síntesis",
+    "aiBlockTensions": "Movimientos y tensiones",
+    "aiBlockOpening": "Apertura",
+    "regenerateAi": "Regenerar lectura IA",
+    "regenerating": "Regenerando",
+    "regenerateHint": "Tras cambios en el cuestionario u otro matiz, vuelve a lanzar el análisis (nueva llamada al modelo; créditos habituales)."
+  },
+
   "mesFleurs": {
     "title": "Mis Flores",
     "subtitle": "Consulta tus exploraciones Mi Flor y DÚO.",
@@ -525,6 +556,7 @@
     "with": "con",
     "deleteConfirm": "¿Eliminar definitivamente {label}?",
     "thisFleur": "esta Mi Flor",
+    "thisFleurBeta": "esta Mi Flor 2-Beta",
     "thisDuo": "esta Flor DÚO",
     "loadError": "No se pueden cargar tus exploraciones.",
     "deleteError": "No se puede eliminar."

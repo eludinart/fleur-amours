@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     partial.include_duo = body.include_duo
     partial.include_chat_clairiere = body.include_chat_clairiere
     partial.include_chat_coach = body.include_chat_coach
+    partial.include_fleur_beta = body.include_fleur_beta
 
     // Numbers
     if (body.confidence_min_facts != null) partial.confidence_min_facts = Number(body.confidence_min_facts)

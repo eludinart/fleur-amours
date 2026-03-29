@@ -11,6 +11,7 @@ const LABELS: Record<string, string> = {
   [basePath]: 'nav.home',
   [`${basePath}/session`]: 'nav.session',
   [`${basePath}/fleur`]: 'nav.fleur',
+  [`${basePath}/fleur-beta`]: 'nav.fleurBeta',
   [`${basePath}/duo`]: 'nav.duo',
   [`${basePath}/mes-fleurs`]: 'nav.mesFleurs',
   [`${basePath}/tirage`]: 'nav.tirages',

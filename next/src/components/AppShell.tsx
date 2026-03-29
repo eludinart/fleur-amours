@@ -26,6 +26,7 @@ import TarotPage from '@/views/TarotPage'
 import SessionPage from '@/views/SessionPage'
 import { SessionErrorBoundary } from '@/components/SessionErrorBoundary'
 import FleurPage from '@/views/FleurPage'
+import FleurBetaPage from '@/views/FleurBetaPage'
 import DuoPage from '@/views/DuoPage'
 import MesFleursPage from '@/views/MesFleursPage'
 import CardsPage from '@/views/CardsPage'
@@ -266,6 +267,13 @@ function AppRoutes() {
       <ProtectedLayout>
         <Layout>
           <FleurPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
+    'fleur-beta': (
+      <ProtectedLayout>
+        <Layout>
+          <FleurBetaPage />
         </Layout>
       </ProtectedLayout>
     ),

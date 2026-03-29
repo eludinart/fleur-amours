@@ -109,6 +109,8 @@
     "boutique": "The Seasons Shop",
     "session": "Explore my Flower",
     "fleur": "My Flower",
+    "fleurBeta": "My Flower 2-Beta",
+    "fleurBetaTooltip": "Short questionnaire (12 questions) through the 4 Doors — experimental.",
     "duo": "Duo",
     "mesFleurs": "My Flowers",
     "tirages": "Readings",
@@ -513,6 +515,35 @@
     }
   },
 
+  "fleurBeta": {
+    "doorTitle": "Which Door do you enter through?",
+    "doorSubtitle": "Same map as the Garden’s 4 Doors (Heart, Time, Climate, History).",
+    "banner": "Beta: a short path to explore petal dynamics.",
+    "quizTitle": "The 12 questions",
+    "quizDesc": "{count} archetypal questions — four answer levels.",
+    "quizScaleExplain": "Each item measures one thing only: how much the statement fits you, from “not at all” to “completely.”",
+    "questionsShort": "questions",
+    "drawFlower": "See my Flower",
+    "changeDoor": "Change Door",
+    "resultTitle": "Your Flower 2-Beta",
+    "versionLabel": "Questionnaire 2-beta — exploration",
+    "newRun": "Start again",
+    "classicFleur": "Classic My Flower (24 questions)",
+    "choice0": "Not at all / hardly",
+    "choice1": "A little",
+    "choice2": "A lot",
+    "choice3": "Fully / completely",
+    "aiReading": "In-depth reading (AI)",
+    "interpretationHeading": "Interpretation of your Flower 2-Beta",
+    "referenceDetails": "Reference: the 8 forms of love (texts + scores)",
+    "aiBlockSynthesis": "Synthesis",
+    "aiBlockTensions": "Movements & tensions",
+    "aiBlockOpening": "Opening",
+    "regenerateAi": "Regenerate AI reading",
+    "regenerating": "Regenerating…",
+    "regenerateHint": "After questionnaire changes or for a different tone, run the analysis again (new model call; usual credits apply)."
+  },
+
   "mesFleurs": {
     "title": "My Flowers",
     "subtitle": "View your My Flower and DUO explorations.",
@@ -527,6 +558,7 @@
     "with": "with",
     "deleteConfirm": "Permanently delete {label}?",
     "thisFleur": "this My Flower",
+    "thisFleurBeta": "this My Flower 2-Beta",
     "thisDuo": "this DUO Flower",
     "loadError": "Unable to load your explorations.",
     "deleteError": "Unable to delete."

@@ -7,6 +7,7 @@ import { my as myDreamscapes } from './db-dreamscape'
 import { my as myTarotReadings } from './db-tarot'
 import { my as mySessions } from './db-sessions'
 import { getMyResults, getResult, getDuoResult } from './db-fleur'
+import { listFleurBetaScoresForScience } from './db-fleur-beta'
 
 type ScienceAIOutput = {
   facts: Array<{
@@ -238,6 +239,21 @@ export async function generateScienceProfile(params: {
             })
             petalsCount++
           }
+        }
+      } catch {
+        // best-effort
+      }
+    }
+
+    // Ma Fleur 2-Beta (scores déjà normalisés 0–1 par pétale)
+    if (config.include_fleur_beta) {
+      try {
+        const betaRows = await listFleurBetaScoresForScience(params.userId, 20)
+        for (const scores of betaRows) {
+          PETAL_IDS_LOCAL.forEach((id) => {
+            petalsAggregate[id] += Math.min(1, Math.max(0, Number(scores[id] ?? 0)))
+          })
+          petalsCount++
         }
       } catch {
         // best-effort

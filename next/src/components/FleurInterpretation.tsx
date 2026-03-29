@@ -9,6 +9,7 @@ import {
   getFleurInterpretationLocale,
 } from '@/data/fleurInterpretation'
 import { aiApi } from '@/api/ai'
+import { fleurBetaApi } from '@/api/fleur-beta'
 import { TranslatableContent } from '@/components/TranslatableContent'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
@@ -19,6 +20,12 @@ type FleurInterpretationProps = {
   resultId?: string | number | null
   interpretation?: { summary?: string; insights?: string; reflection?: string } | null
   compact?: boolean
+  /** Utilise POST /api/fleur-beta/interpretation (cache serveur). */
+  interpretationApi?: 'standard' | 'fleur-beta'
+  /** Replie intro, grille pétales et textes de référence dans un bloc dépliable. */
+  collapseReferenceSection?: boolean
+  /** Affiche le titre « Comment interpréter… » au-dessus du bloc (défaut true). */
+  showOuterHeading?: boolean
 }
 
 export function FleurInterpretation({
@@ -27,6 +34,9 @@ export function FleurInterpretation({
   resultId = null,
   interpretation: storedInterpretation = null,
   compact = false,
+  interpretationApi = 'standard',
+  collapseReferenceSection = false,
+  showOuterHeading = true,
 }: FleurInterpretationProps) {
   const locale = useStore((s) => s.locale)
   const localeData = getFleurInterpretationLocale(locale)
@@ -43,7 +53,30 @@ export function FleurInterpretation({
 
   const hasScores = scores && Object.values(scores).some((v) => (v ?? 0) > 0)
   const scoresKey = hasScores ? JSON.stringify(scores) : ''
+  const betaAiTitle =
+    interpretationApi === 'fleur-beta' ? t('fleurBeta.aiReading') : t('fleur.interpretation.sectionTitle')
+
   useEffect(() => {
+    if (interpretationApi === 'fleur-beta') {
+      if (
+        storedInterpretation &&
+        (storedInterpretation.summary || storedInterpretation.insights || storedInterpretation.reflection)
+      ) {
+        setAiData(storedInterpretation)
+        return
+      }
+      const rid = resultId != null && resultId !== '' ? Number(resultId) : NaN
+      if (!Number.isFinite(rid) || rid <= 0) return
+      setAiLoading(true)
+      setAiError('')
+      fleurBetaApi
+        .interpretation({ result_id: rid, locale: locale || 'fr' })
+        .then((data) => setAiData(data as { summary?: string; insights?: string; reflection?: string }))
+        .catch(() => setAiError(t('fleur.interpretation.error')))
+        .finally(() => setAiLoading(false))
+      return
+    }
+
     if (!scoresKey) return
     if (
       storedInterpretation &&
@@ -61,32 +94,10 @@ export function FleurInterpretation({
       .then((data) => setAiData(data as { summary?: string; insights?: string; reflection?: string }))
       .catch(() => setAiError(t('fleur.interpretation.error')))
       .finally(() => setAiLoading(false))
-  }, [scoresKey, resultId, storedInterpretation])
+  }, [scoresKey, resultId, storedInterpretation, interpretationApi, locale])
 
-  const content = (
+  const referenceBlock = (
     <>
-      {hasScores && (
-        <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/30 p-4 space-y-3">
-          <h5 className="font-semibold text-sm text-violet-800 dark:text-violet-200 flex items-center gap-2">
-            <span>✨</span> {t('fleur.interpretation.sectionTitle')}
-          </h5>
-          {aiLoading && <p className="text-xs text-slate-500 italic">{t('fleur.interpretation.generating')}</p>}
-          {aiError && <p className="text-xs text-amber-600 dark:text-amber-400">{aiError}</p>}
-          {aiData && !aiLoading && (
-            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-              {aiData.summary && <TranslatableContent text={aiData.summary} className="leading-relaxed" />}
-              {aiData.insights && <TranslatableContent text={aiData.insights} className="leading-relaxed italic" />}
-              {aiData.reflection && (
-                <TranslatableContent
-                  text={aiData.reflection}
-                  className="leading-relaxed text-violet-700 dark:text-violet-300 font-medium"
-                />
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
       <div className="rounded-xl border border-accent/20 bg-accent/5 dark:bg-accent/10 p-4 space-y-2">
         <h5 className="font-semibold text-sm text-slate-800 dark:text-slate-100">{fleurCommentLire.title}</h5>
         <ul className="list-disc list-inside text-xs text-slate-600 dark:text-slate-300 space-y-1">
@@ -126,6 +137,71 @@ export function FleurInterpretation({
     </>
   )
 
+  const showAiBlock = interpretationApi === 'fleur-beta' ? hasScores || !!resultId : hasScores
+
+  const content = (
+    <>
+      {showAiBlock && (
+        <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/30 p-4 space-y-3">
+          <h5 className="font-semibold text-sm text-violet-800 dark:text-violet-200 flex items-center gap-2">
+            <span>✨</span> {betaAiTitle}
+          </h5>
+          {aiLoading && <p className="text-xs text-slate-500 italic">{t('fleur.interpretation.generating')}</p>}
+          {aiError && <p className="text-xs text-amber-600 dark:text-amber-400">{aiError}</p>}
+          {aiData && !aiLoading && (
+            <div className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              {aiData.summary && (
+                <div>
+                  {interpretationApi === 'fleur-beta' && (
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/90 mb-1">
+                      {t('fleurBeta.aiBlockSynthesis')}
+                    </p>
+                  )}
+                  <TranslatableContent text={aiData.summary} className="leading-relaxed" />
+                </div>
+              )}
+              {aiData.insights && (
+                <div>
+                  {interpretationApi === 'fleur-beta' && (
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/90 mb-1">
+                      {t('fleurBeta.aiBlockTensions')}
+                    </p>
+                  )}
+                  <TranslatableContent text={aiData.insights} className="leading-relaxed italic" />
+                </div>
+              )}
+              {aiData.reflection && (
+                <div>
+                  {interpretationApi === 'fleur-beta' && (
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/90 mb-1">
+                      {t('fleurBeta.aiBlockOpening')}
+                    </p>
+                  )}
+                  <TranslatableContent
+                    text={aiData.reflection}
+                    className="leading-relaxed text-violet-800 dark:text-violet-200 font-medium"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {collapseReferenceSection ? (
+        <details className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-900/40 overflow-hidden group">
+          <summary className="px-4 py-3 cursor-pointer list-none flex items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/50 [&::-webkit-details-marker]:hidden">
+            <span>{t('fleurBeta.referenceDetails')}</span>
+            <span className="text-slate-400 transition-transform group-open:rotate-180">▼</span>
+          </summary>
+          <div className="px-4 pb-4 pt-1 space-y-4 border-t border-slate-200 dark:border-slate-600">{referenceBlock}</div>
+        </details>
+      ) : (
+        referenceBlock
+      )}
+    </>
+  )
+
   if (compact) {
     return (
       <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 overflow-hidden">
@@ -151,7 +227,13 @@ export function FleurInterpretation({
 
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-5 space-y-4">
-      <h4 className="font-semibold text-slate-800 dark:text-slate-100">{t('fleur.interpretation.howToReadFull')}</h4>
+      {showOuterHeading && (
+        <h4 className="font-semibold text-slate-800 dark:text-slate-100">
+          {interpretationApi === 'fleur-beta'
+            ? t('fleurBeta.interpretationHeading')
+            : t('fleur.interpretation.howToReadFull')}
+        </h4>
+      )}
       {content}
     </div>
   )

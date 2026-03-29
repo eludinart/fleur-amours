@@ -1,758 +1,407 @@
 # Fleur d'AmOurs — Guide Techno-UX pour Gemini
 
-> But: fournir à Gemini une compréhension **UX/UI (écrans, parcours, rôles, composants)** et **technique (Next.js, routes API, auth JWT, MariaDB, i18n, env, modules)**, afin que les prochaines modifications soient cohérentes et “dans l’esprit” de l’app.
+> But: fournir à Gemini une compréhension **UX/UI (écrans, parcours, rôles, composants)** et **technique (Next.js App Router, routes API, auth JWT, MariaDB, i18n, env, modules)**, afin que les prochaines modifications soient cohérentes et dans l’esprit de l’app.
 
 ## Statut
 
-- Version: `0.8`
+- Version: `0.9`
 
-- Dernière mise à jour: `2026-03-29`
+- Dernière mise à jour: `2026-03-29` (régénération complète depuis `next/src` + règles workspace)
 
 ## Comment mettre ce document à jour
 
-Quand on change le programme (routes, composants, UX, DB, variables, rôles), je mettrai à jour ce document en priorité sur:
+Quand le programme change (routes, composants, UX, DB, variables, rôles), mettre à jour en priorité:
 
-- “Parcours & UX clés”
+- Parcours et UX clés
 
-- “Arborescence & composants”
+- Arborescence et composants (`AppShell`, `Sidebar`)
 
-- “API & sécurité”
+- API et sécurité
 
-- “Couche MariaDB (coach/patientèle)”
+- Couche MariaDB (coach / patientèle)
 
-- “Config & variables d’environnement”
+- Config et variables d’environnement
 
-- “Build / déploiement (Coolify, Git)” si le flux prod change
+- Build / déploiement si le flux prod change
 
-- **§11 — Audit sécurité, structure, stubs** (dernière relecture code : 2026-03-29 — v0.8)
+- Section 11 — audit, stubs, risques résiduels
 
 ---
 
 ## 1) Vision UX/UI (mental model)
 
-### 1.1. App à navigation par “portes”
+### 1.1. App à navigation par « portes »
 
-L’application est pensée comme une progression dans des “sections” (pages) accessibles via une barre latérale:
+L’application est une suite de sections accessibles via une barre latérale et des entrées mises en avant:
 
-- Une **Accueil** (ex: “Grand Jardin”, “Clairière”, “Boutique”)
+- **Zone haute sidebar** (toujours visible une fois connecté): CTA **Dreamscape** (`/dreamscape`) et **Session / Phare** (`/session`).
 
-- Une section **Découvrir** (ex: “Fleur”, “Duo”, “Mes Fleurs”)
+- **Accueil**: Grand Jardin (`/prairie`), Clairière (`/clairiere`), Boutique (`/boutique`), et home (`/`).
 
-- Une section **Explorer** (ex: “Tirage”)
+- **Découvrir**: Fleur (`/fleur`), Duo (`/duo`), Mes Fleurs (`/mes-fleurs`).
 
-- Une section **Accompagnement** (ex: “Chat”, “Annuaire des coachs”)
+- **Explorer**: Tirages (`/tirage`).
 
-- Une section **Compte** (ex: profil, notifications)
+- **Accompagnement**: Chat (`/chat`), annuaire (`/coaches`).
 
-La barre latérale ajuste ses items en fonction du rôle de l’utilisateur (**admin**, **coach**, **user**).
+- **Compte**: profil (`/account`), notifications (`/notifications`, préférences `/notifications/preferences`).
+
+La sidebar ajuste les items selon **admin**, **coach**, **user**. Les coachs et admins ont un groupe **Coach** (repliable): dashboard (`/?view=coach`), analytics (`/coach/analytics`), suivi (`/coach/suivi`), chat coach (`/coach/chat`), patientèle (`/coach/patientele`). Les **admins** ont en plus diagnostic, stats, campagnes, et un bloc **Admin** (`/admin`, diffusions, sessions, tirages, science, users, prompts, promo, notifications).
 
 ### 1.2. Layout
 
-- Une page “shell” gère le routage applicatif (table de pages) côté client.
+- La page « shell » `AppShell` route côté client selon le premier segment de chemin (après `basePath`).
 
-- Les pages protégées affichent un **Layout** (sidebar + topbar) et sont contrôlées par `AuthContext`.
+- Les pages protégées utilisent `Layout` (sidebar + topbar) et `ProtectedLayout` selon `AuthContext`.
 
-### 1.3. Rôles & effets UX
+### 1.3. Rôles et effets UX
 
-Rôles estimés à partir de champs du user chargé:
+- **Admin**: menu admin, pages `adminOnly`.
 
-- **Admin**: voit menu “Admin …”, et certaines pages protégées admin-only.
+- **Coach**: menu coach + pages `adminOrCoach`.
 
-- **Coach**: voit le menu “Coach …” et des pages coach/coach-or-admin.
+- **User standard**: parcours public / utilisateur.
 
-- **User standard**: voit les pages “grand public / parcours utilisateur”.
+Règles UX:
 
-Concrètement, l’UX applique ces règles:
+- Pas de session: redirection vers `/login` (avec `from=`).
 
-- Si la session n’existe pas: redirection vers `/login`.
+- Mauvais rôle: redirection vers la home.
 
-- Si l’utilisateur n’a pas le bon rôle: redirection vers la home.
-
-- Les pages “coach/patientèle” apparaissent uniquement pour `isCoach` ou `isAdmin`.
-
-**Limite structurelle:** la barrière UX côté client ne remplace pas les contrôles serveur sur chaque route API (voir §11).
+- **La barrière UX client ne remplace pas les contrôles sur chaque route API** (voir section 11).
 
 ---
 
-## 2) Parcours & écrans clés (UX)
+## 2) Parcours et écrans clés (UX)
 
-### 2.1. Auth & invitation coach -> patientèle
+### 2.1. Auth et invitation coach vers patientèle
 
-**Entrées UX**
+- URL de login peut inclure `invite_token` (query).
 
-- URL de login avec un `invite_token` (paramètre query).
+- **Écran**: `LoginPage` (login / register selon contexte).
 
-**Écran**
+- Après login/register, l’UI appelle `POST /api/coach/patients/accept-invite` avec `{ invite_token }`.
 
-- `LoginPage`
+- **Effet DB**: invitation acceptée, seed sociale coach → patient, patientèle dérivée des seeds acceptées.
 
-  - Mode `login` ou `register` selon présence d’un `invite_token`.
+### 2.2. Espace Coach — Patientèle
 
-**Flux**
+- **Écran**: `CoachPatientelePage` — routes `/admin/patientele` ou `/coach/patientele`.
 
-- Un coach génère un lien d’invitation.
+- Invitation (email, intention), lien copiable, liste patients avec fleur sociale, intentions, science, canal Clairière, recalcul science.
 
-- Le nouvel utilisateur s’inscrit (ou se connecte) puis l’app consomme l’invitation.
+### 2.3. Tableau de bord (home)
 
-**Consommation (important)**
+- **Écran**: `HomePage` choisit le dashboard selon le rôle:
 
-- Après login/register, l’UI envoie `POST` vers:
+  - **Admin**: `AdminDashboardPage`
 
-  - `POST /api/coach/patients/accept-invite`
+  - **Coach** (ou `/?view=coach`): `CoachDashboardPage`
 
-  - payload: `{ invite_token }`
+  - **Sinon**: `DashboardPage` (`next/src/views/DashboardPage.tsx`)
 
-**Effet DB**
+- Données agrégées via `fetchDashboardData` dans `next/src/api/dashboard.ts` (accès SAP, sessions, fleurs, tirages, dreamscapes, prairie, chronique, pétales, etc.). Insights IA: `POST /api/ai/dashboard-insight`, tendance: `POST /api/ai/dashboard-trend`.
 
-- La relation sociale “seed” coach -> patient est marquée acceptée, puis les patientèles coach se dérivent des seeds acceptées.
+### 2.4. Annuaire des coachs et messagerie
 
----
+- `/coaches` → `CoachesDirectoryPage`.
 
-### 2.2. Espace Coach: “Patientèle”
+- Liste: `GET /api/chat/coaches`. CTA message → `/chat?coach=<wp_user_id>`; `ChatPage` normalise vers `?conv=`.
 
-**Écran**
+- Types / affichage: `next/src/lib/coach-profile.ts`.
 
-- `CoachPatientelePage` (route admin/coach: `/admin/patientele` dans `AppShell`)
+### 2.5. Notifications et diffusions
 
-**Composants UX principaux**
+- Utilisateur: `/notifications`, `/notifications/preferences`. APIs dédiées sous `next/src/app/api/notifications/*` (list, unread_count, mark_read, mark_all_read, delete_read, register_push_token, stats, admin_list, admin_delete, create, ensure_tables — **ensure_tables** réservé admin en prod conforme aux correctifs sécurité).
 
-- Bloc “Inviter une personne”
+- Push mobile: `PushNotificationProvider` (Capacitor) envoie le token au backend.
 
-  - champ `email`
-
-  - sélecteur `cadre/intention` via `INTENTIONS`
-
-  - bouton `Inviter`
-
-  - affichage du `inviteLink` (et bouton Copier)
-
-- Bloc “Vos patientèles”
-
-  - liste des patients acceptés
-
-  - pour chaque patient:
-
-    - fleur sociale (pétales) + identité (pseudo/email)
-
-    - intention(s) attachée(s)
-
-    - indicateur science: pas générée / disponible / générée
-
-    - bouton “Ouvrir la Clairière” si `channelId` existe
-
-    - bouton “Recalculer la science” (rebuild)
-
-    - mini-liste de `faits` et `hypothèses` (limitées)
+- Admin: **Diffusions** → `/admin/broadcasts` (`AdminBroadcastsPage`), APIs `next/src/app/api/admin/broadcasts/*`, emails via `next/src/lib/smtp.ts`.
 
 ---
 
-### 2.3. Dashboard utilisateur / coach
+## 3) Arborescence et composants (cibles pour modifications)
 
-**Écran**
+### 3.1. Routage AppShell
 
-- `DashboardPage`
+- Fichier: `next/src/components/AppShell.tsx`
 
-**UX**
+- `basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'`
 
-- Liste de cartes “prochaines portes” selon:
+- Pages **publiques** sans layout complet: `/tirage/partage/:token`, `/dreamscape/partage/:token`
 
-  - session en cours
+- **protectedPages** (extrait des clés): `prairie`, `lisiere`, `clairiere`, `boutique`, `home`, `presentation`, `tirage`, `dreamscape` (ou `dreamscape/historique`), `session`, `fleur`, `duo`, `mes-fleurs`, `cartes`, `coaches`, `chat`, `account`, `notifications` (+ sous-route `preferences`), `graph`, `science`, `matrix`
 
-  - progression science (petals / chronicle)
+- **admin / adminSubRoute**: `''` (dashboard), `suivi`, `patientele`, `sessions`, `tirages`, `users`, `chat`, `prompts`, `promo`, `notifications`, `broadcasts`, `analytics`, `science`
 
-- Affichage de sections:
+- **coach / coachSubRoute**: `''`, `suivi`, `analytics`, `patientele`, `chat`
 
-  - coaching chats (selon accès)
+- **stats**, **campaigns** (admin), **diagnostic** (admin)
 
-  - “Mes coachs” (pour user standard)
+- Landing invité sur `/` / `home`: `LandingPage`
 
-  - modules de statistiques, chronicle, IA, etc.
+### 3.2. Sidebar
 
-**Point coach**
+- `next/src/components/layout/Sidebar.tsx` — groupes i18n, badge unread Clairière (`useSocialStore` → API social unread).
 
-- Le dashboard peut proposer un CTA “Coach Dashboard” si `isAdmin || isCoach`.
+### 3.3. Fleur sociale
 
----
+- `next/src/components/FleurSociale.tsx` — 8 pétales, activité, badges.
 
-### 2.4. Annuaire des coachs & contact par messagerie
+### 3.4. Patientèle et « mes coachs »
 
-**Route**
+- `CoachPatientelePage`, `DashboardMyCoaches` (`next/src/components/dashboard/DashboardMyCoaches.tsx`).
 
-- `/coaches` → `CoachesDirectoryPage` (tableau `protectedPages.coaches` dans `AppShell`)
+### 3.5. Annuaire
 
-**Sidebar**
+- `CoachesDirectoryPage`, `coach-profile.ts`.
 
-- Entrée **Accompagnement** : lien vers l’annuaire (libellé type « Les accompagnants »), pas le formulaire contact historique.
+### 3.6. Admin
 
-**UX**
-
-- Liste des coachs via `GET /api/chat/coaches` (`chatApi.coaches()`).
-
-- Chaque fiche : bloc repliable (`<details>`) pour bio / spécialités / délais, puis CTA **Contacter par message** → navigation vers **`/chat?coach=<wp_user_id>`**.
-
-**Chat côté patient**
-
-- `ChatPage` lit `?coach=` : après chargement de la liste coachs, démarre (ou reprend) la conversation avec ce coach, puis normalise l’URL en `?conv=…` (paramètre `coach` retiré).
-
-- Type partagé et helpers d’affichage : `next/src/lib/coach-profile.ts` (importés aussi par `ChatPage`).
-
----
-
-### 2.5. Notifications in-app & admin “Diffusions”
-
-**Utilisateur connecté**
-
-- Pages: `/notifications`, préférences si présentes.
-
-- API typiques: `GET /api/notifications/list`, `unread_count`, `mark_read`, `mark_all_read`, `delete_read`, `register_push_token` — protégées par `requireAuth` dans les handlers dédiés.
-
-**Admin**
-
-- Sidebar admin: entrée **Diffusions** → `/admin/broadcasts` (`AdminBroadcastsPage`).
-
-- API: `next/src/app/api/admin/broadcasts/*` (create, preview, enqueue, list, worker) — `requireAdmin`.
-
-- Envoi email: `next/src/lib/smtp.ts` (`SMTP_*`). Worker traite les files et peut créer des notifications in-app par destinataire.
-
----
-
-## 3) Arborescence & composants (cibles pour modifications)
-
-### 3.1. Routage “AppShell”
-
-Fichier clé:
-
-- `next/src/components/AppShell.tsx`
-
-Rôle:
-
-- construit les routes applicatives via `pathname` segmenté après `basePath`
-
-- charge pages:
-
-  - publiques: ex `dreamscape/partage`
-
-  - protégées: tableau `protectedPages`
-
-  - admin: bloc spécial `route === 'admin'`
-
-Base path:
-
-- `const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'`
-
-Contrôle auth:
-
-- `ProtectedLayout` utilise `useAuth()` et redirige si rôle incorrect.
-
----
-
-### 3.2. Barre latérale
-
-Fichier clé:
-
-- `next/src/components/layout/Sidebar.tsx`
-
-Rôle:
-
-- génère items de navigation en fonction de `isAdmin` / `isCoach`
-
-- affiche badge unread pour la clairière via `useSocialStore`
-
-- affiche identité de l’utilisateur (avatar/email)
-
-- admin: lien **Diffusions** (`/admin/broadcasts`)
-
----
-
-### 3.3. Couche UI “social”
-
-Fichier clé:
-
-- `next/src/components/FleurSociale.tsx`
-
-Rôle:
-
-- rend la “fleur sociale” (8 pétales) à partir de scores normalisés
-
-- brightness selon `lastActivityAt`
-
-- support de:
-
-  - identité (pseudo)
-
-  - online marker
-
-  - badges sociaux (rosee/pollen reçus)
-
----
-
-### 3.4. Patientèle coach & mes coachs
-
-Fichiers clés:
-
-- `next/src/views/CoachPatientelePage.tsx`
-
-- `next/src/components/dashboard/DashboardMyCoaches.tsx`
-
-Rôles:
-
-- UI patientèle coach: invitation + liste patients + rebuild science
-
-- UI user standard: liste de ses coachs acceptés (et CTA vers `clairiere/:channelId`)
-
-### 3.5. Annuaire coachs (page publique connectée)
-
-Fichiers clés:
-
-- `next/src/views/CoachesDirectoryPage.tsx`
-
-- `next/src/lib/coach-profile.ts` (type `Coach`, titres, dernière activité, etc.)
-
-### 3.6. Admin diffusions & notifications
-
-Fichiers clés:
-
-- `next/src/views/AdminBroadcastsPage.tsx`
-
-- `next/src/lib/db-broadcasts.ts`, `next/src/lib/db-notifications.ts`
+- Diffusions, prompts, promo, science, etc. sous `next/src/views/Admin*.tsx` + libs `db-*`.
 
 ---
 
 ## 4) Configuration technique (Next.js + stack)
 
-### 4.1. Stack (contrainte “Node uniquement”)
+### 4.1. Stack
 
-- Next.js (App Router + route handlers `next/src/app/api/**/route.ts`)
+- Next.js (App Router, `next/src/app/api/**/route.ts`)
 
-- MariaDB via `mysql2/promise`
+- MariaDB (`mysql2/promise`)
 
-- Aucun PHP
+- Pas de PHP (règle projet Jardin)
 
----
+### 4.2. Base path et déploiements
 
-### 4.2. Base path & déploiements
+- `NEXT_PUBLIC_BASE_PATH` (défaut `/jardin`).
 
-Base path:
+- Environnements **séparés** (pas de liens croisés): ex. `www.eludein.art/jardin` et `https://app-fleurdamours.eludein.art/jardin`.
 
-- `NEXT_PUBLIC_BASE_PATH` (par défaut `'/jardin'`)
+- **Dev local**: `npm run dev.vps` (tunnel SSH MariaDB, Next local). Variables d’exemple Next: `next/.env.local.example` pointe vers `.env` à la racine.
 
-Environnements **séparés** (pas de liens croisés) :
-
-- **www** (ex. Hostinger) : `www.eludein.art/jardin`
-
-- **legacy / VPS Coolify** : `https://app-fleurdamours.eludein.art/jardin` (sous-domaine avec tiret, ex. `app-fleurdamours`)
-
-Déploiements:
-
-- **Dev local**: `npm run dev.vps`
-
-  - tunnel SSH pour MariaDB
-
-  - Next.js côté local
-
-- **Prod legacy (VPS Coolify)**:
-
-  - Next.js et MariaDB “dans l’infra” (autonome)
-
-  - Build Docker (`Dockerfile.next` / compose) : les variables **`NEXT_PUBLIC_*`** et **`NEXT_PUBLIC_APP_URL`** (souvent avec suffixe `/jardin`) sont figées **au moment du build** Coolify.
-
-  - Si les logs Coolify indiquent **« Build step skipped »** pour un commit donné, aucun `next build` n’a été rejoué pour ce SHA : voir **`docs/BUILD-AND-GIT-DEPLOY.md`** §6.
-
-Docs associées (index : **`docs/README.md`**) :
-
-- **`docs/BUILD-AND-GIT-DEPLOY.md`** — build local, Git, PowerShell (`build-and-push.ps1`), Bash / SSH, dépannage Coolify
-
-- **`docs/RECAP-DEV-LEGACY.md`** — mémo dev / tunnel / checklist prod
-
-- **`docs/DEV-VS-PROD.md`** — différences dev vs prod, OpenRouter
-
-- **`docs/VERIFICATION-FRONTEND-BACKEND.md`** — checks rapides front / API
+- **Prod (Coolify / Docker)**: `NEXT_PUBLIC_*` et `NEXT_PUBLIC_APP_URL` figés au build. Si Coolify indique « Build step skipped », voir `docs/BUILD-AND-GIT-DEPLOY.md`.
 
 ### 4.3. Prérequis runtime (rappel)
 
-- `MARIADB_*` + `DB_PREFIX`
+- `MARIADB_*`, `DB_PREFIX`
 
-- `JWT_SECRET` (obligatoire en prod — throw fatal si absent, voir §11.1 B4 ✅)
+- **`JWT_SECRET`**: en `production`, absence ou valeur égale au fallback dev → **erreur fatale au démarrage** (`next/src/lib/jwt.ts`).
 
-- `OPENROUTER_API_KEY` si fonctionnalités IA
+- `OPENROUTER_API_KEY` pour l’IA (sinon mocks sur plusieurs routes)
 
-- `NEXT_PUBLIC_APP_URL` / `APP_PUBLIC_URL` (cohérents avec l’URL publique, `/jardin` si besoin)
+- `NEXT_PUBLIC_APP_URL` / cohérence URL publique
 
-- `next/public/api/data/all_cards.json` (selon parcours tirage / cartes)
+- `next/public/api/data/all_cards.json` selon parcours tirage
 
-- Stripe : `STRIPE_*` + webhook si facturation (`docs/BILLING-SETUP.md`)
+- Stripe: `docs/BILLING-SETUP.md`
 
-- SMTP : `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — optionnels : `SMTP_REPLY_TO`, `SMTP_ADMIN_TO` (destinataire notifications contact)
+- SMTP: `SMTP_*` pour diffusions et emails transactionnels
 
-- Diffusions / Contact : `SMTP_*` requis (`next/src/lib/smtp.ts`) ; cron `POST /api/admin/broadcasts/worker` (auth admin)
-
----
-
-## 5) API & sécurité
-
-### 5.1. Client API (frontend -> route handlers)
-
-Fichier clé:
-
-- `next/src/lib/api-client.ts`
-
-Fonctions importantes:
-
-- gère le `base`:
-
-  - en localhost: utilise l’origine actuelle + `BASE_PATH`
-
-  - sinon: utilise `NEXT_PUBLIC_API_URL` si fourni
-
-- gère `X-Locale`:
-
-  - `setLocaleForRequests(locale)` injecte un header `X-Locale`
-
-- gère refresh JWT:
-
-  - en `401` (hors login/refresh/register), tente:
-
-    - `POST /api/auth/refresh`
-
-  - puis retry de la requête
+- Traduction proxy: `POST /api/translate` — `LIBRETRANSLATE_URL`, optionnel `LIBRETRANSLATE_API_KEY`
 
 ---
 
-### 5.2. Auth (JWT)
+## 5) API et sécurité
 
-Fichiers clés côté frontend:
+### 5.1. Client API
 
-- `next/src/contexts/AuthContext.tsx`
+- `next/src/lib/api-client.ts` — base URL (localhost vs `NEXT_PUBLIC_API_URL`), header `X-Locale`, refresh JWT sur 401 via `POST /api/auth/refresh`.
 
-  - stocke `auth_token` et `auth_user` dans `localStorage`
+### 5.2. Auth JWT
 
-  - rafraîchit périodiquement via:
+- Frontend: `next/src/contexts/AuthContext.tsx` (`auth_token`, `auth_user`, `isAdmin`, `isCoach`).
 
-    - `authApi.refresh()`
+- Backend: `next/src/lib/api-auth.ts` (`requireAuth`, `requireAdmin`, `requireAdminOrCoach`), `next/src/lib/jwt.ts` (`jwtEncode`, `jwtDecode`, refresh).
 
-  - calcule `isAdmin` et `isCoach` à partir des rôles dans `user`
+- **Important**: en dev, secret par défaut `dev-secret-change-in-production` si `JWT_SECRET` absent; **en prod, secret obligatoire** (throw au chargement du module).
 
-Fichiers clés côté API:
+### 5.3. Auth REST
 
-- `next/src/lib/api-auth.ts`
+- `next/src/api/auth.ts` — login, register, refresh, me, logout, compte, etc. (handlers sous `app/api/auth/`).
 
-  - `requireAuth` -> obtient `userId` via JWT `sub`
+### 5.4. Catch-all API
 
-  - `requireAdmin` -> vérifie rôle `admin/administrator` (token puis DB via `authMe`)
+- `next/src/app/api/[[...path]]/route.ts`: **production** → 404 pour toute URL sans handler dédié; **développement** → stubs pour chemins historiques; `POST chat/send` avec logique JWT (voir commentaires du fichier).
 
-  - `requireAdminOrCoach` -> autorise `admin` et `coach`
+### 5.5. Inventaire des handlers API (extraits par domaine)
 
-- `next/src/lib/jwt.ts`
+Les routes réelles vivent dans `next/src/app/api/<chemin>/route.ts`. Domaines principaux observés au 2026-03-29:
 
-  - **`JWT_SECRET`** : en absence de variable, fallback **`dev-secret-change-in-production`** (risque critique en prod — voir §11.1 B4).
+- **auth**: login, register, refresh, me, logout, users, account/delete, admin/impersonate, …
 
-End points frontend:
+- **ai**: status, test (admin), threshold, tuteur, extract_door_summary, door-intro, plan14j, coach-fiche, coach-patient-fiche, card-context, card-question, fleur-interpretation, analyze_mood, dreamscape_summarize, dashboard-insight, dashboard-trend, tarot-interpretation
 
-- `next/src/api/auth.ts`
+- **help**: help-chat
 
-  - `/api/auth/login`
+- **billing**: products, create-checkout-session
 
-  - `/api/auth/register`
+- **promo**: redeem (seul handler promo métier côté fichiers; le reste promo admin passe encore par catch-all en dev / 404 en prod si non implémenté)
 
-  - `/api/auth/refresh`
+- **sap**: balance, preview, deduct, bonus
 
-  - `/api/auth/me`
+- **sessions**: my, `[id]`, update, save (si présent), shadow-stats
 
----
+- **fleur**: submit, my-results, questions, result, translate-questions, duo-result, …
 
-### 5.3. Route catch-all API
+- **coach/patients**: liste, invite, accept-invite, rebuild
 
-`next/src/app/api/[[...path]]/route.ts` : depuis v0.7, **404 systématique en production** pour toute URL sans handler dédié. En développement : stubs JSON pour les chemins connus, 404 pour les chemins inconnus. `POST chat/send` exige un JWT valide. Détail : **§11.5**.
+- **chat**: coaches, conversations/*, messages, send, mark_read, stats
 
----
+- **social**: send_seed, send_message, channel_messages, accept_connection, presence_heartbeat, visit_lisiere, clairiere_unread_count, …
 
-## 6) Couche MariaDB: “Coach <-> Patientèle”
+- **notifications**: list, unread_count, mark_*, delete_read, register_push_token, admin_*, ensure_tables, …
 
-Objectif:
+- **admin**: broadcasts, prompts, science, credit-sap, db-status, user-usage, …
 
-- Gérer l’onboarding d’une patientèle via invitations
+- **dreamscape**: save, my, share, update, shared-image
 
-- Maintenir la dérivation “la patientèle d’un coach” à partir des relations acceptées
+- **prairie**: pollen, arroser, add-link, remove-link
 
-### 6.1. Modules clés
+- **translate**: POST proxy LibreTranslate (auth + limite 5k chars)
 
-Fichier data:
+- **utilitaires**: health, proxy-image, firebase-messaging-sw, analytics/overview, tarot_readings/*, users/suivi, account/profile, …
 
-- `next/src/lib/db-coach-patients.ts`
-
-Table invitations:
-
-- `fleur_coach_invitations`
-
-  - token unique
-
-  - status `pending` -> `accepted`
-
-  - stocke `coach_user_id`, `invite_email`, `intention_id`
-
-Table seeds / relation:
-
-- seeds: `fleur_social_seeds` (statuts `pending/accepted`)
-
-- channels: `fleur_chat_channels`
-
-La logique est:
-
-1. Création invitation (token + intention)
-
-2. Consommation invitation:
-
-   - valide l’email (meilleur effort)
-
-   - marque invitation acceptée
-
-   - crée la seed coach->patient via `sendSeed()`
-
-   - lie la connexion via `acceptSeedConnection()`
-
-3. Listing patientèle:
-
-   - prend seeds `accepted` du coach
-
-   - agrège `intention_id` par patient
-
-   - calcule `fleurMoyenne` et `science` pour afficher la carte patient
-
-   - récupère `channelId` entre coach/patient
+Pour la liste exacte, compter les fichiers `route.ts` sous `next/src/app/api/` (centaine de endpoints segmentés).
 
 ---
 
-### 6.2. API routes “coach/patients”
+## 6) Couche MariaDB — Coach et patientèle
 
-Ces routes sont directement utilisées par l’UX `CoachPatientelePage`:
+- Module: `next/src/lib/db-coach-patients.ts`
 
-1. `GET /api/coach/patients`
+- Invitations: `fleur_coach_invitations`
 
-   - renvoie `{ patients: [...] }`
+- Seeds / canaux: `fleur_social_seeds`, `fleur_chat_channels`
 
-   - protégé `requireAdminOrCoach`
+### 6.1. Routes `coach/patients`
 
-2. `POST /api/coach/patients/invite`
+1. `GET /api/coach/patients` — `requireAdminOrCoach`
 
-   - payload UI: `{ email, intention_id }`
+2. `POST /api/coach/patients/invite` — email + intention
 
-   - renvoie `{ ok, token, inviteLink }`
+3. `POST /api/coach/patients/accept-invite` — `requireAuth`
 
-3. `POST /api/coach/patients/accept-invite`
+4. `POST /api/coach/patients/rebuild` — recalcul science patient
 
-   - payload UI: `{ invite_token }`
+### 6.2. Mes coachs
 
-   - protégé `requireAuth`
-
-4. `POST /api/coach/patients/rebuild`
-
-   - payload UI: `{ patient_user_id, locale }`
-
-   - protégé `requireAdminOrCoach`
-
-   - recalcul de `Science de la Fleur` pour le patient
-
----
-
-### 6.3. API routes “mes coachs”
-
-Routes:
-
-- `GET /api/user/my_coaches`
-
-  - renvoie `{ coaches: [...] }`
-
-  - UI utilisée dans `DashboardMyCoaches`
+- `GET /api/user/my_coaches` — ex. `DashboardMyCoaches`
 
 ---
 
 ## 7) i18n
 
-Fichiers clés:
+- `next/src/i18n/index.ts` — `t(key, vars)`
 
-- `next/src/i18n/index.ts`
+- Locales: `next/src/i18n/locales/fr.json`, `en.json`, `es.json`
 
-  - `t(key, vars)` récupère depuis `fr/en/es.json`
-
-- `next/src/contexts/AuthContext.tsx` et pages:
-
-  - utilisent `useStore` pour `locale`
-
-  - utilisent `t(...)` pour traductions
-
-Locales:
-
-- `next/src/i18n/locales/{fr,en,es}.json`
+- Locale requête: `setLocaleForRequests` + header `X-Locale`
 
 ---
 
 ## 8) OpenRouter (IA)
 
-Objectif:
+- Objectif: tuteur, seuil de porte, mood / Dreamscape, plans 14j, fiches coach, interprétations, aide in-app, etc.
 
-- exécuter des tâches IA pour l’app (tuteur, seuil de porte, extraction summaries, etc.)
+- Config: `next/src/lib/openrouter-config.ts` — `FLEUR_OPENROUTER_MODEL` || `OPENROUTER_MODEL` || défaut **`google/gemini-2.5-flash-lite`**.
 
-Configuration OpenRouter:
+- Appel générique: `next/src/lib/openrouter.ts` (`openrouterCall`).
 
-- `next/src/lib/openrouter-config.ts`
+- Client frontend: `next/src/api/ai.ts` + `POST /api/help-chat`.
 
-  - `getOpenRouterModel()` lit `FLEUR_OPENROUTER_MODEL` ou fallback `OPENROUTER_MODEL`
+- **`GET /api/ai/test`**: réservé **`requireAdmin`** (tous environnements où la route est déployée), teste OpenRouter avec JSON attendu.
 
-  - fallback par défaut: `google/gemini-2.5-flash-lite` (coût minimal — corrigé v0.7 ✅)
+- **Auth**: routes IA sensibles utilisent `requireAuth` (dont `status`, `analyze_mood`, `dreamscape_summarize`, etc. — garder ce principe pour toute nouvelle route facturable ou coûteuse).
 
-Routes AI (principales, voir `next/src/app/api/ai/**/route.ts`):
+### 8.1. Cache et persistance des sorties IA (règle workspace)
 
-- `GET /api/ai/status`
-
-- `POST /api/ai/threshold`
-
-- `POST /api/ai/tuteur`
-
-Toutes les routes IA (`analyze_mood`, `threshold`, `tuteur`, `help-chat`) sont protégées par `requireAuth` depuis v0.7 (✅). Route de test `/api/ai/test` : 404 en prod, `requireAdmin` en dev (✅).
-
-Voir aussi:
-
-- `docs/VERIFICATION-FRONTEND-BACKEND.md`
-
-- `docs/DEV-VS-PROD.md` (troubleshooting OpenRouter mock/provider)
+Les sorties structurées réaffichables (résumés, plans, snapshots de seuil, fiches) doivent être **écrites en base** dès la première génération réussie (`step_data_json`, `plan14j_json`, etc.), lues avant de rappeler le modèle, et les updates client doivent **fusionner** les blocs cache. Voir `next/src/lib/db-sessions.ts`, `SessionPage`, règle `.cursor/rules/jardin-ai-token-cache.mdc`.
 
 ---
 
 ## 9) Billing (Stripe)
 
-Doc et variables : **`docs/BILLING-SETUP.md`** (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_CREDITS_100`, etc.).
+- `docs/BILLING-SETUP.md` — clés, webhooks, prix.
 
 ---
 
 ## 10) Journal (récent)
 
-- **v0.4–0.5** : audit §11 (sécurité + stubs §11.4), diffusions / notifications.
+- **v0.4–0.5**: audit sécurité, diffusions / notifications.
 
-- **v0.6** : retrait des redondances et du journal historique détaillé ; prérequis regroupés en **§4.3**.
+- **v0.6**: prérequis regroupés, journal compact.
 
-- **v0.7** : correction de tous les bloquants sécurité (B1–B4 ✅) + risques IA (R1 ✅) ; nouvelles routes réelles `promo/redeem`, `contact_messages/save` + libs `db-promo.ts` / `db-contact.ts` ; catch-all 404 en prod ✅ ; fallback OpenRouter → `google/gemini-2.5-flash-lite` ; migration SQL `docs/migration_v0.7.sql`.
-- **v0.8** : correction des 4 nouveaux critiques : `requireAuth` sur `dreamscape_summarize` (C1 ✅), IDOR `fleur/result/[id]` supprimé (C2 ✅), `ai/status` protégé (C3 ✅), proxy LibreTranslate sécurisé + limite 5 000 chars (C4 ✅).
+- **v0.7**: sessions et DDL sécurisées, catch-all 404 prod, promo **redeem** réel, JWT fatal en prod sans secret, auth IA de base.
 
----
+- **v0.8**: dreamscape_summarize, fleur result IDOR, ai/status, translate authentifié.
 
-## 11) Points bloquants, risques sécurité, structure & stubs
-
-> Synthèse code `next/src` au **2026-03-29** ; à valider après toute évolution des routes.
-
-### 11.1. Bloquants sécurité (à traiter en priorité)
-
-| # | Sujet | Fichier(s) / route | Problème |
-
-|---|--------|---------------------|----------|
-
-| ~~B1~~ | ~~**Sessions sans authentification**~~ | `POST /api/sessions/save`, `POST /api/sessions/update` (`next/src/app/api/sessions/save/route.ts`, `update/route.ts`) + `next/src/lib/db-sessions.ts` | Aucun `requireAuth` : n’importe qui peut **créer** des lignes `fleur_sessions` et **mettre à jour** une session si l’`id` est connu (spoofing email / step_data / plan14j, etc.). |
-
-| ~~B2~~ | ~~**Traduction rituel sans garde**~~ | `POST /api/fleur/translate-questions` (`next/src/app/api/fleur/translate-questions/route.ts`) | Pas d’auth : exécute `ALTER TABLE` / `UPDATE` sur tables rituel + appels **OpenRouter** (coût + intégrité contenu). |
-
-| ~~B3~~ | ~~**DDL notifications pour tout utilisateur connecté**~~ | `POST /api/notifications/ensure_tables` | `requireAuth` seulement : tout compte valide peut déclencher la création de tables (devrait être **`requireAdmin`** ou migration dédiée). |
-
-| ~~B4~~ | ~~**`JWT_SECRET` par défaut**~~ | `next/src/lib/jwt.ts` | Si `JWT_SECRET` absent en prod, signature avec **`dev-secret-change-in-production`** → tokens falsifiables. |
-
-> **v0.7 ✅** : B1–B4 tous corrigés. Sessions protégées par `requireAuth` + vérification ownership. Routes DDL en `requireAdmin`. `jwt.ts` throw fatal en prod si secret absent.
-
-### 11.2. Risques élevés (abus, coût, fuite)
-
-| # | Sujet | Détail |
-
-|---|--------|--------|
-
-| ~~R1~~ | ~~**IA sans auth**~~ | ~~`GET /api/ai/test`, `POST /api/ai/analyze_mood`, `POST /api/help-chat` : appels **OpenRouter** ou équivalent sans Bearer → **drain de quota / déni de budget**.~~ **✅ Corrigé v0.7** : `requireAuth` sur toutes les routes IA ; `/api/ai/test` → 404 prod. |
-
-| ~~R2~~ | ~~**Traduction libre**~~ | ~~`POST /api/translate` : proxy vers LibreTranslate sans auth.~~ **✅ Corrigé v0.8** : `requireAuth` + limite 5 000 chars. |
-
-| R3 | **Jetons en localStorage** | `AuthContext` : vol de session si **XSS** (préférence long terme : cookies httpOnly + CSP stricte). |
-
-| ~~R4~~ | ~~**Catch-all API**~~ | ~~Stubs sans auth, POST `chat/send` factice.~~ **✅ Corrigé v0.7** : catch-all → **404 systématique en prod** ; `chat/send` exige un JWT valide ; routes contact & promo ont des handlers réels. |
-
-| R5 | **Liens de partage** | `GET /api/dreamscape/shared`, `shared-image` : token dans l’URL (fuite possible via historique / Referer). |
-
-| R6 | **Résultat DUO par token** | `GET /api/fleur/duo-result/[token]` : sécurité = entropie du token en base. |
-
-| R7 | **Worker diffusions** | `POST /api/admin/broadcasts/worker` : cron avec JWT admin ou secret machine non standardisé dans le code. |
-
-### 11.3. Structure, dette, exploitation
-
-| # | Sujet | Détail |
-
-|---|--------|--------|
-
-| S1 | **Double prod** (Hostinger vs VPS) | Environnements **isolés** : dérive config / DB (règle `.cursor/rules`). |
-
-| S2 | **`NEXT_PUBLIC_*` au build** | URL / basePath figés au build Coolify. |
-
-| S3 | **SMTP manquant** | Diffusions email sans `SMTP_*` → échecs worker. |
-
-| S4 | **Build Coolify “skipped”** | Déploiement sans `next build` pour un SHA → UI / API désynchronisés (`docs/BUILD-AND-GIT-DEPLOY.md`). |
-
-| S5 | **Cohérence rôles** | L’UI ne suffit pas : chaque handler doit appliquer `requireAuth` / `requireAdmin` (cf. §11.1). |
-
-| S6 | **Proxy image** | `GET /api/proxy-image` : allowlist `eludein.art`. |
-
-### 11.4. Audit v0.8 — Corrections appliquées (C1–C4)
-
-| # | Sujet | Fichier | Correction |
-|---|-------|---------|------------|
-| ~~C1~~ | ~~`dreamscape_summarize` OpenRouter public~~ | `next/src/app/api/ai/dreamscape_summarize/route.ts` | `requireAuth` ajouté ✅ |
-| ~~C2~~ | ~~IDOR `fleur/result/[id]`~~ | `next/src/app/api/fleur/result/[id]/route.ts` | `requireAuth` obligatoire ; `userId` toujours transmis à `getResult` ✅ |
-| ~~C3~~ | ~~`ai/status` public (fuite config)~~ | `next/src/app/api/ai/status/route.ts` | `requireAuth` ajouté ✅ |
-| ~~C4~~ | ~~Proxy LibreTranslate sans auth~~ | `next/src/app/api/translate/route.ts` | `requireAuth` + limite 5 000 chars ✅ |
-
-### 11.5. Fonctionnalités manquantes & stubs
-
-> Handler `app/api/.../route.ts` **prioritaire** sur `app/api/[[...path]]/route.ts` ; les entrées du catch-all peuvent être **historiques**.
-
-#### 11.5.1. Client `next/src/api/*.ts` → pas de `route.ts` dédié (catch-all uniquement)
-
-Ces modules appellent des chemins pour lesquels il **n’existe pas** de dossier `next/src/app/api/.../route.ts` correspondant (0 fichier trouvé dans le dépôt) : le trafic retombe sur **`[[...path]]`**, qui renvoie des JSON **vides ou factices** (`ok: true`, listes vides, objets minimaux).
-
-| Domaine | Fichier client | Préfixe API | Impact UX typique |
-
-|--------|----------------|-------------|-------------------|
-
-| **Campagnes** | `next/src/api/campaigns.ts` | `/api/campaigns`, `/api/campaigns/definitions`, `/api/campaigns/:id`, `/api/campaigns/:id/results`, `answer` | `CampaignsPage` : données de démo / pas de persistance réelle. |
-
-| **Cartes / fichiers** | `next/src/api/cards.ts` | `/api/cards`, `/api/cards/import`, `/api/files`, `/api/invariants` | `CardsPage`, `DiagnosticPage`, `GraphPage` (imports cartes) : listes vides ou succès faux. |
-
-| **Promo / billing codes** | `next/src/api/billing.ts` | `/api/promo/*` (codes CRUD, redemptions, admin-assign, …) | `AdminPromoPage` : CRUD admin toujours stub. **✅ `/api/promo/redeem`** : handler réel v0.7 (transaction SQL, anti-double-use, crédit SAP). |
-
-| **Contact** | `next/src/api/contact.ts` | `/api/contact_messages/list`, `get`, `update`, `stats` | Admin messages contact : CRUD admin toujours stub. **✅ `/api/contact_messages/save`** : handler réel v0.7 (DB + SMTP + accusé de réception). |
-
-| **WordPress** | `next/src/api/wordpress.ts` | `/api/wp/status`, `/api/wp/posts`, `/api/wp/pages` | Toute intégration WP via ces appels : stubs. |
-
-| **Stats (legacy path)** | `next/src/api/stats.ts` | `/api/stats/overview`, `averages`, `results`, `result/:id` | **À ne pas confondre** avec `GET /api/analytics/overview` (handler réel). Ici le chemin est `/api/stats/...` → catch-all. |
-
-| **Diagnostic / graphe** | `next/src/api/diagnostic.ts`, `next/src/api/graph.ts` | `/api/diagnostic`, `/api/graph`, `/api/simulate` | Pages diagnostic / graphe social : réponses génériques. |
-
-Sinon souvent `{ ok: true, stub: true }` (fin de `getStubResponse`).
-
-#### 11.5.2. Catch-all (`[[...path]]`)
-
-**En production :** toutes les méthodes (GET, POST, PUT, PATCH, DELETE) retournent **404** avec le chemin dans le log.
-
-**En dev :** `STUB_RESPONSES` pour les chemins connus + branches `campaigns/:id`, `fleur/`, `duo/` ; **POST `chat/send`** exige désormais un JWT valide (401 sinon) ✅ ; tout chemin inconnu → 404 (plus de `{ ok: true }` silencieux).
-
-#### 11.5.3. Fallbacks dans des routes réelles
-
-| Comportement | Fichier / route | Condition |
-
-|--------------|-----------------|-----------|
-
-| Message chat « stub » | `POST /api/chat/send` | `!isDbConfigured()` → JSON 201 avec `id: stub-…` (auth présente mais pas de DB). |
-
-| Messages clairière en mémoire | `POST /api/social/send_message` + `next/src/lib/social-stub-store.ts` | `!isDbConfigured()` → `addStubMessage` (Map processus ; **perdu au redémarrage**). |
-
-| Accès Sève / SAP | `GET /api/user/access` | DB indisponible → soldes **0** avec `free_access: true` (fallback). |
-
-| Seuil / humeur IA | `POST /api/ai/threshold`, `POST /api/ai/analyze_mood` | Clé OpenRouter absente ou erreur → réponses **mock** (`node-mock`, objet MOCK). |
-
-Vérification rapide : comparer `next/src/api/*.ts` à `next/src/app/api/**/route.ts` ; grep `stub-` et `social-stub-store` sous `app/api`.
+- **v0.9**: **Régénération du guide** (inventaire routes, navigation Dreamscape/Session + espace `/coach/*`, dashboards home, liste complète des routes `api/ai/*`, JWT documenté comme fatal en prod, retrait des références obsolètes aux handlers « contact_messages » absents du dépôt actuel).
 
 ---
 
-*Fin du guide v0.8.*
+## 11) Points bloquants, risques, structure et stubs
 
+> Synthèse au **2026-03-29**; à revérifier après évolution des routes.
+
+### 11.1. Correctifs historiques (référence)
+
+Les items B1–B4 et C1–C4 décrits dans les versions précédentes du guide (sessions non authentifiées, DDL notifications, JWT en prod, IDOR fleur result, etc.) sont traités dans le code actuel — **valider par revue** si vous touchez à ces fichiers.
+
+### 11.2. Risques résiduels
+
+| # | Sujet | Détail |
+|---|--------|--------|
+| R3 | Jetons en localStorage | Risque si XSS; mitigation long terme possible: cookies httpOnly, CSP. |
+| R5 | Partages Dreamscape / tirage | Token dans l’URL (historique, Referer). |
+| R6 | DUO par token | Sécurité = entropie du token stocké. |
+| R7 | Worker diffusions | Cron avec JWT admin ou secret machine — documenter côté ops. |
+
+### 11.3. Structure et exploitation
+
+- Double prod (Hostinger vs VPS): configs isolées.
+
+- `NEXT_PUBLIC_*` au build Coolify.
+
+- SMTP requis pour emails de diffusion.
+
+- Build « skipped » → UI/API désynchronisées (`docs/BUILD-AND-GIT-DEPLOY.md`).
+
+- Cohérence rôles: contrôler **chaque** nouveau handler.
+
+- `GET /api/proxy-image`: allowlist domaines (voir implémentation).
+
+### 11.4. Client `next/src/api/*.ts` sans handler dédié
+
+Plusieurs modules appellent encore des chemins qui, **s’il n’existe pas** de `route.ts` correspondant, tombent sur le catch-all (**404 en prod**). Domaines typiques documentés précédemment:
+
+- **campaigns**: `campaigns.ts` → gestion campagnes souvent stub / incomplet côté API.
+
+- **cards / diagnostic / graph**: imports, diagnostic, graphe — vérifier présence de handlers avant de s’en servir en prod.
+
+- **promo admin**: seul `POST /api/promo/redeem` est un handler fichier dédié; les autres méthodes `billing.ts` (codes CRUD, redemptions list, admin-assign) loggent encore « stub » et reposent sur catch-all hors prod.
+
+- **wordpress**: `wordpress.ts` — stubs si pas de routes WP dédiées.
+
+- **stats legacy**: `stats.ts` utilise `/api/stats/...` — ne pas confondre avec **`GET /api/analytics/overview`** qui est un handler réel.
+
+Vérification: comparer `next/src/api/*.ts` aux dossiers `next/src/app/api/**/route.ts` et tester en prod.
+
+### 11.5. Catch-all et stubs en développement
+
+- **Prod**: toute route non couverte → 404 JSON explicite.
+
+- **Dev**: `STUB_RESPONSES` + patterns (campaigns, fleur, duo) pour développer sans tout implémenter; **`POST chat/send`** soumis à contrôle JWT.
+
+### 11.6. Fallbacks dans des routes réelles
+
+| Comportement | Condition typique |
+|--------------|-------------------|
+| Chat `stub-` id | DB non configurée pour le chat |
+| Messages clairière en mémoire | `social-stub-store` si pas de DB |
+| Accès SAP / `user/access` | fallback soldes si DB indisponible |
+| IA threshold / analyze_mood | mock si pas de clé OpenRouter ou erreur provider |
+
+---
+
+*Fin du guide v0.9.*

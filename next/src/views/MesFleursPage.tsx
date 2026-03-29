@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { fleurApi } from '@/api/fleur'
+import { fleurBetaApi } from '@/api/fleur-beta'
 import { ContextualHint } from '@/components/ContextualHint'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
@@ -42,6 +43,8 @@ export default function MesFleursPage() {
   function openItem(item) {
     if (item.type === 'duo') {
       router.push(`/duo?token=${encodeURIComponent(item.token)}`)
+    } else if (item.type === 'fleur-beta') {
+      router.push(`/fleur-beta?result=${item.id}`)
     } else {
       router.push(`/fleur?result=${item.id}`)
     }
@@ -49,11 +52,20 @@ export default function MesFleursPage() {
 
   async function deleteItem(e, item) {
     e.stopPropagation()
-    const label = item.type === 'duo' ? t('mesFleurs.thisDuo') : t('mesFleurs.thisFleur')
+    const label =
+      item.type === 'duo'
+        ? t('mesFleurs.thisDuo')
+        : item.type === 'fleur-beta'
+          ? t('mesFleurs.thisFleurBeta')
+          : t('mesFleurs.thisFleur')
     if (!window.confirm(t('mesFleurs.deleteConfirm', { label }))) return
     setError('')
     try {
-      await fleurApi.deleteResult(item)
+      if (item.type === 'fleur-beta') {
+        await fleurBetaApi.delete(Number(item.id))
+      } else {
+        await fleurApi.deleteResult(item)
+      }
       loadResults()
     } catch (e) {
       const msg = e?.message ?? e?.response?.data?.detail ?? e?.detail ?? t('mesFleurs.deleteError')
@@ -102,6 +114,9 @@ export default function MesFleursPage() {
             <Link href="/fleur" className="px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent-hover">
               {t('nav.fleur')}
             </Link>
+            <Link href="/fleur-beta" className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium hover:opacity-90">
+              {t('nav.fleurBeta')}
+            </Link>
             <Link href="/duo" className="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 dark:hover:bg-slate-600">
               {t('nav.duo')}
             </Link>
@@ -113,19 +128,32 @@ export default function MesFleursPage() {
         <div id="section-fleurs" className="space-y-3">
           {items.map((item) => (
             <div
-              key={`${item.token}-${item.created_at}`}
+              key={`${item.type}-${item.id}-${item.created_at}`}
               onClick={() => openItem(item)}
               className={`w-full text-left rounded-2xl border p-4 transition-colors cursor-pointer flex items-center justify-between gap-2 ${
                 item.type === 'duo'
                   ? 'border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/30 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50'
-                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-accent/40 hover:bg-accent/5 dark:hover:bg-accent/10'
+                  : item.type === 'fleur-beta'
+                    ? 'border-violet-200 dark:border-violet-800 bg-violet-50/40 dark:bg-violet-950/20 hover:border-violet-300 dark:hover:border-violet-700'
+                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-accent/40 hover:bg-accent/5 dark:hover:bg-accent/10'
               }`}
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <span className="text-2xl shrink-0">{item.type === 'duo' ? '💞' : '🌸'}</span>
+                <span className="text-2xl shrink-0">
+                  {item.type === 'duo' ? '💞' : item.type === 'fleur-beta' ? '🧪' : '🌸'}
+                </span>
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                    {item.type === 'duo' ? t('mesFleurs.fleurDuo') : t('nav.fleur')}
+                    {item.type === 'duo'
+                      ? t('mesFleurs.fleurDuo')
+                      : item.type === 'fleur-beta'
+                        ? t('nav.fleurBeta')
+                        : t('nav.fleur')}
+                    {item.type === 'fleur-beta' && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded bg-violet-200/80 dark:bg-violet-800/80 text-violet-800 dark:text-violet-100">
+                        Beta
+                      </span>
+                    )}
                     {item.type === 'duo' && (
                       <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded bg-rose-200/80 dark:bg-rose-800/80 text-rose-700 dark:text-rose-200">
                         {t('mesFleurs.duo')}

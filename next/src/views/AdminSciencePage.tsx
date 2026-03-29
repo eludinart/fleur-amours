@@ -18,6 +18,7 @@ type ScienceConfig = {
   include_duo: boolean
   include_chat_clairiere: boolean
   include_chat_coach: boolean
+  include_fleur_beta: boolean
 
   evidence_initial_max_messages: number
   evidence_update_max_messages: number
@@ -138,6 +139,7 @@ export default function AdminSciencePage() {
               ['include_tarot_1card', 'Tirage 1 carte'],
               ['include_tarot_4doors', 'Tirage 4 portes'],
               ['include_ma_fleur', 'Ma Fleur'],
+              ['include_fleur_beta', 'Ma Fleur 2-Beta'],
               ['include_duo', 'Duo'],
             ].map(([key, label]) => (
               <label key={key as string} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">

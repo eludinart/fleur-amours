@@ -40,6 +40,12 @@ function buildNavGroups(
 
   const decouvrirItems: NavItem[] = [
     { to: '/fleur', label: translate('nav.fleur'), icon: '🌸', title: translate('nav.fleurTooltip') },
+    {
+      to: '/fleur-beta',
+      label: translate('nav.fleurBeta'),
+      icon: '🧪',
+      title: translate('nav.fleurBetaTooltip'),
+    },
     { to: '/duo', label: translate('nav.duo'), icon: '💕', title: translate('nav.duoTooltip') },
     { to: '/mes-fleurs', label: translate('nav.mesFleurs'), icon: '📄', title: translate('nav.mesFleursTooltip') },
   ]
