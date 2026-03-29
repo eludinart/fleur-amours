@@ -31,11 +31,15 @@ function getProjectId(): string {
 function getServiceAccount(): { client_email?: string; private_key?: string } | null {
   const envVal = process.env.FCM_SERVICE_ACCOUNT_JSON ?? ''
   let json: string
+
   if (envVal.startsWith('{')) {
     json = envVal
   } else if (envVal) {
     const path = resolve(process.cwd(), envVal.replace(/^\.\//, ''))
-    if (!existsSync(path)) return null
+    if (!existsSync(path)) {
+      console.warn('[FCM] Fichier service account introuvable :', path)
+      return null
+    }
     try {
       json = readFileSync(path, 'utf8')
     } catch {
@@ -43,18 +47,41 @@ function getServiceAccount(): { client_email?: string; private_key?: string } | 
     }
   } else {
     const defaultPath = resolve(process.cwd(), '..', 'config', 'fcm-service-account.json')
-    if (!existsSync(defaultPath)) return null
+    if (!existsSync(defaultPath)) {
+      console.warn('[FCM] FCM_SERVICE_ACCOUNT_JSON non défini et config/fcm-service-account.json absent')
+      return null
+    }
     try {
       json = readFileSync(defaultPath, 'utf8')
     } catch {
       return null
     }
   }
+
+  // Tentative 1 : parse direct
   try {
-    return JSON.parse(json) as { client_email?: string; private_key?: string }
+    const parsed = JSON.parse(json) as { client_email?: string; private_key?: string }
+    if (parsed.client_email && parsed.private_key) return parsed
   } catch {
+    // Tentative 2 : Coolify peut insérer de vraies newlines dans la private_key
+    // On les réencapsule proprement
+    try {
+      const fixed = json
+        // Remplace les vraies newlines DANS les valeurs de string JSON par \n
+        .replace(/"private_key"\s*:\s*"([\s\S]*?)(?<!\\)"/g, (_, key: string) => {
+          return `"private_key":"${key.replace(/\n/g, '\\n')}"`
+        })
+      const parsed = JSON.parse(fixed) as { client_email?: string; private_key?: string }
+      if (parsed.client_email && parsed.private_key) return parsed
+    } catch {
+      /* ignore */
+    }
+    console.warn('[FCM] Impossible de parser FCM_SERVICE_ACCOUNT_JSON — vérifier le format dans Coolify')
     return null
   }
+
+  console.warn('[FCM] Service account parsé mais client_email ou private_key manquant')
+  return null
 }
 
 async function getAccessToken(): Promise<string | null> {
