@@ -3,10 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { contactApi } from '@/api/contact'
 import { chatApi } from '@/api/chat'
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
 function StatCard({ label, value, sub, to, icon, color }: { label: string; value?: number; sub?: string; to?: string; icon: string; color: string }) {
   const content = (
@@ -50,16 +47,11 @@ function ShortcutCard({ to, label, icon }: { to: string; label: string; icon: st
 }
 
 export default function CoachDashboardPage() {
-  const [msgStats, setMsgStats] = useState<{ total?: number; unread?: number } | null>(null)
   const [chatStats, setChatStats] = useState<{ total?: number; open?: number; unread_messages?: number } | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([contactApi.stats().catch(() => null), chatApi.stats().catch(() => null)]).then(([msgs, chat]) => {
-      setMsgStats(msgs)
-      setChatStats(chat)
-      setLoading(false)
-    })
+    chatApi.stats().then(setChatStats).catch(() => setChatStats(null)).finally(() => setLoading(false))
   }, [])
 
   return (
@@ -84,51 +76,29 @@ export default function CoachDashboardPage() {
           </div>
         ) : (
           <>
-            {(msgStats?.unread ?? 0) > 0 || (chatStats?.unread_messages ?? 0) > 0 ? (
+            {(chatStats?.unread_messages ?? 0) > 0 ? (
               <section className="flex flex-col sm:flex-row gap-3">
-                {(msgStats?.unread ?? 0) > 0 && (
-                  <Link
-                    href="/admin/messages"
-                    className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-700 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-colors"
-                  >
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
-                    <span className="text-sm font-semibold text-rose-700 dark:text-rose-300">
-                      {msgStats!.unread!} message{msgStats!.unread! > 1 ? 's' : ''} non lu{msgStats!.unread! > 1 ? 's' : ''}
-                    </span>
-                    <span className="ml-auto text-rose-400 text-xs">Voir →</span>
-                  </Link>
-                )}
-                {(chatStats?.unread_messages ?? 0) > 0 && (
-                  <Link
-                    href="/admin/chat"
-                    className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors"
-                  >
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                    <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                      {chatStats!.unread_messages!} message{chatStats!.unread_messages! > 1 ? 's' : ''} de chat non lu{chatStats!.unread_messages! > 1 ? 's' : ''}
-                      {(chatStats?.open ?? 0) > 0 && (
-                        <span className="ml-1 font-normal opacity-70">
-                          · {chatStats!.open} conversation{(chatStats!.open ?? 0) > 1 ? 's' : ''} ouverte{(chatStats!.open ?? 0) > 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </span>
-                    <span className="ml-auto text-amber-400 text-xs">Répondre →</span>
-                  </Link>
-                )}
+                <Link
+                  href="/coach/chat"
+                  className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors"
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                    {chatStats!.unread_messages!} message chat non lu{chatStats!.unread_messages! > 1 ? 's' : ''}
+                    {(chatStats?.open ?? 0) > 0 && (
+                      <span className="ml-1 font-normal opacity-70">
+                        · {chatStats!.open} conversation{(chatStats!.open ?? 0) > 1 ? 's' : ''} ouverte{(chatStats!.open ?? 0) > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </span>
+                  <span className="ml-auto text-amber-400 text-xs">Répondre →</span>
+                </Link>
               </section>
             ) : null}
 
             <section>
               <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Vue d&apos;ensemble</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <StatCard
-                  label="Messages"
-                  value={msgStats?.total ?? 0}
-                  sub={(msgStats?.unread ?? 0) > 0 ? `${msgStats!.unread} non lu${msgStats!.unread! > 1 ? 's' : ''}` : "Demandes d'accompagnement"}
-                  to="/admin/messages"
-                  icon="✉️"
-                  color="rose"
-                />
                 <StatCard
                   label="Conversations chat"
                   value={chatStats?.total ?? 0}
@@ -137,7 +107,7 @@ export default function CoachDashboardPage() {
                       ? `${chatStats.open ?? 0} ouverte${(chatStats.open ?? 0) > 1 ? 's' : ''} · ${chatStats.unread_messages ?? 0} msg non lu${(chatStats.unread_messages ?? 0) > 1 ? 's' : ''}`
                       : undefined
                   }
-                  to="/admin/chat"
+                  to="/coach/chat"
                   icon="💬"
                   color="violet"
                 />
@@ -149,7 +119,6 @@ export default function CoachDashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <ShortcutCard to="/coach/analytics" label="Vue globale" icon="📊" />
                 <ShortcutCard to="/coach/suivi" label="Suivi individuel" icon="🌸" />
-                <ShortcutCard to="/coach/messages" label="Messages" icon="✉️" />
                 <ShortcutCard to="/coach/chat" label="Chat" icon="💬" />
               </div>
             </section>

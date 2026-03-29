@@ -145,7 +145,7 @@ export function PresentationPage() {
             <p>
               {t('presentation.accompanyProposal')}{' '}
               <Link
-                href="/contact"
+                href="/chat"
                 className="text-violet-600 dark:text-violet-400 underline hover:no-underline"
               >
                 {t('presentation.requestMeeting')}
@@ -157,7 +157,7 @@ export function PresentationPage() {
         {/* Accompagnement & Chat */}
         <div className="grid sm:grid-cols-2 gap-4">
           <Link
-            href="/contact"
+            href="/chat"
             className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 to-transparent dark:from-emerald-950/30 dark:to-transparent hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-500/10 transition-all group"
           >
             <span className="text-4xl group-hover:scale-110 transition-transform">

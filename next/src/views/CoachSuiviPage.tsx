@@ -301,13 +301,6 @@ function UserDetailPanel({
             >
               💬 Ouvrir le chat
             </Link>
-            <Link
-              href={`/admin/messages?search=${encodeURIComponent(email)}`}
-              onClick={onClose}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-            >
-              ✉️ Messages contact
-            </Link>
           </div>
 
           <div className="flex gap-1 mt-3">

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminOrCoach } from '@/lib/api-auth'
 import { isDbConfigured } from '@/lib/db'
 import { createCoachInvitation } from '@/lib/db-coach-patients'
+import { absolutePublicAppUrl } from '@/lib/app-public-url'
 import { INTENTIONS } from '@/api/social'
 
 export const dynamic = 'force-dynamic'
@@ -38,8 +39,8 @@ export async function POST(req: NextRequest) {
       intentionId,
     })
 
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
-    const inviteLink = `${basePath}/login?from=/&invite_token=${encodeURIComponent(token)}`
+    const invitePath = `/login?from=/&invite_token=${encodeURIComponent(token)}`
+    const inviteLink = absolutePublicAppUrl(invitePath, req)
 
     return NextResponse.json({ ok: true, token, inviteLink })
   } catch (err: unknown) {

@@ -979,7 +979,7 @@ function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, a
         <p>{t('session.disclaimer')}</p>
         <p>
           {t('session.accompanyLight')}{' '}
-          <a href="/contact" className="text-violet-400 hover:text-violet-300 underline hover:no-underline">{t('session.requestMeeting')}</a>
+          <a href="/chat" className="text-violet-400 hover:text-violet-300 underline hover:no-underline">{t('session.requestMeeting')}</a>
         </p>
       </NoteCard>
 
@@ -2438,7 +2438,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                   </p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <a
-                      href="/contact"
+                      href="/chat"
                       className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg ${palette.ctaBtn} text-white text-xs font-semibold transition-colors`}>
                       {t('session.requestAccompaniment')} →
                     </a>
@@ -2937,7 +2937,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
               </div>
             )}
             <a
-              href="/contact"
+              href="/chat"
               className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl font-semibold text-sm bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:opacity-90 transition-colors"
             >
               {t('session.requestAccompaniment')} →
@@ -3490,7 +3490,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
               }
             </p>
             <a
-              href="/contact"
+              href="/chat"
               className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 hasTensions
                   ? 'bg-gradient-to-r from-rose-500 to-rose-600 shadow-md shadow-rose-500/20'

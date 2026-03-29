@@ -12,7 +12,6 @@ import { LandingPage } from '@/views/LandingPage'
 import { HomePage } from '@/views/HomePage'
 import { PresentationPage } from '@/views/PresentationPage'
 import { AccountPage } from '@/views/AccountPage'
-import { ContactPage } from '@/views/ContactPage'
 import { CoachesDirectoryPage } from '@/views/CoachesDirectoryPage'
 import { ChatPage } from '@/views/ChatPage'
 import NotificationsPage from '@/views/NotificationsPage'
@@ -41,7 +40,6 @@ import BoutiquePage from '@/views/BoutiquePage'
 import AdminDashboardPage from '@/views/AdminDashboardPage'
 import AdminTiragesPage from '@/views/AdminTiragesPage'
 import AdminChatPage from '@/views/AdminChatPage'
-import AdminMessagesPage from '@/views/AdminMessagesPage'
 import AdminPromptsPage from '@/views/AdminPromptsPage'
 import AdminPromoPage from '@/views/AdminPromoPage'
 import AdminNotificationsPage from '@/views/AdminNotificationsPage'
@@ -292,13 +290,6 @@ function AppRoutes() {
         </Layout>
       </ProtectedLayout>
     ),
-    contact: (
-      <ProtectedLayout>
-        <Layout>
-          <ContactPage />
-        </Layout>
-      </ProtectedLayout>
-    ),
     coaches: (
       <ProtectedLayout>
         <Layout>
@@ -411,13 +402,6 @@ function AppRoutes() {
           </Layout>
         </ProtectedLayout>
       ),
-      messages: (
-        <ProtectedLayout adminOrCoach>
-          <Layout>
-            <AdminMessagesPage />
-          </Layout>
-        </ProtectedLayout>
-      ),
       chat: (
         <ProtectedLayout adminOrCoach>
           <Layout>
@@ -508,13 +492,6 @@ function AppRoutes() {
         <ProtectedLayout adminOrCoach>
           <Layout>
             <CoachPatientelePage />
-          </Layout>
-        </ProtectedLayout>
-      ),
-      messages: (
-        <ProtectedLayout adminOrCoach>
-          <Layout>
-            <AdminMessagesPage />
           </Layout>
         </ProtectedLayout>
       ),

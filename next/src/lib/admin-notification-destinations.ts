@@ -31,13 +31,11 @@ export const ADMIN_NOTIFICATION_DESTINATIONS: AdminNotificationDestination[] = [
   { id: 'dreamscape_historique', label: 'Dreamscape — historique', path: '/dreamscape/historique' },
   { id: 'boutique', label: 'Boutique', path: '/boutique' },
   { id: 'coaches', label: 'Annuaire des coachs', path: '/coaches' },
-  { id: 'contact', label: 'Contact', path: '/contact' },
   { id: 'admin', label: 'Admin — tableau de bord', path: '/admin' },
   { id: 'admin_broadcasts', label: 'Admin — diffusions', path: '/admin/broadcasts' },
   { id: 'admin_suivi', label: 'Admin — suivi', path: '/admin/suivi' },
   { id: 'admin_patientele', label: 'Admin — patientèle', path: '/admin/patientele' },
   { id: 'coach_suivi', label: 'Coach — suivi', path: '/coach/suivi' },
-  { id: 'coach_messages', label: 'Coach — messages admin', path: '/coach/messages' },
 ]
 
 export const ADMIN_NOTIFICATION_DEST_CUSTOM = '__custom__'

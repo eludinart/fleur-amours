@@ -87,7 +87,6 @@ function buildNavGroups(
     coachNavItems.push(
       { to: '/coach/analytics', label: translate('nav.coachAnalytics') ?? 'Vue globale', icon: '📊', title: translate('nav.coachAnalyticsTooltip') ?? 'Synthèse et tendances sur votre patientèle.' },
       { to: '/coach/suivi', label: translate('nav.coachSuivi') ?? 'Suivi individuel', icon: '🌸', title: translate('nav.coachSuiviTooltip') ?? 'Détail utilisateur par utilisateur.' },
-      { to: '/coach/messages', label: translate('nav.coachMessages'), icon: '✉️', title: translate('nav.coachMessagesTooltip') },
       { to: '/coach/chat', label: translate('nav.coachChat'), icon: '💬', title: translate('nav.coachChatTooltip') },
       { to: '/coach/patientele', label: translate('nav.coachPatientele'), icon: '🌿', title: translate('nav.coachPatienteleTooltip') }
     )

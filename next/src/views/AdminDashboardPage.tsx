@@ -7,7 +7,6 @@ import { motion } from 'framer-motion'
 import { sessionsApi } from '@/api/sessions'
 import { statsApi } from '@/api/stats'
 import { tarotReadingsApi } from '@/api/tarotReadings'
-import { contactApi } from '@/api/contact'
 import { chatApi } from '@/api/chat'
 import { notificationsApi } from '@/api/notifications'
 import { aiApi } from '@/api/ai'
@@ -87,7 +86,6 @@ export default function AdminDashboardPage() {
   const [sessionsStats, setSessionsStats] = useState(null)
   const [fleurStats, setFleurStats] = useState(null)
   const [tarotStats, setTarotStats] = useState(null)
-  const [msgStats, setMsgStats] = useState(null)
   const [chatStats, setChatStats] = useState(null)
   const [notifStats, setNotifStats] = useState(null)
   const [shadowStats, setShadowStats] = useState(null)
@@ -164,15 +162,13 @@ export default function AdminDashboardPage() {
       sessionsApi.stats().catch(() => null),
       statsApi.overview().catch(() => null),
       tarotReadingsApi.stats().catch(() => null),
-      contactApi.stats().catch(() => null),
       chatApi.stats().catch(() => null),
       notificationsApi.stats().catch(() => null),
       sessionsApi.shadowStats().catch(() => null),
-    ]).then(([sess, fleur, tarot, msgs, chat, notifs, shadows]) => {
+    ]).then(([sess, fleur, tarot, chat, notifs, shadows]) => {
       setSessionsStats(sess)
       setFleurStats(fleur)
       setTarotStats(tarot)
-      setMsgStats(msgs)
       setChatStats(chat)
       setNotifStats(notifs)
       setShadowStats(shadows)
@@ -495,39 +491,25 @@ export default function AdminDashboardPage() {
             )}
           </motion.section>
 
-          {(msgStats?.unread ?? 0) > 0 || (chatStats?.unread_messages ?? 0) > 0 ? (
+          {(chatStats?.unread_messages ?? 0) > 0 ? (
             <motion.section variants={item} className="flex flex-col sm:flex-row gap-3">
-              {(msgStats?.unread ?? 0) > 0 && (
-                <Link
-                  href="/admin/messages"
-                  className="flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-800/60 hover:bg-rose-100/80 dark:hover:bg-rose-950/50 backdrop-blur-sm transition-all hover:ring-2 hover:ring-rose-400/30"
-                >
-                  <span className="w-3 h-3 rounded-full bg-rose-500 animate-pulse shrink-0" />
-                  <span className="text-sm font-semibold text-rose-700 dark:text-rose-300">
-                    {msgStats!.unread!} message{msgStats!.unread! > 1 ? 's' : ''} non lu{msgStats!.unread! > 1 ? 's' : ''}
-                  </span>
-                  <span className="ml-auto text-rose-500 dark:text-rose-400 text-xs font-medium">Voir →</span>
-                </Link>
-              )}
-              {(chatStats?.unread_messages ?? 0) > 0 && (
-                <Link
-                  href="/admin/chat"
-                  className="flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 hover:bg-amber-100/80 dark:hover:bg-amber-950/50 backdrop-blur-sm transition-all hover:ring-2 hover:ring-amber-400/30"
-                >
-                  <span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                    {chatStats!.unread_messages!} message{chatStats!.unread_messages! > 1 ? 's' : ''} de chat non lu
-                    {chatStats!.unread_messages! > 1 ? 's' : ''}
-                    {(chatStats?.open ?? 0) > 0 && (
-                      <span className="ml-1 font-normal opacity-70">
-                        · {chatStats!.open} conversation{(chatStats!.open ?? 0) > 1 ? 's' : ''} ouverte
-                        {(chatStats!.open ?? 0) > 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </span>
-                  <span className="ml-auto text-amber-500 dark:text-amber-400 text-xs font-medium">Répondre →</span>
-                </Link>
-              )}
+              <Link
+                href="/admin/chat"
+                className="flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 hover:bg-amber-100/80 dark:hover:bg-amber-950/50 backdrop-blur-sm transition-all hover:ring-2 hover:ring-amber-400/30"
+              >
+                <span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                  {chatStats!.unread_messages!} message{chatStats!.unread_messages! > 1 ? 's' : ''} de chat non lu
+                  {chatStats!.unread_messages! > 1 ? 's' : ''}
+                  {(chatStats?.open ?? 0) > 0 && (
+                    <span className="ml-1 font-normal opacity-70">
+                      · {chatStats!.open} conversation{(chatStats!.open ?? 0) > 1 ? 's' : ''} ouverte
+                      {(chatStats!.open ?? 0) > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+                <span className="ml-auto text-amber-500 dark:text-amber-400 text-xs font-medium">Répondre →</span>
+              </Link>
             </motion.section>
           ) : null}
 
@@ -662,14 +644,6 @@ export default function AdminDashboardPage() {
                   color="emerald"
                 />
                 <StatCard
-                  label="Messages"
-                  value={msgStats?.total ?? 0}
-                  sub={(msgStats?.unread ?? 0) > 0 ? `${msgStats!.unread} non lu${msgStats!.unread! > 1 ? 's' : ''}` : "Demandes d'accompagnement"}
-                  to="/admin/messages"
-                  icon="✉️"
-                  color="rose"
-                />
-                <StatCard
                   label="Conversations chat"
                   value={chatStats?.total ?? 0}
                   sub={
@@ -798,7 +772,6 @@ export default function AdminDashboardPage() {
               <ShortcutCard to="/admin/suivi" label="Suivi utilisateurs" icon="🌸" />
               <ShortcutCard to="/admin/sessions" label="Sessions IA" icon="📋" />
               <ShortcutCard to="/admin/science" label="Science de la Fleur" icon="🧬" />
-              <ShortcutCard to="/admin/messages" label="Messages" icon="✉️" />
               <ShortcutCard to="/admin/chat" label="Chat" icon="💬" />
               <ShortcutCard to="/admin/users" label="Utilisateurs" icon="👥" />
               <ShortcutCard to="/admin/prompts" label="Prompts IA" icon="✏️" />

@@ -6,6 +6,7 @@
 import { readFileSync, existsSync } from 'fs'
 import { resolve } from 'path'
 import * as jwt from 'jsonwebtoken'
+import { getAppPublicOrigin } from './app-public-url'
 
 function getProjectId(): string {
   const envVal = process.env.FCM_PROJECT_ID ?? ''
@@ -205,14 +206,7 @@ export async function sendFcmPush(
   }
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
-  // Construire une URL absolue HTTPS — FCM l'exige pour webpush.fcm_options.link
-  // On préfère APP_PUBLIC_URL (runtime) puis NEXT_PUBLIC_APP_URL, et on force HTTPS
-  let appUrl = (process.env.APP_PUBLIC_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
-  if (!appUrl || appUrl.includes('localhost') || appUrl.startsWith('http://')) {
-    // Fallback : construire depuis l'hôte de production connu
-    const host = process.env.APP_HOST ?? process.env.VIRTUAL_HOST ?? ''
-    appUrl = host ? `https://${host}` : ''
-  }
+  const appUrl = getAppPublicOrigin()
   /** Chemins en DB (ex. /clairiere/5) n'incluent pas toujours basePath (/jardin). */
   const withBasePath = (rel: string | null): string => {
     const bp = basePath.replace(/\/$/, '')

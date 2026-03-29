@@ -625,7 +625,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
                   {level >= 4 ? t('dreamscapeCanvas.accompanyDistress') : t('dreamscapeCanvas.accompanyLight')}
                 </p>
                 <a
-                  href="/contact"
+                  href="/chat"
                   className={`flex-shrink-0 px-3 py-1.5 rounded-lg ${p.btn} text-white text-xs font-semibold transition-colors whitespace-nowrap`}>
                   {t('dreamscapeCanvas.accompany')}
                 </a>

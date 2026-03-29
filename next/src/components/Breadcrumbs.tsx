@@ -16,7 +16,6 @@ const LABELS: Record<string, string> = {
   [`${basePath}/tirage`]: 'nav.tirages',
   [`${basePath}/dreamscape`]: 'dreamscape',
   [`${basePath}/dreamscape/historique`]: 'dreamscapeHistorique.history',
-  [`${basePath}/contact`]: 'contact',
   [`${basePath}/coaches`]: 'nav.coachesDirectory',
   [`${basePath}/chat`]: 'chat',
   [`${basePath}/account`]: 'account',
@@ -25,7 +24,6 @@ const LABELS: Record<string, string> = {
 
 const FALLBACK: Record<string, string> = {
   dreamscape: 'Promenade Onirique',
-  contact: 'Contact',
   chat: 'Chat coach',
   account: 'Mon compte',
   presentation: 'Présentation',
