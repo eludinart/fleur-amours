@@ -99,6 +99,8 @@ export default function AdminChatPage() {
   const lastMsgAt = useRef<string | null>(null)
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const initReadDoneRef = useRef(false)
+  /** Conversation ouverte : le poll liste ne doit pas réinjecter un badge « non lu » serveur (course markRead / timing). */
+  const selectedIdRef = useRef<number | null>(null)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -112,10 +114,15 @@ export default function AdminChatPage() {
       .listConversations({ status: effectiveStatus, per_page: 50 })
       .then((res) => {
         const items = (res as { items?: Conversation[] })?.items ?? []
-        setConversations(items)
+        const openId = selectedIdRef.current
+        const merged =
+          openId != null
+            ? items.map((c) => (c.id === openId ? { ...c, unread_count: 0 } : c))
+            : items
+        setConversations(merged)
         setSelected((prev) => {
           if (!prev) return prev
-          const row = items.find((c) => c.id === prev.id)
+          const row = merged.find((c) => c.id === prev.id)
           return row ? { ...prev, ...row } : prev
         })
       })
@@ -169,19 +176,26 @@ export default function AdminChatPage() {
           return newItems.length > 0 ? [...prev, ...newItems] : prev
         })
         lastMsgAt.current = items[items.length - 1].created_at ?? null
-        await chatApi.markRead(String(convId), 'coach')
         scrollToBottom()
       }
+      // Toujours marquer lu après un fetch réussi tant qu'on affiche le fil : évite le badge qui
+      // revient à chaque poll liste (markRead n'était pas appelé si items vide en mode since).
+      await chatApi.markRead(String(convId), 'coach')
     } catch {
       /* silent */
     }
   }, [scrollToBottom])
 
   useEffect(() => {
-    if (!selected) return
+    if (!selected) {
+      selectedIdRef.current = null
+      return
+    }
+    selectedIdRef.current = selected.id
     lastMsgAt.current = null
     setMessages([])
     setConversations((prev) => prev.map((c) => (c.id === selected.id ? { ...c, unread_count: 0 } : c)))
+    void chatApi.markRead(String(selected.id), 'coach').catch(() => {})
     loadMessages(selected.id, null)
     if (pollTimer.current) clearInterval(pollTimer.current)
     pollTimer.current = setInterval(() => loadMessages(selected.id, lastMsgAt.current), 10000)

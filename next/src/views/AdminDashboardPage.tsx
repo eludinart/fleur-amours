@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { sessionsApi } from '@/api/sessions'
@@ -157,7 +157,7 @@ export default function AdminDashboardPage() {
       })
   }, [])
 
-  useEffect(() => {
+  const loadDashboardStats = useCallback(() => {
     Promise.all([
       sessionsApi.stats().catch(() => null),
       statsApi.overview().catch(() => null),
@@ -175,6 +175,18 @@ export default function AdminDashboardPage() {
       setLoading(false)
     })
   }, [])
+
+  useEffect(() => {
+    loadDashboardStats()
+  }, [loadDashboardStats])
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === 'visible') loadDashboardStats()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [loadDashboardStats])
 
   if (loading) {
     return (
@@ -660,7 +672,7 @@ export default function AdminDashboardPage() {
                   value={notifStats?.total ?? 0}
                   sub={
                     notifStats
-                      ? `${notifStats.delivered ?? 0} délivrées · ${notifStats.unread ?? 0} non lue${(notifStats.unread ?? 0) > 1 ? 's' : ''}`
+                      ? `${notifStats.delivered ?? 0} délivrées · cloche : ${notifStats.unread_mine ?? 0} non lue${(notifStats.unread_mine ?? 0) > 1 ? 's' : ''} · ${notifStats.unread ?? 0} en attente (tous comptes)`
                       : undefined
                   }
                   to="/admin/notifications"

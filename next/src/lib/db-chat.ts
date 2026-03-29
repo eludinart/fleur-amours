@@ -464,18 +464,18 @@ export async function markChatConversationRead(params: {
     }
   }
 
-  const [maxRows] = await pool.execute<RowDataPacket[]>(
-    `SELECT MAX(created_at) as ts FROM ${tMsg} WHERE conversation_id = ?`,
+  const col = readerRole === 'user' ? 'user_last_read_at' : 'coach_last_read_at'
+  // GREATEST(NOW(), MAX(created_at)) : le filigrane dépasse toujours le dernier message et l’instant courant,
+  // ce qui évite les faux « non lus » (comparaison stricte created_at > coach_last_read_at).
+  await pool.execute(
+    `UPDATE ${tConv} c
+     SET c.${col} = GREATEST(
+       NOW(),
+       COALESCE((SELECT MAX(m.created_at) FROM ${tMsg} m WHERE m.conversation_id = c.id), NOW())
+     )
+     WHERE c.id = ?`,
     [conversationId]
   )
-  const tsRaw = maxRows[0]?.ts
-  const watermark =
-    tsRaw != null && String(tsRaw).trim() !== ''
-      ? String(tsRaw)
-      : new Date().toISOString().slice(0, 19).replace('T', ' ')
-
-  const col = readerRole === 'user' ? 'user_last_read_at' : 'coach_last_read_at'
-  await pool.execute(`UPDATE ${tConv} SET ${col} = ? WHERE id = ?`, [watermark, conversationId])
   return { ok: true }
 }
 

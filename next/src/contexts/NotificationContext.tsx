@@ -66,11 +66,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setItems((prev) =>
         prev.map((n) => (ids.includes(n.id) ? { ...n, read_at: new Date().toISOString() } : n))
       )
-      setUnreadCount((prev) => Math.max(0, prev - ids.length))
+      await fetchUnread()
     } catch {
       /* silent */
     }
-  }, [])
+  }, [fetchUnread])
 
   const markAllRead = useCallback(async () => {
     try {
@@ -78,11 +78,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setItems((prev) =>
         prev.map((n) => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
       )
-      setUnreadCount(0)
+      await fetchUnread()
     } catch {
       /* silent */
     }
-  }, [])
+  }, [fetchUnread])
 
   const deleteRead = useCallback(async () => {
     try {

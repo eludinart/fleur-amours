@@ -62,7 +62,13 @@ export default function AdminNotificationsPage() {
   const { fetchUnread } = useNotifications()
   const [tab, setTab] = useState('list')
   const [testing, setTesting] = useState(false)
-  const [stats, setStats] = useState<{ total?: number; delivered?: number; read?: number; unread?: number } | null>(null)
+  const [stats, setStats] = useState<{
+    total?: number
+    delivered?: number
+    read?: number
+    unread?: number
+    unread_mine?: number
+  } | null>(null)
   const [list, setList] = useState<{ items: unknown[]; total?: number; pages?: number } | null>(null)
   const [page, setPage] = useState(1)
   const [filterType, setFilterType] = useState('')
@@ -89,7 +95,13 @@ export default function AdminNotificationsPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const data = await notificationsApi.stats() as { total?: number; delivered?: number; read?: number; unread?: number }
+      const data = await notificationsApi.stats() as {
+        total?: number
+        delivered?: number
+        read?: number
+        unread?: number
+        unread_mine?: number
+      }
       setStats(data)
     } catch {
       /* silent */
@@ -232,11 +244,20 @@ export default function AdminNotificationsPage() {
       </div>
 
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <StatCard label="Total envoyées" value={stats.total} />
           <StatCard label="Délivrées" value={stats.delivered} />
           <StatCard label="Lues" value={stats.read} color="text-emerald-600" />
-          <StatCard label="Non lues" value={stats.unread} color="text-rose-500" />
+          <StatCard
+            label="Non lues (tous comptes)"
+            value={stats.unread}
+            color="text-rose-500"
+          />
+          <StatCard
+            label="Ma cloche"
+            value={stats.unread_mine}
+            color="text-amber-600"
+          />
         </div>
       )}
 
