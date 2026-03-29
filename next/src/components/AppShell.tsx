@@ -51,7 +51,7 @@ import AdminSciencePage from '@/views/AdminSciencePage'
 import AdminBroadcastsPage from '@/views/AdminBroadcastsPage'
 import CoachSuiviPage from '@/views/CoachSuiviPage'
 import CoachPatientelePage from '@/views/CoachPatientelePage'
-import { usePushNotifications } from '@/hooks/usePushNotifications'
+import PushNotificationPriming from '@/components/PushNotificationPriming'
 
 const AdminAnalyticsPage = dynamic(
   () => import('@/views/AdminAnalyticsPage').then((m) => m.default),
@@ -115,24 +115,6 @@ function LocaleSync() {
   useEffect(() => {
     setLocaleForRequests(locale || 'fr')
   }, [locale])
-  return null
-}
-
-function PushNotificationManager() {
-  const { user } = useAuth()
-  const userId = user?.id ? Number(user.id) : null
-  const { triggerAfterLogin } = usePushNotifications(userId)
-
-  // Déclencher immédiatement après un login/register dans la même session
-  useEffect(() => {
-    if (!userId) return
-    const key = `push_just_logged_in_${userId}`
-    if (sessionStorage.getItem(key)) {
-      triggerAfterLogin(userId)
-      sessionStorage.removeItem(key)
-    }
-  }, [userId, triggerAfterLogin])
-
   return null
 }
 
@@ -620,7 +602,7 @@ function AppRoutes() {
     <Suspense fallback={<PageFallback />}>
       <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
         <LocaleSync />
-        {user && <PushNotificationManager />}
+        {user && <PushNotificationPriming />}
         {page}
       </div>
     </Suspense>

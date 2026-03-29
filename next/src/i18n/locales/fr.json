@@ -190,7 +190,12 @@
     "notifications": "Notifications",
     "changeLanguage": "Changer la langue",
     "phare": "Phare",
-    "cardsManager": "Cards Manager"
+    "cardsManager": "Cards Manager",
+    "pushPrimingTitle": "Notifications pour ton Jardin",
+    "pushPrimingBody": "Pour un bon fonctionnement de l’application, nous te recommandons d’accepter les notifications : tu seras averti des nouveaux messages (Clairière, coach…) même lorsque l’app n’est pas ouverte.",
+    "pushPrimingHint": "Tu pourras changer ce réglage plus tard dans les paramètres du navigateur ou de ton téléphone.",
+    "pushPrimingContinue": "Continuer et autoriser",
+    "pushPrimingLater": "Plus tard"
   },
 
   "onboarding": {

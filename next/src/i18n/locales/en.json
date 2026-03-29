@@ -167,7 +167,12 @@
     "notifications": "Notifications",
     "changeLanguage": "Change language",
     "phare": "Beacon",
-    "cardsManager": "Cards Manager"
+    "cardsManager": "Cards Manager",
+    "pushPrimingTitle": "Notifications for your Garden",
+    "pushPrimingBody": "For the app to work as intended, we recommend allowing notifications: you’ll be alerted to new messages (Glade, coach, etc.) even when the app isn’t open.",
+    "pushPrimingHint": "You can change this later in your browser or device settings.",
+    "pushPrimingContinue": "Continue and allow",
+    "pushPrimingLater": "Not now"
   },
 
   "onboarding": {

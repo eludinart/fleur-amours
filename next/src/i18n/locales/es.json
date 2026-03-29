@@ -165,7 +165,12 @@
     "notifications": "Notificaciones",
     "changeLanguage": "Cambiar idioma",
     "phare": "Faro",
-    "cardsManager": "Gestor de cartas"
+    "cardsManager": "Gestor de cartas",
+    "pushPrimingTitle": "Notificaciones para tu Jardín",
+    "pushPrimingBody": "Para que la aplicación funcione correctamente, te recomendamos aceptar las notificaciones: recibirás avisos de mensajes nuevos (Clairière, coach…) incluso cuando la app no esté abierta.",
+    "pushPrimingHint": "Podrás cambiar esta opción más tarde en los ajustes del navegador o del teléfono.",
+    "pushPrimingContinue": "Continuar y permitir",
+    "pushPrimingLater": "Ahora no"
   },
 
   "onboarding": {
