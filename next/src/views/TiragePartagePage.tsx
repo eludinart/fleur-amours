@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { t } from '@/i18n'
+import { ogMetaDescriptionTirage, ogMetaTitleTirage } from '@/lib/og-share-copy'
 import { BACK_IMG } from '@/data/tarotCards'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
@@ -76,16 +77,19 @@ export default function TiragePartagePage() {
         const ogImgUrl = `${window.location.origin}${basePath}/api/og/tirage?id=${id}`
         const shareUrl = window.location.href
         const cardName = data.type === 'simple' ? (data.card?.name || '') : (data.cards?.map(c => c.name).join(' · ') || '')
-        const title = `Mon tirage — ${cardName}`
-        const desc = data.type === 'simple' ? (data.card?.synth || '') : (data.synthesis || '')
+        const synthSnippet =
+          data.type === 'simple' ? (data.card?.synth || null) : (data.synthesis || null)
+        const title = ogMetaTitleTirage(cardName)
+        const desc = ogMetaDescriptionTirage(cardName || 'tarot', synthSnippet)
         const metas = [
           { property: 'og:title', content: title },
-          { property: 'og:description', content: desc.slice(0, 200) },
+          { property: 'og:description', content: desc },
           { property: 'og:url', content: shareUrl },
           { property: 'og:image', content: ogImgUrl },
           { property: 'og:type', content: 'website' },
           { name: 'twitter:card', content: 'summary_large_image' },
           { name: 'twitter:title', content: title },
+          { name: 'twitter:description', content: desc },
           { name: 'twitter:image', content: ogImgUrl },
         ]
         document.title = `${title} — Fleur d'AmOurs`

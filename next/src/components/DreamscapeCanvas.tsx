@@ -14,47 +14,15 @@ import { toast } from '@/hooks/useToast'
 import { ALL_CARDS, LOVE, BACK_IMG, getCardTranslated } from '@/data/tarotCards'
 import { DreamscapeRosace } from '@/components/DreamscapeRosace'
 import { FLOWER_OFFSET } from '@/config/dreamscapeLayout'
+import { buildSlotsFromSaved, initSlots } from '@/lib/dreamscape-slots'
+import { captureDreamscapeDomToDataUrl } from '@/lib/dreamscape-snapshot-capture'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
-
-// Les 8 positions de la fleur, dans l'ordre des angles (0° = haut, 45° = haut-droite, etc.)
-const PETAL_POSITIONS = ['Agapè', 'Philautia', 'Mania', 'Storgè', 'Pragma', 'Philia', 'Ludus', 'Éros']
 
 // Fleur de référence complète (silhouette) pour l’effet « fleur double »
 const FULL_SILHOUETTE_PETALS = Object.fromEntries(
   ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'].map(id => [id, 1])
 )
-
-// État initial : 8 slots, chacun porte la carte d'amour correspondante, face cachée
-// revealOrder : compteur global d'ordre d'apparition (0 = jamais révélé)
-const initSlots = () =>
-  PETAL_POSITIONS.map((position, i) => ({
-    position,
-    card: position,
-    faceDown: true,
-    angleDeg: i * 45,
-    revealOrder: 0,  // 0 = face cachée, >0 = ordre de révélation
-  }))
-
-function buildSlotsFromSaved(savedSlots = []) {
-  let revCounter = 0
-  return PETAL_POSITIONS.map((position, i) => {
-    const saved = savedSlots.find(s => s.position === position)
-    if (saved) {
-      const faceDown = saved.faceDown !== false
-      const revealOrder = saved.revealOrder ?? (faceDown ? 0 : ++revCounter)
-      return {
-        position,
-        card: saved.card || position,
-        faceDown,
-        angleDeg: saved.angleDeg ?? i * 45,
-        revealOrder,
-        halo: saved.halo ?? null,
-      }
-    }
-    return { position, card: position, faceDown: true, angleDeg: i * 45, revealOrder: 0, halo: null }
-  })
-}
 
 export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
   useStore((s) => s.locale)
@@ -72,13 +40,6 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
   )
   const [livePetals, setLivePetals] = useState(() => initialData?.petals ?? {})
   const [livePetalsDeficit, setLivePetalsDeficit] = useState(() => initialData?.petalsDeficit ?? {})
-  const revealOrderRef = useRef(
-    initialData ? Math.max(0, ...(initialData.slots ?? []).map(s => s.revealOrder ?? 0)) : 0
-  )
-  const allRevealedRef = useRef(false)
-  allRevealedRef.current = slots.every(s => !s.faceDown)
-  const userMessageCount = history.filter(m => m.role === 'user').length
-  const canCloseTirage = allRevealedRef.current && userMessageCount >= 4
   const [isSaving, setIsSaving] = useState(false)
   const [shadowState, setShadowState] = useState(null)
   const [shadowDismissed, setShadowDismissed] = useState(false)
@@ -89,27 +50,59 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
   const [hoveredCardPosition, setHoveredCardPosition] = useState(null)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
   const [isCapturing, setIsCapturing] = useState(false)
+  const [closeModalPreview, setCloseModalPreview] = useState(null)
+  const revealOrderRef = useRef(
+    initialData ? Math.max(0, ...(initialData.slots ?? []).map(s => s.revealOrder ?? 0)) : 0
+  )
+  const allRevealedRef = useRef(false)
+  allRevealedRef.current = slots.every(s => !s.faceDown)
+  const userMessageCount = history.filter(m => m.role === 'user').length
+  /** Dès qu’au moins un échange — la promenade peut se clôturer quand le cercle est complet */
+  const canCloseTirage = allRevealedRef.current && userMessageCount >= 1
+  const autoEndFormTriggeredRef = useRef(false)
   const snapshotRef = useRef(null)
 
-  const captureSnapshot = useCallback(async () => {
-    const el = snapshotRef.current
-    if (!el) return null
-    try {
-      const { default: html2canvas } = await import('html2canvas')
-      const size = 400
-      const canvas = await html2canvas(el, {
-        backgroundColor: '#0f172a',
-        width: size,
-        height: size,
-        scale: 2,
-        useCORS: true,
-        logging: false,
-      })
-      return canvas.toDataURL('image/png')
-    } catch {
-      return null
+  useEffect(() => {
+    autoEndFormTriggeredRef.current = false
+  }, [resumeId, initialData?.id])
+
+  /** Ouvrir le formulaire de fin dès que toutes les cartes sont révélées (promenade terminée) */
+  useEffect(() => {
+    if (initialData?.history?.some((m) => m.role === 'closing')) return
+    if (autoEndFormTriggeredRef.current) return
+    if (isAnalyzing) return
+    if (!slots.every((s) => !s.faceDown)) return
+    if (!history.some((m) => m.role === 'user')) return
+    autoEndFormTriggeredRef.current = true
+    const t = window.setTimeout(() => setShowCloseModal(true), 650)
+    return () => window.clearTimeout(t)
+  }, [slots, history, initialData, isAnalyzing])
+
+  const captureSnapshot = useCallback(
+    () => captureDreamscapeDomToDataUrl(snapshotRef.current),
+    []
+  )
+
+  useEffect(() => {
+    if (!showCloseModal) {
+      setCloseModalPreview(null)
+      return
     }
-  }, [])
+    let alive = true
+    const run = async () => {
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+      try {
+        const url = await captureSnapshot()
+        if (alive && url) setCloseModalPreview(url)
+      } catch {
+        /* aperçu optionnel */
+      }
+    }
+    run()
+    return () => {
+      alive = false
+    }
+  }, [showCloseModal, captureSnapshot])
 
   useEffect(() => {
     const mq = window.matchMedia('(hover: none)')
@@ -501,11 +494,20 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
       <motion.div variants={itemVariants} className="shrink-0 flex justify-center w-full">
         <div
           ref={snapshotRef}
-          className="relative w-[min(100%,360px)] aspect-square max-w-[360px] overflow-visible rounded-2xl bg-slate-900 ring-2 ring-violet-500/30 ring-inset shadow-[0_0_40px_rgba(139,92,246,0.15),0_0_80px_rgba(99,102,241,0.08)] p-5 sm:p-6"
-          style={{ backgroundColor: '#0f172a' }}
+          className="relative w-[min(100%,360px)] aspect-square max-w-[360px] overflow-hidden rounded-xl p-5 sm:p-6 shadow-[0_0_40px_rgba(59,20,120,0.35)]"
+          style={{ backgroundColor: '#05030c' }}
           data-dreamscape-snapshot
         >
-          <div className="absolute inset-5 sm:inset-6 flex items-center justify-center">
+          <div className="absolute inset-0 z-0 bg-[#05030c]" aria-hidden />
+          <div
+            className="absolute inset-0 z-0"
+            style={{
+              background:
+                'radial-gradient(ellipse 76% 60% at 50% 46%, rgba(124,58,237,0.2) 0%, transparent 64%), linear-gradient(165deg, #07051c 0%, #120a24 50%, #05030c 100%)',
+            }}
+            aria-hidden
+          />
+          <div className="absolute inset-5 sm:inset-6 z-10 flex items-center justify-center">
             <DreamscapeRosace
               cards={rosaceCards}
               className="w-full h-full max-w-full max-h-full"
@@ -624,11 +626,11 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
                 <p className={`text-xs ${p.ctaText} leading-relaxed`}>
                   {level >= 4 ? t('dreamscapeCanvas.accompanyDistress') : t('dreamscapeCanvas.accompanyLight')}
                 </p>
-                <a
-                  href="/chat"
+                <Link
+                  href="/coaches"
                   className={`flex-shrink-0 px-3 py-1.5 rounded-lg ${p.btn} text-white text-xs font-semibold transition-colors whitespace-nowrap`}>
                   {t('dreamscapeCanvas.accompany')}
-                </a>
+                </Link>
               </div>
               )}
             </motion.div>
@@ -812,6 +814,18 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
                     <li key={i}>{a}</li>
                   ))}
                 </ul>
+              </div>
+            )}
+            {closeModalPreview && (
+              <div className="rounded-xl bg-slate-900/80 border border-violet-500/25 p-3">
+                <p className="text-xs font-semibold text-violet-300/90 uppercase tracking-wider mb-2">
+                  {t('dreamscapeHistorique.snapshot')}
+                </p>
+                <img
+                  src={closeModalPreview}
+                  alt=""
+                  className="w-full max-w-[240px] mx-auto rounded-lg object-contain ring-1 ring-white/10 shadow-lg"
+                />
               </div>
             )}
             <div className="flex flex-wrap gap-3 justify-end">

@@ -69,6 +69,16 @@ export async function update(
   if (affected === 0) throw new Error('Promenade introuvable ou accès refusé')
 }
 
+/** Mise à jour uniquement du snapshot (régénération visuel), sans toucher au reste. */
+export async function updateSnapshot(userId: string, id: number, snapshotBase64: string | null): Promise<void> {
+  const pool = getPool()
+  const t = tbl()
+  const sql = `UPDATE ${t} SET snapshot_base64 = ? WHERE id = ? AND user_id = ?`
+  const [result] = await exec(pool, sql, [snapshotBase64, id, userId])
+  const affected = (result as { affectedRows?: number }).affectedRows ?? 0
+  if (affected === 0) throw new Error('Promenade introuvable ou accès refusé')
+}
+
 export async function my(userId: string): Promise<{ items: Record<string, unknown>[] }> {
   const pool = getPool()
   await ensureTable()

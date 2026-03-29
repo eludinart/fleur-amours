@@ -7,14 +7,13 @@
  * La transaction SQL garantit :
  *   1. Le code existe, est actif, non expiré, pas encore épuisé.
  *   2. L'utilisateur ne l'a pas déjà utilisé (unicité code_id + user_id).
- *   3. Les SAP sont ajoutés via ensureWalletRow + sapCredit.
+ *   3. Les SAP sont ajoutés sur le Sablier (fleur_users_access) + miroir wallet.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, ApiError } from '@/lib/api-auth'
 import { isDbConfigured } from '@/lib/db'
 import { redeemPromoCode, PromoError } from '@/lib/db-promo'
-import { getPool } from '@/lib/db'
-import { ensureWalletRow } from '@/lib/db-sap'
+import { transactionalSapUpdate } from '@/lib/db-sap'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,19 +38,7 @@ export async function POST(req: NextRequest) {
     // Vérifier + consommer le code (transaction interne dans redeemPromoCode)
     const { sapCredited } = await redeemPromoCode(code, uid)
 
-    // Créditer le wallet SAP de l'utilisateur
-    const pool = getPool()
-    await ensureWalletRow(pool, uid)
-    await pool.execute(
-      `UPDATE wp_fleur_sap_wallets SET balance = balance + ? WHERE user_id = ?`,
-      [sapCredited, uid]
-    )
-    // Enregistrer la transaction SAP
-    await pool.execute(
-      `INSERT INTO wp_fleur_sap_transactions (user_id, amount, type, reason)
-       VALUES (?, ?, 'bonus', ?)`,
-      [uid, sapCredited, `promo:${code.toUpperCase()}`]
-    )
+    await transactionalSapUpdate(uid, sapCredited, `promo:${code.toUpperCase()}`, 'bonus')
 
     return NextResponse.json({
       success: true,

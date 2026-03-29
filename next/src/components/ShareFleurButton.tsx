@@ -6,6 +6,7 @@ import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { canUseNativeShare } from '@/utils/share-social'
 import { ShareSocialButtons } from './ShareSocialButtons'
+import { ogMetaDescriptionFleur, ogMetaTitleFleur } from '@/lib/og-share-copy'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
@@ -35,20 +36,26 @@ export function ShareFleurButton({
 
   const sharePayload = {
     url: fullUrl,
-    title: "Ma Fleur d'AmOurs",
-    text: "J'ai découvert ma Fleur d'AmOurs — 8 pétales révélant mes dimensions d'amour 🌸",
+    title: ogMetaTitleFleur(),
+    text:
+      "Ma Fleur d'AmOurs : 8 dimensions de l'amour en un seul visuel. " +
+      'Test gratuit, résultat immédiat — venez voir la vôtre sur Fleur d’AmOurs.',
     ...(ogImageUrl ? { image: ogImageUrl } : {}),
   }
 
   // Inject OG meta tags so the page is social-preview-ready
   useEffect(() => {
     if (!ogImageUrl || typeof window === 'undefined') return
+    const desc = ogMetaDescriptionFleur()
+    const title = ogMetaTitleFleur()
     const metas: Array<{ attr: string; key: string; content: string }> = [
       { attr: 'property', key: 'og:image', content: ogImageUrl },
       { attr: 'name', key: 'twitter:card', content: 'summary_large_image' },
       { attr: 'name', key: 'twitter:image', content: ogImageUrl },
-      { attr: 'property', key: 'og:title', content: "Ma Fleur d'AmOurs" },
-      { attr: 'property', key: 'og:description', content: "Découvrez ma Fleur d'AmOurs — 8 pétales révélant mes dimensions d'amour 🌸" },
+      { attr: 'property', key: 'og:title', content: title },
+      { attr: 'property', key: 'og:description', content: desc },
+      { attr: 'name', key: 'twitter:title', content: title },
+      { attr: 'name', key: 'twitter:description', content: desc },
     ]
     metas.forEach(({ attr, key, content }) => {
       let el = document.querySelector(`meta[${attr}="${key}"]`)

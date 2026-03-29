@@ -438,7 +438,23 @@ export function useAiSession({
               })
             }
           })
-          .catch(() => {})
+          .catch(() => {
+            const response_a = `Vous avez tiré « ${cardToUse.name} ».`
+            const descLine = (cardToUse.desc || '').split('\n').map((s) => s.trim()).find(Boolean) || ''
+            const questionFallback = descLine
+              ? `${descLine.slice(0, 320)}${descLine.length > 320 ? '…' : ''} — ${t('tarot.reflectionQuestion')}`
+              : t('tarot.reflectionQuestion')
+            setAiMessage({
+              response_a,
+              response_b: '',
+              question: questionFallback,
+              reflection: null,
+              suggest_card: null,
+              thread_context: null,
+              shadow_detected: false,
+              explore_petal: null,
+            })
+          })
       }
     }
 
@@ -547,7 +563,19 @@ export function useAiSession({
           next_door_suggestion: prev?.next_door_suggestion,
         }))
       })
-      .catch(() => {})
+      .catch(() => {
+        const door = DOOR_MAP[currentDoor]
+        const lastUser = history.filter((m) => m.role === 'user').pop()
+        setDoorSummary((prev) => ({
+          door_summary_preview: {
+            synthesis_suggestion:
+              lastUser?.content?.trim() ||
+              `${t('session.explorationOf')} ${door?.subtitle ?? t('session.thisDoor')}`,
+            paths_solutions: '',
+          },
+          next_door_suggestion: prev?.next_door_suggestion,
+        }))
+      })
       .finally(() => setSummaryLoading(false))
   }, [showSummaryPanel, doorLocked, history, currentDoor])
 

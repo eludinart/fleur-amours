@@ -111,6 +111,11 @@ function ResultView({ result, answers: answersProp, onReset }) {
         <div ref={flowerRef} className="flex justify-center">
           <FlowerSVG petals={scoresToPetals(scores)} size={280} animate showLabels />
         </div>
+      </div>
+
+      <FleurInterpretation scores={scores} answers={answersForAi} resultId={result.id || result.result_id} interpretation={result.interpretation} />
+
+      <div className="flex justify-center">
         <ShareFleurButton
           targetRef={flowerRef}
           shareUrl={result.id ? `/fleur?result=${result.id}` : result.result_id ? `/fleur?result=${result.result_id}` : '/fleur'}
@@ -138,8 +143,6 @@ function ResultView({ result, answers: answersProp, onReset }) {
           </div>
         ))}
       </div>
-
-      <FleurInterpretation scores={scores} answers={answersForAi} resultId={result.id || result.result_id} interpretation={result.interpretation} />
 
       {analysis?.global && (
         <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4">

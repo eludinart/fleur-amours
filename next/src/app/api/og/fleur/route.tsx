@@ -1,27 +1,44 @@
 /**
  * GET /api/og/fleur?id=…
- * Génère une image OG 1200×630 pour un résultat de la Fleur d'AmOurs.
+ * Carte Open Graph 1200×630 — Fleur d'AmOurs, promesse + preuve visuelle + CTA.
  */
 import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { getResult } from '@/lib/db-fleur'
+import {
+  OG_FLEUR_CHIPS,
+  OG_FLEUR_CTA,
+  OG_FLEUR_HOOK,
+  OG_FLEUR_KICKER,
+  OG_FLEUR_SUB,
+  OG_CHIP_FAST,
+  OG_CHIP_FREE,
+  OG_CHIP_PRIVATE,
+} from '@/lib/og-share-copy'
+import {
+  OgBenefitChips,
+  OgBrandHeader,
+  OgConversionFooter,
+  OgHook,
+  OgKicker,
+  OgSubhook,
+} from '@/lib/og-share-chrome'
 
 export const dynamic = 'force-dynamic'
 
 const W = 1200
 const H = 630
-const BRAND = "Fleur d'AmOurs"
 
 const PETAL_DEFS = [
-  { id: 'agape',     name: 'Agapè',     angle: 0,   color: '#f43f5e' },
-  { id: 'philautia', name: 'Philautia', angle: 45,  color: '#f59e0b' },
-  { id: 'mania',     name: 'Mania',     angle: 90,  color: '#ef4444' },
-  { id: 'storge',    name: 'Storgè',    angle: 135, color: '#0d9488' },
-  { id: 'pragma',    name: 'Pragma',    angle: 180, color: '#6366f1' },
-  { id: 'philia',    name: 'Philia',    angle: 225, color: '#10b981' },
-  { id: 'ludus',     name: 'Ludus',     angle: 270, color: '#0ea5e9' },
-  { id: 'eros',      name: 'Éros',      angle: 315, color: '#8b5cf6' },
+  { id: 'agape', name: 'Agapè', angle: 0, color: '#f43f5e' },
+  { id: 'philautia', name: 'Philautia', angle: 45, color: '#f59e0b' },
+  { id: 'mania', name: 'Mania', angle: 90, color: '#ef4444' },
+  { id: 'storge', name: 'Storgè', angle: 135, color: '#0d9488' },
+  { id: 'pragma', name: 'Pragma', angle: 180, color: '#6366f1' },
+  { id: 'philia', name: 'Philia', angle: 225, color: '#10b981' },
+  { id: 'ludus', name: 'Ludus', angle: 270, color: '#0ea5e9' },
+  { id: 'eros', name: 'Éros', angle: 315, color: '#8b5cf6' },
 ]
 
 function petalPath(halfLen: number, width: number): string {
@@ -36,10 +53,10 @@ function petalPath(halfLen: number, width: number): string {
 
 function FlowerOG({ scores, dominant }: { scores: Record<string, number>; dominant: string | null }) {
   const CENTER = 120
-  const SIZE = 240
-  const MIN_LEN = 20
-  const MAX_LEN = 80
-  const PETAL_W = 22
+  const SIZE = 260
+  const MIN_LEN = 22
+  const MAX_LEN = 88
+  const PETAL_W = 24
 
   const vals = Object.values(scores).filter((v) => typeof v === 'number')
   const dataMax = vals.length ? Math.max(...vals) : 1
@@ -61,17 +78,16 @@ function FlowerOG({ scores, dominant }: { scores: Record<string, number>; domina
             <path
               d={path}
               fill={p.color}
-              opacity={isHigh ? 0.95 : 0.65}
+              opacity={isHigh ? 0.97 : 0.68}
               stroke={p.color}
-              strokeWidth={isHigh ? 1.5 : 0.5}
-              strokeOpacity={0.4}
+              strokeWidth={isHigh ? 2 : 0.6}
+              strokeOpacity={0.35}
             />
           </g>
         )
       })}
-      {/* Center circle */}
-      <circle cx={0} cy={0} r={14} fill="white" opacity={0.9} />
-      <circle cx={0} cy={0} r={8} fill="#f8f4ef" />
+      <circle cx={0} cy={0} r={16} fill="white" opacity={0.95} />
+      <circle cx={0} cy={0} r={9} fill="#faf6f0" />
     </svg>
   )
 }
@@ -96,13 +112,15 @@ export async function GET(req: NextRequest) {
       dominant = (analysis?.dominant as string) || null
       globalText = (analysis?.global as string) || null
     } catch {
-      /* fallback to empty flower */
+      /* empty flower */
     }
   }
 
   const dominantDef = PETAL_DEFS.find((p) => p.id === dominant)
   const dominantColor = dominantDef?.color || '#8b5cf6'
   const dominantName = dominantDef?.name || ''
+
+  const trustChips = [OG_CHIP_FREE, OG_CHIP_PRIVATE, OG_CHIP_FAST] as const
 
   return new ImageResponse(
     (
@@ -111,30 +129,28 @@ export async function GET(req: NextRequest) {
           display: 'flex',
           width: W,
           height: H,
-          background: 'linear-gradient(135deg, #fdf8f0 0%, #f5e6d0 40%, #fdf4ee 100%)',
+          background: 'linear-gradient(165deg, #fffbf5 0%, #f7ead8 35%, #fdf6ee 70%, #faf0e6 100%)',
           position: 'relative',
           overflow: 'hidden',
-          fontFamily: 'Georgia, serif',
         }}
       >
-        {/* Decorative soft circles */}
         <div
           style={{
             position: 'absolute',
-            top: -60,
-            left: -60,
-            width: 300,
-            height: 300,
+            top: -80,
+            right: -70,
+            width: 380,
+            height: 380,
             borderRadius: '50%',
-            background: 'rgba(244,63,94,0.07)',
+            background: `radial-gradient(circle, ${dominantColor}18 0%, transparent 65%)`,
             display: 'flex',
           }}
         />
         <div
           style={{
             position: 'absolute',
-            bottom: -80,
-            right: -80,
+            bottom: -100,
+            left: -40,
             width: 360,
             height: 360,
             borderRadius: '50%',
@@ -143,165 +159,118 @@ export async function GET(req: NextRequest) {
           }}
         />
 
-        {/* Left: Flower */}
+        <OgBrandHeader variant="warm" />
+
         <div
           style={{
             display: 'flex',
-            width: 380,
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingLeft: 60,
+            flexDirection: 'row',
+            width: '100%',
+            height: '100%',
+            paddingTop: 108,
+            paddingBottom: 76,
+            boxSizing: 'border-box',
           }}
         >
           <div
             style={{
               display: 'flex',
-              width: 260,
-              height: 260,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.7)',
-              border: `2px solid ${dominantColor}22`,
+              width: 400,
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: `0 0 60px ${dominantColor}22, 0 8px 32px rgba(0,0,0,0.06)`,
+              paddingLeft: 48,
             }}
           >
-            <FlowerOG scores={scores} dominant={dominant} />
-          </div>
-        </div>
-
-        {/* Right: Text */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            flex: 1,
-            justifyContent: 'center',
-            paddingRight: 60,
-            paddingLeft: 20,
-            gap: 0,
-          }}
-        >
-          {/* Label */}
-          <div
-            style={{
-              fontSize: 13,
-              color: 'rgba(100,60,40,0.6)',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
-              marginBottom: 14,
-              display: 'flex',
-            }}
-          >
-            Ma Fleur d'AmOurs
-          </div>
-
-          {/* Dominant petal */}
-          {dominantName && (
             <div
               style={{
                 display: 'flex',
+                width: 288,
+                height: 288,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.85)',
+                border: `3px solid ${dominantColor}35`,
                 alignItems: 'center',
-                gap: 12,
-                marginBottom: 16,
+                justifyContent: 'center',
+                boxShadow: `0 0 80px ${dominantColor}25, 0 16px 48px rgba(45,28,14,0.08)`,
               }}
             >
+              <FlowerOG scores={scores} dominant={dominant} />
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              justifyContent: 'center',
+              paddingRight: 52,
+              paddingLeft: 8,
+            }}
+          >
+            <OgKicker variant="warm">{OG_FLEUR_KICKER}</OgKicker>
+            <OgHook variant="warm">{OG_FLEUR_HOOK}</OgHook>
+            <OgSubhook variant="warm">{OG_FLEUR_SUB}</OgSubhook>
+
+            {dominantName && (
               <div
                 style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  background: dominantColor,
                   display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  marginBottom: 14,
                 }}
-              />
+              >
+                <div
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: dominantColor,
+                    display: 'flex',
+                  }}
+                />
+                <div
+                  style={{
+                    fontSize: 40,
+                    fontWeight: 800,
+                    color: '#1a1008',
+                    lineHeight: 1.05,
+                    letterSpacing: '-0.03em',
+                    fontFamily:
+                      'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                    display: 'flex',
+                  }}
+                >
+                  Dimension dominante · {dominantName}
+                </div>
+              </div>
+            )}
+
+            {globalText && (
               <div
                 style={{
-                  fontSize: 52,
-                  fontWeight: 700,
-                  color: '#2d1c0e',
-                  lineHeight: 1.1,
-                  letterSpacing: '-0.5px',
+                  fontSize: 18,
+                  color: 'rgba(55,35,20,0.82)',
+                  lineHeight: 1.5,
+                  fontStyle: 'italic',
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                  marginBottom: 16,
                   display: 'flex',
                 }}
               >
-                {dominantName}
+                {truncate(globalText, 125)}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Global text */}
-          {globalText && (
-            <div
-              style={{
-                fontSize: 19,
-                color: 'rgba(70,40,20,0.8)',
-                lineHeight: 1.5,
-                fontStyle: 'italic',
-                marginBottom: 28,
-                display: 'flex',
-              }}
-            >
-              {truncate(globalText, 130)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <OgBenefitChips items={OG_FLEUR_CHIPS} variant="light" />
+              <OgBenefitChips items={trustChips} variant="light" />
             </div>
-          )}
-
-          {/* 8 petal mini scores */}
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 8,
-            }}
-          >
-            {PETAL_DEFS.map((p) => {
-              const val = scores[p.id] ?? 0
-              return (
-                <div
-                  key={p.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    background: `${p.color}15`,
-                    border: `1px solid ${p.color}30`,
-                    borderRadius: 999,
-                    padding: '3px 10px',
-                    fontSize: 12,
-                    color: p.id === dominant ? p.color : 'rgba(80,50,30,0.75)',
-                    fontWeight: p.id === dominant ? 700 : 400,
-                  }}
-                >
-                  {p.name} · {val}
-                </div>
-              )
-            })}
           </div>
         </div>
 
-        {/* Footer */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 60,
-            background: 'rgba(255,255,255,0.8)',
-            borderTop: '1px solid rgba(180,120,80,0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 56px',
-          }}
-        >
-          <div style={{ fontSize: 17, color: 'rgba(80,50,30,0.75)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            🌸 <span>{BRAND}</span>
-          </div>
-          <div style={{ fontSize: 15, color: dominantColor, display: 'flex', alignItems: 'center' }}>
-            Découvrir ma propre Fleur →
-          </div>
-        </div>
+        <OgConversionFooter ctaLabel={OG_FLEUR_CTA} variant="warm" />
       </div>
     ),
     { width: W, height: H }

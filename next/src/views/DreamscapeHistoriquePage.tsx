@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -15,6 +15,9 @@ import { proxyImageUrl } from '@/lib/api-client'
 import { toast } from '@/hooks/useToast'
 import { FlowerSVG } from '@/components/FlowerSVG'
 import { ALL_CARDS, BACK_IMG } from '@/data/tarotCards'
+import { DreamscapeTirageSnapshotBox } from '@/components/DreamscapeTirageSnapshotBox'
+import { buildSlotsFromSaved } from '@/lib/dreamscape-slots'
+import { captureDreamscapeDomToDataUrl } from '@/lib/dreamscape-snapshot-capture'
 
 function formatDate(s) {
   if (!s) return '—'
@@ -69,6 +72,10 @@ export default function DreamscapeHistoriquePage() {
   const [shareLoadingId, setShareLoadingId] = useState(null)
   const [shareMenuId, setShareMenuId] = useState(null)
   const [shareMenuUrl, setShareMenuUrl] = useState(null)
+  /** Régénération PNG : file d’attente { id, slots, petals } */
+  const [regenQueue, setRegenQueue] = useState([])
+  const snapshotBoxRef = useRef(null)
+  const activeRegen = regenQueue[0] ?? null
 
   useEffect(() => {
     setLoading(true)
@@ -105,6 +112,72 @@ export default function DreamscapeHistoriquePage() {
     const item = dreamscapeHistory.find((i) => i.id === expandedId)
     if (item?.history?.length) fetchSummary(item)
   }, [expandedId, dreamscapeHistory, fetchSummary])
+
+  useEffect(() => {
+    if (!activeRegen) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+        if (cancelled) return
+        const url = await captureDreamscapeDomToDataUrl(snapshotBoxRef.current)
+        if (cancelled) return
+        if (!url) {
+          toast(t('dreamscapeHistorique.regenerateError'), 'error')
+          setRegenQueue((q) => q.slice(1))
+          return
+        }
+        await dreamscapeApi.updateSnapshot(String(activeRegen.id), url)
+        if (cancelled) return
+        setDreamscapeHistory((prev) =>
+          prev.map((it) => (it.id === activeRegen.id ? { ...it, snapshot: url } : it))
+        )
+        toast(t('dreamscapeHistorique.regenerateOk'), 'success')
+      } catch (e) {
+        if (!cancelled) toast((e && e.message) || t('dreamscapeHistorique.regenerateError'), 'error')
+      } finally {
+        if (!cancelled) setRegenQueue((q) => q.slice(1))
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [activeRegen])
+
+  const addRegenJob = useCallback((item) => {
+    const slots = buildSlotsFromSaved(item.slots)
+    if (!slots.some((s) => !s.faceDown)) {
+      toast(t('dreamscapeHistorique.regenerateNoCards'), 'warning')
+      return
+    }
+    const job = { id: item.id, slots, petals: item.petals || {} }
+    setRegenQueue((q) => (q.some((j) => j.id === job.id) ? q : [...q, job]))
+  }, [])
+
+  const regenAllSnapshots = useCallback(() => {
+    const jobs = dreamscapeHistory
+      .filter((item) => buildSlotsFromSaved(item.slots).some((s) => !s.faceDown))
+      .map((item) => ({
+        id: item.id,
+        slots: buildSlotsFromSaved(item.slots),
+        petals: item.petals || {},
+      }))
+    if (!jobs.length) {
+      toast(t('dreamscapeHistorique.regenerateNoCards'), 'warning')
+      return
+    }
+    setRegenQueue((q) => {
+      const ids = new Set(q.map((j) => j.id))
+      const next = [...q]
+      for (const j of jobs) {
+        if (!ids.has(j.id)) {
+          next.push(j)
+          ids.add(j.id)
+        }
+      }
+      return next
+    })
+  }, [dreamscapeHistory])
 
   if (loading) {
     return (
@@ -153,8 +226,23 @@ export default function DreamscapeHistoriquePage() {
     )
   }
 
+  const regenBusy = regenQueue.length > 0
+  const canBulkRegen = dreamscapeHistory.some((item) =>
+    buildSlotsFromSaved(item.slots).some((s) => !s.faceDown)
+  )
+
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6">
+      {activeRegen ? (
+        <div className="pointer-events-none fixed left-[-12000px] top-0 -z-10" aria-hidden>
+          <DreamscapeTirageSnapshotBox
+            ref={snapshotBoxRef}
+            slots={activeRegen.slots}
+            petals={activeRegen.petals}
+          />
+        </div>
+      ) : null}
+
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <Link href="/dreamscape" className="text-sm text-violet-500 hover:text-violet-400 order-2 sm:order-1 shrink-0">
@@ -164,6 +252,25 @@ export default function DreamscapeHistoriquePage() {
             Historique des promenades oniriques
           </h1>
         </div>
+
+        {canBulkRegen ? (
+          <div className="flex flex-wrap items-center gap-2 justify-end">
+            {regenBusy ? (
+              <span className="text-xs text-violet-600 dark:text-violet-300 flex items-center gap-2">
+                <span className="w-3.5 h-3.5 border-2 border-violet-400 border-t-violet-700 rounded-full animate-spin" />
+                {t('dreamscapeHistorique.regenerateBusy')} ({regenQueue.length})
+              </span>
+            ) : null}
+            <button
+              type="button"
+              onClick={regenAllSnapshots}
+              disabled={regenBusy}
+              className="text-xs sm:text-sm px-3 py-2 rounded-xl border border-violet-300/60 dark:border-violet-600/60 bg-violet-500/10 text-violet-700 dark:text-violet-200 font-medium hover:bg-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {t('dreamscapeHistorique.regenerateAllSnapshots')}
+            </button>
+          </div>
+        ) : null}
 
         <ul className="space-y-3">
           <AnimatePresence mode="popLayout">
@@ -214,20 +321,45 @@ export default function DreamscapeHistoriquePage() {
                       >
                         <div className="p-5 sm:p-6 space-y-6 bg-slate-50/50 dark:bg-slate-800/30">
                           {/* Snapshot visuel (cartes + fleur) */}
-                          {item.snapshot && (
-                            <div className="w-fit mx-auto">
-                              <p className="text-xs font-bold text-violet-500 uppercase tracking-wider mb-2">
-                                {t('dreamscapeHistorique.snapshot')}
-                              </p>
-                              <div className="rounded-xl border border-slate-200 dark:border-slate-600 overflow-hidden bg-slate-900">
-                                <img
-                                  src={item.snapshot}
-                                  alt="Tirage Dreamscape"
-                                  className="max-w-sm max-h-[360px] w-auto block object-contain"
-                                />
+                          {(() => {
+                            const hasRevealed = buildSlotsFromSaved(item.slots).some((s) => !s.faceDown)
+                            if (!item.snapshot && !hasRevealed) return null
+                            return (
+                              <div className="w-full max-w-md mx-auto">
+                                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                  <p className="text-xs font-bold text-violet-400 uppercase tracking-wider">
+                                    {t('dreamscapeHistorique.snapshot')}
+                                  </p>
+                                  {hasRevealed ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => addRegenJob(item)}
+                                      disabled={regenBusy}
+                                      className="text-xs font-medium px-2.5 py-1 rounded-lg border border-violet-400/40 text-violet-600 dark:text-violet-300 hover:bg-violet-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                      {t('dreamscapeHistorique.regenerateSnapshot')}
+                                    </button>
+                                  ) : null}
+                                </div>
+                                {item.snapshot ? (
+                                  <div
+                                    className="rounded-xl overflow-hidden p-2 sm:p-2.5 shadow-[0_0_28px_rgba(59,20,120,0.25)]"
+                                    style={{ backgroundColor: '#05030c' }}
+                                  >
+                                    <img
+                                      src={item.snapshot}
+                                      alt="Tirage Dreamscape"
+                                      className="w-full max-h-[360px] object-contain object-center mx-auto block rounded-lg bg-[#05030c]"
+                                    />
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-slate-500 dark:text-slate-400 italic py-2">
+                                    {t('dreamscapeHistorique.regenerateSnapshotMissing')}
+                                  </p>
+                                )}
                               </div>
-                            </div>
-                          )}
+                            )
+                          })()}
                           {/* Résumé de la discussion */}
                           {item.history?.length > 0 && (
                             <div className="space-y-2">

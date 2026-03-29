@@ -1,18 +1,32 @@
 /**
  * GET /api/og/dreamscape?token=…
- * Génère une image OG 1200×630 pour une Promenade Onirique partagée.
- * Utilise le snapshot stocké + overlay stylisé.
+ * Carte Open Graph 1200×630 — conversion : promesse, sens, CTA.
  */
 import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { getShared } from '@/lib/db-dreamscape'
+import {
+  OG_DREAMSCAPE_CHIPS,
+  OG_DREAMSCAPE_CTA,
+  OG_DREAMSCAPE_HOOK,
+  OG_DREAMSCAPE_KICKER,
+  OG_DREAMSCAPE_FALLBACK_TITLE,
+  OG_DREAMSCAPE_SUB,
+} from '@/lib/og-share-copy'
+import {
+  OgBenefitChips,
+  OgBrandHeader,
+  OgConversionFooter,
+  OgHook,
+  OgKicker,
+  OgSubhook,
+} from '@/lib/og-share-chrome'
 
 export const dynamic = 'force-dynamic'
 
 const W = 1200
 const H = 630
-const BRAND = "Fleur d'AmOurs"
 
 function truncate(s: string | null | undefined, max: number): string {
   if (!s) return ''
@@ -40,7 +54,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const shortText = truncate(poeticReflection, 150)
+  const excerpt = truncate(poeticReflection, 138)
 
   return new ImageResponse(
     (
@@ -51,11 +65,9 @@ export async function GET(req: NextRequest) {
           height: H,
           position: 'relative',
           overflow: 'hidden',
-          fontFamily: 'Georgia, serif',
-          background: 'linear-gradient(135deg, #0a0118 0%, #150829 50%, #0a0118 100%)',
+          background: 'linear-gradient(145deg, #05010a 0%, #120822 42%, #1a0a28 100%)',
         }}
       >
-        {/* Snapshot background image */}
         {snapshot && (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -69,152 +81,106 @@ export async function GET(req: NextRequest) {
               width: W,
               height: H,
               objectFit: 'cover',
-              opacity: 0.45,
+              opacity: 0.52,
             }}
             alt=""
           />
         )}
 
-        {/* Gradient overlay for readability */}
         <div
           style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             background: snapshot
-              ? 'linear-gradient(to bottom, rgba(10,1,24,0.3) 0%, rgba(10,1,24,0.55) 40%, rgba(10,1,24,0.88) 100%)'
-              : 'transparent',
+              ? 'radial-gradient(ellipse 80% 70% at 50% 100%, rgba(10,2,24,0.15) 0%, rgba(5,1,12,0.88) 55%, rgba(3,0,10,0.97) 100%)'
+              : 'radial-gradient(ellipse 120% 80% at 20% 20%, rgba(124,58,237,0.12) 0%, transparent 50%)',
             display: 'flex',
           }}
         />
 
-        {/* Decorative ambient blobs */}
         <div
           style={{
             position: 'absolute',
-            top: -80,
-            right: 100,
-            width: 350,
-            height: 350,
+            top: -100,
+            right: -80,
+            width: 420,
+            height: 420,
             borderRadius: '50%',
-            background: 'rgba(139,92,246,0.12)',
-            filter: 'blur(80px)',
+            background: 'rgba(139,92,246,0.14)',
+            filter: 'blur(90px)',
             display: 'flex',
           }}
         />
         <div
           style={{
             position: 'absolute',
-            bottom: 60,
-            left: 80,
-            width: 280,
-            height: 280,
+            bottom: 120,
+            left: -60,
+            width: 320,
+            height: 320,
             borderRadius: '50%',
-            background: 'rgba(236,72,153,0.1)',
-            filter: 'blur(70px)',
+            background: 'rgba(219,39,119,0.1)',
+            filter: 'blur(72px)',
             display: 'flex',
           }}
         />
 
-        {/* Content */}
+        <OgBrandHeader variant="dark" />
+
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
+            justifyContent: 'flex-end',
             width: '100%',
             height: '100%',
-            justifyContent: 'flex-end',
-            padding: '0 64px 80px',
+            padding: '118px 56px 92px',
             position: 'relative',
+            boxSizing: 'border-box',
           }}
         >
-          {/* Title badge */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 18,
-            }}
-          >
-            <div
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: 'rgba(196,181,253,0.9)',
-                display: 'flex',
-              }}
-            />
-            <div
-              style={{
-                fontSize: 13,
-                color: 'rgba(196,181,253,0.8)',
-                letterSpacing: '3px',
-                textTransform: 'uppercase',
-                display: 'flex',
-              }}
-            >
-              Promenade Onirique
-            </div>
-          </div>
+          <OgKicker variant="dark">{OG_DREAMSCAPE_KICKER}</OgKicker>
+          <OgHook variant="dark">{OG_DREAMSCAPE_HOOK}</OgHook>
+          <OgSubhook variant="dark">{OG_DREAMSCAPE_SUB}</OgSubhook>
 
-          {/* Poetic text */}
-          {shortText ? (
+          {excerpt ? (
             <div
               style={{
-                fontSize: 28,
+                fontSize: 22,
                 fontWeight: 400,
-                color: 'rgba(255,255,255,0.92)',
+                color: 'rgba(255,252,255,0.92)',
                 lineHeight: 1.5,
                 fontStyle: 'italic',
-                marginBottom: 10,
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                marginBottom: 18,
                 display: 'flex',
+                borderLeft: '4px solid rgba(167,139,250,0.75)',
+                paddingLeft: 20,
               }}
             >
-              &ldquo;{shortText}&rdquo;
+              « {excerpt} »
             </div>
           ) : (
             <div
               style={{
-                fontSize: 42,
-                fontWeight: 700,
-                color: 'rgba(255,255,255,0.9)',
-                lineHeight: 1.2,
-                marginBottom: 10,
+                fontSize: 26,
+                fontWeight: 600,
+                color: 'rgba(248,250,252,0.9)',
+                lineHeight: 1.35,
+                marginBottom: 18,
+                fontFamily:
+                  'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                 display: 'flex',
               }}
             >
-              Une Promenade Onirique
+              {OG_DREAMSCAPE_FALLBACK_TITLE}
             </div>
           )}
+
+          <OgBenefitChips items={OG_DREAMSCAPE_CHIPS} variant="dark" />
         </div>
 
-        {/* Footer bar */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 60,
-            background: 'rgba(0,0,0,0.6)',
-            borderTop: '1px solid rgba(139,92,246,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 56px',
-          }}
-        >
-          <div style={{ fontSize: 17, color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            🌸 <span>{BRAND}</span>
-          </div>
-          <div style={{ fontSize: 15, color: 'rgba(196,181,253,0.85)', display: 'flex', alignItems: 'center' }}>
-            Vivre ma propre promenade →
-          </div>
-        </div>
+        <OgConversionFooter ctaLabel={OG_DREAMSCAPE_CTA} variant="dark" />
       </div>
     ),
     { width: W, height: H }

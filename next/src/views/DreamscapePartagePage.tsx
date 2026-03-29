@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { dreamscapeApi } from '@/api/dreamscape'
 import { FlowerSVG } from '@/components/FlowerSVG'
 import { getShareBaseUrl, getSharedImageUrl } from '@/utils/dreamscapeShare'
+import { ogMetaDescriptionDreamscape, ogMetaTitleDreamscape } from '@/lib/og-share-copy'
 import { proxyImageUrl } from '@/lib/api-client'
 import { ALL_CARDS, BACK_IMG } from '@/data/tarotCards'
 import { t } from '@/i18n'
@@ -70,13 +71,16 @@ export default function DreamscapePartagePage() {
 
   useEffect(() => {
     document.title = 'Promenade Onirique partagée — Fleur d\'AmOurs'
+    const desc = ogMetaDescriptionDreamscape(synthesis)
+    const title = ogMetaTitleDreamscape()
     const metaOg = [
-      { property: 'og:title', content: 'Promenade Onirique — Fleur d\'AmOurs' },
-      { property: 'og:description', content: (synthesis || '').slice(0, 200) + (synthesis?.length > 200 ? '…' : '') },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: desc },
       { property: 'og:url', content: shareUrl },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: 'Promenade Onirique — Fleur d\'AmOurs' },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: desc },
     ]
     // Prefer the designed OG image route over the raw snapshot
     const apiBase = typeof window !== 'undefined' ? window.location.origin : ''
@@ -119,11 +123,14 @@ export default function DreamscapePartagePage() {
 
         {item.snapshot && (
           <div className="w-fit mx-auto">
-            <div className="rounded-2xl overflow-hidden border border-white/10 bg-slate-900">
+            <div
+              className="rounded-xl overflow-hidden p-2 shadow-[0_0_28px_rgba(59,20,120,0.35)]"
+              style={{ backgroundColor: '#05030c' }}
+            >
               <img
                 src={item.snapshot}
                 alt="Tirage Dreamscape"
-                className="max-w-md max-h-[360px] w-auto block object-contain"
+                className="max-w-md max-h-[360px] w-auto block object-contain rounded-lg bg-[#05030c]"
               />
             </div>
           </div>

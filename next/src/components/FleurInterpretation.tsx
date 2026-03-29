@@ -44,7 +44,8 @@ export function FleurInterpretation({
   const fleurCommentLire = localeData?.howToRead ?? FLEUR_COMMENT_LIRE
   const petalInterpretations = localeData?.petalInterpretations ?? PETAL_INTERPRETATIONS
   const fleurConseil = localeData?.conseil ?? FLEUR_CONSEIL
-  const [expanded, setExpanded] = useState(!compact)
+  /** Ouvert par défaut pour que l'interprétation IA (Duo compact inclus) soit visible sans clic. */
+  const [expanded, setExpanded] = useState(true)
   const [aiData, setAiData] = useState<{ summary?: string; insights?: string; reflection?: string } | null>(
     storedInterpretation || null
   )

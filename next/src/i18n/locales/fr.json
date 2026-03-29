@@ -418,7 +418,14 @@
     "resumeBtn": "Reprendre le tirage",
     "inProgress": "en cours",
     "snapshot": "Aperçu du tirage",
-    "downloadSocial": "Image réseaux sociaux"
+    "downloadSocial": "Image réseaux sociaux",
+    "regenerateSnapshot": "Régénérer l'aperçu",
+    "regenerateAllSnapshots": "Régénérer tous les aperçus",
+    "regenerateOk": "Aperçu mis à jour.",
+    "regenerateError": "Impossible de régénérer l'aperçu.",
+    "regenerateNoCards": "Aucune carte révélée à capturer pour cette promenade.",
+    "regenerateBusy": "Régénération des aperçus…",
+    "regenerateSnapshotMissing": "Aucun aperçu enregistré — utilisez le bouton pour en créer un."
   },
 
   "voiceInput": {
@@ -771,6 +778,7 @@
     "summaryPrefix": "Résumé — {door}",
     "thisDoor": "cette Porte",
     "contextChoices": "Contexte, choix et intention émergés",
+    "summaryEmptyHint": "Le résumé n’a pas pu être affiché. Vous pouvez continuer les échanges ou passer à la porte suivante — votre progression est enregistrée.",
     "synthesisInProgress": "Synthèse en cours…",
     "takeBreath": "Prenez un souffle pour intégrer ce qui s'est déplacé, puis recevez votre synthèse et votre Plan 14 jours.",
     "lockDoor": "Verrouiller {door}",

@@ -1,5 +1,6 @@
 /**
- * Sève SAP — portefeuille unitaire + journal (MariaDB, mysql2/promise).
+ * Sève SAP — source de vérité : `fleur_users_access` (Sablier + Cristal).
+ * `fleur_sap_wallets` est un miroir (somme) pour stats / compatibilité.
  */
 import type { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { getPool, isDbConfigured, table } from '@/lib/db'
@@ -52,8 +53,15 @@ class SapError extends Error {
   }
 }
 
-/** Solde depuis fleur_users_access (Sablier + Cristal) pour initialiser le wallet une fois. */
-async function readLegacySapSum(exec: SqlExecutor, userId: number): Promise<number> {
+async function ensureAccessRowExec(exec: SqlExecutor, userId: number): Promise<void> {
+  await exec.execute(
+    `INSERT IGNORE INTO ${TBL_ACCESS()} (user_id, token_balance, eternal_sap) VALUES (?, 0, 0)`,
+    [userId]
+  )
+}
+
+/** Somme Sablier + Cristal (sève disponible telle qu’affichée dans l’UI). */
+export async function readLegacySapSum(exec: SqlExecutor, userId: number): Promise<number> {
   try {
     const [rows] = await exec.execute<RowDataPacket[]>(
       `SELECT token_balance, eternal_sap FROM ${TBL_ACCESS()} WHERE user_id = ? LIMIT 1`,
@@ -67,37 +75,65 @@ async function readLegacySapSum(exec: SqlExecutor, userId: number): Promise<numb
   }
 }
 
+async function upsertWalletMirror(exec: SqlExecutor, userId: number, balance: number): Promise<void> {
+  const b = Math.max(0, Math.floor(balance))
+  await exec.execute(
+    `INSERT INTO ${TBL_WALLET()} (user_id, balance) VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE balance = VALUES(balance), updated_at = NOW()`,
+    [userId, b]
+  )
+}
+
 /**
- * Garantit une ligne wallet ; au premier insert, reprend la somme legacy (access) si disponible.
+ * Recalcule le miroir wallet depuis l’accès (après crédit admin qui ne passe pas par transactionalSapUpdate).
+ */
+export async function syncSapWalletFromAccess(userId: number): Promise<number> {
+  if (!isDbConfigured()) return 0
+  const pool = getPool()
+  await ensureSapTables(pool)
+  const sum = await readLegacySapSum(pool, userId)
+  await upsertWalletMirror(pool, userId, sum)
+  return sum
+}
+
+/**
+ * Garantit une ligne wallet alignée sur l’accès (pour code legacy qui appelle ensureWalletRow seul).
  */
 export async function ensureWalletRow(pool: Pool, userId: number): Promise<void> {
   await ensureSapTables(pool)
-  const [existing] = await pool.execute<RowDataPacket[]>(
-    `SELECT user_id FROM ${TBL_WALLET()} WHERE user_id = ? LIMIT 1`,
-    [userId]
-  )
-  if (existing?.length) return
-
-  const legacy = await readLegacySapSum(pool, userId)
-  await pool.execute(`INSERT INTO ${TBL_WALLET()} (user_id, balance) VALUES (?, ?)`, [userId, legacy])
+  await ensureAccessRowExec(pool, userId)
+  const sum = await readLegacySapSum(pool, userId)
+  await upsertWalletMirror(pool, userId, sum)
 }
 
-/** Solde actuel (sans transaction). */
+/** Solde spendable = Sablier + Cristal (même chiffre que la jauge). */
 export async function getSapBalance(userId: number): Promise<number> {
   if (!isDbConfigured()) return 0
   const pool = getPool()
-  await ensureWalletRow(pool, userId)
-  const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT balance FROM ${TBL_WALLET()} WHERE user_id = ? LIMIT 1`,
-    [userId]
-  )
-  const b = rows?.[0]?.balance
-  return Math.max(0, Number(b) || 0)
+  await ensureSapTables(pool)
+  await ensureAccessRowExec(pool, userId)
+  const sum = await readLegacySapSum(pool, userId)
+  await upsertWalletMirror(pool, userId, sum)
+  return sum
 }
 
 /**
- * Mise à jour atomique : usage = débit (amount > 0), purchase/bonus = crédit.
- * Verrouillage de ligne (SELECT … FOR UPDATE) pour limiter les courses critiques.
+ * Débit : d’abord le Sablier (token_balance), puis le Cristal (eternal_sap).
+ */
+function applyDebitToTbEs(tb: number, es: number, debit: number): { tb: number; es: number } {
+  let rem = Math.floor(debit)
+  let t = Math.max(0, Math.floor(tb))
+  let e = Math.max(0, Math.floor(es))
+  const fromT = Math.min(rem, t)
+  t -= fromT
+  rem -= fromT
+  const fromE = Math.min(rem, e)
+  e -= fromE
+  return { tb: t, es: e }
+}
+
+/**
+ * usage = débit depuis l’accès ; purchase/bonus = crédit sur le Sablier puis miroir wallet.
  */
 export async function transactionalSapUpdate(
   userId: number,
@@ -122,55 +158,63 @@ export async function transactionalSapUpdate(
   const conn = await pool.getConnection() as PoolConnection
   try {
     await conn.beginTransaction()
-
-    let [locked] = await conn.execute<RowDataPacket[]>(
-      `SELECT balance FROM ${TBL_WALLET()} WHERE user_id = ? FOR UPDATE`,
-      [userId]
-    )
-    if (!locked?.length) {
-      const legacy = await readLegacySapSum(conn, userId)
-      await conn.execute(`INSERT INTO ${TBL_WALLET()} (user_id, balance) VALUES (?, ?)`, [userId, legacy])
-      ;[locked] = await conn.execute<RowDataPacket[]>(
-        `SELECT balance FROM ${TBL_WALLET()} WHERE user_id = ? FOR UPDATE`,
-        [userId]
-      )
-    }
-
-    const row = locked?.[0]
-    if (!row) {
-      throw new SapError('Wallet introuvable', 'DB')
-    }
-
-    let balance = Math.max(0, Number(row.balance) || 0)
+    await ensureAccessRowExec(conn, userId)
 
     if (type === 'usage') {
-      if (balance < amt) {
+      const [locked] = await conn.execute<RowDataPacket[]>(
+        `SELECT token_balance, eternal_sap FROM ${TBL_ACCESS()} WHERE user_id = ? FOR UPDATE`,
+        [userId]
+      )
+      const r = locked?.[0]
+      if (!r) {
+        await conn.rollback()
+        throw new SapError('Accès utilisateur introuvable', 'DB')
+      }
+      let tb = Math.max(0, Number(r.token_balance) || 0)
+      let es = Math.max(0, Number(r.eternal_sap) || 0)
+      const total = tb + es
+      if (total < amt) {
         await conn.rollback()
         throw new SapError('Solde SAP insuffisant', 'INSUFFICIENT')
       }
-      balance -= amt
-      await conn.execute(`UPDATE ${TBL_WALLET()} SET balance = ?, updated_at = NOW() WHERE user_id = ?`, [
-        balance,
-        userId,
-      ])
+      const out = applyDebitToTbEs(tb, es, amt)
+      tb = out.tb
+      es = out.es
+      await conn.execute(
+        `UPDATE ${TBL_ACCESS()} SET token_balance = ?, eternal_sap = ?, updated_at = NOW() WHERE user_id = ?`,
+        [tb, es, userId]
+      )
+      const newSum = tb + es
+      await upsertWalletMirror(conn, userId, newSum)
       await conn.execute(
         `INSERT INTO ${TBL_TX()} (user_id, amount, type, reason) VALUES (?, ?, 'usage', ?)`,
         [userId, amt, String(reason || '').slice(0, 255)]
       )
-    } else {
-      balance += amt
-      await conn.execute(`UPDATE ${TBL_WALLET()} SET balance = ?, updated_at = NOW() WHERE user_id = ?`, [
-        balance,
-        userId,
-      ])
-      await conn.execute(
-        `INSERT INTO ${TBL_TX()} (user_id, amount, type, reason) VALUES (?, ?, ?, ?)`,
-        [userId, amt, type, String(reason || '').slice(0, 255)]
-      )
+      await conn.commit()
+      return { balance: newSum }
     }
 
+    // Crédit (achat Stripe, bonus coach) : tout sur le Sablier (cohérent avec l’UI « recharge »)
+    const [before] = await conn.execute<RowDataPacket[]>(
+      `SELECT token_balance, eternal_sap FROM ${TBL_ACCESS()} WHERE user_id = ? FOR UPDATE`,
+      [userId]
+    )
+    const row = before?.[0]
+    let tb = Math.max(0, Number(row?.token_balance) || 0)
+    const es = Math.max(0, Number(row?.eternal_sap) || 0)
+    tb += amt
+    await conn.execute(
+      `UPDATE ${TBL_ACCESS()} SET token_balance = ?, updated_at = NOW() WHERE user_id = ?`,
+      [tb, userId]
+    )
+    const newSum = tb + es
+    await upsertWalletMirror(conn, userId, newSum)
+    await conn.execute(
+      `INSERT INTO ${TBL_TX()} (user_id, amount, type, reason) VALUES (?, ?, ?, ?)`,
+      [userId, amt, type, String(reason || '').slice(0, 255)]
+    )
     await conn.commit()
-    return { balance }
+    return { balance: newSum }
   } catch (e) {
     await conn.rollback()
     if (e instanceof SapError) throw e
@@ -185,7 +229,6 @@ export function isSapInsufficientError(e: unknown): boolean {
   return e instanceof SapError && e.code === 'INSUFFICIENT'
 }
 
-/** Évite un double débit si un tour Tuteur est rejoué (retry réseau). */
 export async function sapUsageReasonExists(reason: string): Promise<boolean> {
   if (!isDbConfigured() || !reason) return false
   const pool = getPool()
@@ -197,7 +240,6 @@ export async function sapUsageReasonExists(reason: string): Promise<boolean> {
   return Array.isArray(rows) && rows.length > 0
 }
 
-/** Évite un double crédit si Stripe renvoie le même checkout.session.completed. */
 export async function sapPurchaseReasonExists(reason: string): Promise<boolean> {
   if (!isDbConfigured() || !reason) return false
   const pool = getPool()
@@ -210,8 +252,7 @@ export async function sapPurchaseReasonExists(reason: string): Promise<boolean> 
 }
 
 /**
- * Retire jusqu'à `maxAmount` SAP (solde insuffisant → retire tout le solde).
- * Enregistre une ligne `usage` avec la raison fournie (ex. remboursement Stripe).
+ * Retire jusqu'à `maxAmount` (remboursement Stripe) : débit depuis l’accès comme un usage.
  */
 export async function sapDebitUpTo(
   userId: number,
@@ -235,33 +276,40 @@ export async function sapDebitUpTo(
   const conn = await pool.getConnection() as PoolConnection
   try {
     await conn.beginTransaction()
+    await ensureAccessRowExec(conn, userId)
 
-    let [locked] = await conn.execute<RowDataPacket[]>(
-      `SELECT balance FROM ${TBL_WALLET()} WHERE user_id = ? FOR UPDATE`,
+    const [locked] = await conn.execute<RowDataPacket[]>(
+      `SELECT token_balance, eternal_sap FROM ${TBL_ACCESS()} WHERE user_id = ? FOR UPDATE`,
       [userId]
     )
-    if (!locked?.length) {
-      await conn.commit()
+    const r = locked?.[0]
+    if (!r) {
+      await conn.rollback()
       return { debited: 0, balance: 0 }
     }
-
-    const balance0 = Math.max(0, Number(locked[0].balance) || 0)
-    const debited = Math.min(balance0, cap)
-    const balance = balance0 - debited
-
-    if (debited > 0) {
-      await conn.execute(`UPDATE ${TBL_WALLET()} SET balance = ?, updated_at = NOW() WHERE user_id = ?`, [
-        balance,
-        userId,
-      ])
-      await conn.execute(
-        `INSERT INTO ${TBL_TX()} (user_id, amount, type, reason) VALUES (?, ?, 'usage', ?)`,
-        [userId, debited, String(reason || '').slice(0, 255)]
-      )
+    let tb = Math.max(0, Number(r.token_balance) || 0)
+    let es = Math.max(0, Number(r.eternal_sap) || 0)
+    const total = tb + es
+    const debited = Math.min(total, cap)
+    if (debited <= 0) {
+      await conn.commit()
+      return { debited: 0, balance: total }
     }
-
+    const out = applyDebitToTbEs(tb, es, debited)
+    tb = out.tb
+    es = out.es
+    await conn.execute(
+      `UPDATE ${TBL_ACCESS()} SET token_balance = ?, eternal_sap = ?, updated_at = NOW() WHERE user_id = ?`,
+      [tb, es, userId]
+    )
+    const newSum = tb + es
+    await upsertWalletMirror(conn, userId, newSum)
+    await conn.execute(
+      `INSERT INTO ${TBL_TX()} (user_id, amount, type, reason) VALUES (?, ?, 'usage', ?)`,
+      [userId, debited, String(reason || '').slice(0, 255)]
+    )
     await conn.commit()
-    return { debited, balance }
+    return { debited, balance: newSum }
   } catch (e) {
     await conn.rollback()
     if (e instanceof SapError) throw e

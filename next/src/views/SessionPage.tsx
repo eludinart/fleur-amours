@@ -208,6 +208,10 @@ function DoorSummaryPanel({ door, summary, onConfirm, loading, isLastDoor, card 
           <span className="w-4 h-4 border-2 border-violet-300 border-t-violet-500 rounded-full animate-spin" />
           <span className="text-sm text-slate-500">{t('session.synthesisInProgress')}</span>
         </div>
+      ) : !hasContent ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed italic py-2">
+          {t('session.summaryEmptyHint')}
+        </p>
       ) : (
         <div className="space-y-4 text-left">
           {synthesis && (
@@ -979,7 +983,7 @@ function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, a
         <p>{t('session.disclaimer')}</p>
         <p>
           {t('session.accompanyLight')}{' '}
-          <a href="/chat" className="text-violet-400 hover:text-violet-300 underline hover:no-underline">{t('session.requestMeeting')}</a>
+          <Link href="/coaches" className="text-violet-400 hover:text-violet-300 underline hover:no-underline">{t('session.requestMeeting')}</Link>
         </p>
       </NoteCard>
 
@@ -1725,7 +1729,16 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
           next_door_suggestion: prev?.next_door_suggestion,
         }))
       })
-      .catch(() => {})
+      .catch(() => {
+        const lastUser = history.filter(m => m.role === 'user').pop()
+        setDoorSummary(prev => ({
+          door_summary_preview: {
+            synthesis_suggestion: lastUser?.content?.trim() || `${t('session.explorationOf')} ${door?.subtitle ?? t('session.thisDoor')}`,
+            paths_solutions: '',
+          },
+          next_door_suggestion: prev?.next_door_suggestion,
+        }))
+      })
       .finally(() => setSummaryLoading(false))
   }, [showSummaryPanel, doorLocked, history, currentDoor])
 
@@ -2437,11 +2450,11 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                       : t('session.shadowDedicatedSpace')}
                   </p>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <a
-                      href="/chat"
+                    <Link
+                      href="/coaches"
                       className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg ${palette.ctaBtn} text-white text-xs font-semibold transition-colors`}>
-                      {t('session.requestAccompaniment')} →
-                    </a>
+                      {t('session.requestAccompaniment')}
+                    </Link>
                     <button
                       onClick={() => {
                         setDrawerOpen(true)
@@ -2908,7 +2921,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
 
   function SessionRightColumn() {
     return (
-      <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain pb-1">
         <div className={`rounded-2xl border-2 ${localeDoor.border} p-4 flex gap-3 items-center w-full shrink-0`}>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
@@ -2936,12 +2949,12 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
                 />
               </div>
             )}
-            <a
-              href="/chat"
+            <Link
+              href="/coaches"
               className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl font-semibold text-sm bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:opacity-90 transition-colors"
             >
-              {t('session.requestAccompaniment')} →
-            </a>
+              {t('session.requestAccompaniment')}
+            </Link>
           </div>
         )}
 
@@ -3148,7 +3161,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
 
   return (
     <div className="max-w-4xl mx-auto h-full flex flex-col min-h-0">
-      <div className="grid lg:grid-cols-[420px,1fr] gap-5 flex-1 min-h-0 min-w-0 overflow-hidden">
+      <div className="grid h-full min-h-0 grid-cols-1 auto-rows-[minmax(0,1fr)] lg:grid-cols-[420px_1fr] gap-5 flex-1 min-w-0 overflow-hidden [&>*]:min-h-0">
         <SessionLeftColumn />
         <SessionRightColumn />
       </div>
@@ -3489,15 +3502,15 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
                 : t('session.accompanyFull')
               }
             </p>
-            <a
-              href="/chat"
+            <Link
+              href="/coaches"
               className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 hasTensions
                   ? 'bg-gradient-to-r from-rose-500 to-rose-600 shadow-md shadow-rose-500/20'
                   : 'bg-gradient-to-r from-violet-500 to-rose-500 shadow-md'
               }`}>
-              {t('session.requestAccompaniment')} →
-            </a>
+              {t('session.requestAccompaniment')}
+            </Link>
           </div>
         )
       })()}

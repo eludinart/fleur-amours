@@ -393,7 +393,14 @@
     "resumeBtn": "Reanudar el tiro",
     "inProgress": "en curso",
     "snapshot": "Vista del tiro",
-    "downloadSocial": "Imagen redes sociales"
+    "downloadSocial": "Imagen redes sociales",
+    "regenerateSnapshot": "Regenerar vista previa",
+    "regenerateAllSnapshots": "Regenerar todas las vistas",
+    "regenerateOk": "Vista actualizada.",
+    "regenerateError": "No se pudo regenerar la vista.",
+    "regenerateNoCards": "No hay cartas reveladas para capturar.",
+    "regenerateBusy": "Regenerando vistas…",
+    "regenerateSnapshotMissing": "Aún no hay vista — use el botón para crearla."
   },
 
   "voiceInput": {
@@ -745,6 +752,7 @@
     "summaryPrefix": "Resumen — {door}",
     "thisDoor": "esta Puerta",
     "contextChoices": "Contexto, elecciones e intención emergente",
+    "summaryEmptyHint": "No se pudo mostrar el resumen. Puedes seguir intercambiando o pasar a la siguiente puerta — tu progreso está guardado.",
     "synthesisInProgress": "Síntesis en curso…",
     "takeBreath": "Respira para integrar lo que se ha desplazado, luego recibe tu síntesis y Plan 14 días.",
     "lockDoor": "Bloquear {door}",

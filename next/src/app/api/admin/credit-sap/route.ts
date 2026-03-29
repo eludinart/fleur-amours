@@ -8,7 +8,7 @@ import type { RowDataPacket } from 'mysql2'
 import { requireAdmin } from '@/lib/api-auth'
 import { ApiError } from '@/lib/api-auth'
 import { getPool, isDbConfigured, table } from '@/lib/db'
-import { transactionalSapUpdate } from '@/lib/db-sap'
+import { syncSapWalletFromAccess } from '@/lib/db-sap'
 
 interface TotalRow extends RowDataPacket {
   total_accumulated_eternal: number
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 
     if (sapDelta > 0 && isDbConfigured()) {
       try {
-        await transactionalSapUpdate(userId, sapDelta, 'admin_credit_sap', 'bonus')
+        await syncSapWalletFromAccess(userId)
       } catch (sapErr) {
         console.error('[credit-sap] synchronisation wallet SAP échouée', sapErr)
         return NextResponse.json({

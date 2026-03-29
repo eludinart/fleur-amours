@@ -6,6 +6,7 @@ import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { canUseNativeShare } from '@/utils/share-social'
 import { ShareSocialButtons } from './ShareSocialButtons'
+import { ogMetaDescriptionTirage, ogMetaTitleTirage } from '@/lib/og-share-copy'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
@@ -56,6 +57,7 @@ type ShareTirageButtonProps = {
     cards?: Array<{ name?: string }>
     intention?: string
     createdAt?: string
+    synthesis?: string
   }
   showLabel?: boolean
 }
@@ -88,11 +90,18 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
     const cardName = reading.type === 'simple'
       ? (reading.card?.name || '')
       : (reading.cards?.map((c) => c.name).join(' · ') || '')
+    const synthSnippet =
+      reading.type === 'simple' ? (reading.card?.synth ?? null) : (reading.synthesis ?? null)
+    const title = ogMetaTitleTirage(cardName)
+    const desc = ogMetaDescriptionTirage(cardName || 'tarot', synthSnippet)
     const metas: Array<{ attr: string; key: string; content: string }> = [
       { attr: 'property', key: 'og:image', content: ogImgUrl },
-      { attr: 'property', key: 'og:title', content: `Mon tirage — ${cardName}` },
+      { attr: 'property', key: 'og:title', content: title },
+      { attr: 'property', key: 'og:description', content: desc },
       { attr: 'name', key: 'twitter:card', content: 'summary_large_image' },
       { attr: 'name', key: 'twitter:image', content: ogImgUrl },
+      { attr: 'name', key: 'twitter:title', content: title },
+      { attr: 'name', key: 'twitter:description', content: desc },
     ]
     metas.forEach(({ attr, key, content }) => {
       let el = document.querySelector(`meta[${attr}="${key}"]`)
@@ -103,7 +112,7 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
       }
       el.setAttribute('content', content)
     })
-  }, [reading?.id])
+  }, [reading])
 
   const handleShare = useCallback(async () => {
     if (canUseNativeShare()) {

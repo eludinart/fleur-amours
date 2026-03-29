@@ -1,14 +1,54 @@
 /**
  * Utilitaires pour le partage Dreamscape (URL + image réseaux sociaux).
  */
+import {
+  OG_BRAND,
+  OG_BRAND_LINE,
+  OG_DREAMSCAPE_CTA,
+  OG_DREAMSCAPE_HOOK,
+  OG_DREAMSCAPE_KICKER,
+  OG_DREAMSCAPE_SUB,
+} from '@/lib/og-share-copy'
 
 const SOCIAL_WIDTH = 1200
 const SOCIAL_HEIGHT = 630
-const BRAND_TEXT = "Promenade Onirique — Fleur d'AmOurs"
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+
+function fillWrappedLines(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+  maxLines: number
+): number {
+  const words = text.split(/\s+/).filter(Boolean)
+  let line = ''
+  let cy = y
+  let linesUsed = 0
+  for (const w of words) {
+    if (linesUsed >= maxLines) break
+    const test = line ? `${line} ${w}` : w
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, cy)
+      cy += lineHeight
+      linesUsed++
+      line = w
+      if (linesUsed >= maxLines) break
+    } else {
+      line = test
+    }
+  }
+  if (line && linesUsed < maxLines) {
+    ctx.fillText(line, x, cy)
+    cy += lineHeight
+  }
+  return cy
+}
 
 /**
  * Retourne l'URL de base pour les liens partagés.
@@ -85,22 +125,35 @@ export async function buildSocialCardImage(
       ctx.fillStyle = overlay
       ctx.fillRect(0, 0, SOCIAL_WIDTH, SOCIAL_HEIGHT)
 
-      // Label: "Promenade Onirique"
-      ctx.fillStyle = 'rgba(196,181,253,0.75)'
-      ctx.font = '500 15px system-ui, sans-serif'
+      // Conversion stack (aligné avec /api/og/dreamscape)
       ctx.textAlign = 'left'
-      ctx.letterSpacing = '3px'
-      ctx.fillText('PROMENADE ONIRIQUE', 56, SOCIAL_HEIGHT - 180)
+      ctx.fillStyle = 'rgba(196,181,253,0.82)'
+      ctx.font = '700 11px system-ui, sans-serif'
+      ctx.letterSpacing = '0.18em'
+      ctx.fillText(OG_DREAMSCAPE_KICKER.toUpperCase(), 56, SOCIAL_HEIGHT - 248)
       ctx.letterSpacing = '0px'
+      ctx.fillStyle = 'rgba(248,250,252,0.95)'
+      ctx.font = '800 26px system-ui, sans-serif'
+      const subStartY = fillWrappedLines(
+        ctx,
+        OG_DREAMSCAPE_HOOK,
+        56,
+        SOCIAL_HEIGHT - 214,
+        SOCIAL_WIDTH - 112,
+        30,
+        2
+      ) + 8
+      ctx.fillStyle = 'rgba(226,232,240,0.78)'
+      ctx.font = '500 15px system-ui, sans-serif'
+      fillWrappedLines(ctx, OG_DREAMSCAPE_SUB, 56, subStartY, SOCIAL_WIDTH - 112, 22, 2)
 
-      // Poetic reflection text
+      // Extrait poétique (preuve émotionnelle)
       if (poeticReflection) {
         const maxW = SOCIAL_WIDTH - 112
         const shortText = poeticReflection.length > 120 ? poeticReflection.slice(0, 119) + '…' : poeticReflection
-        ctx.fillStyle = 'rgba(255,255,255,0.9)'
-        ctx.font = 'italic 26px Georgia, serif'
+        ctx.fillStyle = 'rgba(255,252,255,0.9)'
+        ctx.font = 'italic 20px Georgia, serif'
         ctx.textAlign = 'left'
-        // Simple word-wrap: two lines
         const words = shortText.split(' ')
         let line1 = ''
         let line2 = ''
@@ -117,8 +170,9 @@ export async function buildSocialCardImage(
           }
         }
         const finalLine2 = line2.length > 80 ? line2.slice(0, 79) + '…' : line2
-        ctx.fillText(`« ${line1}`, 56, SOCIAL_HEIGHT - 140)
-        if (finalLine2) ctx.fillText(`${finalLine2} »`, 56, SOCIAL_HEIGHT - 105)
+        const quoteY = SOCIAL_HEIGHT - 148
+        ctx.fillText(`« ${line1}`, 56, quoteY)
+        if (finalLine2) ctx.fillText(`${finalLine2} »`, 56, quoteY + 26)
       }
 
       // Footer bar
@@ -133,17 +187,20 @@ export async function buildSocialCardImage(
       ctx.lineTo(SOCIAL_WIDTH, SOCIAL_HEIGHT - 64)
       ctx.stroke()
 
-      // Brand name
-      ctx.fillStyle = 'rgba(255,255,255,0.7)'
-      ctx.font = '500 18px system-ui, sans-serif'
+      // Brand
+      ctx.fillStyle = 'rgba(255,255,255,0.72)'
+      ctx.font = '600 16px system-ui, sans-serif'
       ctx.textAlign = 'left'
-      ctx.fillText('🌸 ' + BRAND_TEXT, 56, SOCIAL_HEIGHT - 26)
+      ctx.fillText(`✿ ${OG_BRAND}`, 56, SOCIAL_HEIGHT - 28)
+      ctx.fillStyle = 'rgba(196,181,253,0.55)'
+      ctx.font = '500 12px system-ui, sans-serif'
+      ctx.fillText(OG_BRAND_LINE, 56, SOCIAL_HEIGHT - 12)
 
       // CTA
-      ctx.fillStyle = 'rgba(196,181,253,0.85)'
-      ctx.font = '500 16px system-ui, sans-serif'
+      ctx.fillStyle = 'rgba(244,244,255,0.95)'
+      ctx.font = '700 15px system-ui, sans-serif'
       ctx.textAlign = 'right'
-      ctx.fillText('Vivre ma propre promenade →', SOCIAL_WIDTH - 56, SOCIAL_HEIGHT - 26)
+      ctx.fillText(`${OG_DREAMSCAPE_CTA} →`, SOCIAL_WIDTH - 56, SOCIAL_HEIGHT - 26)
 
       resolve(canvas.toDataURL('image/png'))
     }

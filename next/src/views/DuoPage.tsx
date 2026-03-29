@@ -181,6 +181,7 @@ function SoloResult({ result }) {
       <div className="flex justify-center">
         <FlowerSVG petals={scoresToPetals(scores)} size={240} animate showLabels />
       </div>
+      <FleurInterpretation scores={scores} resultId={result?.id} interpretation={result?.interpretation} compact />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
         {Object.entries(scores).map(([p, v]) => (
           <div key={p} className={`rounded-xl border px-1.5 py-1.5 text-center text-xs ${ZONE_COLOR[analysis?.zones?.[p] ?? 'neutre']}`}>
@@ -190,7 +191,6 @@ function SoloResult({ result }) {
         ))}
       </div>
       {analysis?.global && <p className="text-xs italic text-slate-600 dark:text-slate-400 leading-relaxed">{analysis.global}</p>}
-      <FleurInterpretation scores={scores} resultId={result?.id} interpretation={result?.interpretation} compact />
       {composite && (
         <div className="flex gap-4 justify-center">
           {[['coherence_index','coherence','text-indigo-500'], ['vitality_index','vitality','text-emerald-500'], ['stability_index','stability','text-amber-500']].map(([k, key, cls]) => (
@@ -279,6 +279,8 @@ function DuoResult({ duoData, onReset, currentUser }) {
         </div>
       </div>
 
+      <FleurInterpretation compact scores={duoScores} />
+
       {/* Fleurs individuelles (différenciées par couleur) */}
       <div className="flex flex-wrap justify-center gap-6">
         <div className="text-center">
@@ -311,8 +313,6 @@ function DuoResult({ duoData, onReset, currentUser }) {
           </div>
         ))}
       </div>
-
-      <FleurInterpretation compact scores={duoScores} />
 
       {/* Explication des zones DUO — personnalisée par l'IA */}
       <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 p-5 space-y-4">

@@ -395,7 +395,14 @@
     "resumeBtn": "Resume the reading",
     "inProgress": "in progress",
     "snapshot": "Reading overview",
-    "downloadSocial": "Social media image"
+    "downloadSocial": "Social media image",
+    "regenerateSnapshot": "Regenerate preview",
+    "regenerateAllSnapshots": "Regenerate all previews",
+    "regenerateOk": "Preview updated.",
+    "regenerateError": "Could not regenerate preview.",
+    "regenerateNoCards": "No revealed cards to capture for this walk.",
+    "regenerateBusy": "Regenerating previews…",
+    "regenerateSnapshotMissing": "No preview saved yet — use the button to create one."
   },
 
   "voiceInput": {
@@ -747,6 +754,7 @@
     "summaryPrefix": "Summary — {door}",
     "thisDoor": "this Door",
     "contextChoices": "Context, choices and emerged intentions",
+    "summaryEmptyHint": "The summary couldn’t be shown. You can keep exchanging or move to the next gate — your progress is saved.",
     "synthesisInProgress": "Synthesis in progress…",
     "takeBreath": "Take a breath to integrate what has shifted, then receive your synthesis and 14-day plan.",
     "lockDoor": "Lock {door}",

@@ -237,6 +237,32 @@ export async function getResult(resultId: number, userId?: string): Promise<Reco
   return formatResult(row as unknown as Record<string, unknown>)
 }
 
+/** Persiste l'interprétation IA (JSON dans ai_interpretation). Ignore silencieusement si colonne absente. */
+export async function saveFleurAmourInterpretation(
+  resultId: number,
+  user_id: number,
+  data: { summary: string; insights: string; reflection: string; provider?: string }
+): Promise<void> {
+  const pool = getPool()
+  const tRes = table('fleur_amour_results')
+  const json = JSON.stringify({
+    summary: data.summary,
+    insights: data.insights,
+    reflection: data.reflection,
+    provider: data.provider ?? 'openrouter',
+    cached_at: new Date().toISOString(),
+  })
+  try {
+    await pool.execute(`UPDATE ${tRes} SET ai_interpretation = ? WHERE id = ? AND user_id = ?`, [
+      json,
+      resultId,
+      user_id,
+    ])
+  } catch {
+    /* colonne ou droits — l'UI garde quand même le texte */
+  }
+}
+
 /** Récupère les réponses d'un résultat */
 export async function getAnswers(
   resultId: number,

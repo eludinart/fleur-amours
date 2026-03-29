@@ -42,20 +42,11 @@ export function DreamscapeRosace({ cards = [], className = '', onCardClick, onCa
 
   return (
     <div
-      className={`relative w-full min-w-[200px] ${className}`.trim()}
+      className={`relative w-full min-w-[200px] aspect-square overflow-visible ${className}`.trim()}
       data-dreamscape-rosace
-      style={{
-        /* Padding-bottom hack pour ratio 1:1 — fiable sur Android Chrome */
-        paddingBottom: '100%',
-        height: 0,
-        overflow: 'visible',
-      }}
     >
-      {/* Conteneur carré absolu pour le positionnement des cartes */}
-      <div
-        className="absolute inset-0"
-        style={{ left: 0, top: 0, right: 0, bottom: 0 }}
-      >
+      {/* Carré explicite (plus padding-bottom height:0) pour html2canvas / exports PNG */}
+      <div className="absolute inset-0 bg-[#05030c]">
         {items.map(({ id, img, angleDeg, x, y, faceDown, cardName, halo, position }) => {
           const isClickable = !faceDown && typeof onCardClick === 'function' && cardName
           const handleClick = isClickable
@@ -86,7 +77,10 @@ export function DreamscapeRosace({ cards = [], className = '', onCardClick, onCa
           }}
           aria-label={isClickable ? cardName : undefined}
         >
-          <div className="relative w-full rounded-md overflow-hidden" style={{ paddingBottom: '142.86%' }}>
+          <div
+            className="relative w-full rounded-md overflow-hidden bg-[#05030c] border border-violet-950/40"
+            style={{ paddingBottom: '142.86%' }}
+          >
             <img
               src={img}
               alt={cardName || ''}
