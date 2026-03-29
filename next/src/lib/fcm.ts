@@ -156,41 +156,50 @@ export async function sendFcmPush(
   }
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-  const link = actionUrl
-    ? (actionUrl.startsWith('http') ? actionUrl : `${appUrl}${actionUrl}`)
-    : `${appUrl}${basePath}`
+  // Construire une URL absolue HTTPS — FCM l'exige pour webpush.fcm_options.link
+  // On préfère APP_PUBLIC_URL (runtime) puis NEXT_PUBLIC_APP_URL, et on force HTTPS
+  let appUrl = (process.env.APP_PUBLIC_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
+  if (!appUrl || appUrl.includes('localhost') || appUrl.startsWith('http://')) {
+    // Fallback : construire depuis l'hôte de production connu
+    const host = process.env.APP_HOST ?? process.env.VIRTUAL_HOST ?? ''
+    appUrl = host ? `https://${host}` : ''
+  }
+  const safeLink = (rel: string | null) => {
+    if (!rel) return appUrl ? `${appUrl}${basePath}` : null
+    if (rel.startsWith('http')) return rel
+    return appUrl ? `${appUrl}${rel}` : null
+  }
+  const link = safeLink(actionUrl)
+  const icon = appUrl ? `${appUrl}${basePath}/juste-la-fleur.png` : `${basePath}/juste-la-fleur.png`
+
+  console.log(`[FCM] Envoi à ${tokenRows.length} token(s), appUrl=${appUrl}, link=${link}`)
 
   const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`
   let sent = 0
   for (const { token, platform } of tokenRows) {
-    const isWeb = platform === 'web'
+    // Tous les tokens enregistrés via le navigateur sont de type web,
+    // même si platform='android' par défaut (ancien schéma)
+    const isWebToken = platform === 'web' || platform == null || platform === 'android'
     const message: Record<string, unknown> = {
       token,
       notification: { title, body },
       data: { action_url: actionUrl ?? '' },
-      // Config Android native
-      android: {
-        notification: { channel_id: 'fleur_default', sound: 'default' },
-        priority: 'high',
+    }
+    // Bloc webpush : toujours présent pour les tokens FCM web (PWA)
+    const webpushBlock: Record<string, unknown> = {
+      headers: { Urgency: 'high' },
+      notification: {
+        title,
+        body,
+        icon,
+        badge: icon,
+        requireInteraction: false,
+        tag: 'fleur-message',
+        renotify: true,
       },
     }
-    // Config Web Push (PWA) — obligatoire pour les tokens navigateur
-    if (isWeb) {
-      message.webpush = {
-        headers: { Urgency: 'high' },
-        notification: {
-          title,
-          body,
-          icon: `${appUrl}${basePath}/juste-la-fleur.png`,
-          badge: `${appUrl}${basePath}/juste-la-fleur.png`,
-          requireInteraction: false,
-          tag: 'fleur-message',
-          renotify: true,
-        },
-        fcm_options: { link },
-      }
-    }
+    if (link) webpushBlock.fcm_options = { link }
+    if (isWebToken) message.webpush = webpushBlock
     const res = await fetch(url, {
       method: 'POST',
       headers: {
