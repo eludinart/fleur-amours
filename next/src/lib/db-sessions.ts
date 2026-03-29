@@ -92,7 +92,7 @@ export async function update(body: Record<string, unknown>): Promise<{ updated: 
   for (const [key, col, isJson] of fieldMap) {
     if (Object.prototype.hasOwnProperty.call(body, key)) {
       updates.push(`${col} = ?`)
-      params.push(isJson ? JSON.stringify(body[key]) : body[key])
+      params.push(isJson ? JSON.stringify(body[key]) : (body[key] as string | number | boolean | null))
     }
   }
   if (Object.prototype.hasOwnProperty.call(body, 'turn_count')) {
