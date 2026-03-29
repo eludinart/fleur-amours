@@ -44,6 +44,7 @@ export const chatApi = {
       conversation_id: conversationId,
       reader_role: readerRole,
     }),
+  markAllRead: () => api.post('/api/chat/mark_all_read'),
   unread: () => api.get('/api/chat/unread'),
   stats: () => api.get('/api/chat/stats'),
 }

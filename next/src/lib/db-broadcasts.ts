@@ -26,7 +26,8 @@ export type BroadcastStatus =
 
 export type BroadcastChannel = 'email' | 'inapp'
 
-export type AudienceType = 'users' | 'coaches' | 'all'
+/** `single` = une personne (ID et/ou email) ; `users` = sans rôle coach/admin ; `coaches` = rôle coach uniquement ; `all` = tous les comptes avec email */
+export type AudienceType = 'single' | 'users' | 'coaches' | 'all'
 
 export type ActivitySegment =
   | 'any'
@@ -46,6 +47,9 @@ export type BroadcastAudience = {
   exclude_admins: boolean
   exclude_emails: string[]
   respect_email_optout: boolean
+  /** Si audience_type === 'single' */
+  single_user_id?: number | null
+  single_user_email?: string | null
 }
 
 export type BroadcastContent = {
@@ -282,6 +286,47 @@ async function selectAudienceRecipients(audience: BroadcastAudience): Promise<Ar
 
   const excludeEmails = new Set((audience.exclude_emails ?? []).map(normalizeEmail).filter(Boolean))
 
+  if (audience.audience_type === 'single') {
+    const sid = audience.single_user_id != null ? Number(audience.single_user_id) : 0
+    const sem = normalizeEmail(audience.single_user_email)
+    const whereSingle: string[] = [`u.user_email IS NOT NULL AND u.user_email != ''`]
+    const pSingle: (string | number)[] = []
+    if (sid > 0) {
+      whereSingle.push(`u.ID = ?`)
+      pSingle.push(sid)
+    } else if (sem) {
+      whereSingle.push(`LOWER(u.user_email) = ?`)
+      pSingle.push(sem)
+    } else {
+      return []
+    }
+    const sqlOne = `
+      SELECT
+        u.ID as user_id,
+        u.user_email as email,
+        um_last.meta_value as last_login,
+        um_listed.meta_value as coach_is_listed,
+        ar.app_role as app_role
+      FROM ${tUsers} u
+      LEFT JOIN ${tMeta} um_last ON um_last.user_id = u.ID AND um_last.meta_key = 'fleur_last_login'
+      LEFT JOIN ${tMeta} um_listed ON um_listed.user_id = u.ID AND um_listed.meta_key = 'fleur_coach_is_listed'
+      LEFT JOIN ${tRoles} ar ON ar.user_id = u.ID
+      WHERE ${whereSingle.join(' AND ')}
+      LIMIT 1
+    `
+    const resOne = await exec(pool, sqlOne, pSingle)
+    const rowsOne = (resOne[0] ?? []) as RowDataPacket[]
+    return rowsOne
+      .map((r) => ({
+        user_id: Number(r.user_id),
+        email: normalizeEmail(r.email),
+        last_login: r.last_login != null ? String(r.last_login) : null,
+        coach_is_listed: r.coach_is_listed != null ? String(r.coach_is_listed) : null,
+        app_role: r.app_role != null ? String(r.app_role) : null,
+      }))
+      .filter((r) => r.user_id > 0 && r.email && !excludeEmails.has(r.email))
+  }
+
   // Activity thresholds (days)
   const days =
     audience.activity === 'active_7d' ? 7 :
@@ -303,7 +348,7 @@ async function selectAudienceRecipients(audience: BroadcastAudience): Promise<Ar
   if (audience.audience_type === 'users') {
     whereParts.push(`COALESCE(ar.app_role, 'user') NOT IN ('coach', 'admin')`)
   } else if (audience.audience_type === 'coaches') {
-    whereParts.push(`COALESCE(ar.app_role, '') IN ('coach', 'admin')`)
+    whereParts.push(`COALESCE(ar.app_role, '') = 'coach'`)
   }
 
   if (audience.exclude_admins) {
@@ -415,6 +460,9 @@ export async function enqueueDeliveries(params: { broadcastId: number }): Promis
   }
 
   const recipients = await selectAudienceRecipients(audience)
+  if (recipients.length === 0) {
+    throw new Error('Aucun destinataire ne correspond à cette cible (vérifiez l’ID, l’e-mail ou les filtres).')
+  }
   const wantsEmail = !!channels.email?.subject
   const wantsInapp = !!channels.inapp?.title
   if (!wantsEmail && !wantsInapp) throw new Error('Aucun canal activé')

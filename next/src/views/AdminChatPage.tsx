@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { chatApi } from '@/api/chat'
 import { t } from '@/i18n'
+import { useAuth } from '@/contexts/AuthContext'
 
 function formatTime(iso: string | null | undefined): string {
   if (!iso) return ''
@@ -44,6 +45,7 @@ type Message = {
 export default function AdminChatPage() {
   const searchParams = useSearchParams()
   const emailParam = searchParams?.get('email') ?? null
+  const { isAdmin, isCoach, user } = useAuth()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selected, setSelected] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -55,6 +57,7 @@ export default function AdminChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgAt = useRef<string | null>(null)
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const initReadDoneRef = useRef(false)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -69,6 +72,23 @@ export default function AdminChatPage() {
       .catch(() => setConversations([]))
       .finally(() => setLoadingConvs(false))
   }, [effectiveStatus])
+
+  // Init : pour éviter d'afficher d'anciens messages comme "non lus"
+  // après mise en place du suivi (coach_last_read_at == NULL).
+  useEffect(() => {
+    if (initReadDoneRef.current) return
+    if (emailParam) return
+    if (!user) return
+    if (!isAdmin && !isCoach) return
+
+    initReadDoneRef.current = true
+    void chatApi
+      .markAllRead()
+      .then(() => loadConversations())
+      .catch(() => {
+        /* ignore */
+      })
+  }, [emailParam, isAdmin, isCoach, user, loadConversations])
 
   useEffect(() => { loadConversations() }, [loadConversations])
   useEffect(() => {
@@ -182,7 +202,12 @@ export default function AdminChatPage() {
     <div className="relative flex h-full min-h-0 gap-0 overflow-hidden -mx-4 md:mx-0 md:w-auto">
       <div className={`${showList ? 'flex' : 'hidden'} md:flex w-full md:w-64 lg:w-72 shrink-0 border-r border-slate-200 dark:border-slate-700 flex-col min-h-0 absolute md:relative inset-0 z-10 md:z-auto bg-white dark:bg-slate-900`}>
         <div className="shrink-0 p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-3">Conversations</h2>
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+            {t('chat.adminInboxTitle')}
+          </h2>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 mb-3 leading-snug">
+            {t('chat.adminInboxSubtitle')}
+          </p>
           <div className="flex gap-1">
             {[['open', 'Ouvertes'], ['closed', 'Clôturées'], ['', 'Toutes']].map(([val, lbl]) => (
               <button
@@ -223,16 +248,20 @@ export default function AdminChatPage() {
                     className={`w-full text-left px-4 py-3 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selected?.id === c.id ? 'bg-violet-50 dark:bg-violet-950/20' : ''} ${unread ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}
                   >
                     <div className="flex items-center justify-between gap-2 pr-5">
-                      <p className={`text-xs font-medium truncate ${unread ? 'font-semibold text-slate-800 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200'}`}>
-                        {c.user_email || `User #${c.user_id}`}
-                      </p>
-                      {unread ? (
-                        <span className="shrink-0 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-bold px-1">
-                          {(c.unread_count ?? 0) > 99 ? '99+' : c.unread_count}
-                        </span>
-                      ) : (
-                        <span className={`shrink-0 w-2 h-2 rounded-full ${convClosed ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-500'}`} />
-                      )}
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <p className={`text-xs font-medium truncate ${unread ? 'font-semibold text-slate-800 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200'}`}>
+                          {c.user_email || `User #${c.user_id}`}
+                        </p>
+                        {unread ? (
+                          <span
+                            className="shrink-0 min-w-[18px] h-[18px] inline-flex items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-bold px-1"
+                            title={`${c.unread_count} message${(c.unread_count ?? 0) > 1 ? 's' : ''} non lu${(c.unread_count ?? 0) > 1 ? 's' : ''}`}
+                          >
+                            {(c.unread_count ?? 0) > 99 ? '99+' : c.unread_count}
+                          </span>
+                        ) : null}
+                      </div>
+                      <span className={`shrink-0 w-2 h-2 rounded-full ${convClosed ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-500'}`} />
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                       <p className="text-[10px] text-slate-400">
@@ -262,10 +291,13 @@ export default function AdminChatPage() {
       </div>
 
       {!selected ? (
-        <div className="hidden md:flex flex-1 items-center justify-center text-sm text-slate-400 p-8 text-center">
-          <div className="space-y-3">
+        <div className="hidden md:flex flex-1 items-center justify-center text-slate-500 dark:text-slate-400 p-8 text-center">
+          <div className="space-y-3 max-w-sm">
             <div className="text-4xl">💬</div>
-            <p>Sélectionnez une conversation à gauche</p>
+            <p className="text-base font-semibold text-slate-700 dark:text-slate-200">
+              {t('chat.adminEmptyStateTitle')}
+            </p>
+            <p className="text-sm leading-relaxed">{t('chat.adminEmptyStateHint')}</p>
           </div>
         </div>
       ) : (

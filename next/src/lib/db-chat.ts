@@ -90,6 +90,19 @@ async function ensureTables(pool: ReturnType<typeof getPool>): Promise<void> {
   } catch {
     // Ignore
   }
+  for (const col of ['coach_last_read_at', 'user_last_read_at'] as const) {
+    try {
+      const [readCols] = await pool.execute<RowDataPacket[]>(
+        `SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+        [tConv, col]
+      )
+      if (readCols.length === 0) {
+        await pool.execute(`ALTER TABLE ${tConv} ADD COLUMN ${col} DATETIME NULL DEFAULT NULL`)
+      }
+    } catch {
+      // Ignore
+    }
+  }
 }
 
 export type CoachPublicCard = {
@@ -375,7 +388,15 @@ export async function listConversations(
      FROM (
        SELECT c.id, c.user_id, c.user_email, c.status, c.assigned_coach_id, c.closed_by_role, c.created_at, c.updated_at,
               (SELECT MAX(created_at) FROM ${tMsg} m WHERE m.conversation_id = c.id) as last_message_at,
-              0 as unread_count,
+              (
+                SELECT COUNT(*) FROM ${tMsg} m
+                WHERE m.conversation_id = c.id
+                  AND m.sender_role = 'user'
+                  AND (
+                    c.coach_last_read_at IS NULL
+                    OR m.created_at > c.coach_last_read_at
+                  )
+              ) as unread_count,
               ${dedupeRank} as rn
        FROM ${tConv} c
        WHERE ${where}
@@ -401,6 +422,102 @@ export async function listConversations(
   }))
 
   return { items, total }
+}
+
+/** Marque la conversation comme lue côté coach ou côté patient (watermark = dernier message affiché). */
+export async function markChatConversationRead(params: {
+  conversationId: number
+  readerRole: 'coach' | 'user'
+  readerUserId: number
+  isAdmin?: boolean
+  isCoach?: boolean
+}): Promise<{ ok: boolean }> {
+  const pool = getPool()
+  await ensureTables(pool)
+  const tConv = table(TBL_CONV)
+  const tMsg = table(TBL_MSG)
+  const { conversationId, readerRole, readerUserId } = params
+  const isAdmin = params.isAdmin ?? false
+  const isCoach = params.isCoach ?? false
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id, user_id, assigned_coach_id, status FROM ${tConv} WHERE id = ? AND status != 'deleted'`,
+    [conversationId]
+  )
+  const row = rows[0]
+  if (!row) return { ok: false }
+
+  if (readerRole === 'user') {
+    if (Number(row.user_id) !== readerUserId) return { ok: false }
+  } else {
+    if (!isCoach && !isAdmin) return { ok: false }
+    if (!isAdmin) {
+      const aid = row.assigned_coach_id != null ? Number(row.assigned_coach_id) : null
+      if (aid != null && aid !== readerUserId) return { ok: false }
+    }
+  }
+
+  const [maxRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT MAX(created_at) as ts FROM ${tMsg} WHERE conversation_id = ?`,
+    [conversationId]
+  )
+  const tsRaw = maxRows[0]?.ts
+  const watermark =
+    tsRaw != null && String(tsRaw).trim() !== ''
+      ? String(tsRaw)
+      : new Date().toISOString().slice(0, 19).replace('T', ' ')
+
+  const col = readerRole === 'user' ? 'user_last_read_at' : 'coach_last_read_at'
+  await pool.execute(`UPDATE ${tConv} SET ${col} = ? WHERE id = ?`, [watermark, conversationId])
+  return { ok: true }
+}
+
+/**
+ * Initialise le "non lu" pour les chats coachs/admin :
+ * - uniquement pour les conversations dont `coach_last_read_at` est encore `NULL`
+ * - watermark = MAX(created_at) de la conversation (donc les messages existants sont considérés lus)
+ *
+ * But : éviter d'afficher d'anciens messages comme "non lus" après la mise en place du suivi.
+ */
+export async function markCoachConversationsRead(params: {
+  readerUserId: number
+  isAdmin: boolean
+  isCoach: boolean
+}): Promise<{ updated: number }> {
+  const pool = getPool()
+  await ensureTables(pool)
+  const tConv = table(TBL_CONV)
+  const tMsg = table(TBL_MSG)
+
+  const { readerUserId, isAdmin, isCoach } = params
+
+  const whereCoachScope =
+    isCoach && !isAdmin
+      ? `AND (c.assigned_coach_id = ? OR c.assigned_coach_id IS NULL)`
+      : ''
+
+  const paramsList: (string | number | boolean | null)[] =
+    isCoach && !isAdmin ? [readerUserId] : []
+
+  // NOTE: MySQL/PMA n'a pas d'alias dans UPDATE SET sous la forme qu'on voudrait,
+  // donc on utilise une sous-requête corrélée.
+  const [res] = await pool.execute<any>(
+    `
+      UPDATE ${tConv} c
+      SET c.coach_last_read_at = (
+        SELECT MAX(m.created_at)
+        FROM ${tMsg} m
+        WHERE m.conversation_id = c.id
+      )
+      WHERE c.coach_last_read_at IS NULL
+        AND c.status != 'deleted'
+        ${whereCoachScope}
+    `,
+    paramsList
+  )
+
+  const updated = Number(res?.affectedRows ?? 0)
+  return { updated }
 }
 
 /** Messages d'une conversation */

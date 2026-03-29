@@ -73,6 +73,13 @@ export async function POST(req: NextRequest) {
             source_type: 'broadcast',
             source_id: id,
           })
+          try {
+            const { sendFcmPush } = await import('@/lib/fcm')
+            const pushBody = String(bodyText ?? '').trim() || title
+            await sendFcmPush(d.user_id, d.user_email || null, title, pushBody, actionUrl)
+          } catch {
+            /* push optionnel */
+          }
           await markDeliverySent({ deliveryId: d.id, providerMessageId: null })
         } catch (err: unknown) {
           await markDeliveryFailed({ deliveryId: d.id, error: (err as Error)?.message ?? 'Erreur in-app' })
