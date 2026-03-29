@@ -76,7 +76,7 @@ export async function update(body: Record<string, unknown>): Promise<{ updated: 
   const id = parseInt(String(body.id ?? 0), 10)
   if (!id) throw new Error('id requis')
   const updates: string[] = []
-  const params: unknown[] = []
+  const params: (string | number | boolean | null)[] = []
   const fieldMap: [string, string, boolean][] = [
     ['petals', 'petals_json', true],
     ['history', 'history_json', true],

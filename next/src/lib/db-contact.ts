@@ -94,7 +94,7 @@ export async function updateContactMessage(
 ): Promise<{ updated: boolean }> {
   const pool = getPool()
   const sets: string[] = []
-  const params: unknown[] = []
+  const params: (string | number)[] = []
 
   if (fields.status) {
     sets.push('status = ?')

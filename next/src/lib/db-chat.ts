@@ -343,7 +343,7 @@ export async function listConversations(
   const perPage = Math.min(100, Math.max(1, opts.per_page ?? 50))
 
   let where = "c.status != 'deleted'"
-  const params: unknown[] = []
+  const params: (string | number | boolean | null)[] = []
 
   if (status) {
     where += ' AND c.status = ?'
@@ -412,7 +412,7 @@ export async function getMessages(
   await ensureTables(pool)
   const tMsg = table(TBL_MSG)
   let sql = `SELECT id, sender_role, content, created_at FROM ${tMsg} WHERE conversation_id = ?`
-  const params: unknown[] = [conversationId]
+  const params: (string | number | boolean | null)[] = [conversationId]
   if (since) {
     sql += ' AND created_at > ?'
     params.push(since)

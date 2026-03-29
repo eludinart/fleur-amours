@@ -332,7 +332,7 @@ export async function adminList(params: { page?: number; per_page?: number; type
   const offset = (page - 1) * perPage
   const type = String(params.type ?? '').trim()
   const where = type ? 'WHERE n.type = ?' : ''
-  const values: unknown[] = type ? [type] : []
+  const values: (string | number | boolean | null)[] = type ? [type] : []
   const countRes = await exec(pool, `SELECT COUNT(*) as total FROM ${tN} n ${where}`, values)
   const countRows = (countRes[0] ?? []) as RowDataPacket[]
   const total = Number(countRows?.[0]?.total ?? 0)

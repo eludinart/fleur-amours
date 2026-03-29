@@ -182,7 +182,7 @@ export async function updateDraft(params: {
   const id = Number(params.id)
   if (!id) throw new Error('id requis')
   const updates: string[] = []
-  const values: unknown[] = []
+  const values: (string | number | boolean | null)[] = []
   if (params.title != null) {
     updates.push('title = ?')
     values.push(String(params.title).trim().slice(0, 255))
@@ -245,7 +245,7 @@ export async function list(params: { page?: number; per_page?: number; status?: 
   const offset = (page - 1) * perPage
   const status = String(params.status ?? '').trim()
   let where = '1=1'
-  const values: unknown[] = []
+  const values: (string | number | boolean | null)[] = []
   if (status) {
     where += ' AND status = ?'
     values.push(status)
@@ -297,7 +297,7 @@ async function selectAudienceRecipients(audience: BroadcastAudience): Promise<Ar
   const whereParts: string[] = [
     `u.user_email IS NOT NULL AND u.user_email != ''`,
   ]
-  const params: unknown[] = []
+  const params: (string | number | boolean | null)[] = []
 
   // Audience type via app_role table (V1).
   if (audience.audience_type === 'users') {
