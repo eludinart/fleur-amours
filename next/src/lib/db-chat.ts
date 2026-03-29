@@ -465,6 +465,130 @@ export async function sendMessage(
   }
 }
 
+/**
+ * Notification in-app + push FCM pour les messages du chat d’accompagnement (patient ↔ coach/admin).
+ */
+export async function notifyCoachChatNewMessage(
+  conversationId: number,
+  senderRole: 'user' | 'coach',
+  senderId: number,
+  content: string
+): Promise<void> {
+  try {
+    const pool = getPool()
+    await ensureTables(pool)
+    const tConv = table(TBL_CONV)
+    const tUsers = table('users')
+    const tRoles = table('fleur_app_roles')
+
+    const [convRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT user_id, user_email, assigned_coach_id FROM ${tConv} WHERE id = ? LIMIT 1`,
+      [conversationId]
+    )
+    if (!convRows.length) return
+    const conv = convRows[0]
+    const patientId = Number(conv.user_id)
+    const assignedRaw = conv.assigned_coach_id
+    const assignedCoach =
+      assignedRaw != null && assignedRaw !== '' && !Number.isNaN(Number(assignedRaw))
+        ? Number(assignedRaw)
+        : null
+
+    const preview = content.length > 120 ? `${content.slice(0, 117)}…` : content
+
+    const [senderRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT display_name FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+      [senderId]
+    )
+    const senderName = senderRows[0]?.display_name ? String(senderRows[0].display_name).trim() : 'Quelqu’un'
+
+    const { createNotification } = await import('./db-notifications')
+    const { sendFcmPush } = await import('./fcm')
+
+    const actionPatient = '/chat'
+    const actionStaff = '/coach/chat'
+
+    if (senderRole === 'coach') {
+      const title = 'Nouveau message du coach'
+      const [urows] = await pool.execute<RowDataPacket[]>(
+        `SELECT user_email FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+        [patientId]
+      )
+      const email = urows[0]?.user_email ? String(urows[0].user_email) : null
+      await createNotification({
+        type: 'coach_chat_message',
+        title,
+        body: preview,
+        action_url: actionPatient,
+        recipient_type: 'user',
+        recipient_id: patientId,
+        recipient_email: email,
+        created_by: senderId,
+      })
+      await sendFcmPush(patientId, email, title, preview, actionPatient)
+      return
+    }
+
+    const title = `Nouveau message de ${senderName}`
+    if (assignedCoach) {
+      const [crows] = await pool.execute<RowDataPacket[]>(
+        `SELECT user_email FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+        [assignedCoach]
+      )
+      const cemail = crows[0]?.user_email ? String(crows[0].user_email) : null
+      await createNotification({
+        type: 'coach_chat_message',
+        title,
+        body: preview,
+        action_url: actionStaff,
+        recipient_type: 'user',
+        recipient_id: assignedCoach,
+        recipient_email: cemail,
+        created_by: senderId,
+      })
+      await sendFcmPush(assignedCoach, cemail, title, preview, actionStaff)
+      return
+    }
+
+    await createNotification({
+      type: 'coach_chat_message',
+      title,
+      body: preview,
+      action_url: actionStaff,
+      recipient_type: 'role',
+      recipient_role: 'coach',
+      created_by: senderId,
+    })
+    await createNotification({
+      type: 'coach_chat_message',
+      title,
+      body: preview,
+      action_url: actionStaff,
+      recipient_type: 'role',
+      recipient_role: 'admin',
+      created_by: senderId,
+    })
+
+    const [staffRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT DISTINCT u.ID AS id, u.user_email AS email
+       FROM ${tUsers} u
+       INNER JOIN ${tRoles} r ON r.user_id = u.ID
+       WHERE r.app_role IN ('coach', 'admin')
+         AND u.user_email IS NOT NULL AND TRIM(u.user_email) != ''`
+    )
+    const seen = new Set<number>()
+    for (const row of staffRows) {
+      const sid = Number(row.id)
+      if (!Number.isFinite(sid) || seen.has(sid)) continue
+      seen.add(sid)
+      const em = row.email ? String(row.email) : null
+      await sendFcmPush(sid, em, title, preview, actionStaff)
+    }
+  } catch {
+    /* ne pas bloquer l’envoi du message */
+  }
+}
+
 export async function closeConversation(id: number): Promise<void> {
   const pool = getPool()
   await ensureTables(pool)

@@ -376,3 +376,48 @@ export async function getDuoResult(
     person_b: await formatResultWithProfile(rowB as unknown as Record<string, unknown>, pool),
   }
 }
+
+/** Prévient le créateur du Duo (personne A) lorsque le partenaire a soumis ses réponses. */
+export async function notifyDuoPartnerSubmitted(partnerToken: string, submittingUserId: number): Promise<void> {
+  if (!partnerToken || !submittingUserId) return
+  try {
+    const pool = getPool()
+    const tRes = table('fleur_amour_results')
+    const tUsers = table('users')
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT id, user_id, email, token FROM ${tRes} WHERE token = ? LIMIT 1`,
+      [partnerToken.trim()]
+    )
+    const row = rows[0]
+    if (!row) return
+    const ownerId = row.user_id != null && row.user_id !== '' ? Number(row.user_id) : 0
+    if (!ownerId || ownerId === submittingUserId) return
+
+    const [urows] = await pool.execute<RowDataPacket[]>(
+      `SELECT user_email FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+      [ownerId]
+    )
+    const email = urows[0]?.user_email ? String(urows[0].user_email) : null
+
+    const title = 'Duo complété'
+    const body = 'Ton partenaire a terminé son questionnaire Duo. Vous pouvez voir le résultat commun.'
+    const tok = String(row.token ?? partnerToken)
+    const actionUrl = `/duo?token=${encodeURIComponent(tok)}`
+
+    const { createNotification } = await import('./db-notifications')
+    const { sendFcmPush } = await import('./fcm')
+    await createNotification({
+      type: 'duo_partner_submitted',
+      title,
+      body,
+      action_url: actionUrl,
+      recipient_type: 'user',
+      recipient_id: ownerId,
+      recipient_email: email,
+      created_by: submittingUserId,
+    })
+    await sendFcmPush(ownerId, email, title, body, actionUrl)
+  } catch {
+    /* optionnel */
+  }
+}

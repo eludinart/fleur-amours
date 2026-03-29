@@ -3,7 +3,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { sendMessage } from '@/lib/db-chat'
+import { notifyCoachChatNewMessage, sendMessage } from '@/lib/db-chat'
 import { getPool, table } from '@/lib/db'
 import { authMe } from '@/lib/db-auth'
 import type { RowDataPacket } from 'mysql2'
@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     const msg = await sendMessage(convId, uid, senderRole, content)
+    void notifyCoachChatNewMessage(convId, senderRole, uid, content)
     return NextResponse.json(
       {
         id: String(msg.id),

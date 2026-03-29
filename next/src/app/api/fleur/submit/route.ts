@@ -4,7 +4,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
-import { submitFleur } from '@/lib/db-fleur'
+import { notifyDuoPartnerSubmitted, submitFleur } from '@/lib/db-fleur'
 import { requireAuth } from '@/lib/api-auth'
 
 export const dynamic = 'force-dynamic'
@@ -24,6 +24,11 @@ export async function POST(req: NextRequest) {
     const payload = { ...body, user_id: parseInt(userId, 10) }
 
     const data = await submitFleur(payload)
+
+    const partnerToken = typeof body.partner_token === 'string' ? body.partner_token.trim() : ''
+    if (partnerToken) {
+      void notifyDuoPartnerSubmitted(partnerToken, parseInt(userId, 10))
+    }
 
     const result = {
       id: data.result_id,
