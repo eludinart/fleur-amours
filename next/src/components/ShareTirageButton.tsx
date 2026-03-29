@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
@@ -21,26 +21,42 @@ function formatDate(iso: string | undefined): string {
   }
 }
 
-function summary(r: {
+function buildShareText(r: {
   type?: string
-  card?: { name?: string }
+  card?: { name?: string; synth?: string }
   cards?: Array<{ name?: string }>
+  intention?: string
+  createdAt?: string
 }): string {
-  if (r.type === 'simple') return r.card?.name ?? '—'
-  if (r.type === 'four' && r.cards?.length)
-    return r.cards.map((c) => c.name).join(' · ')
-  return '—'
+  if (!r) return t('share.tirageShareText')
+
+  const typeLabel = r.type === 'simple' ? t('tarot.simple') : t('tarot.fourDoors')
+
+  if (r.type === 'simple' && r.card?.name) {
+    const cardLine = r.card.name
+    const synthSnippet = r.card.synth ? ` — « ${r.card.synth.slice(0, 80)}${r.card.synth.length > 80 ? '…' : ''} »` : ''
+    const intentionLine = r.intention ? `\nIntention : ${r.intention.slice(0, 60)}${r.intention.length > 60 ? '…' : ''}` : ''
+    return `J'ai tiré ${cardLine}${synthSnippet}${intentionLine}\n\nTirage ${typeLabel} — Fleur d'AmOurs 🌸`
+  }
+
+  if (r.type === 'four' && r.cards?.length) {
+    const names = r.cards.map((c) => c.name).join(' · ')
+    const intentionLine = r.intention ? `\nIntention : ${r.intention.slice(0, 60)}${r.intention.length > 60 ? '…' : ''}` : ''
+    return `Mon tirage 4 Portes : ${names}${intentionLine}\n\nFleur d'AmOurs 🌸`
+  }
+
+  return t('share.tirageShareText')
 }
 
 type ShareTirageButtonProps = {
   reading?: {
     id?: string
     type?: string
-    card?: { name?: string }
+    card?: { name?: string; synth?: string }
     cards?: Array<{ name?: string }>
+    intention?: string
     createdAt?: string
   }
-  /** Afficher le libellé « Partager » pour un CTA plus visible */
   showLabel?: boolean
 }
 
@@ -48,26 +64,54 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
   useStore((s) => s.locale)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const base = typeof window !== 'undefined' ? `${window.location.origin}${basePath}`.replace(/\/+$/, '') : ''
-  const url = reading?.id ? `${base}/tirage?reading=${reading.id}` : `${base}/tirage`
-  const text = reading
-    ? `Mon tirage Fleur d'AmOurs (${reading.type === 'simple' ? t('tarot.simple') : t('tarot.fourDoors')}) : ${summary(reading)} — ${formatDate(reading.createdAt)}`
-    : t('share.tirageShareText')
+  const base =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}${basePath}`.replace(/\/+$/, '')
+      : ''
+
+  // Prefer a beautiful public share page over the protected /tirage route
+  const publicPageUrl =
+    reading?.id ? `${base}/tirage/partage/${reading.id}` : `${base}/tirage`
+
+  const text = buildShareText(reading || {})
 
   const sharePayload = {
-    url,
+    url: publicPageUrl,
     title: "Mon tirage Fleur d'AmOurs",
     text,
   }
 
+  // Inject OG meta for current page when a reading is open
+  useEffect(() => {
+    if (!reading?.id || typeof window === 'undefined') return
+    const ogImgUrl = `${window.location.origin}${basePath}/api/og/tirage?id=${reading.id}`
+    const cardName = reading.type === 'simple'
+      ? (reading.card?.name || '')
+      : (reading.cards?.map((c) => c.name).join(' · ') || '')
+    const metas: Array<{ attr: string; key: string; content: string }> = [
+      { attr: 'property', key: 'og:image', content: ogImgUrl },
+      { attr: 'property', key: 'og:title', content: `Mon tirage — ${cardName}` },
+      { attr: 'name', key: 'twitter:card', content: 'summary_large_image' },
+      { attr: 'name', key: 'twitter:image', content: ogImgUrl },
+    ]
+    metas.forEach(({ attr, key, content }) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`)
+      if (!el) {
+        el = document.createElement('meta')
+        el.setAttribute(attr, key)
+        document.head.appendChild(el)
+      }
+      el.setAttribute('content', content)
+    })
+  }, [reading?.id])
+
   const handleShare = useCallback(async () => {
-    // Mobile : priorité au partage natif (ouvre WhatsApp, Twitter, etc.)
     if (canUseNativeShare()) {
       try {
         await navigator.share({
           title: sharePayload.title,
           text: sharePayload.text,
-          url,
+          url: publicPageUrl,
         })
         toast(t('share.shareSuccess'), 'success')
       } catch (e) {
@@ -78,7 +122,7 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
     } else {
       setMenuOpen(true)
     }
-  }, [reading, url])
+  }, [reading, publicPageUrl])
 
   return (
     <div className="relative">

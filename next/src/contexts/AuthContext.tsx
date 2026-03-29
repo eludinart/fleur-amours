@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { authApi } from '@/api/auth'
+import { isCapacitor } from '@/lib/api-client'
 
 type User = Record<string, unknown> | null
 
@@ -30,7 +31,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshTimer.current = setInterval(async () => {
       try {
         const { token } = (await authApi.refresh()) as { token: string }
-        if (token && typeof window !== 'undefined') localStorage.setItem('auth_token', token)
+        // Sur Capacitor, stocker le nouveau token dans localStorage
+        if (token && isCapacitor() && typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', token)
+        }
       } catch {
         doForceLogout()
       }
@@ -47,10 +51,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshTimer.current = null
   }, [])
 
+  /**
+   * Bootstrap : appelle /api/auth/me si et seulement si une session est probable.
+   *
+   * On ne peut pas lire le cookie httpOnly depuis JS, donc on utilise `auth_user`
+   * (mis en localStorage à chaque login/register/bootstrap réussi) comme sentinelle.
+   * Sur Capacitor, on vérifie aussi `auth_token`.
+   *
+   * Sans sentinelle → on est certain de ne pas être connecté → early return.
+   * Avec sentinelle → on tente me() :
+   *   - Web      : le cookie httpOnly est envoyé automatiquement (credentials: include).
+   *   - Capacitor: le Bearer token depuis localStorage est envoyé en header.
+   */
   const bootstrap = useCallback(async () => {
-    if (typeof window === 'undefined') return
-    const token = localStorage.getItem('auth_token')
-    if (!token) {
+    if (typeof window === 'undefined') {
+      setLoading(false)
+      return
+    }
+    const hasSessionHint =
+      !!localStorage.getItem('auth_user') ||
+      (isCapacitor() && !!localStorage.getItem('auth_token'))
+    if (!hasSessionHint) {
       setLoading(false)
       return
     }
@@ -60,9 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('auth_user', JSON.stringify(u))
       scheduleRefresh(forceLogout)
     } catch {
-      forceLogout()
+      // Session expirée ou révoquée côté serveur
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [scheduleRefresh, forceLogout])
 
   useEffect(() => {
@@ -73,9 +97,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [bootstrap])
 
   const login = async (loginId: string, password: string) => {
-    const { token, user: u } = (await authApi.login(loginId, password)) as { token: string; user: Record<string, unknown> }
+    const { token, user: u } = (await authApi.login(loginId, password)) as {
+      token: string
+      user: Record<string, unknown>
+    }
     if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token)
+      // Sur Capacitor : stocker le token (le cookie ne fonctionne pas cross-origin)
+      // Sur web      : le cookie httpOnly est posé par le serveur, pas besoin de localStorage
+      if (isCapacitor()) localStorage.setItem('auth_token', token)
       localStorage.setItem('auth_user', JSON.stringify(u))
     }
     setUser(u)
@@ -89,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: Record<string, unknown>
     }
     if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token)
+      if (isCapacitor()) localStorage.setItem('auth_token', token)
       localStorage.setItem('auth_user', JSON.stringify(u))
     }
     setUser(u)
@@ -98,6 +127,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
+    // Efface le cookie httpOnly côté serveur
+    authApi.logout().catch(() => {/* non bloquant */})
+    // Nettoyer localStorage (Capacitor + cache user)
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
@@ -108,13 +140,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const refreshUser = useCallback(async () => {
-    if (typeof window === 'undefined') return
-    const token = localStorage.getItem('auth_token')
-    if (!token) return
     try {
       const u = (await authApi.me()) as Record<string, unknown>
       setUser(u)
-      localStorage.setItem('auth_user', JSON.stringify(u))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_user', JSON.stringify(u))
+      }
     } catch {
       /* ignore */
     }

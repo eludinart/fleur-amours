@@ -601,6 +601,8 @@
     "noReadingsDesc": "Haz una tirada simple o de 4 Puertas.",
     "useTabs": "Usa las pestañas para empezar.",
     "readingSaved": "Tirada guardada",
+    "landingCardWelcome": "¡Bienvenido/a! Tu carta te espera.",
+    "landingCardHint": "El análisis de la IA se cargará automáticamente. Luego podrás explorar la aplicación.",
     "addComment": "Añadir comentario",
     "editComment": "Modificar tu comentario",
     "yourComment": "Tu comentario",
@@ -1022,5 +1024,32 @@
     "exploreFleurSub": "Jardín de Amores · 4 puertas · Plan 14d",
     "tirages": "Tiradas",
     "tiragesSub": "Una carta o tirada de las 4 Puertas"
+  },
+
+  "landing": {
+    "ritualSection": "Tu tirada",
+    "testimonial": "« En una carta, por fin puse palabras a lo que sentía. » — Elise",
+    "trustLine": "Conexión segura · Tus datos se respetan · Sin tarjeta para empezar",
+    "tagline": "Herramienta de claridad relacional",
+    "heroTitle": "Navega la complejidad de tus amores",
+    "heroSubtitle": "Un espejo compasivo para tus relaciones. Saca una carta y descubre lo que ya sabes.",
+    "ctaLogin": "Iniciar sesión",
+    "ctaRegister": "Registrarse",
+    "ctaDraw": "Sacar una carta",
+    "redraw": "Otra carta",
+    "fullAnalysis": "Descubrir el análisis de IA",
+    "cardLabel": "Tarot Fleur d'AmOurs",
+    "essence": "Esencia",
+    "rootQuestion": "Pregunta del momento",
+    "lumiere": "Luz",
+    "ombre": "Sombra",
+    "cardCta": "Descubrir el análisis de IA",
+    "tapToReveal": "Haz clic para revelar",
+    "featureFleur": "Fleur d'AmOurs",
+    "featureTarot": "Tiradas guiadas",
+    "featureIA": "Análisis IA",
+    "alreadyGardener": "¿Ya eres jardinero/a?",
+    "signIn": "Iniciar sesión",
+    "footerNote": "Fleur d'AmOurs — Jardín de Amores · Herramienta de autoconocimiento relacional"
   }
 }

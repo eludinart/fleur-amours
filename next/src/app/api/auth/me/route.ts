@@ -2,14 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { authMe } from '@/lib/db-auth'
 import { jwtDecode } from '@/lib/jwt'
+import { getAuthHeader } from '@/lib/api-auth'
 
 export const dynamic = 'force-dynamic'
-
-function getAuthHeader(req: NextRequest): string | null {
-  const auth = req.headers.get('authorization')
-  if (!auth?.startsWith('Bearer ')) return null
-  return auth.slice(7)
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,6 +14,7 @@ export async function GET(req: NextRequest) {
         { status: 503 }
       )
     }
+    // Lit le token depuis le cookie httpOnly (web) ou Authorization: Bearer (Capacitor)
     const token = getAuthHeader(req)
     if (!token) {
       return NextResponse.json({ error: 'Authentification requise' }, { status: 401 })

@@ -1,10 +1,16 @@
 /**
  * Catch-all pour les routes API.
- * Retourne des stubs JSON valides pour les routes sans handler spécifique.
+ * En développement : retourne des stubs JSON pour les routes connues sans handler,
+ *   et un 404 explicite pour toute route inconnue.
+ * En production : 404 systématique (les stubs ne doivent pas être exposés).
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthHeader } from '@/lib/api-auth'
+import { jwtDecode } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
+
+const IS_PROD = process.env.NODE_ENV === 'production'
 
 const STUB_RESPONSES: Record<string, unknown> = {
   'notifications/list': { items: [], total: 0 },
@@ -101,61 +107,75 @@ function getStubResponse(path: string): unknown {
     }
   }
   if (normalized.includes('science/')) return { files: [] }
-  return { ok: true, stub: true }
+  return null
+}
+
+function notFound(path: string) {
+  return NextResponse.json(
+    { error: `Route non implémentée : ${path}` },
+    { status: 404 }
+  )
 }
 
 export async function GET(req: NextRequest) {
-  const path = req.nextUrl.pathname || ''
-  const stub = getStubResponse(path)
+  if (IS_PROD) return notFound(req.nextUrl.pathname)
+  const stub = getStubResponse(req.nextUrl.pathname)
+  if (stub === null) return notFound(req.nextUrl.pathname)
   return NextResponse.json(stub)
 }
 
 export async function POST(req: NextRequest) {
+  if (IS_PROD) return notFound(req.nextUrl.pathname)
+
   const path = req.nextUrl.pathname || ''
-  const normalized = (path || '')
+  const normalized = path
     .replace(/^\/jardin\/api\/?/, '')
     .replace(/^\/api\/?/, '')
     .replace(/^\/+|\/+$/g, '')
 
-  // chat/send : le frontend attend l'objet message complet (id, content, created_at, sender_role)
+  // chat/send : vérifie l'authentification avant de renvoyer le stub.
   if (normalized === 'chat/send' || normalized.endsWith('/chat/send')) {
+    const token = getAuthHeader(req)
+    const payload = token ? jwtDecode(token) : null
+    if (!payload?.sub) {
+      return NextResponse.json({ error: 'Authentification requise' }, { status: 401 })
+    }
     let body: { conversation_id?: string; content?: string; sender_role?: string } = {}
     try {
       body = (await req.json()) as typeof body
-    } catch {
-      /* ignore */
-    }
-    const content = String(body?.content ?? '').trim() || '(message vide)'
-    const convId = body?.conversation_id ?? '0'
-    const senderRole = body?.sender_role ?? 'user'
+    } catch { /* ignore */ }
     const msg = {
       id: `stub-${Date.now()}`,
-      conversation_id: convId,
-      sender_role: senderRole,
-      content,
+      conversation_id: body?.conversation_id ?? '0',
+      sender_role: body?.sender_role ?? 'user',
+      content: String(body?.content ?? '').trim() || '(message vide)',
       created_at: new Date().toISOString(),
     }
     return NextResponse.json(msg, { status: 201 })
   }
 
   const stub = getStubResponse(path)
-  return NextResponse.json(stub ?? { ok: true })
+  if (stub === null) return notFound(path)
+  return NextResponse.json(stub)
 }
 
 export async function PUT(req: NextRequest) {
-  const path = req.nextUrl.pathname || ''
-  const stub = getStubResponse(path)
+  if (IS_PROD) return notFound(req.nextUrl.pathname)
+  const stub = getStubResponse(req.nextUrl.pathname)
+  if (stub === null) return notFound(req.nextUrl.pathname)
   return NextResponse.json(stub)
 }
 
 export async function PATCH(req: NextRequest) {
-  const path = req.nextUrl.pathname || ''
-  const stub = getStubResponse(path)
+  if (IS_PROD) return notFound(req.nextUrl.pathname)
+  const stub = getStubResponse(req.nextUrl.pathname)
+  if (stub === null) return notFound(req.nextUrl.pathname)
   return NextResponse.json(stub)
 }
 
 export async function DELETE(req: NextRequest) {
-  const path = req.nextUrl.pathname || ''
-  const stub = getStubResponse(path)
+  if (IS_PROD) return notFound(req.nextUrl.pathname)
+  const stub = getStubResponse(req.nextUrl.pathname)
+  if (stub === null) return notFound(req.nextUrl.pathname)
   return NextResponse.json(stub)
 }

@@ -185,6 +185,18 @@ export function isSapInsufficientError(e: unknown): boolean {
   return e instanceof SapError && e.code === 'INSUFFICIENT'
 }
 
+/** Évite un double débit si un tour Tuteur est rejoué (retry réseau). */
+export async function sapUsageReasonExists(reason: string): Promise<boolean> {
+  if (!isDbConfigured() || !reason) return false
+  const pool = getPool()
+  await ensureSapTables(pool)
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id FROM ${TBL_TX()} WHERE type = 'usage' AND reason = ? LIMIT 1`,
+    [reason.slice(0, 255)]
+  )
+  return Array.isArray(rows) && rows.length > 0
+}
+
 /** Évite un double crédit si Stripe renvoie le même checkout.session.completed. */
 export async function sapPurchaseReasonExists(reason: string): Promise<boolean> {
   if (!isDbConfigured() || !reason) return false

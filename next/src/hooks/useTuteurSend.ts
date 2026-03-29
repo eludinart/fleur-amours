@@ -4,6 +4,11 @@ import { useState, useCallback, useRef } from 'react'
 import { aiApi } from '@/api/ai'
 import { ApiError } from '@/lib/api-client'
 
+function generateTurnKey(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 const MAX_RETRIES = 2
 const RETRY_DELAY_MS = 2000
 
@@ -46,15 +51,19 @@ export function useTuteurSend(options: {
   const [status, setStatus] = useState<TuteurSendStatus>('idle')
   const [retryCount, setRetryCount] = useState(0)
   const lastPayloadRef = useRef<TuteurPayload | null>(null)
+  const turnKeyRef = useRef<string | null>(null)
 
   const send = useCallback(
     async (payload: TuteurPayload) => {
       lastPayloadRef.current = payload
+      turnKeyRef.current = generateTurnKey()
       setStatus('sending')
+
+      const idempotency_key = turnKeyRef.current
 
       const attempt = async (attemptNumber: number): Promise<void> => {
         try {
-          const res = (await aiApi.tuteur(payload)) as TuteurResponse
+          const res = (await aiApi.tuteur({ ...payload, idempotency_key })) as TuteurResponse
           setStatus('idle')
           setRetryCount(0)
           onSuccess(res)

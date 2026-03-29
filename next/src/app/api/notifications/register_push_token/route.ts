@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json(
       { error: e.message ?? 'Erreur' },
-      { status: e.status ?? 401 }
+      { status: e.status ?? 500 }
     )
   }
 }

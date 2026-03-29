@@ -28,9 +28,13 @@ export function getSharedImageUrl(token: string | null): string {
 }
 
 /**
- * Génère une image 1200x630 optimisée pour les réseaux sociaux.
+ * Génère une image 1200x630 optimisée pour les réseaux sociaux (client-side fallback).
+ * Utilisée uniquement pour le partage natif mobile quand la route /api/og/dreamscape n'est pas accessible.
  */
-export async function buildSocialCardImage(snapshotBase64: string | null): Promise<string | null> {
+export async function buildSocialCardImage(
+  snapshotBase64: string | null,
+  poeticReflection?: string | null
+): Promise<string | null> {
   if (!snapshotBase64) return null
 
   return new Promise((resolve) => {
@@ -45,12 +49,16 @@ export async function buildSocialCardImage(snapshotBase64: string | null): Promi
         resolve(snapshotBase64)
         return
       }
+
+      // Background: deep violet-indigo gradient
       const gradient = ctx.createLinearGradient(0, 0, SOCIAL_WIDTH, SOCIAL_HEIGHT)
-      gradient.addColorStop(0, '#0f172a')
-      gradient.addColorStop(0.5, '#1e293b')
-      gradient.addColorStop(1, '#0f172a')
+      gradient.addColorStop(0, '#0a0118')
+      gradient.addColorStop(0.5, '#150829')
+      gradient.addColorStop(1, '#0a0118')
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, SOCIAL_WIDTH, SOCIAL_HEIGHT)
+
+      // Draw snapshot (cover, centered)
       const imgRatio = img.width / img.height
       const targetRatio = SOCIAL_WIDTH / SOCIAL_HEIGHT
       let drawW: number, drawH: number, drawX: number, drawY: number
@@ -65,13 +73,78 @@ export async function buildSocialCardImage(snapshotBase64: string | null): Promi
         drawX = (SOCIAL_WIDTH - drawW) / 2
         drawY = 0
       }
+      ctx.globalAlpha = 0.5
       ctx.drawImage(img, drawX, drawY, drawW, drawH)
-      ctx.fillStyle = 'rgba(0,0,0,0.5)'
-      ctx.fillRect(0, SOCIAL_HEIGHT - 80, SOCIAL_WIDTH, 80)
-      ctx.fillStyle = 'rgba(255,255,255,0.9)'
-      ctx.font = 'bold 28px system-ui, sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText(BRAND_TEXT, SOCIAL_WIDTH / 2, SOCIAL_HEIGHT - 40)
+      ctx.globalAlpha = 1
+
+      // Gradient overlay bottom
+      const overlay = ctx.createLinearGradient(0, SOCIAL_HEIGHT * 0.3, 0, SOCIAL_HEIGHT)
+      overlay.addColorStop(0, 'rgba(10,1,24,0)')
+      overlay.addColorStop(0.6, 'rgba(10,1,24,0.75)')
+      overlay.addColorStop(1, 'rgba(10,1,24,0.95)')
+      ctx.fillStyle = overlay
+      ctx.fillRect(0, 0, SOCIAL_WIDTH, SOCIAL_HEIGHT)
+
+      // Label: "Promenade Onirique"
+      ctx.fillStyle = 'rgba(196,181,253,0.75)'
+      ctx.font = '500 15px system-ui, sans-serif'
+      ctx.textAlign = 'left'
+      ctx.letterSpacing = '3px'
+      ctx.fillText('PROMENADE ONIRIQUE', 56, SOCIAL_HEIGHT - 180)
+      ctx.letterSpacing = '0px'
+
+      // Poetic reflection text
+      if (poeticReflection) {
+        const maxW = SOCIAL_WIDTH - 112
+        const shortText = poeticReflection.length > 120 ? poeticReflection.slice(0, 119) + '…' : poeticReflection
+        ctx.fillStyle = 'rgba(255,255,255,0.9)'
+        ctx.font = 'italic 26px Georgia, serif'
+        ctx.textAlign = 'left'
+        // Simple word-wrap: two lines
+        const words = shortText.split(' ')
+        let line1 = ''
+        let line2 = ''
+        let onLine2 = false
+        for (const w of words) {
+          const test = (line1 ? line1 + ' ' : '') + w
+          if (!onLine2 && ctx.measureText(test).width > maxW) {
+            onLine2 = true
+          }
+          if (onLine2) {
+            line2 += (line2 ? ' ' : '') + w
+          } else {
+            line1 += (line1 ? ' ' : '') + w
+          }
+        }
+        const finalLine2 = line2.length > 80 ? line2.slice(0, 79) + '…' : line2
+        ctx.fillText(`« ${line1}`, 56, SOCIAL_HEIGHT - 140)
+        if (finalLine2) ctx.fillText(`${finalLine2} »`, 56, SOCIAL_HEIGHT - 105)
+      }
+
+      // Footer bar
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'
+      ctx.fillRect(0, SOCIAL_HEIGHT - 64, SOCIAL_WIDTH, 64)
+
+      // Separator line
+      ctx.strokeStyle = 'rgba(139,92,246,0.25)'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(0, SOCIAL_HEIGHT - 64)
+      ctx.lineTo(SOCIAL_WIDTH, SOCIAL_HEIGHT - 64)
+      ctx.stroke()
+
+      // Brand name
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'
+      ctx.font = '500 18px system-ui, sans-serif'
+      ctx.textAlign = 'left'
+      ctx.fillText('🌸 ' + BRAND_TEXT, 56, SOCIAL_HEIGHT - 26)
+
+      // CTA
+      ctx.fillStyle = 'rgba(196,181,253,0.85)'
+      ctx.font = '500 16px system-ui, sans-serif'
+      ctx.textAlign = 'right'
+      ctx.fillText('Vivre ma propre promenade →', SOCIAL_WIDTH - 56, SOCIAL_HEIGHT - 26)
+
       resolve(canvas.toDataURL('image/png'))
     }
     img.onerror = () => resolve(snapshotBase64)

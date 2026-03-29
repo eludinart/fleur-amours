@@ -9,6 +9,7 @@ export const authApi = {
       user: Record<string, unknown>
     }>,
   refresh: () => api.post('/api/auth/refresh', {}) as Promise<{ token: string }>,
+  logout: () => api.post('/api/auth/logout', {}) as Promise<{ ok: boolean }>,
   me: () => api.get('/api/auth/me') as Promise<Record<string, unknown>>,
   users: (params: { page?: number; per_page?: number; search?: string; role?: string } = {}) => {
     const p = new URLSearchParams()

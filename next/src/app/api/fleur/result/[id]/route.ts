@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { getResult } from '@/lib/db-fleur'
-import { getUserIdFromRequest } from '@/lib/api-auth'
+import { requireAuth, ApiError } from '@/lib/api-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,10 +26,15 @@ export async function GET(
       )
     }
 
-    const userId = getUserIdFromRequest(req)
-    const data = await getResult(parseInt(id, 10), userId ?? undefined)
+    // L'ownership est vérifié dans getResult uniquement si userId est fourni.
+    // On force l'auth pour éviter l'IDOR par énumération d'ID sans JWT.
+    const { userId } = await requireAuth(req)
+    const data = await getResult(parseInt(id, 10), userId)
     return NextResponse.json(data)
   } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.status })
+    }
     const e = err as Error & { status?: number }
     const status = e.status ?? 500
     return NextResponse.json(

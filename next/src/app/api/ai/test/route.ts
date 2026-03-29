@@ -1,14 +1,27 @@
 /**
  * GET /api/ai/test
  * Test OpenRouter (réponse JSON simple).
+ * Désactivé en production. Nécessite le rôle admin en développement.
  */
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
 import { getOpenRouterModel } from '@/lib/openrouter-config'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Route désactivée en production.' }, { status: 404 })
+  }
+
+  try {
+    await requireAdmin(req)
+  } catch (err: unknown) {
+    const e = err as { status?: number; message?: string }
+    return NextResponse.json({ error: e.message ?? 'Accès refusé' }, { status: e.status ?? 403 })
+  }
+
   if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({
       ok: false,

@@ -125,6 +125,25 @@ export const ALL_CARDS: Card[] = [
   ...LIFE.filter((c) => !LOVE.find((l) => l.name === c.name) && !VEGETAL.find((v) => v.name === c.name) && !ELEMENTS.find((e) => e.name === c.name)),
 ]
 
+export type LandingCardText = { desc: string; synth: string }
+
+/** Paires [nom canonique, textes] pour la landing publique — aligné sur la locale UI (fr = données TS). */
+export function getLandingCardEntries(locale: string | undefined): [string, LandingCardText][] {
+  const loc = (locale || 'fr').toLowerCase().split('-')[0]
+  if (loc === 'en') {
+    return Object.entries((enCards as { cards: Record<string, LandingCardText> }).cards)
+  }
+  if (loc === 'es') {
+    return Object.entries((esCards as { cards: Record<string, LandingCardText> }).cards)
+  }
+  return ALL_CARDS.map((c) => [c.name, { desc: c.desc ?? '', synth: c.synth ?? '' }])
+}
+
+/** URL illustration (même jeu que TarotPage) — clé = nom canonique FR dans les JSON. */
+export function getCardImageByName(name: string): string | undefined {
+  return ALL_CARDS.find((c) => c.name === name)?.img
+}
+
 export const FOUR_DOORS = [
   { key: 'love', group: LOVE, title: "Cycle de la Fleur d'amour", subtitle: 'La Porte du Cœur', aspect: "L'Essence", color: 'text-rose-600', border: 'border-rose-300 dark:border-rose-800', glowColor: '#f43f5e', shadowColor: 'rgba(244,63,94,0.2)', bgFrom: 'rgba(254,226,226,1)', bgTo: 'rgba(253,242,248,1)' },
   { key: 'vegetal', group: VEGETAL, title: 'Cycle du végétal', subtitle: 'La Porte du Temps', aspect: 'Le Processus', color: 'text-emerald-600', border: 'border-emerald-300 dark:border-emerald-800', glowColor: '#10b981', shadowColor: 'rgba(16,185,129,0.2)', bgFrom: 'rgba(209,250,229,1)', bgTo: 'rgba(236,253,245,1)' },

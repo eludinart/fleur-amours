@@ -3,17 +3,29 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
 /**
  * Client HTTP centralisé avec refresh automatique du token JWT.
- * Adapté pour Next.js (NEXT_PUBLIC_* au lieu de VITE_*).
+ *
+ * Stratégie d'authentification :
+ *   - Navigateur web  : cookie httpOnly `auth_token` (envoyé via `credentials: 'include'`).
+ *                        Aucun token dans localStorage — protection XSS.
+ *   - Capacitor/Android : localStorage + `Authorization: Bearer` (cookie cross-origin non dispo).
+ *
+ * Détection Capacitor : `window.Capacitor` défini à l'exécution.
  */
+
 function getBase(): string {
   if (typeof window === 'undefined') return ''
-  // En localhost, toujours utiliser l'API locale (évite cache/external)
-  if (typeof window !== 'undefined' && /^https?:\/\/localhost(:\d+)?$/.test(window.location.origin)) {
+  if (/^https?:\/\/localhost(:\d+)?$/.test(window.location.origin)) {
     return `${window.location.origin}${BASE_PATH}`
   }
   const envUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
   if (envUrl && envUrl.trim() !== '') return envUrl
   return `${window.location.origin}${BASE_PATH}`
+}
+
+/** Retourne true si le code s'exécute dans une WebView Capacitor. */
+export function isCapacitor(): boolean {
+  return typeof window !== 'undefined' &&
+    !!(window as Window & { Capacitor?: unknown }).Capacitor
 }
 
 let _requestLocale: string | null = null
@@ -22,7 +34,13 @@ export function setLocaleForRequests(locale: string | null) {
   _requestLocale = locale || null
 }
 
+/**
+ * Retourne le token JWT depuis localStorage.
+ * Uniquement pour Capacitor — sur navigateur web, on renvoie null
+ * (le cookie httpOnly est géré automatiquement par le navigateur).
+ */
 export function getAuthToken(): string | null {
+  if (!isCapacitor()) return null
   if (typeof window === 'undefined') return null
   return localStorage.getItem('auth_token')
 }
@@ -44,31 +62,40 @@ export class ApiError extends Error {
   }
 }
 
-let _refreshPromise: Promise<string | null> | null = null
+let _refreshPromise: Promise<boolean> | null = null
 
-async function _tryRefreshToken(): Promise<string | null> {
+/**
+ * Tente de rafraîchir la session.
+ *   - Web      : envoie le cookie via `credentials: 'include'`, récupère le nouveau cookie.
+ *   - Capacitor: envoie le Bearer token, stocke le nouveau token en localStorage.
+ * Retourne true si le refresh a réussi.
+ */
+async function _tryRefreshToken(): Promise<boolean> {
   if (_refreshPromise) return _refreshPromise
   _refreshPromise = (async () => {
-    const token = getAuthToken()
-    if (!token) return null
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      const token = getAuthToken() // null sur web, token localStorage sur Capacitor
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
       const res = await fetch(`${getBase()}/api/auth/refresh`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
+        credentials: 'include',
       })
-      if (!res.ok) return null
-      const data = await res.json()
-      const newToken = data?.token
-      if (newToken && typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', newToken)
-        return newToken
+      if (!res.ok) return false
+
+      if (isCapacitor()) {
+        // Sur Capacitor, sauvegarder le nouveau token dans localStorage
+        const data = await res.json().catch(() => ({}))
+        const newToken = data?.token
+        if (newToken && typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', newToken)
+        }
       }
-      return null
+      return true
     } catch {
-      return null
+      return false
     } finally {
       _refreshPromise = null
     }
@@ -79,12 +106,13 @@ async function _tryRefreshToken(): Promise<string | null> {
 async function request(
   path: string,
   options: RequestInit & { headers?: Record<string, string> } = {},
-  _isRetry = false,
-  _tokenOverride: string | null = null
+  _isRetry = false
 ): Promise<unknown> {
   const base = getBase()
   const url = path.startsWith('http') ? path : `${base}${path}`
-  const token = _tokenOverride ?? getAuthToken()
+
+  // Sur Capacitor, ajouter Authorization: Bearer si token disponible
+  const token = getAuthToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -94,7 +122,11 @@ async function request(
 
   let res: Response
   try {
-    res = await fetch(url, { ...options, headers })
+    res = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include', // envoie le cookie httpOnly sur web + cookies Capacitor
+    })
   } catch (networkErr) {
     const msg = base
       ? `Impossible de joindre le serveur (${url}). Vérifiez votre connexion.`
@@ -109,9 +141,12 @@ async function request(
     !path.includes('/auth/refresh') &&
     !path.includes('/auth/register')
   ) {
-    const newToken = await _tryRefreshToken()
-    if (newToken) return request(path, options, true, newToken)
-    if (typeof window !== 'undefined') {
+    const refreshed = await _tryRefreshToken()
+    if (refreshed) return request(path, options, true)
+    // Refresh échoué : sur Capacitor, le token localStorage est la source de vérité → nettoyer.
+    // Sur web, le cookie httpOnly est géré par le serveur → ne pas toucher localStorage
+    // pour éviter de déconnecter l'utilisateur à cause d'une erreur réseau transitoire.
+    if (isCapacitor() && typeof window !== 'undefined') {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
     }

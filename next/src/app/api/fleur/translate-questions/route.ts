@@ -5,6 +5,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import type { RowDataPacket } from 'mysql2'
+import { requireAdmin } from '@/lib/api-auth'
 import { getPool, table, isDbConfigured } from '@/lib/db'
 import { getOpenRouterModel } from '@/lib/openrouter-config'
 
@@ -52,6 +53,8 @@ async function translateBatch(texts: string[], targetLang: 'en' | 'es'): Promise
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin(req)
+
     if (!isDbConfigured()) {
       return NextResponse.json({ error: 'MariaDB non configuré' }, { status: 503 })
     }

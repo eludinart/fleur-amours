@@ -95,7 +95,7 @@ export function EvolutionChart({ timeline = [], className = '' }) {
         ))}
       </div>
       <div className="h-64 min-h-[200px] w-full">
-        <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+        <ResponsiveContainer width="100%" height={256}>
           <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
             <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748b' }} stroke="#94a3b8" strokeOpacity={0.5} />

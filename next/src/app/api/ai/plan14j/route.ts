@@ -2,11 +2,14 @@
  * POST /api/ai/plan14j
  * Génère un plan personnalisé 14 jours + synthèse + 3 micro-leviers
  * à partir des pétales, ancres, cartes et échanges de la session.
+ * Cache : si session_id fourni, lit plan14j_json en DB avant d'appeler le LLM.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
 import { getLangInstruction } from '@/lib/prompts'
+import { getById, update } from '@/lib/db-sessions'
+import { isDbConfigured } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,6 +68,8 @@ export async function POST(req: NextRequest) {
     session_notes?: string
     anchors?: Array<{ door?: string; subtitle?: string; synthesis?: string; habit?: string }>
     user_email?: string
+    session_id?: number
+    force?: boolean
   }
   try {
     body = await req.json()
@@ -74,6 +79,21 @@ export async function POST(req: NextRequest) {
       levers: [],
       plan_14j: [],
     })
+  }
+
+  const sessionId = body.session_id ? parseInt(String(body.session_id), 10) : null
+  if (sessionId && isDbConfigured() && !body.force) {
+    try {
+      const session = await getById(sessionId)
+      if (session?.plan14j && typeof session.plan14j === 'object') {
+        const p = session.plan14j as Record<string, unknown>
+        if (p.synthesis && Array.isArray(p.plan_14j) && (p.plan_14j as unknown[]).length > 0) {
+          return NextResponse.json({ ...p, cached: true })
+        }
+      }
+    } catch {
+      // cache miss → génération normale
+    }
   }
 
   const petals = body.petals && typeof body.petals === 'object' ? body.petals : {}
@@ -161,10 +181,20 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  return NextResponse.json({
+  const payload = {
     synthesis,
     synthesis_suggestion: result.synthesis_suggestion ?? null,
     levers,
     plan_14j: plan14j.slice(0, 14),
-  })
+  }
+
+  if (sessionId && isDbConfigured()) {
+    try {
+      await update({ id: sessionId, plan14j: payload })
+    } catch {
+      // non-bloquant
+    }
+  }
+
+  return NextResponse.json(payload)
 }

@@ -2,6 +2,7 @@
  * POST /api/help-chat
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
 import { getLangInstruction } from '@/lib/prompts'
 
@@ -10,6 +11,12 @@ export const dynamic = 'force-dynamic'
 const HELP_SYSTEM = `Tu es l'assistant du Jardin Fleur d'AmOurs. Tu réponds de façon courte et utile aux questions sur l'application.`
 
 export async function POST(req: NextRequest) {
+  try {
+    await requireAuth(req)
+  } catch (err: unknown) {
+    const e = err as { status?: number; message?: string }
+    return NextResponse.json({ error: e.message ?? 'Authentification requise' }, { status: e.status ?? 401 })
+  }
   try {
     const body = await req.json().catch(() => ({}))
     const message = String(body.message ?? '').trim()

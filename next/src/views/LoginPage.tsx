@@ -16,7 +16,12 @@ export function LoginPage() {
   const from = searchParams.get('from') || basePath
   const inviteToken = (searchParams.get('invite_token') ?? '').trim()
 
-  const [mode, setMode] = useState<'login' | 'register'>(inviteToken ? 'register' : 'login')
+  const intentParam = searchParams.get('intent') || ''
+  const cardIdParam = searchParams.get('cardId') || ''
+  const modeParam = searchParams.get('mode') || ''
+  const [mode, setMode] = useState<'login' | 'register'>(
+    inviteToken || modeParam === 'register' ? 'register' : 'login'
+  )
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -26,7 +31,8 @@ export function LoginPage() {
 
   useEffect(() => {
     if (inviteToken) setMode('register')
-  }, [inviteToken])
+    else if (modeParam === 'register') setMode('register')
+  }, [inviteToken, modeParam])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -53,6 +59,14 @@ export function LoginPage() {
           }
         }
       }
+      // Si l'utilisateur vient de la landing avec une carte à analyser, l'amener
+      // directement sur TarotPage avec la carte pré-sélectionnée.
+      if (intentParam === 'card_analysis' && cardIdParam) {
+        const decodedCardId = decodeURIComponent(cardIdParam)
+        router.replace(`${basePath}/tirage?landing_card=${encodeURIComponent(decodedCardId)}`)
+        return
+      }
+
       const target = (from.startsWith('/') ? from : `/${from}`).replace(/^\/jardin\/?/, '/') || '/'
       router.replace(target)
     } catch (err: unknown) {

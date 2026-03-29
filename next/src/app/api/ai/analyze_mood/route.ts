@@ -4,6 +4,7 @@
  * Prompts et logique IA.
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
 import { getAnalyzeMoodPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction, isValidPetal, isValidCard } from '@/lib/prompts'
@@ -41,6 +42,13 @@ const MOCK_RESPONSE = {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    await requireAuth(req)
+  } catch (err: unknown) {
+    const e = err as { status?: number; message?: string }
+    return NextResponse.json({ error: e.message ?? 'Authentification requise' }, { status: e.status ?? 401 })
+  }
+
   if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json(MOCK_RESPONSE)
   }

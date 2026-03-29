@@ -439,11 +439,13 @@ function SimpleDraw({
   currentReadingId,
   onSaveReflection,
   quotaExceeded,
+  landingCard,
 }: {
   onReadingComplete?: (data: Record<string, unknown>) => void | Promise<unknown>
   currentReadingId: string | null
   onSaveReflection?: (id: string, updates: Record<string, unknown>) => void
   quotaExceeded: boolean
+  landingCard?: CardType | null
 }) {
   const locale = useStore((s) => s.locale)
   const { user } = useAuth()
@@ -456,10 +458,32 @@ function SimpleDraw({
   const [interpretation, setInterpretation] = useState('')
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const indexRef = useRef(0)
+  const landingHandledRef = useRef(false)
 
   useEffect(() => () => {
     if (timerRef.current) clearInterval(timerRef.current)
   }, [])
+
+  // Pré-sélectionner la carte de la landing page sans animation
+  useEffect(() => {
+    if (!landingCard || landingHandledRef.current || drawState !== STATE.IDLE) return
+    landingHandledRef.current = true
+    setDrawnCard(landingCard)
+    setDrawState(STATE.REVEALED)
+    // Sauvegarder automatiquement ce tirage comme les autres
+    const cardT = getCardTranslated(landingCard, locale) || landingCard
+    onReadingComplete?.({
+      type: 'simple',
+      card: {
+        name: cardT.name ?? '',
+        desc: cardT.desc,
+        img: landingCard.img,
+        synth: cardT.synth,
+      },
+      intention: '',
+      reflection: '',
+    })
+  }, [landingCard, drawState, locale])
 
   useEffect(() => {
     if (drawState === STATE.REVEALED && drawnCard) {
@@ -1462,12 +1486,21 @@ const TABS = [
 ]
 
 export default function TarotPage() {
-  useStore((s) => s.locale)
+  const locale = useStore((s) => s.locale)
   const hasDoneFirstTirage = useStore((s) => s.hasDoneFirstTirage)
   const setHasDoneFirstTirage = useStore((s) => s.setHasDoneFirstTirage)
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const [hash, setHash] = useState('')
+
+  // landing_card : carte pré-sélectionnée depuis la landing page (intent card_analysis)
+  const landingCardName = searchParams?.get('landing_card') || null
+  const landingCardObj = landingCardName
+    ? (ALL_CARDS.find((c) => c.name === decodeURIComponent(landingCardName)) ?? null)
+    : null
+  const landingCardTranslated = landingCardObj
+    ? (getCardTranslated(landingCardObj, locale) ?? landingCardObj)
+    : null
   useEffect(() => {
     setHash(typeof window !== 'undefined' ? window.location.hash : '')
     const h = () => setHash(window.location.hash)
@@ -1477,6 +1510,11 @@ export default function TarotPage() {
   const [tab, setTab] = useState<'simple' | 'four' | 'list'>(() =>
     searchParams?.get('tab') === 'list' ? 'list' : 'simple'
   )
+
+  // Si une carte de landing est présente, forcer l'onglet simple
+  useEffect(() => {
+    if (landingCardName) setTab('simple')
+  }, [landingCardName])
   const { readings, addReading, updateReading, deleteReading } = useReadings()
   const [currentSimpleReadingId, setCurrentSimpleReadingId] = useState<
     string | null
@@ -1572,6 +1610,22 @@ export default function TarotPage() {
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6 py-2 min-w-0">
       <Breadcrumbs />
+
+      {/* Bannière contextuelle quand l'utilisateur vient de la landing */}
+      {landingCardName && (
+        <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-r from-violet-50 to-rose-50 dark:from-violet-950/30 dark:to-rose-950/20 p-4 flex items-start gap-3">
+          <span className="text-2xl shrink-0">✨</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+              {t('tarot.landingCardWelcome') || 'Bienvenue ! Votre carte vous attend.'}
+            </p>
+            <p className="text-xs text-violet-600/70 dark:text-violet-400/70 mt-0.5">
+              {t('tarot.landingCardHint') || 'L\'analyse de l\'IA se chargera automatiquement. Vous pouvez explorer le reste de l\'application ensuite.'}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="text-center space-y-3">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-rose-500 bg-clip-text text-transparent">
           {t('tarot.title')}
@@ -1647,6 +1701,7 @@ export default function TarotPage() {
           currentReadingId={currentSimpleReadingId}
           onSaveReflection={updateReading}
           quotaExceeded={!!quotaError}
+          landingCard={landingCardTranslated}
         />
       )}
       {tab === 'four' && (

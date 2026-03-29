@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
@@ -29,11 +29,37 @@ export function ShareFleurButton({
   const base = typeof window !== 'undefined' ? `${window.location.origin}${basePath}`.replace(/\/+$/, '') : ''
   const fullUrl = shareUrl ? base + (shareUrl.startsWith('/') ? shareUrl : `/${shareUrl}`) : typeof window !== 'undefined' ? window.location.href : ''
 
+  // Extract result id from shareUrl (e.g. /fleur?result=42) for OG image
+  const resultId = shareUrl?.match(/[?&]result=(\d+)/)?.[1] ?? null
+  const ogImageUrl = resultId ? `${base}/api/og/fleur?id=${resultId}` : null
+
   const sharePayload = {
     url: fullUrl,
     title: "Ma Fleur d'AmOurs",
-    text: "Découvrez ma Fleur d'AmOurs — tirages et questionnaire",
+    text: "J'ai découvert ma Fleur d'AmOurs — 8 pétales révélant mes dimensions d'amour 🌸",
+    ...(ogImageUrl ? { image: ogImageUrl } : {}),
   }
+
+  // Inject OG meta tags so the page is social-preview-ready
+  useEffect(() => {
+    if (!ogImageUrl || typeof window === 'undefined') return
+    const metas: Array<{ attr: string; key: string; content: string }> = [
+      { attr: 'property', key: 'og:image', content: ogImageUrl },
+      { attr: 'name', key: 'twitter:card', content: 'summary_large_image' },
+      { attr: 'name', key: 'twitter:image', content: ogImageUrl },
+      { attr: 'property', key: 'og:title', content: "Ma Fleur d'AmOurs" },
+      { attr: 'property', key: 'og:description', content: "Découvrez ma Fleur d'AmOurs — 8 pétales révélant mes dimensions d'amour 🌸" },
+    ]
+    metas.forEach(({ attr, key, content }) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`)
+      if (!el) {
+        el = document.createElement('meta')
+        el.setAttribute(attr, key)
+        document.head.appendChild(el)
+      }
+      el.setAttribute('content', content)
+    })
+  }, [ogImageUrl])
 
   const downloadImage = useCallback(async () => {
     const el = targetRef?.current

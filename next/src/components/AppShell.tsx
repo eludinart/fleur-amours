@@ -8,6 +8,7 @@ import { setLocaleForRequests } from '@/lib/api-client'
 import { useStore } from '@/store/useStore'
 import { Layout } from '@/components/layout/Layout'
 import { LoginPage } from '@/views/LoginPage'
+import { LandingPage } from '@/views/LandingPage'
 import { HomePage } from '@/views/HomePage'
 import { PresentationPage } from '@/views/PresentationPage'
 import { AccountPage } from '@/views/AccountPage'
@@ -32,6 +33,7 @@ import CardsPage from '@/views/CardsPage'
 import DreamscapePage from '@/views/DreamscapePage'
 import DreamscapeHistoriquePage from '@/views/DreamscapeHistoriquePage'
 import DreamscapePartagePage from '@/views/DreamscapePartagePage'
+import TiragePartagePage from '@/views/TiragePartagePage'
 import PrairiePage from '@/views/PrairiePage'
 import UserLisierePage from '@/views/UserLisierePage'
 import ClairierePage from '@/views/ClairierePage'
@@ -46,8 +48,10 @@ import AdminNotificationsPage from '@/views/AdminNotificationsPage'
 import AdminUsersPage from '@/views/AdminUsersPage'
 import AdminSessionsPage from '@/views/AdminSessionsPage'
 import AdminSciencePage from '@/views/AdminSciencePage'
+import AdminBroadcastsPage from '@/views/AdminBroadcastsPage'
 import CoachSuiviPage from '@/views/CoachSuiviPage'
 import CoachPatientelePage from '@/views/CoachPatientelePage'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 const AdminAnalyticsPage = dynamic(
   () => import('@/views/AdminAnalyticsPage').then((m) => m.default),
@@ -114,6 +118,12 @@ function LocaleSync() {
   return null
 }
 
+function PushNotificationManager() {
+  const { user } = useAuth()
+  usePushNotifications(user?.id ? Number(user.id) : null)
+  return null
+}
+
 function AppRoutes() {
   const pathname = usePathname()
   const { user, loading, isAdmin, isCoach } = useAuth()
@@ -121,6 +131,19 @@ function AppRoutes() {
   const route = segments[0] || 'home'
   const subRoute = segments[1]
   const subRoute2 = segments[2]
+
+  // Pour la route home sans session confirmée : afficher la landing immédiatement
+  // (évite le flash de spinner sombre sur la page d'accueil publique)
+  if (loading && route === 'home') {
+    return (
+      <Suspense fallback={null}>
+        <LocaleSync />
+        <div className="scrollbar-cream h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
+          <LandingPage />
+        </div>
+      </Suspense>
+    )
+  }
 
   if (loading) {
     return (
@@ -130,10 +153,22 @@ function AppRoutes() {
     )
   }
 
-  // Login - redirect if already logged in
-  if (route === 'login') {
+  // Login / Register - redirect if already logged in
+  if (route === 'login' || route === 'register') {
     if (user) return <RedirectHome />
     return <LoginPage />
+  }
+
+  // Public: TiragePartagePage (no Layout, no auth)
+  if (route === 'tirage' && subRoute === 'partage' && subRoute2) {
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-900"><span className="w-8 h-8 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" /></div>}>
+        <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-900">
+          <LocaleSync />
+          <TiragePartagePage />
+        </div>
+      </Suspense>
+    )
   }
 
   // Public: DreamscapePartagePage (no Layout, no auth)
@@ -417,6 +452,13 @@ function AppRoutes() {
           </Layout>
         </ProtectedLayout>
       ),
+      broadcasts: (
+        <ProtectedLayout adminOnly>
+          <Layout>
+            <AdminBroadcastsPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
       analytics: (
         <ProtectedLayout adminOrCoach>
           <Layout>
@@ -548,12 +590,25 @@ function AppRoutes() {
     )
   }
 
+  // Landing page (guest home) — rendue sans le wrapper dark de l'app
+  if (route === 'home' && !user) {
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <LocaleSync />
+        <div className="scrollbar-cream h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
+          <LandingPage />
+        </div>
+      </Suspense>
+    )
+  }
+
   const page = protectedPages[route] ?? protectedPages.home
 
   return (
     <Suspense fallback={<PageFallback />}>
       <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
         <LocaleSync />
+        {user && <PushNotificationManager />}
         {page}
       </div>
     </Suspense>

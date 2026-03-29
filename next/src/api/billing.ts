@@ -1,5 +1,10 @@
 import { api } from '@/lib/api-client'
 
+// ⚠ STUB : les routes /api/promo/* n'ont pas de handler Next.js dédié.
+// Implémenter next/src/app/api/promo/**/route.ts pour une persistance réelle.
+const warnPromoStub = (fn: string) =>
+  console.warn(`[billing/promo] ${fn} : route stub (pas de backend réel)`)
+
 type SapPreviewResult = {
   ok: boolean
   available: boolean
@@ -38,17 +43,26 @@ export const sapApi = {
 
 export const billingApi = {
   getAccess: () => api.get('/api/user/access'),
-  redeemPromo: (code: string) => api.post('/api/promo/redeem', { code }),
+  redeemPromo: (code: string) => {
+    warnPromoStub('redeemPromo'); return api.post('/api/promo/redeem', { code })
+  },
   getProducts: () => api.get('/api/billing/products'),
   createCheckoutSession: (data: Record<string, unknown>) =>
     api.post('/api/billing/create-checkout-session', data),
 
-  // Admin
-  listPromoCodes: () => api.get('/api/promo/codes'),
-  createPromoCode: (data: Record<string, unknown>) => api.post('/api/promo/codes/create', data),
-  updatePromoCode: (data: Record<string, unknown>) => api.post('/api/promo/codes/update', data),
-  deletePromoCode: (id: number) => api.post('/api/promo/codes/delete', { id }),
+  // Admin — routes promo (stubs, pas de handler dédié)
+  listPromoCodes: () => { warnPromoStub('listPromoCodes'); return api.get('/api/promo/codes') },
+  createPromoCode: (data: Record<string, unknown>) => {
+    warnPromoStub('createPromoCode'); return api.post('/api/promo/codes/create', data)
+  },
+  updatePromoCode: (data: Record<string, unknown>) => {
+    warnPromoStub('updatePromoCode'); return api.post('/api/promo/codes/update', data)
+  },
+  deletePromoCode: (id: number) => {
+    warnPromoStub('deletePromoCode'); return api.post('/api/promo/codes/delete', { id })
+  },
   listRedemptions: (params?: Record<string, unknown>) => {
+    warnPromoStub('listRedemptions')
     const q = new URLSearchParams(
       Object.fromEntries(
         Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -56,14 +70,17 @@ export const billingApi = {
     ).toString()
     return api.get(`/api/promo/redemptions${q ? '?' + q : ''}`)
   },
-  getUserRedemptions: (userId: number) =>
-    api.get(`/api/promo/user-redemptions?user_id=${userId}`),
+  getUserRedemptions: (userId: number) => {
+    warnPromoStub('getUserRedemptions'); return api.get(`/api/promo/user-redemptions?user_id=${userId}`)
+  },
   getUserUsage: (userId: number) =>
     api.get(`/api/admin/user-usage?user_id=${userId}`),
-  adminAssignAccess: (data: Record<string, unknown>) =>
-    api.post('/api/promo/admin-assign', data),
-  removeRedemption: (id: number) =>
-    api.post('/api/promo/remove-redemption', { id }),
+  adminAssignAccess: (data: Record<string, unknown>) => {
+    warnPromoStub('adminAssignAccess'); return api.post('/api/promo/admin-assign', data)
+  },
+  removeRedemption: (id: number) => {
+    warnPromoStub('removeRedemption'); return api.post('/api/promo/remove-redemption', { id })
+  },
   adminCreditUsage: (
     userId: number,
     credits: Record<string, number>

@@ -78,11 +78,12 @@ export default function DreamscapePartagePage() {
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: 'Promenade Onirique — Fleur d\'AmOurs' },
     ]
-    if (item.snapshot) {
-      const imgUrl = getSharedImageUrl(token)
-      metaOg.push({ property: 'og:image', content: imgUrl })
-      metaOg.push({ name: 'twitter:image', content: imgUrl })
-    }
+    // Prefer the designed OG image route over the raw snapshot
+    const apiBase = typeof window !== 'undefined' ? window.location.origin : ''
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
+    const ogImgUrl = `${apiBase}${basePath}/api/og/dreamscape?token=${encodeURIComponent(token || '')}`
+    metaOg.push({ property: 'og:image', content: ogImgUrl })
+    metaOg.push({ name: 'twitter:image', content: ogImgUrl })
     metaOg.forEach(({ property, name, content }) => {
       const attr = property ? 'property' : 'name'
       const key = property || name

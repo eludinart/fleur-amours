@@ -6,6 +6,16 @@ import { exec, getPool, table } from './db'
 
 const tbl = () => table('fleur_sessions')
 
+/** Renvoie l'email lié à une session (pour vérification d'ownership). */
+export async function getSessionEmail(id: number): Promise<string | null> {
+  const pool = getPool()
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT email FROM ${tbl()} WHERE id = ?`,
+    [id]
+  )
+  return rows[0]?.email ?? null
+}
+
 export async function ensureTable(): Promise<void> {
   const pool = getPool()
   const t = tbl()

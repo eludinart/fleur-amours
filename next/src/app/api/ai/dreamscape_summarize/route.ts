@@ -4,6 +4,7 @@
  * Résumé Dreamscape via OpenRouter.
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, ApiError } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
 import { getLangInstruction } from '@/lib/prompts'
 
@@ -23,6 +24,15 @@ const DREAMSCAPE_SUMMARIZE_SYSTEM = `Tu es le Tuteur maïeutique du jardin inté
 Ton chaleureux et poétique, sans conseil direct. Sépare les paragraphes par une ligne vide (double saut de ligne) pour une lecture agréable. Réponds UNIQUEMENT en texte brut, sans JSON.`
 
 export async function POST(req: NextRequest) {
+  try {
+    await requireAuth(req)
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.status })
+    }
+    return NextResponse.json({ error: 'Authentification requise' }, { status: 401 })
+  }
+
   if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({
       summary: 'Aucun échange à résumer.',

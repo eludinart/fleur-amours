@@ -9,6 +9,7 @@ import { isDbConfigured } from '@/lib/db'
 import {
   getSapBalance,
   transactionalSapUpdate,
+  sapUsageReasonExists,
   TUTEUR_SAP_COST,
   SapError,
 } from '@/lib/db-sap'
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
     card_group?: string
     locked_doors?: string[]
     overridden_petals?: Record<string, number>
+    idempotency_key?: string
   }
   try {
     body = await req.json().catch(() => ({}))
@@ -86,6 +88,8 @@ export async function POST(req: NextRequest) {
   const overriddenPetals = (body.overridden_petals && typeof body.overridden_petals === 'object')
     ? body.overridden_petals
     : {}
+  const idempotencyKey = String(body.idempotency_key ?? '').trim().slice(0, 64) || null
+  const sapReason = idempotencyKey ? `tuteur_turn:${idempotencyKey}` : 'tuteur_turn'
 
   const locale = req.headers.get('x-locale') || 'fr'
 
@@ -130,8 +134,12 @@ export async function POST(req: NextRequest) {
       userContent
   }
 
+  // Limite l'historique aux 8 derniers tours pour réduire les tokens d'input.
+  const MAX_HISTORY_TURNS = 8
+  const trimmedHistory = history.slice(-MAX_HISTORY_TURNS * 2)
+
   const oaiMessages: Array<{ role: 'user' | 'assistant'; content: string }> = []
-  for (const m of history) {
+  for (const m of trimmedHistory) {
     const role = (m.role ?? 'user') as 'user' | 'assistant'
     const content = String(m.content ?? '').trim()
     if (role && content) oaiMessages.push({ role, content })
@@ -205,29 +213,37 @@ export async function POST(req: NextRequest) {
         : null
 
     if (billTuteurSap && uid > 0) {
-      let debitOk = false
-      let lastDebitErr: unknown = null
-      for (let attempt = 0; attempt < 2 && !debitOk; attempt++) {
-        try {
-          if (attempt > 0) await new Promise((r) => setTimeout(r, 80))
-          await transactionalSapUpdate(uid, TUTEUR_SAP_COST, 'tuteur_turn', 'usage')
-          debitOk = true
-        } catch (e) {
-          lastDebitErr = e
-          if (e instanceof SapError && e.code === 'INSUFFICIENT') {
-            return NextResponse.json(
-              { success: false, error: 'Solde SAP insuffisant.' },
-              { status: 402 }
-            )
+      // Idempotence : si la clé de tour est connue, on ne débite qu'une seule fois
+      // même en cas de retry réseau côté client.
+      const alreadyDebited = idempotencyKey
+        ? await sapUsageReasonExists(sapReason).catch(() => false)
+        : false
+
+      if (!alreadyDebited) {
+        let debitOk = false
+        let lastDebitErr: unknown = null
+        for (let attempt = 0; attempt < 2 && !debitOk; attempt++) {
+          try {
+            if (attempt > 0) await new Promise((r) => setTimeout(r, 80))
+            await transactionalSapUpdate(uid, TUTEUR_SAP_COST, sapReason, 'usage')
+            debitOk = true
+          } catch (e) {
+            lastDebitErr = e
+            if (e instanceof SapError && e.code === 'INSUFFICIENT') {
+              return NextResponse.json(
+                { success: false, error: 'Solde SAP insuffisant.' },
+                { status: 402 }
+              )
+            }
           }
         }
-      }
-      if (!debitOk) {
-        console.error('[sap] tuteur debit failed after retry', lastDebitErr)
-        return NextResponse.json(
-          { success: false, error: 'Impossible d’enregistrer la consommation SAP.' },
-          { status: 500 }
-        )
+        if (!debitOk) {
+          console.error('[sap] tuteur debit failed after retry', lastDebitErr)
+          return NextResponse.json(
+            { success: false, error: "Impossible d'enregistrer la consommation SAP." },
+            { status: 500 }
+          )
+        }
       }
     }
 

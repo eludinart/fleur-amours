@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { authLogin } from '@/lib/db-auth'
 import { jwtEncode } from '@/lib/jwt'
+import { setAuthCookie } from '@/lib/auth-cookie'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,7 +29,9 @@ export async function POST(req: NextRequest) {
       role: user.app_role || 'user',
       email: user.email || '',
     })
-    return NextResponse.json({ token, user })
+    const res = NextResponse.json({ token, user })
+    setAuthCookie(res, token)
+    return res
   } catch (err: unknown) {
     const e = err as Error
     const status = (e as Error & { status?: number }).status || 401

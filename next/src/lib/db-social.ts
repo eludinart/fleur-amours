@@ -488,7 +488,7 @@ export async function createClairiereMessageNotification(
   const bodyText = cardSlug
     ? `${pseudo} a partagé une carte avec vous`
     : body
-      ? (body.length > 80 ? `${body.slice(0, 77)}...` : body)
+      ? `${pseudo} : ${body.length > 75 ? `${body.slice(0, 72)}...` : body}`
       : `${pseudo} vous a envoyé un message`
   const title = 'Nouveau message'
 

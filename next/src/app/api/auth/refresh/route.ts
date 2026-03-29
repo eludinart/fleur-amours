@@ -2,17 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { authMe } from '@/lib/db-auth'
 import { jwtDecodeForRefresh, jwtEncode } from '@/lib/jwt'
+import { getAuthHeader } from '@/lib/api-auth'
+import { setAuthCookie } from '@/lib/auth-cookie'
 
 export const dynamic = 'force-dynamic'
 
-function getAuthHeader(req: NextRequest): string | null {
-  const auth = req.headers.get('authorization')
-  if (!auth?.startsWith('Bearer ')) return null
-  return auth.slice(7)
-}
-
 export async function POST(req: NextRequest) {
   try {
+    // Lit le token depuis le cookie httpOnly (web) ou Authorization: Bearer (Capacitor)
     const token = getAuthHeader(req)
     if (!token) {
       return NextResponse.json({ error: 'Authentification requise' }, { status: 401 })
@@ -32,11 +29,14 @@ export async function POST(req: NextRequest) {
           email = user.email || email
         }
       } catch {
-        // Keep payload values on DB error
+        // En cas d'erreur DB, on garde les valeurs du payload
       }
     }
     const newToken = jwtEncode({ sub: payload.sub, role, email })
-    return NextResponse.json({ token: newToken })
+    const res = NextResponse.json({ token: newToken })
+    // Renouvelle le cookie httpOnly (web) + retourne le token dans le body (Capacitor)
+    setAuthCookie(res, newToken)
+    return res
   } catch {
     return NextResponse.json({ error: 'Token invalide ou expiré' }, { status: 401 })
   }

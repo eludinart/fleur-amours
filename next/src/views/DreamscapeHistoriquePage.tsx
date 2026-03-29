@@ -364,17 +364,20 @@ export default function DreamscapeHistoriquePage() {
                                     const res = await dreamscapeApi.share(item.id)
                                     const base = getShareBaseUrl()
                                     const fullUrl = `${base}${res.shareUrl || `/dreamscape/partage/${res.shareToken}`}`
+                                    const poeticSnippet = item.poeticReflection
+                                      ? ` « ${item.poeticReflection.slice(0, 80)}${item.poeticReflection.length > 80 ? '…' : ''} »`
+                                      : ''
                                     const sharePayload = {
                                       url: fullUrl,
-                                      title: 'Promenade Onirique — Fleur d\'AmOurs',
-                                      text: 'Découvrez ma promenade onirique',
+                                      title: 'Ma Promenade Onirique — Fleur d\'AmOurs',
+                                      text: `J'ai traversé les cartes oniriques de Fleur d'AmOurs.${poeticSnippet} 🌸`,
                                     }
                                     if (canUseNativeShare()) {
                                       try {
                                         const files = []
                                         if (item.snapshot) {
                                           try {
-                                            const socialImg = await buildSocialCardImage(item.snapshot)
+                                            const socialImg = await buildSocialCardImage(item.snapshot, item.poeticReflection)
                                             if (socialImg) {
                                               const imgRes = await fetch(socialImg)
                                               const blob = await imgRes.blob()
@@ -413,7 +416,7 @@ export default function DreamscapeHistoriquePage() {
                                   type="button"
                                   onClick={async () => {
                                     try {
-                                      const socialImg = await buildSocialCardImage(item.snapshot)
+                                      const socialImg = await buildSocialCardImage(item.snapshot, item.poeticReflection)
                                       const a = document.createElement('a')
                                       a.href = socialImg || item.snapshot
                                       a.download = `promenade-onirique-${item.id}-reseaux-sociaux.png`

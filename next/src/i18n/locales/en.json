@@ -603,6 +603,8 @@
     "noReadingsDesc": "Do a simple or 4 Doors reading.",
     "useTabs": "Use the tabs above to get started.",
     "readingSaved": "Reading saved",
+    "landingCardWelcome": "Welcome! Your card is waiting for you.",
+    "landingCardHint": "The AI analysis will load automatically. You can explore the app afterwards.",
     "addComment": "Add a comment",
     "editComment": "Edit your comment",
     "yourComment": "Your comment",
@@ -1024,5 +1026,32 @@
     "exploreFleurSub": "Garden of Love · 4 doors · 14-day plan",
     "tirages": "Readings",
     "tiragesSub": "One card or 4-Door reading"
+  },
+
+  "landing": {
+    "ritualSection": "Your reading",
+    "testimonial": "\"In one card, I finally found words for what I was feeling.\" — Elise",
+    "trustLine": "Secure connection · Your data is respected · No card required to explore",
+    "tagline": "Relational clarity tool",
+    "heroTitle": "Navigate the complexity of your loves",
+    "heroSubtitle": "A compassionate mirror for your relationships. Draw a card and discover what you already know.",
+    "ctaLogin": "Sign in",
+    "ctaRegister": "Sign up",
+    "ctaDraw": "Draw a card",
+    "redraw": "Another card",
+    "fullAnalysis": "Discover the AI analysis",
+    "cardLabel": "Fleur d'AmOurs Tarot",
+    "essence": "Essence",
+    "rootQuestion": "Question of the moment",
+    "lumiere": "Light",
+    "ombre": "Shadow",
+    "cardCta": "Discover the AI analysis",
+    "tapToReveal": "Click to reveal",
+    "featureFleur": "Fleur d'AmOurs",
+    "featureTarot": "Guided readings",
+    "featureIA": "AI analysis",
+    "alreadyGardener": "Already a gardener?",
+    "signIn": "Sign in",
+    "footerNote": "Fleur d'AmOurs — Garden of Love · Relational awareness tool"
   }
 }

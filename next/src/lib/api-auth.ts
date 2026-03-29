@@ -1,11 +1,20 @@
 /**
  * Helpers pour les routes API (JWT, user_id).
+ *
+ * Priorité de lecture du token :
+ *   1. Cookie httpOnly `auth_token` (navigateurs web — protection XSS)
+ *   2. Header `Authorization: Bearer` (Capacitor / Android standalone)
  */
 import { NextRequest } from 'next/server'
 import { jwtDecode, jwtDecodeForRefresh } from './jwt'
 import { authMe } from './db-auth'
+import { getTokenFromCookie } from './auth-cookie'
 
 export function getAuthHeader(req: NextRequest): string | null {
+  // 1. Cookie httpOnly (web) — inaccessible au JS, priorité absolue
+  const cookieToken = getTokenFromCookie(req)
+  if (cookieToken) return cookieToken
+  // 2. Bearer header (Capacitor / mobile fallback)
   const auth = req.headers.get('authorization')
   if (!auth?.startsWith('Bearer ')) return null
   return auth.slice(7)
