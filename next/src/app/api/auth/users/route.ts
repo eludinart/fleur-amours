@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT u.ID as id, u.user_login as login, u.user_email as email, u.display_name as name,
               u.user_registered as registered, r.app_role,
-              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = ? LIMIT 1) as caps
+              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = ? LIMIT 1) as caps,
+              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = 'fleur_last_login' LIMIT 1) as last_login
        FROM ${usersTbl} u
        LEFT JOIN ${rolesTbl} r ON r.user_id = u.ID
        ORDER BY u.user_registered DESC LIMIT 200`,
@@ -54,6 +55,7 @@ export async function GET(req: NextRequest) {
         registered: r.registered,
         wp_role: wpRole,
         app_role: appRole,
+        last_login: r.last_login != null ? String(r.last_login) : null,
       }
     })
     return NextResponse.json({ items, total: items.length })
