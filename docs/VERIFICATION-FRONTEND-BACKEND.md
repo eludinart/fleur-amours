@@ -8,7 +8,7 @@
 
 | Route | Description |
 |-------|-------------|
-| `POST /api/auth/login` | Connexion WordPress/MariaDB |
+| `POST /api/auth/login` | Connexion MariaDB (schéma/auth hérités WordPress-like) |
 | `POST /api/auth/refresh` | Rafraîchissement JWT |
 | `GET /api/auth/me` | Utilisateur courant |
 | `GET /api/ai/status` | Statut OpenRouter |

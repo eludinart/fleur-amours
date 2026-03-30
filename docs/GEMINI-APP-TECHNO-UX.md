@@ -4,9 +4,9 @@
 
 ## Statut
 
-- Version: `0.9`
+- Version: `0.10`
 
-- Dernière mise à jour: `2026-03-29` (régénération complète depuis `next/src` + règles workspace)
+- Dernière mise à jour: `2026-03-30` (audit prod: routes API manquantes/stubs + recoupements `next/src`)
 
 ## Comment mettre ce document à jour
 
@@ -381,11 +381,36 @@ Plusieurs modules appellent encore des chemins qui, **s’il n’existe pas** de
 
 - **promo admin**: seul `POST /api/promo/redeem` est un handler fichier dédié; les autres méthodes `billing.ts` (codes CRUD, redemptions list, admin-assign) loggent encore « stub » et reposent sur catch-all hors prod.
 
-- **wordpress**: `wordpress.ts` — stubs si pas de routes WP dédiées.
+- **wordpress**: `wordpress.ts` — stubs/artefacts hérités. Note anti-lock-in : aucune intégration WordPress HTTP n’est active (les appels `/api/wp*` ne doivent pas être considérés comme une dépendance CMS en runtime).
 
 - **stats legacy**: `stats.ts` utilise `/api/stats/...` — ne pas confondre avec **`GET /api/analytics/overview`** qui est un handler réel.
 
 Vérification: comparer `next/src/api/*.ts` aux dossiers `next/src/app/api/**/route.ts` et tester en prod.
+
+#### 11.4.1 Audit prod (instance `NODE_ENV=production`)
+Base de calcul: `next/src/app/api/[[...path]]/route.ts` (en prod: 404 systématique pour toute route sans handler dédié).
+
+Fonctionnalités non opérationnelles (routes sans `route.ts` dédié -> 404 en prod) :
+- `POST /api/diagnostic` (module `diagnostic.ts`)
+- `GET /api/graph` (module `graph.ts`)
+- `POST /api/simulate` (module `graph.ts`)
+- `GET|POST /api/campaigns*` (module `campaigns.ts`, client loggé STUB)
+- `GET|PUT|POST|DELETE /api/cards*` (module `cards.ts`)
+- `GET /api/files` (module `cards.ts`)
+- `GET /api/invariants` (module `cards.ts`)
+- `GET|POST /api/promo*` (module `billing.ts` : codes CRUD, redemptions, admin-assign, etc.)
+- `GET|POST /api/wp*` (module `wordpress.ts`) : routes stub (artefacts), pas de connexion WordPress en runtime.
+- `GET|POST /api/stats/*` (module `stats.ts`)
+Note: `GET /api/analytics/overview` existe via handler dédié (ne pas confondre).
+
+Fonctionnalités stub même avec handler :
+- `GET /api/prairie/check-visibility` : renvoie toujours `{ visible: false, reason: 'stub' }`.
+
+Cas partiels / dépendance DB:
+- certains endpoints “réels” ont des fallbacks si `isDbConfigured()` est faux (ex: messages Clairière en mémoire).
+
+Vérification recommandée pendant les tests pré-prod:
+- confirmer en prod que les pages dépendantes ne “crash” pas (au minimum: toasts d’erreur / affichage “non dispo”) et que les routes réellement utilisées par l’UI correspondent bien à un handler présent dans `next/src/app/api/**`.
 
 ### 11.5. Catch-all et stubs en développement
 
@@ -404,4 +429,4 @@ Vérification: comparer `next/src/api/*.ts` aux dossiers `next/src/app/api/**/ro
 
 ---
 
-*Fin du guide v0.9.*
+*Fin du guide v0.10.*

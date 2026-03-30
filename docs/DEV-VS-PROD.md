@@ -13,6 +13,11 @@
 | **DB** | Tunnel SSH → MariaDB VPS | MariaDB conteneur |
 | **NEXT_PUBLIC_API_URL** | Vide (même origine) | Vide (même origine) |
 
+## Note anti-dépendance WordPress
+
+Aucune connexion WordPress HTTP n’est active depuis l’application (pas de REST/HTTP vers un site WordPress).
+Les références `wordpress` / `wp_` visibles dans le code/doc sont des artefacts hérités (compatibilité de schéma / naming DB), pas une dépendance runtime à WordPress.
+
 ## Environnements autonomes
 
 **app-fleurdamours.eludein.art** (VPS legacy) et **www.eludein.art/jardin** sont indépendants : pas de liens croisés.
