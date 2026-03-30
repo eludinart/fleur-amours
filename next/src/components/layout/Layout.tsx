@@ -32,6 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const headerRef = useRef<HTMLElement>(null)
   const pathname = usePathname() || ''
   const pathWithoutBase = pathname.replace('/jardin', '').replace(/^\/+|\/+$/g, '') || ''
+  const refreshAccessInFlight = useRef<Promise<void> | null>(null)
 
   useEffect(() => {
     document.documentElement.dataset.fontSize = fontSizePreference === 'large' ? 'large' : ''
@@ -46,7 +47,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
       setAccess(null)
       return
     }
-    billingApi.getAccess().then((a) => setAccess(a as typeof access)).catch(() => setAccess(null))
+    const refresh = () => {
+      if (refreshAccessInFlight.current) return refreshAccessInFlight.current
+      refreshAccessInFlight.current = billingApi
+        .getAccess()
+        .then((a) => setAccess(a as typeof access))
+        .catch(() => setAccess(null))
+        .finally(() => {
+          refreshAccessInFlight.current = null
+        }) as Promise<void>
+      return refreshAccessInFlight.current
+    }
+
+    // Premier chargement
+    refresh()
+
+    // Rafraîchir au retour sur l'onglet (utile après crédit admin, achat boutique, etc.)
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+
+    // Petit polling (évite les compteurs figés en session longue)
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') refresh()
+    }, 60000)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [(user as { id?: string })?.id])
 
   useEffect(() => {

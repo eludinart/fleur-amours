@@ -44,13 +44,23 @@ export function DashboardPage() {
 
   const silverMode = (data?.access?.total_accumulated_eternal ?? 0) >= 200
 
-  useEffect(() => {
+  const refresh = () => {
     setLoading(true)
     setError(null)
-    fetchDashboardData()
+    return fetchDashboardData()
       .then(setData)
       .catch((e) => setError((e as Error)?.message ?? 'Impossible de charger le dashboard'))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    refresh()
+    // Si on revient sur l’onglet, on recharge (ex. crédit admin, achat, etc.)
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [])
 
   if (loading) {

@@ -109,6 +109,7 @@ export default function AdminDashboardPage() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [infraExpanded, setInfraExpanded] = useState(true)
+  const hasCoolify = !!(systemStatus?.coolify?.configured && (systemStatus.coolify.servers?.length ?? 0) > 0)
 
   useEffect(() => {
     adminApi
@@ -312,9 +313,15 @@ export default function AdminDashboardPage() {
             </button>
             {infraExpanded && (
             <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-700">
+              <div
+                className={[
+                  'grid gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-700',
+                  'grid-cols-1 md:grid-cols-2',
+                  hasCoolify ? 'xl:grid-cols-4' : 'xl:grid-cols-3',
+                ].join(' ')}
+              >
                 {/* Base de données */}
-                <div className="p-4 md:p-5">
+                <div className="p-4 md:p-5 min-w-0">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Base de données</h3>
                     <div
@@ -333,9 +340,9 @@ export default function AdminDashboardPage() {
                   {dbStatus?.connected && dbStatus.connectionInfo ? (
                     <dl className="grid grid-cols-1 gap-2 text-sm">
                       {dbStatus.connectionInfo.viaTunnel && dbStatus.connectionInfo.tunnelTarget && (
-                        <div className="col-span-full flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-medium mb-2">
+                        <div className="col-span-full flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-medium mb-2 min-w-0">
                           <span>🔗</span>
-                          <span>VPS via tunnel SSH — {dbStatus.connectionInfo.tunnelTarget}</span>
+                          <span className="truncate">VPS via tunnel SSH — {dbStatus.connectionInfo.tunnelTarget}</span>
                         </div>
                       )}
                       <div className="flex justify-between gap-3 py-1 border-b border-slate-100 dark:border-slate-800">
@@ -382,7 +389,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* OpenRouter (IA) */}
-                <div className="p-4 md:p-5">
+                <div className="p-4 md:p-5 min-w-0">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">OpenRouter (IA)</h3>
                     <div
@@ -418,7 +425,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Serveur */}
-                <div className="p-4 md:p-5 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-700">
+                <div className="p-4 md:p-5 min-w-0">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Serveur</h3>
                     {systemStatus && (
@@ -469,7 +476,7 @@ export default function AdminDashboardPage() {
 
                 {/* Coolify */}
                 {systemStatus?.coolify?.configured && systemStatus.coolify.servers.length > 0 && (
-                  <div className="p-4 md:p-5 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-700">
+                  <div className="p-4 md:p-5 min-w-0">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Coolify</h3>
                       <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-violet-500/15 text-violet-700 dark:text-violet-400">

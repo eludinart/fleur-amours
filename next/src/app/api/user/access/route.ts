@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { RowDataPacket } from 'mysql2'
 import { requireAuth } from '@/lib/api-auth'
 import { getPool, table, isDbConfigured } from '@/lib/db'
+import { readMonthlyUsage } from '@/lib/db-usage'
+import { readQuotaBonus } from '@/lib/db-quota-bonus'
 
 interface AccessRow extends RowDataPacket {
   token_balance: number
@@ -56,11 +58,28 @@ export async function GET(req: NextRequest) {
 
         const row = Array.isArray(rows) ? rows[0] : null
         if (row) {
+          const usage = await readMonthlyUsage(uid)
+          const bonus = await readQuotaBonus(uid, usage.period)
+          const baseLimits = {
+            chat_messages_per_month: 10,
+            sessions_per_month: 2,
+            tirages_per_month: 5,
+            fleur_submits_per_month: 2,
+          }
+          const limits = {
+            chat_messages_per_month: baseLimits.chat_messages_per_month + (bonus.chat_messages_bonus ?? 0),
+            sessions_per_month: baseLimits.sessions_per_month + (bonus.sessions_bonus ?? 0),
+            tirages_per_month: baseLimits.tirages_per_month + (bonus.tirages_bonus ?? 0),
+            fleur_submits_per_month: baseLimits.fleur_submits_per_month + (bonus.fleur_submits_bonus ?? 0),
+          }
           return NextResponse.json({
             token_balance: Number(row.token_balance) || 0,
             eternal_sap: Number(row.eternal_sap) || 0,
             total_accumulated_eternal: Number(row.total_accumulated_eternal) || 0,
             free_access: true,
+            usage,
+            limits,
+            quota_bonus: bonus,
           })
         }
       } catch {
@@ -73,6 +92,9 @@ export async function GET(req: NextRequest) {
       eternal_sap: 0,
       total_accumulated_eternal: 0,
       free_access: true,
+      usage: { period: new Date().toISOString().slice(0, 7), chat_messages_count: 0, sessions_count: 0, tirages_count: 0, fleur_submits_count: 0 },
+      limits: { chat_messages_per_month: 10, sessions_per_month: 2, tirages_per_month: 5, fleur_submits_per_month: 2 },
+      quota_bonus: { period: new Date().toISOString().slice(0, 7), chat_messages_bonus: 0, sessions_bonus: 0, tirages_bonus: 0, fleur_submits_bonus: 0 },
     })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

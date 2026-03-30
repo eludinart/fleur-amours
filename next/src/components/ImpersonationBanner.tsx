@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { t } from '@/i18n'
+import { api } from '@/lib/api-client'
 
 const BASE = (process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin').replace(/\/+$/, '').trim() || ''
 
@@ -19,14 +20,22 @@ export function ImpersonationBanner() {
     setState(getImpersonationState())
   }, [])
 
-  function handleDisconnect() {
+  async function handleDisconnect() {
     if (typeof window === 'undefined') return
     const restore = sessionStorage.getItem('impersonate_restore')
     if (!restore) return
-    localStorage.setItem('auth_token', restore)
-    sessionStorage.removeItem('impersonate_restore')
-    sessionStorage.removeItem('impersonating')
-    window.location.href = `${BASE}/admin` || '/admin'
+    try {
+      // Web: restaure le cookie httpOnly admin
+      await api.post('/api/auth/admin/impersonate-restore', {})
+    } catch {
+      // ignore
+    } finally {
+      // Capacitor: restaure le Bearer token (si présent)
+      if (restore) localStorage.setItem('auth_token', restore)
+      sessionStorage.removeItem('impersonate_restore')
+      sessionStorage.removeItem('impersonating')
+      window.location.href = `${BASE}/admin` || '/admin'
+    }
   }
 
   const displayName = state.name ?? t('admin.impersonatingUnknown')

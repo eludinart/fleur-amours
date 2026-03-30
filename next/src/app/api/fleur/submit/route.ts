@@ -6,12 +6,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { notifyDuoPartnerSubmitted, submitFleur } from '@/lib/db-fleur'
 import { requireAuth } from '@/lib/api-auth'
+import { incrementMonthlyUsage } from '@/lib/db-usage'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req)
+    const uid = parseInt(userId, 10)
 
     if (!isDbConfigured()) {
       return NextResponse.json(
@@ -21,14 +23,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}))
-    const payload = { ...body, user_id: parseInt(userId, 10) }
+    const payload = { ...body, user_id: uid }
 
     const data = await submitFleur(payload)
 
     const partnerToken = typeof body.partner_token === 'string' ? body.partner_token.trim() : ''
     if (partnerToken) {
-      void notifyDuoPartnerSubmitted(partnerToken, parseInt(userId, 10))
+      void notifyDuoPartnerSubmitted(partnerToken, uid)
     }
+
+    void incrementMonthlyUsage(uid, { fleur_submits: 1 })
 
     const result = {
       id: data.result_id,

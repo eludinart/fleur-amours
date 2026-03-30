@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { authApi } from '@/api/auth'
 import { billingApi } from '@/api/billing'
+import { isCapacitor } from '@/lib/api-client'
 
 const APP_ROLES = ['user', 'admin', 'coach'] as const
 
@@ -47,6 +48,7 @@ type User = {
 type UsageData = {
   usage?: Record<string, number> & { period?: string }
   limits?: Record<string, number>
+  quota_bonus?: Record<string, number> & { period?: string }
   free_access?: boolean
   token_balance?: number
   eternal_sap?: number
@@ -445,8 +447,12 @@ function UserEditPanel({
                 ].map(({ label, key, limit, icon }) => {
                   const used = usageData?.usage?.[key] ?? 0
                   const isFree = usageData?.free_access
-                  const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0
-                  const over = limit && used >= limit && !isFree
+                  const bonus =
+                    (usageData?.quota_bonus?.[key.replace(/_count$/, '_bonus')] as number | undefined) ?? 0
+                  // `limits` renvoyés par l’API incluent déjà le bonus (limite + bonus).
+                  const effectiveLimit = Math.max(0, limit ?? 0)
+                  const pct = effectiveLimit ? Math.min(100, Math.round((used / effectiveLimit) * 100)) : 0
+                  const over = effectiveLimit && used >= effectiveLimit && !isFree
                   return (
                     <div
                       key={key}
@@ -469,10 +475,16 @@ function UserEditPanel({
                                 : 'text-slate-700 dark:text-slate-300'
                           }`}
                         >
-                          {isFree ? '∞' : limit ? `${used}/${limit}` : used}
+                          {isFree
+                            ? '∞'
+                            : effectiveLimit
+                              ? bonus > 0
+                                ? `${used}/${effectiveLimit} (+${bonus})`
+                                : `${used}/${effectiveLimit}`
+                              : used}
                         </span>
                       </div>
-                      {limit && !isFree && (
+                      {effectiveLimit && !isFree && (
                         <div className="h-1 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
@@ -499,8 +511,7 @@ function UserEditPanel({
               Créditer des tokens gratuits
             </h3>
             <p className="text-[10px] text-slate-400">
-              Réduit le compteur d&apos;utilisation pour redonner des tokens à l&apos;utilisateur ce
-              mois-ci.
+              Ajoute un bonus de quota sur la limite mensuelle (limite + bonus).
             </p>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -849,13 +860,15 @@ export default function AdminUsersPage() {
     if (impersonateLoading) return
     setImpersonateLoading(u.id)
     try {
-      sessionStorage.setItem('impersonate_restore', localStorage.getItem('auth_token') || '')
+      // Sur web, le restore se fait via cookie backup côté serveur; on met juste une sentinelle.
+      // Sur Capacitor, on sauvegarde le token localStorage pour restauration.
+      sessionStorage.setItem('impersonate_restore', isCapacitor() ? (localStorage.getItem('auth_token') || '') : 'cookie')
       const res = (await authApi.impersonate(String(u.id))) as {
         token: string
         user: User
       }
       const { token, user: target } = res
-      localStorage.setItem('auth_token', token)
+      if (isCapacitor()) localStorage.setItem('auth_token', token)
       localStorage.setItem('auth_user', JSON.stringify(target))
       sessionStorage.setItem(
         'impersonating',
@@ -864,7 +877,8 @@ export default function AdminUsersPage() {
       const base = (process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin')
         .replace(/\/+$/, '')
         .trim() || '/'
-      window.location.href = base || '/'
+      // Hard reload pour éviter un état React "entre deux" après switch de cookie.
+      window.location.href = (base || '/') + '?impersonated=1'
     } catch (err) {
       console.error('Impersonation failed:', err)
       setImpersonateLoading(null)

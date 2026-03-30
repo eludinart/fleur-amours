@@ -6,12 +6,14 @@ import { requireAuth } from '@/lib/api-auth'
 import { authMe } from '@/lib/db-auth'
 import { save } from '@/lib/db-tarot'
 import { isDbConfigured } from '@/lib/db'
+import { incrementMonthlyUsage } from '@/lib/db-usage'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req)
+    const uid = parseInt(userId, 10)
 
     if (!isDbConfigured()) {
       return NextResponse.json({ error: 'Backend non configuré' }, { status: 503 })
@@ -23,19 +25,20 @@ export async function POST(req: NextRequest) {
 
     let email: string | null = null
     try {
-      const user = await authMe(parseInt(userId, 10))
+      const user = await authMe(uid)
       email = user.email || null
     } catch {
       /* ignore */
     }
 
     const saved = await save({
-      user_id: parseInt(userId, 10),
+      user_id: uid,
       email,
       type,
       payload,
     })
 
+    void incrementMonthlyUsage(uid, { tirages: 1 })
     return NextResponse.json(saved, { status: 201 })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
