@@ -6,6 +6,12 @@ import { getPool, table, exec } from './db'
 
 const PETALS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
 
+function rowScores(r: Record<string, unknown>): Record<string, number> {
+  const scores: Record<string, number> = {}
+  for (const p of PETALS) scores[p] = Number(r[p] ?? 0)
+  return scores
+}
+
 function formatResult(r: Record<string, unknown>): Record<string, unknown> {
   const scores: Record<string, number> = {}
   for (const p of PETALS) scores[p] = Number(r[p] ?? 0)
@@ -307,7 +313,7 @@ export async function getAnswers(
   }
 }
 
-/** Liste les résultats d'un utilisateur (Mes Fleurs) */
+/** Liste les résultats d'un utilisateur (Mes Fleurs) — 3 requêtes max au lieu d’un N+1 par ligne. */
 export async function getMyResults(userId: string): Promise<{ items: Array<Record<string, unknown>> }> {
   const pool = getPool()
   const tRes = table('fleur_amour_results')
@@ -316,54 +322,88 @@ export async function getMyResults(userId: string): Promise<{ items: Array<Recor
     [userId]
   )
 
+  const parentIds = [
+    ...new Set(
+      rows
+        .map((r) => r.parent_id)
+        .filter((id) => id != null)
+        .map((id) => Number(id))
+    ),
+  ]
+  const parentById = new Map<number, RowDataPacket>()
+  if (parentIds.length > 0) {
+    const ph = parentIds.map(() => '?').join(', ')
+    const [parents] = await pool.execute<RowDataPacket[]>(`SELECT * FROM ${tRes} WHERE id IN (${ph})`, parentIds)
+    for (const p of parents) parentById.set(Number(p.id), p)
+  }
+
+  function resolveToken(r: RowDataPacket): string | null {
+    if (r.parent_id != null) {
+      const pr = parentById.get(Number(r.parent_id))
+      return pr?.token != null && pr.token !== '' ? String(pr.token) : null
+    }
+    return r.token != null && r.token !== '' ? String(r.token) : null
+  }
+
+  const tokensNeeded = new Set<string>()
+  for (const r of rows) {
+    const tok = resolveToken(r)
+    if (tok) tokensNeeded.add(tok)
+  }
+
+  const rowsByToken = new Map<string, RowDataPacket[]>()
+  if (tokensNeeded.size > 0) {
+    const tArr = [...tokensNeeded]
+    const ph = tArr.map(() => '?').join(', ')
+    const [allForTokens] = await pool.execute<RowDataPacket[]>(
+      `SELECT * FROM ${tRes} WHERE token IN (${ph})`,
+      tArr
+    )
+    for (const row of allForTokens) {
+      const tok = row.token != null ? String(row.token) : ''
+      if (!tok) continue
+      if (!rowsByToken.has(tok)) rowsByToken.set(tok, [])
+      rowsByToken.get(tok)!.push(row)
+    }
+  }
+
   const seen = new Set<string>()
   const items: Array<Record<string, unknown>> = []
 
   for (const r of rows) {
-    let token: string | null = null
-    let isDuo = false
-
-    if (r.parent_id != null) {
-      const [pRows] = await pool.execute<RowDataPacket[]>(`SELECT token FROM ${tRes} WHERE id = ?`, [r.parent_id])
-      token = pRows[0]?.token ?? null
-      isDuo = true
-    } else {
-      token = r.token ?? null
-      const [cRows] = await pool.execute<RowDataPacket[]>(`SELECT 1 FROM ${tRes} WHERE parent_id = ?`, [r.id])
-      isDuo = cRows.length > 0 || !!r.intended_duo
-    }
-
+    const token = resolveToken(r)
     if (!token || seen.has(token)) continue
     seen.add(token)
+
+    const group = rowsByToken.get(token) ?? [r]
+    const root = group.reduce((a, b) => (Number(a.id) < Number(b.id) ? a : b))
+    const hasPair = group.length >= 2
+    const isDuo = hasPair || !!root.intended_duo
 
     const item: Record<string, unknown> = {
       token,
       type: isDuo ? 'duo' : 'solo',
       id: Number(r.id),
       created_at: r.created_at,
+      scores: isDuo
+        ? rowScores(root as unknown as Record<string, unknown>)
+        : rowScores(r as unknown as Record<string, unknown>),
     }
+
     if (isDuo) {
-      const rootId = r.parent_id ? Number(r.parent_id) : Number(r.id)
-      const [cntRows] = await pool.execute<RowDataPacket[]>(
-        `SELECT COUNT(*) AS cnt FROM ${tRes} WHERE id = ? OR parent_id = ?`,
-        [rootId, rootId]
-      )
-      const count = Number(cntRows[0]?.cnt ?? 0)
-      item.status = count >= 2 ? 'complete' : 'waiting_partner'
+      item.status = hasPair ? 'complete' : 'waiting_partner'
       if (r.parent_id != null) {
-        const [pRows] = await pool.execute<RowDataPacket[]>(`SELECT email FROM ${tRes} WHERE id = ?`, [r.parent_id])
-        item.partner_email = pRows[0]?.email ?? null
+        const pr = parentById.get(Number(r.parent_id))
+        item.partner_email = pr?.email ?? null
       } else {
-        const [cRows] = await pool.execute<RowDataPacket[]>(
-          `SELECT email FROM ${tRes} WHERE parent_id = ? LIMIT 1`,
-          [r.id]
-        )
-        item.partner_email = cRows[0]?.email ?? null
+        const child = group.find((x) => Number(x.parent_id) === Number(r.id))
+        item.partner_email = child?.email ?? null
         if (item.status === 'waiting_partner' && r.invited_email) {
           item.invited_email = String(r.invited_email).trim()
         }
       }
     }
+
     items.push(item)
   }
 

@@ -47,34 +47,60 @@ export async function fetchDashboardData() {
   const prairieLinks = (prairieData as { links?: unknown[] })?.links ?? []
   const prairieMeFleur = (prairieData as { me_fleur?: unknown })?.me_fleur ?? null
 
-  // Détail fleur : avant c’était une boucle await séquentielle (jusqu’à 20 × RTT tunnel + DB).
-  // En parallèle : même coût serveur global, latence perçue proche d’un seul aller-retour.
+  // Scores Fleur : renvoyés par GET /api/fleur/my-results (évite N appels getResult / getDuoResult).
+  // Fallback réseau uniquement pour les entrées sans scores (ex. fleur-beta ou ancien client).
   const fleurSlice = (fleurItems as Record<string, unknown>[]).slice(0, 20)
-  const fleurSettled = await Promise.allSettled(
-    fleurSlice.map(async (item): Promise<Record<string, unknown> | null> => {
-      try {
-        if (item.type === 'duo' && item.token) {
-          const duo = await fleurApi.getDuoResult(item.token as string)
-          const personA = (duo as Record<string, unknown>)?.person_a as Record<string, unknown> | undefined
-          if (personA?.scores) {
-            return { ...item, scores: personA.scores, type: 'duo' }
-          }
-        } else if (item.id) {
-          const res = await fleurApi.getResult(item.id as string)
-          if ((res as Record<string, unknown>)?.scores) {
-            return { ...item, scores: (res as Record<string, unknown>).scores, type: 'solo' }
-          }
-        }
-      } catch {
-        /* ignore */
-      }
-      return null
-    })
-  )
-  const fleurResultsWithScores: Array<Record<string, unknown>> = []
-  for (const r of fleurSettled) {
-    if (r.status === 'fulfilled' && r.value) fleurResultsWithScores.push(r.value)
+
+  function hasServerScores(item: Record<string, unknown>): boolean {
+    const s = item.scores
+    if (!s || typeof s !== 'object' || Array.isArray(s)) return false
+    const o = s as Record<string, unknown>
+    return ['agape', 'philia', 'eros'].some((k) => typeof o[k] === 'number' && !Number.isNaN(Number(o[k])))
   }
+
+  const n = fleurSlice.length
+  const fleurSlots: Array<Record<string, unknown> | undefined> = new Array(n)
+  const fleurPromises: Promise<void>[] = []
+
+  fleurSlice.forEach((item, i) => {
+    if (hasServerScores(item)) {
+      const typ = item.type === 'duo' ? 'duo' : item.type === 'fleur-beta' ? 'fleur-beta' : 'solo'
+      fleurSlots[i] = { ...item, type: typ }
+    } else if ((item.type === 'duo' && item.token) || item.id) {
+      fleurPromises.push(
+        (async () => {
+          try {
+            if (item.type === 'duo' && item.token) {
+              const duo = await fleurApi.getDuoResult(item.token as string)
+              const personA = (duo as Record<string, unknown>)?.person_a as Record<string, unknown> | undefined
+              if (personA?.scores) {
+                fleurSlots[i] = { ...item, scores: personA.scores, type: 'duo' }
+              }
+            } else if (item.id) {
+              const res = await fleurApi.getResult(item.id as string)
+              if ((res as Record<string, unknown>)?.scores) {
+                fleurSlots[i] = {
+                  ...item,
+                  scores: (res as Record<string, unknown>).scores,
+                  type: 'solo',
+                }
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        })()
+      )
+    }
+  })
+
+  if (fleurPromises.length > 0) {
+    await Promise.all(fleurPromises)
+  }
+
+  const fleurResultsWithScores: Array<Record<string, unknown>> = fleurSlots.filter(
+    (x): x is Record<string, unknown> => x != null
+  )
 
   const cardsRevealed =
     (sessions as { cards_drawn?: unknown[] }[]).reduce(

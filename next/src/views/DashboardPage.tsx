@@ -2,7 +2,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -41,23 +41,36 @@ export function DashboardPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const lastFullRefreshRef = useRef(0)
 
   const silverMode = (data?.access?.total_accumulated_eternal ?? 0) >= 200
 
-  const refresh = () => {
-    setLoading(true)
-    setError(null)
+  const refresh = (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true
+    if (!silent) {
+      setLoading(true)
+      setError(null)
+    }
     return fetchDashboardData()
       .then(setData)
-      .catch((e) => setError((e as Error)?.message ?? 'Impossible de charger le dashboard'))
-      .finally(() => setLoading(false))
+      .catch((e) => {
+        if (!silent) setError((e as Error)?.message ?? 'Impossible de charger le dashboard')
+      })
+      .finally(() => {
+        if (!silent) setLoading(false)
+      })
   }
 
   useEffect(() => {
+    lastFullRefreshRef.current = Date.now()
     refresh()
-    // Si on revient sur l’onglet, on recharge (ex. crédit admin, achat, etc.)
+    // Retour onglet : éviter un rechargement complet à chaque fois (tunnel + 6 API + insight).
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') refresh()
+      if (document.visibilityState !== 'visible') return
+      const now = Date.now()
+      if (now - lastFullRefreshRef.current < 120_000) return
+      lastFullRefreshRef.current = now
+      refresh({ silent: true })
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
