@@ -12,6 +12,25 @@ const DB_USER = process.env.MARIADB_USER ?? 'mariadb'
 const DB_PASSWORD = process.env.MARIADB_PASSWORD ?? process.env.MARIADB_PASS ?? ''
 const DB_PREFIX = process.env.DB_PREFIX ?? 'wp_'
 
+const POOL_CONNECTION_LIMIT = (() => {
+  const raw = process.env.MARIADB_POOL_LIMIT ?? ''
+  const n = parseInt(raw, 10)
+  return Number.isFinite(n) && n > 0 ? n : 2
+})()
+
+const POOL_QUEUE_LIMIT = (() => {
+  const raw = process.env.MARIADB_POOL_QUEUE_LIMIT ?? ''
+  const n = parseInt(raw, 10)
+  return Number.isFinite(n) && n >= 0 ? n : 10
+})()
+
+const POOL_IDLE_TIMEOUT_MS = (() => {
+  const raw = process.env.MARIADB_POOL_IDLE_TIMEOUT_MS ?? ''
+  const n = parseInt(raw, 10)
+  // mysql2 default is 60000; keep it explicit so we can tune in prod.
+  return Number.isFinite(n) && n >= 0 ? n : 60_000
+})()
+
 declare global {
   // eslint-disable-next-line no-var
   var __fleur_mariadb_pool: mysql.Pool | undefined
@@ -38,8 +57,11 @@ export function getPool(): mysql.Pool {
       password: DB_PASSWORD,
       charset: 'utf8mb4',
       waitForConnections: true,
-      connectionLimit: 3,
-      queueLimit: 5,
+      connectionLimit: POOL_CONNECTION_LIMIT,
+      // Avoid keeping many idle sockets open when MariaDB has a low max_connections.
+      maxIdle: POOL_CONNECTION_LIMIT,
+      idleTimeout: POOL_IDLE_TIMEOUT_MS,
+      queueLimit: POOL_QUEUE_LIMIT,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
     })

@@ -27,7 +27,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [items, setItems] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const tablesInitRef = useRef(false)
 
   const fetchUnread = useCallback(async () => {
     const u = user as { id?: string; email?: string } | null
@@ -101,10 +100,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setItems([])
       return
     }
-    if (!tablesInitRef.current) {
-      tablesInitRef.current = true
-      notificationsApi.ensureTables().catch(() => {})
-    }
+    // Pas d'appel à ensure_tables ici : GET /api/notifications/unread_count et list
+    // appellent déjà ensureNotificationsTables() côté serveur (évite DDL en double + ~10–15s).
     fetchUnread()
     pollRef.current = setInterval(fetchUnread, POLL_INTERVAL)
     return () => {

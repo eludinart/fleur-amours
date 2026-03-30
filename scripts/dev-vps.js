@@ -110,6 +110,12 @@ setTimeout(() => {
     MARIADB_DATABASE: env.LOCAL_DB || 'default',
     MARIADB_USER: env.LOCAL_USER || 'mariadb',
     MARIADB_PASSWORD: env.LOCAL_PASS || '',
+    // Dev tunnel: keep the pool tiny to avoid hitting low `max_connections`
+    // on the remote MariaDB (often shared with WP / other services).
+    // 2 = bon compromis dev : moins de sérialisation qu'avec 1, toujours faible vs max_connections
+    MARIADB_POOL_LIMIT: env.MARIADB_POOL_LIMIT || '2',
+    MARIADB_POOL_QUEUE_LIMIT: env.MARIADB_POOL_QUEUE_LIMIT || '50',
+    MARIADB_POOL_IDLE_TIMEOUT_MS: env.MARIADB_POOL_IDLE_TIMEOUT_MS || '15000',
     MARIADB_VIA_TUNNEL: 'true',
     MARIADB_TUNNEL_TARGET: env.SSH_VPS_HOST || env.VPS_HOST || '',
     USE_NODE_API: 'true',
