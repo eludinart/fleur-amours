@@ -12,10 +12,21 @@ const DB_USER = process.env.MARIADB_USER ?? 'mariadb'
 const DB_PASSWORD = process.env.MARIADB_PASSWORD ?? process.env.MARIADB_PASS ?? ''
 const DB_PREFIX = process.env.DB_PREFIX ?? 'wp_'
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __fleur_mariadb_pool: mysql.Pool | undefined
+}
+
 let pool: mysql.Pool | null = null
 
 export function getPool(): mysql.Pool {
+  // In Next.js dev (HMR), modules can be re-evaluated and a module-scoped singleton
+  // may be recreated, leaking MariaDB connections. Cache the pool on globalThis.
   if (!pool) {
+    if (globalThis.__fleur_mariadb_pool) {
+      pool = globalThis.__fleur_mariadb_pool
+      return pool
+    }
     if (!DB_PASSWORD) {
       throw new Error('MARIADB_PASSWORD requis pour la connexion MariaDB')
     }
@@ -29,7 +40,10 @@ export function getPool(): mysql.Pool {
       waitForConnections: true,
       connectionLimit: 3,
       queueLimit: 5,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 0,
     })
+    globalThis.__fleur_mariadb_pool = pool
   }
   return pool
 }

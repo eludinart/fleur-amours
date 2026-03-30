@@ -102,12 +102,10 @@ export async function addQuotaBonus(
     }
   }
   if (updates.length > 0) {
-    params.push(userId)
-    // @ts-expect-error - period string in params ok
-    params.push(period as unknown as number)
+    const sqlParams: (string | number)[] = [...params, userId, period]
     await pool.execute(
       `UPDATE ${TBL()} SET ${updates.join(', ')}, updated_at = NOW() WHERE user_id = ? AND period = ?`,
-      params as unknown as (string | number)[]
+      sqlParams
     )
   }
 

@@ -95,12 +95,10 @@ export async function incrementMonthlyUsage(
     }
   }
   if (updates.length === 0) return
-  params.push(userId)
-  // @ts-expect-error - period string in params is ok for mysql2
-  params.push(period as unknown as number)
+  const sqlParams: (string | number)[] = [...params, userId, period]
   await pool.execute(
     `UPDATE ${TBL()} SET ${updates.join(', ')}, updated_at = NOW() WHERE user_id = ? AND period = ?`,
-    params as unknown as (string | number)[]
+    sqlParams
   )
 }
 
@@ -131,12 +129,10 @@ export async function creditMonthlyUsage(
     }
   }
   if (updates.length === 0) return
-  params.push(userId)
-  // @ts-expect-error - period string in params is ok for mysql2
-  params.push(period as unknown as number)
+  const sqlParams: (string | number)[] = [...params, userId, period]
   await pool.execute(
     `UPDATE ${TBL()} SET ${updates.join(', ')}, updated_at = NOW() WHERE user_id = ? AND period = ?`,
-    params as unknown as (string | number)[]
+    sqlParams
   )
 }
 
