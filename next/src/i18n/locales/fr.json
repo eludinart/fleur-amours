@@ -197,7 +197,9 @@
     "pushPrimingBody": "Pour un bon fonctionnement de l’application, nous te recommandons d’accepter les notifications : tu seras averti des nouveaux messages (Clairière, coach…) même lorsque l’app n’est pas ouverte.",
     "pushPrimingHint": "Tu pourras changer ce réglage plus tard dans les paramètres du navigateur ou de ton téléphone.",
     "pushPrimingContinue": "Continuer et autoriser",
-    "pushPrimingLater": "Plus tard"
+    "pushPrimingLater": "Plus tard",
+    "formBack": "Écran précédent",
+    "formBackAria": "Revenir à l’écran ou au formulaire précédent"
   },
 
   "onboarding": {
@@ -267,6 +269,19 @@
     "coachingOpenHeading": "Conversation ouverte — reprendre tout de suite",
     "coachingHistorySection": "Historique accompagnement",
     "coachingPickerLink": "Page choix accompagnant"
+  },
+
+  "fleurZen": {
+    "title": "Fleur d'ÅmÔurs",
+    "subtitle": "Tes huit pétales · navigation dans le temps",
+    "chromaticHint": "Le curseur temporel replace la fleur sur un instant récent ; « Présent » montre la synthèse actuelle.",
+    "detailsStats": "Détails & statistiques",
+    "backToFlower": "Vue fleur",
+    "timeScrollTitle": "Time-scroll",
+    "timeScrollAria": "Naviguer dans le temps — présent ou instantanés récents",
+    "timeNow": "Présent",
+    "timeAggregate": "Synthèse",
+    "timeScrollSlider": "Curseur temporel"
   },
 
   "sap": {

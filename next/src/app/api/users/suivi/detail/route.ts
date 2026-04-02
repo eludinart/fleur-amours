@@ -6,12 +6,13 @@ import { requireAdminOrCoach } from '@/lib/api-auth'
 import { getPool, isDbConfigured, table } from '@/lib/db'
 import type { RowDataPacket } from 'mysql2'
 import { getCoachPatientSnapshot } from '@/lib/db-coach-patient-fiches'
+import { fetchPatientStaffOverview } from '@/lib/db-patient-staff-detail'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    const { userId, isAdmin, isCoach } = await requireAdminOrCoach(req)
+    const { userId, isAdmin } = await requireAdminOrCoach(req)
 
     const emailQuery = String(new URL(req.url).searchParams.get('email') ?? '').trim()
     const emailNorm = String(emailQuery ?? '').trim().toLowerCase()
@@ -23,9 +24,12 @@ export async function GET(req: NextRequest) {
 
     const pool = getPool()
     const tSessions = table('fleur_sessions')
-    const coachUserId = isCoach ? parseInt(userId, 10) : null
+    // Même clé qu’à l’upsert (POST coach-patient-fiche) : viewer admin ou coach.
+    const viewerId = parseInt(userId, 10)
     const coachPatientSnapshotPromise =
-      coachUserId && emailNorm ? getCoachPatientSnapshot({ coachUserId, patientEmail: emailNorm }) : Promise.resolve(null)
+      Number.isFinite(viewerId) && viewerId > 0 && emailNorm
+        ? getCoachPatientSnapshot({ coachUserId: viewerId, patientEmail: emailNorm })
+        : Promise.resolve(null)
 
     const petalKeys = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
     const DEFICIT_OMBRE_MIN = 0.02
@@ -85,6 +89,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    const patient_overview = await fetchPatientStaffOverview(pool, emailNorm)
+
     const [rows] = await pool.execute<RowDataPacket[]>(
       `
         SELECT
@@ -118,6 +124,7 @@ export async function GET(req: NextRequest) {
         shadow_events: [],
         sessions: [],
         coach_patient_snapshot: await coachPatientSnapshotPromise,
+        patient_overview,
       })
     }
 
@@ -291,6 +298,7 @@ export async function GET(req: NextRequest) {
       // Champs supplémentaires possibles côté UI (non requis mais pratiques)
       shadow_urgent,
       coach_patient_snapshot: await coachPatientSnapshotPromise,
+      patient_overview,
     })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

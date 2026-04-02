@@ -78,6 +78,27 @@ export async function ensurePromoTables(exec: SqlExecutor): Promise<void> {
       INDEX idx_redeemed_at (redeemed_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `)
+
+  // Migrations idempotentes (compat avec anciens schémas)
+  // MariaDB supporte ADD COLUMN IF NOT EXISTS.
+  const migrations = [
+    `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS promo_code VARCHAR(60) NOT NULL DEFAULT '—'`,
+    `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS promo_note TEXT NULL DEFAULT NULL`,
+    `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS free_until DATETIME NULL DEFAULT NULL`,
+    `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS unlimited TINYINT(1) NOT NULL DEFAULT 0`,
+    `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS active TINYINT(1) NOT NULL DEFAULT 1`,
+    `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS redeemed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS duration_days INT NULL DEFAULT NULL`,
+    `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS max_uses INT NULL DEFAULT NULL`,
+    `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS uses_count INT NOT NULL DEFAULT 0`,
+    `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS expires_at DATETIME NULL DEFAULT NULL`,
+    `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS note TEXT NULL DEFAULT NULL`,
+  ]
+  for (const sql of migrations) {
+    await exec.execute(sql).catch(() => {
+      /* ignore */
+    })
+  }
 }
 
 export async function listPromoCodes(): Promise<PromoCodeRow[]> {
@@ -162,12 +183,30 @@ export async function listRedemptions(params?: { user_id?: number }): Promise<Re
   const userId = params?.user_id ? Math.max(1, Math.floor(params.user_id)) : null
   const where = userId ? 'WHERE user_id = ?' : ''
   const values = userId ? [userId] : []
-  const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, user_id, promo_code, redeemed_at, free_until, unlimited, active, promo_note
-     FROM ${TBL_REDS()} ${where}
-     ORDER BY redeemed_at DESC LIMIT 500`,
-    values
-  )
+  let rows: RowDataPacket[]
+  try {
+    const [r] = await pool.execute<RowDataPacket[]>(
+      `SELECT id, user_id, promo_code, redeemed_at, free_until, unlimited, active, promo_note
+       FROM ${TBL_REDS()} ${where}
+       ORDER BY redeemed_at DESC LIMIT 500`,
+      values
+    )
+    rows = r
+  } catch (e: unknown) {
+    // Schéma legacy : certaines DB avaient `code` au lieu de `promo_code`.
+    const msg = String((e as Error)?.message ?? '')
+    if (msg.includes('Unknown column') && msg.includes('promo_code')) {
+      const [r] = await pool.execute<RowDataPacket[]>(
+        `SELECT id, user_id, code as promo_code, redeemed_at, free_until, unlimited, active, promo_note
+         FROM ${TBL_REDS()} ${where}
+         ORDER BY redeemed_at DESC LIMIT 500`,
+        values
+      )
+      rows = r
+    } else {
+      throw e
+    }
+  }
   return rows.map((r) => ({
     id: Number(r.id),
     user_id: Number(r.user_id),

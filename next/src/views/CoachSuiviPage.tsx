@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { sessionsApi } from '@/api/sessions'
 import { aiApi } from '@/api/ai'
@@ -202,6 +203,270 @@ type SuiviDetailData = {
     cached_at?: string
     provider?: string
   } | null
+  patient_overview?: {
+    account: {
+      user_id: number
+      email: string
+      login: string
+      display_name: string
+      registered_at: string | null
+      pseudo: string | null
+      bio_preview: string | null
+      avatar_emoji: string | null
+      app_role: string | null
+      user_status: number | null
+    } | null
+    linked_coaches: Array<{ user_id: number; email: string; display_name: string }>
+    questionnaire_results: Array<{
+      id: number
+      created_at: string | null
+      token: string
+      intended_duo: boolean
+      scores: Record<string, number>
+    }>
+    dreamscape_walks: Array<{
+      id: number
+      created_at: string | null
+      poetic_preview: string | null
+      petals: Record<string, number>
+    }>
+    tarot_readings: Array<{ id: string; type: string; created_at: string | null; summary: string }>
+    science: {
+      generated_at: string
+      generation_version: string
+      facts_count: number
+      hypotheses_count: number
+      facts_preview: string[]
+      hypotheses_preview: string[]
+    } | null
+    sap_total: number | null
+    usage_month: {
+      period: string
+      chat_messages_count: number
+      sessions_count: number
+      tirages_count: number
+      fleur_submits_count: number
+    } | null
+  }
+}
+
+function PatientEnsembleTab({
+  overview,
+  email,
+}: {
+  overview: NonNullable<SuiviDetailData['patient_overview']>
+  email: string
+}) {
+  const acc = overview.account
+  const topPetal = (scores: Record<string, number>) =>
+    PETAL_KEYS.reduce(
+      (best, k) => ((scores[k] ?? 0) > (scores[best] ?? 0) ? k : best),
+      PETAL_KEYS[0]
+    )
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40 p-4">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+          Compte et profil
+        </p>
+        {acc ? (
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-slate-700 dark:text-slate-200">
+            <div className="sm:col-span-2 flex items-center gap-2">
+              <span className="text-2xl">{acc.avatar_emoji || '🌸'}</span>
+              <div>
+                <p className="font-semibold">{acc.pseudo || acc.display_name || acc.login}</p>
+                <p className="text-xs text-slate-400 break-all">{acc.email}</p>
+              </div>
+            </div>
+            <dt className="text-slate-400">Identifiant</dt>
+            <dd className="font-mono text-xs">{acc.login}</dd>
+            <dt className="text-slate-400">Inscription</dt>
+            <dd>{acc.registered_at ? formatDate(acc.registered_at) : '—'}</dd>
+            <dt className="text-slate-400">Rôle app</dt>
+            <dd>{acc.app_role || '—'}</dd>
+            {acc.bio_preview && (
+              <>
+                <dt className="text-slate-400 sm:col-span-2">Bio</dt>
+                <dd className="sm:col-span-2 text-xs leading-relaxed">{acc.bio_preview}</dd>
+              </>
+            )}
+          </dl>
+        ) : (
+          <p className="text-sm text-slate-500">
+            Aucun compte WordPress trouvé pour <span className="font-mono">{email}</span>. Des
+            données peuvent exister quand même (questionnaire ou tirages saisis avec cet email).
+          </p>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/15 p-4">
+        <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">
+          Coaches liés (acceptés)
+        </p>
+        {overview.linked_coaches.length === 0 ? (
+          <p className="text-xs text-slate-500">Aucune relation coach enregistrée.</p>
+        ) : (
+          <ul className="space-y-2">
+            {overview.linked_coaches.map((c) => (
+              <li key={c.user_id} className="text-sm flex flex-wrap gap-x-2 gap-y-0.5">
+                <span className="font-medium text-slate-800 dark:text-slate-100">
+                  {c.display_name || c.email}
+                </span>
+                <span className="text-xs text-slate-400 font-mono break-all">{c.email}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+            Sève (SAP)
+          </p>
+          <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+            {overview.sap_total != null ? overview.sap_total : '—'}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+            Usage mois courant
+          </p>
+          {overview.usage_month ? (
+            <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5">
+              <li>Messages chat : {overview.usage_month.chat_messages_count}</li>
+              <li>Sessions (compteur usage) : {overview.usage_month.sessions_count}</li>
+              <li>Tirages : {overview.usage_month.tirages_count}</li>
+              <li>Questionnaires : {overview.usage_month.fleur_submits_count}</li>
+              <li className="text-slate-400">{overview.usage_month.period}</li>
+            </ul>
+          ) : (
+            <p className="text-xs text-slate-500">Pas de ligne d’usage pour ce mois.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+          Science de la Fleur (profil agrégé)
+        </p>
+        {!overview.science ? (
+          <p className="text-xs text-slate-500">Aucun profil science en cache.</p>
+        ) : (
+          <div className="space-y-3 text-xs">
+            <p className="text-slate-500">
+              Généré le {formatDate(overview.science.generated_at)} · {overview.science.generation_version}{' '}
+              · {overview.science.facts_count} fait(s), {overview.science.hypotheses_count} hypothèse(s)
+            </p>
+            {overview.science.facts_preview.length > 0 && (
+              <div>
+                <p className="font-semibold text-slate-600 dark:text-slate-300 mb-1">Faits (extrait)</p>
+                <ul className="list-disc pl-4 space-y-1 text-slate-600 dark:text-slate-400">
+                  {overview.science.facts_preview.map((t, i) => (
+                    <li key={i}>{t}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {overview.science.hypotheses_preview.length > 0 && (
+              <div>
+                <p className="font-semibold text-slate-600 dark:text-slate-300 mb-1">Hypothèses (extrait)</p>
+                <ul className="list-disc pl-4 space-y-1 text-slate-600 dark:text-slate-400">
+                  {overview.science.hypotheses_preview.map((t, i) => (
+                    <li key={i}>{t}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+          Questionnaires Fleur d&apos;AmOurs (24 questions)
+        </p>
+        {overview.questionnaire_results.length === 0 ? (
+          <p className="text-xs text-slate-500">Aucun résultat enregistré.</p>
+        ) : (
+          <ul className="space-y-2">
+            {overview.questionnaire_results.map((q) => {
+              const dominant = topPetal(q.scores)
+              return (
+                <li
+                  key={q.id}
+                  className="text-xs border border-slate-100 dark:border-slate-800 rounded-lg p-2.5 bg-white/40 dark:bg-slate-800/30"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      {q.created_at ? formatDate(q.created_at) : '—'}
+                    </span>
+                    {q.intended_duo && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300">
+                        Duo
+                      </span>
+                    )}
+                    <span className="text-slate-400">#{q.id}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      max · {PETAL_LABELS[dominant] ?? dominant}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1 font-mono truncate" title={q.token}>
+                    token {q.token.slice(0, 12)}…
+                  </p>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+          Promenades oniriques (Dreamscape)
+        </p>
+        {overview.dreamscape_walks.length === 0 ? (
+          <p className="text-xs text-slate-500">Aucune promenade sauvegardée.</p>
+        ) : (
+          <ul className="space-y-2 max-h-64 overflow-y-auto">
+            {overview.dreamscape_walks.map((d) => (
+              <li
+                key={d.id}
+                className="text-xs border border-slate-100 dark:border-slate-800 rounded-lg p-2.5"
+              >
+                <span className="font-semibold text-slate-600 dark:text-slate-300">
+                  {d.created_at ? formatDate(d.created_at) : '—'} · #{d.id}
+                </span>
+                {d.poetic_preview && (
+                  <p className="mt-1 text-slate-500 dark:text-slate-400 leading-relaxed">{d.poetic_preview}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+          Tirages tarot
+        </p>
+        {overview.tarot_readings.length === 0 ? (
+          <p className="text-xs text-slate-500">Aucun tirage lié à ce compte / email.</p>
+        ) : (
+          <ul className="space-y-1.5 max-h-56 overflow-y-auto">
+            {overview.tarot_readings.map((t) => (
+              <li key={t.id} className="text-xs flex flex-wrap gap-x-2 text-slate-600 dark:text-slate-300">
+                <span className="text-slate-400">{t.created_at ? formatDate(t.created_at) : '—'}</span>
+                <span className="font-medium">{t.type}</span>
+                <span>{t.summary}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function UserDetailPanel({
@@ -215,9 +480,13 @@ function UserDetailPanel({
   const staffChatBase = isAdmin ? '/admin/chat' : '/coach/chat'
   const [data, setData] = useState<SuiviDetailData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('fleur')
+  const [tab, setTab] = useState('ensemble')
   const [patientFicheLoading, setPatientFicheLoading] = useState(false)
   const [patientFicheError, setPatientFicheError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setTab('ensemble')
+  }, [email])
 
   useEffect(() => {
     setLoading(true)
@@ -306,8 +575,23 @@ function UserDetailPanel({
             </Link>
           </div>
 
-          <div className="flex gap-1 mt-3">
+          {data && data.session_count === 0 && (
+            <div className="mt-3 rounded-xl border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20 px-3 py-2.5 text-xs text-amber-900 dark:text-amber-100/90 leading-relaxed">
+              <p className="font-semibold text-amber-950 dark:text-amber-50">
+                Aucune session Fleur pour cet email
+              </p>
+              <p className="mt-1 text-amber-800/90 dark:text-amber-200/80">
+                Les onglets Fleur, Ombres et Séances s’appuient sur les sessions enregistrées en base avec cet email (parcours Fleur terminé en étant connecté). Si vous êtes en local, la base peut être vide ou différente de la production.
+              </p>
+              <p className="mt-1.5 text-amber-800/90 dark:text-amber-200/80">
+                <span className="font-medium">Fiche patient :</span> ouvrez l’onglet dédié puis utilisez « Générer la fiche patient » pour un canevas (IA ou texte générique sans clé API).
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-1 mt-3 flex-wrap">
             {[
+              { id: 'ensemble', label: '📇 Vue d’ensemble' },
               { id: 'fleur', label: '🌸 Fleur' },
               {
                 id: 'ombres',
@@ -343,6 +627,14 @@ function UserDetailPanel({
             <p className="text-sm text-slate-400 italic text-center py-8">
               Impossible de charger les données.
             </p>
+          ) : tab === 'ensemble' ? (
+            data.patient_overview ? (
+              <PatientEnsembleTab overview={data.patient_overview} email={email} />
+            ) : (
+              <p className="text-sm text-slate-500">
+                Synthèse patient indisponible (API à jour requise).
+              </p>
+            )
           ) : tab === 'fleur' ? (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row gap-6 items-start">
@@ -999,7 +1291,10 @@ function GlobalStats({ users }: { users: SuiviUser[] }) {
   )
 }
 
-export default function CoachSuiviPage() {
+function CoachSuiviPageInner() {
+  const router = useRouter()
+  const pathname = usePathname() || '/'
+  const searchParams = useSearchParams()
   const [users, setUsers] = useState<SuiviUser[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchInput, setSearchInput] = useState('')
@@ -1008,6 +1303,19 @@ export default function CoachSuiviPage() {
   const [selected, setSelected] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const debouncedSearch = useDebounce(searchInput, 300)
+
+  const emailFromUrl = searchParams.get('email')?.trim() ?? ''
+
+  useEffect(() => {
+    if (emailFromUrl) setSelected(emailFromUrl)
+  }, [emailFromUrl])
+
+  function clearEmailQuery() {
+    const next = new URLSearchParams(searchParams.toString())
+    next.delete('email')
+    const q = next.toString()
+    router.replace(q ? `${pathname}?${q}` : pathname)
+  }
 
   const load = useCallback(() => {
     setLoading(true)
@@ -1128,7 +1436,12 @@ export default function CoachSuiviPage() {
               <UserCard
                 key={user.email}
                 user={user}
-                onClick={() => setSelected(user.email)}
+                onClick={() => {
+                  setSelected(user.email)
+                  const next = new URLSearchParams(searchParams.toString())
+                  next.set('email', user.email)
+                  router.replace(`${pathname}?${next.toString()}`)
+                }}
               />
             ))}
           </div>
@@ -1136,8 +1449,28 @@ export default function CoachSuiviPage() {
       </div>
 
       {selected && (
-        <UserDetailPanel email={selected} onClose={() => setSelected(null)} />
+        <UserDetailPanel
+          email={selected}
+          onClose={() => {
+            setSelected(null)
+            clearEmailQuery()
+          }}
+        />
       )}
     </div>
+  )
+}
+
+export default function CoachSuiviPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex-1 min-h-0 overflow-y-auto flex items-center justify-center py-20">
+          <span className="w-10 h-10 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <CoachSuiviPageInner />
+    </Suspense>
   )
 }

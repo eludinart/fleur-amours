@@ -3,12 +3,20 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { coachPatientsApi } from '@/api/coachPatients'
 import { sapApi } from '@/api/billing'
 import { useAuth } from '@/contexts/AuthContext'
 import { INTENTIONS } from '@/api/social'
 import { FlowerSVG } from '@/components/FlowerSVG'
 import { useStore } from '@/store/useStore'
+
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
+
+function pathWithoutBase(pathname: string): string {
+  if (!pathname) return '/'
+  return pathname.startsWith(basePath) ? pathname.slice(basePath.length) || '/' : pathname
+}
 
 const PETAL_IDS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros']
 
@@ -22,6 +30,10 @@ function petalsArrayToRecord(petals) {
 }
 
 export default function CoachPatientelePage() {
+  const pathname = usePathname() || ''
+  const routeRoot = pathWithoutBase(pathname).split('/').filter(Boolean)[0]
+  const suiviBase = routeRoot === 'admin' ? '/admin/suivi' : '/coach/suivi'
+
   const { isAdmin, isCoach } = useAuth()
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
@@ -235,25 +247,38 @@ export default function CoachPatientelePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               {patients.map((p) => {
                 const petalsRecord = petalsArrayToRecord(p.fleurMoyenne?.petals)
+                const suiviHref =
+                  p.email && String(p.email).trim()
+                    ? `${suiviBase}?email=${encodeURIComponent(String(p.email).trim())}`
+                    : null
                 return (
                   <div
                     key={p.patientUserId}
                     className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/40 p-5 space-y-3"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="shrink-0">
-                        <FlowerSVG
-                          petals={petalsRecord}
-                          variant="silhouette"
-                          size={92}
-                          animate={false}
-                          showLabels={false}
-                          showScores={false}
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{p.pseudo}</p>
-                        {p.email ? <p className="text-xs text-slate-500 dark:text-slate-400">{p.email}</p> : null}
+                    {suiviHref ? (
+                      <Link
+                        href={suiviHref}
+                        className="flex items-start gap-4 rounded-xl -m-1 p-1 -mt-1 transition-colors hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50"
+                      >
+                        <div className="shrink-0">
+                          <FlowerSVG
+                            petals={petalsRecord}
+                            variant="silhouette"
+                            size={92}
+                            animate={false}
+                            showLabels={false}
+                            showScores={false}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{p.pseudo}</p>
+                            <span className="shrink-0 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                              Suivi détaillé →
+                            </span>
+                          </div>
+                          {p.email ? <p className="text-xs text-slate-500 dark:text-slate-400">{p.email}</p> : null}
                         <div className="flex flex-wrap gap-2 mt-2 items-center">
                           <span className="text-[10px] px-2 py-1 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-200 border border-violet-200/60 dark:border-violet-800/60 font-semibold">
                             SAP : {p.sapBalance ?? 0}
@@ -305,8 +330,55 @@ export default function CoachPatientelePage() {
                             Note : synthèse sans contexte Clairière/coach.
                           </p>
                         ) : null}
+                        </div>
+                      </Link>
+                    ) : (
+                      <div
+                        className="flex items-start gap-4 rounded-xl opacity-90"
+                        title="Email non renseigné — ouverture du suivi détaillé impossible"
+                      >
+                        <div className="shrink-0">
+                          <FlowerSVG
+                            petals={petalsRecord}
+                            variant="silhouette"
+                            size={92}
+                            animate={false}
+                            showLabels={false}
+                            showScores={false}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{p.pseudo}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Pas d&apos;email — suivi détaillé indisponible
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-2 items-center">
+                            <span className="text-[10px] px-2 py-1 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-200 border border-violet-200/60 dark:border-violet-800/60 font-semibold">
+                              SAP : {p.sapBalance ?? 0}
+                            </span>
+                            <span
+                              className={`text-[10px] px-2 py-1 rounded-full border font-medium ${
+                                p.acquisitionChannel === 'direct'
+                                  ? 'bg-teal-50 dark:bg-teal-950/30 border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-200'
+                                  : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200'
+                              }`}
+                            >
+                              {p.acquisitionChannel === 'direct' ? 'Direct · 0 %' : 'Marketplace · 20 %'}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {(p.intentionIds ?? []).map((cid) => (
+                              <span
+                                key={cid}
+                                className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
+                              >
+                                {intentionLabel.get(cid) ?? cid}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <Link

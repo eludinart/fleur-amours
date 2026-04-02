@@ -174,7 +174,9 @@
     "pushPrimingBody": "For the app to work as intended, we recommend allowing notifications: you’ll be alerted to new messages (Glade, coach, etc.) even when the app isn’t open.",
     "pushPrimingHint": "You can change this later in your browser or device settings.",
     "pushPrimingContinue": "Continue and allow",
-    "pushPrimingLater": "Not now"
+    "pushPrimingLater": "Not now",
+    "formBack": "Previous screen",
+    "formBackAria": "Go back to the previous screen or form"
   },
 
   "onboarding": {
@@ -244,6 +246,19 @@
     "coachingOpenHeading": "Open conversation — continue now",
     "coachingHistorySection": "Coaching history",
     "coachingPickerLink": "Choose a coach"
+  },
+
+  "fleurZen": {
+    "title": "Fleur d'ÅmÔurs",
+    "subtitle": "Your eight petals · time navigation",
+    "chromaticHint": "The time scrubber shows a recent snapshot; “Now” shows the current blend.",
+    "detailsStats": "Details & statistics",
+    "backToFlower": "Flower view",
+    "timeScrollTitle": "Time-scroll",
+    "timeScrollAria": "Move through time — present or recent snapshots",
+    "timeNow": "Now",
+    "timeAggregate": "Blend",
+    "timeScrollSlider": "Time scrubber"
   },
 
   "sap": {

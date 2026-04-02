@@ -172,7 +172,9 @@
     "pushPrimingBody": "Para que la aplicación funcione correctamente, te recomendamos aceptar las notificaciones: recibirás avisos de mensajes nuevos (Clairière, coach…) incluso cuando la app no esté abierta.",
     "pushPrimingHint": "Podrás cambiar esta opción más tarde en los ajustes del navegador o del teléfono.",
     "pushPrimingContinue": "Continuar y permitir",
-    "pushPrimingLater": "Ahora no"
+    "pushPrimingLater": "Ahora no",
+    "formBack": "Pantalla anterior",
+    "formBackAria": "Volver a la pantalla o formulario anterior"
   },
 
   "onboarding": {
@@ -242,6 +244,19 @@
     "coachingOpenHeading": "Conversación abierta — continuar ahora",
     "coachingHistorySection": "Historial de acompañamiento",
     "coachingPickerLink": "Elegir acompañante"
+  },
+
+  "fleurZen": {
+    "title": "Fleur d'ÅmÔurs",
+    "subtitle": "Tus ocho pétalos · tiempo",
+    "chromaticHint": "El control temporal muestra un instante reciente; «Ahora» muestra la síntesis actual.",
+    "detailsStats": "Detalles y estadísticas",
+    "backToFlower": "Vista flor",
+    "timeScrollTitle": "Time-scroll",
+    "timeScrollAria": "Navegar en el tiempo — presente o instantáneas",
+    "timeNow": "Ahora",
+    "timeAggregate": "Síntesis",
+    "timeScrollSlider": "Control temporal"
   },
 
   "sap": {

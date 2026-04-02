@@ -12,6 +12,57 @@ import { spawn, spawnSync } from 'child_process'
 import { readFileSync, existsSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { platform } from 'os'
+
+/** Next `npm run dev` dans next/package.json */
+const NEXT_DEV_PORT = 3001
+
+/**
+ * Tue les processus qui écoutent déjà sur le port (reliquats d’un dev.vps précédent).
+ * Sous Windows : netstat + taskkill /T (plus fiable que Get-NetTCPConnection pour [::]:port).
+ */
+function killListenersOnPortWin(port) {
+  const r = spawnSync('cmd', ['/c', 'netstat -ano'], {
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024,
+  })
+  const pids = new Set()
+  for (const line of (r.stdout || '').split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed.startsWith('TCP')) continue
+    const parts = trimmed.split(/\s+/).filter(Boolean)
+    if (parts.length < 5) continue
+    const localAddr = parts[1]
+    const state = parts[3]
+    const pid = parts[parts.length - 1]
+    if (!/LISTEN/i.test(state)) continue
+    const lm = localAddr.match(/:(\d+)$/)
+    if (!lm || Number(lm[1]) !== port) continue
+    if (!/^\d+$/.test(pid)) continue
+    pids.add(pid)
+  }
+  for (const pid of pids) {
+    if (pid === String(process.pid)) continue
+    spawnSync('taskkill', ['/F', '/T', '/PID', pid], { stdio: 'ignore' })
+  }
+}
+
+function killListenersOnPort(port) {
+  const n = Number(port)
+  if (!Number.isFinite(n) || n < 1 || n > 65535) return
+  if (platform() === 'win32') {
+    killListenersOnPortWin(n)
+    return
+  }
+  const r = spawnSync('sh', ['-c', `lsof -nP -iTCP:${n} -sTCP:LISTEN -t 2>/dev/null`], {
+    encoding: 'utf8',
+  })
+  const pids = [...new Set(r.stdout.trim().split(/\n/).filter(Boolean))]
+  for (const pid of pids) {
+    if (pid === String(process.pid)) continue
+    spawnSync('kill', ['-9', pid], { stdio: 'ignore' })
+  }
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
@@ -46,6 +97,13 @@ const dbTarget = 'localhost'
 
 console.log(`\n🔗 Tunnel SSH → ${SSH_USER}@${SSH_HOST}  localhost:${TUNNEL_PORT} → ${dbTarget}:${MARIADB_PORT}`)
 console.log('   (nécessite le relais socat sur le VPS : voir scripts/setup-mariadb-tunnel-vps.sh)\n')
+
+const portsToFree = [...new Set([Number(TUNNEL_PORT), NEXT_DEV_PORT])].filter(
+  (p) => Number.isFinite(p) && p > 0,
+)
+console.log(`Arrêt des processus encore en écoute sur les ports : ${portsToFree.join(', ')}`)
+for (const p of portsToFree) killListenersOnPort(p)
+console.log('')
 
 let tunnel = spawn('ssh', buildSshOpts(dbTarget), { stdio: 'inherit' })
 
@@ -99,6 +157,9 @@ let lastRestart = 0
 // Attendre que le tunnel soit établi avant de lancer Next.js
 setTimeout(() => {
   console.log('\n▶  Démarrage Next.js dev...\n')
+
+  // Dernier passage : un autre Next / IDE peut avoir repris 3001 pendant l’attente du tunnel
+  killListenersOnPort(NEXT_DEV_PORT)
 
   // Forcer MARIADB_* pour que Next.js se connecte au tunnel, pas à Hostinger (DB_*)
   // loadEnv() injecte .env + sync-config.env pour que Next reçoive toutes les variables

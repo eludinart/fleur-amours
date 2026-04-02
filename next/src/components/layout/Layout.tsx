@@ -15,6 +15,7 @@ import { billingApi } from '@/api/billing'
 import { socialApi } from '@/api/social'
 import NotificationCenter from '../NotificationCenter'
 import { LanguageSelector } from './LanguageSelector'
+import { FormBackBar } from './FormBackBar'
 import { OnboardingTour } from '../OnboardingTour'
 import { t } from '@/i18n'
 
@@ -183,6 +184,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           key={locale}
           className="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden p-4 pb-[max(1rem,env(safe-area-inset-bottom,48px))] md:p-6 md:pb-6"
         >
+          <FormBackBar />
           <div className="flex-1 min-h-0 flex flex-col">
             {children}
           </div>

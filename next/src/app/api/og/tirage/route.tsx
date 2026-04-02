@@ -33,6 +33,15 @@ export const dynamic = 'force-dynamic'
 const W = 1200
 const H = 630
 
+function absoluteCardImageUrl(img: string | null | undefined, req: NextRequest): string | undefined {
+  if (!img?.trim()) return undefined
+  const u = img.trim()
+  if (/^https?:\/\//i.test(u)) return u
+  const origin = req.nextUrl.origin
+  const path = u.startsWith('/') ? u : `/${u}`
+  return `${origin}${path}`
+}
+
 function truncate(s: string | null | undefined, max: number): string {
   if (!s) return ''
   return s.length > max ? s.slice(0, max - 1) + '…' : s
@@ -54,14 +63,14 @@ export async function GET(req: NextRequest) {
   const isSimple = type === 'simple'
   const card = reading?.card as { name?: string; synth?: string; img?: string } | undefined
   const cards = reading?.cards as Array<{ name?: string; synth?: string; img?: string }> | undefined
-  const intention = reading?.intention as string | undefined
   const synthesis4 = (reading?.synthesis as string) || ''
 
   const cardName = isSimple
     ? card?.name || 'Votre carte'
     : cards?.map((c) => c.name).join(' · ') || 'Les quatre portes'
   const cardSynth = isSimple ? card?.synth : synthesis4
-  const cardImg = isSimple ? card?.img : null
+  const cardImgRaw = isSimple ? card?.img : null
+  const cardImg = absoluteCardImageUrl(cardImgRaw, req)
 
   const kicker = isSimple ? OG_TAROT_KICKER_SIMPLE : OG_TAROT_KICKER_4
   const hook = isSimple ? OG_TAROT_HOOK_SIMPLE : OG_TAROT_HOOK_4
@@ -202,22 +211,6 @@ export async function GET(req: NextRequest) {
                 </div>
               )}
 
-              {intention && (
-                <div
-                  style={{
-                    fontSize: 15,
-                    color: 'rgba(196,181,253,0.88)',
-                    marginBottom: 16,
-                    fontFamily:
-                      'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-                    display: 'flex',
-                  }}
-                >
-                  <span style={{ fontWeight: 700, marginRight: 8 }}>Intention :</span>
-                  {truncate(intention, 72)}
-                </div>
-              )}
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <OgBenefitChips items={chips} variant="dark" />
                 <OgBenefitChips items={trustChips} variant="dark" />
@@ -243,15 +236,17 @@ export async function GET(req: NextRequest) {
             <OgSubhook variant="dark">{OG_TAROT_SUB}</OgSubhook>
 
             <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end', marginBottom: 6 }}>
-              {(cards || []).slice(0, 4).map((c, i) => (
+              {(cards || []).slice(0, 4).map((c, i) => {
+                const absDoorImg = absoluteCardImageUrl(c.img, req)
+                return (
                 <div
                   key={i}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}
                 >
-                  {c.img ? (
+                  {absDoorImg ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
-                      src={c.img}
+                      src={absDoorImg}
                       width={132}
                       height={198}
                       style={{
@@ -293,7 +288,8 @@ export async function GET(req: NextRequest) {
                     {truncate(c.name, 20)}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
 
             {cardName && (
@@ -323,20 +319,6 @@ export async function GET(req: NextRequest) {
                 }}
               >
                 {truncate(synthesis4, 132)}
-              </div>
-            )}
-
-            {intention && (
-              <div
-                style={{
-                  fontSize: 15,
-                  color: 'rgba(196,181,253,0.85)',
-                  fontFamily:
-                    'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>Intention : </span>
-                {truncate(intention, 80)}
               </div>
             )}
 

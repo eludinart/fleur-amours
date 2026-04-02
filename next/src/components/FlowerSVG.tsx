@@ -527,7 +527,7 @@ export function PetalSlider({ petalId, label, color, value, onChange }: PetalSli
         value={Math.round(value * 100)}
         onChange={(e) => onChange(petalId, Number(e.target.value) / 100)}
         className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
-        style={{ accentColor: color } as React.CSSProperties}
+        style={{ accentColor: color }}
       />
       <span className="text-xs text-slate-400 w-8">{Math.round(value * 100)}%</span>
     </div>

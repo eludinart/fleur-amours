@@ -184,28 +184,12 @@ export default function TiragePartagePage() {
           </div>
         )}
 
-        {/* Intention */}
-        {reading.intention && (
-          <div className="rounded-2xl bg-violet-900/20 border border-violet-500/20 p-5">
-            <p className="text-xs font-semibold text-violet-400 uppercase tracking-wider mb-2">Intention</p>
-            <p className="text-white/85 italic">{reading.intention}</p>
-          </div>
-        )}
-
-        {/* Synth / description */}
+        {/* Synth / description (pas d’intention / réflexion sur la page publique) */}
         {isSimple && (card?.synth || card?.desc) && (
           <SynthPanel synth={card.synth || card.desc} />
         )}
         {!isSimple && (reading.synthesis || reading.interpretation) && (
           <SynthPanel synth={reading.synthesis || reading.interpretation} />
-        )}
-
-        {/* Reflection */}
-        {reading.reflection && (
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">Réflexion</p>
-            <p className="text-white/80 leading-relaxed whitespace-pre-wrap">{reading.reflection}</p>
-          </div>
         )}
 
         {/* CTA section */}

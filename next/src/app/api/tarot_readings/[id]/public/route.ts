@@ -25,11 +25,44 @@ export async function GET(
     if (!reading) {
       return NextResponse.json({ error: 'Tirage introuvable' }, { status: 404 })
     }
-    // Strip private fields
-    const { email: _e, user_id: _u, ...publicReading } = reading as Record<string, unknown>
-    return NextResponse.json(publicReading, {
-      headers: { 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400' },
-    })
+    const r = reading as Record<string, unknown>
+    const type = r.type === 'four' ? 'four' : 'simple'
+    const created = r.createdAt ?? r.created_at
+    // Partage public : carte(s) + sens générique uniquement — pas d’intention, réflexion ni interprétation IA (contexte perso).
+    if (type === 'four') {
+      const cards = Array.isArray(r.cards) ? r.cards : []
+      return NextResponse.json(
+        {
+          id: r.id,
+          type: 'four',
+          createdAt: created,
+          created_at: created,
+          cards,
+          synthesis: r.synthesis ?? null,
+        },
+        {
+          headers: { 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400' },
+        }
+      )
+    }
+    const card = (r.card as Record<string, unknown> | undefined) || {}
+    return NextResponse.json(
+      {
+        id: r.id,
+        type: 'simple',
+        createdAt: created,
+        created_at: created,
+        card: {
+          name: card.name,
+          img: card.img,
+          desc: card.desc,
+          synth: card.synth,
+        },
+      },
+      {
+        headers: { 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400' },
+      }
+    )
   } catch {
     return NextResponse.json({ error: 'Tirage introuvable' }, { status: 404 })
   }

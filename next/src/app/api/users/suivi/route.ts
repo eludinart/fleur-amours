@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
             petals_json,
             step_data_json
           FROM ${tSessions}
-          WHERE email = ?
+          WHERE LOWER(TRIM(email)) = ?
           ORDER BY created_at DESC
           LIMIT 50
         `,

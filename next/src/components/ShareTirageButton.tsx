@@ -36,14 +36,12 @@ function buildShareText(r: {
   if (r.type === 'simple' && r.card?.name) {
     const cardLine = r.card.name
     const synthSnippet = r.card.synth ? ` — « ${r.card.synth.slice(0, 80)}${r.card.synth.length > 80 ? '…' : ''} »` : ''
-    const intentionLine = r.intention ? `\nIntention : ${r.intention.slice(0, 60)}${r.intention.length > 60 ? '…' : ''}` : ''
-    return `J'ai tiré ${cardLine}${synthSnippet}${intentionLine}\n\nTirage ${typeLabel} — Fleur d'AmOurs 🌸`
+    return `J'ai tiré ${cardLine}${synthSnippet}\n\nTirage ${typeLabel} — Fleur d'AmOurs 🌸`
   }
 
   if (r.type === 'four' && r.cards?.length) {
     const names = r.cards.map((c) => c.name).join(' · ')
-    const intentionLine = r.intention ? `\nIntention : ${r.intention.slice(0, 60)}${r.intention.length > 60 ? '…' : ''}` : ''
-    return `Mon tirage 4 Portes : ${names}${intentionLine}\n\nFleur d'AmOurs 🌸`
+    return `Mon tirage 4 Portes : ${names}\n\nFleur d'AmOurs 🌸`
   }
 
   return t('share.tirageShareText')

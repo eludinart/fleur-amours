@@ -2,8 +2,9 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   StatsOverview,
@@ -37,6 +38,8 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
 export function DashboardPage() {
   const { user, isAdmin, isCoach } = useAuth()
+  const pathname = usePathname() || '/'
+  const searchParams = useSearchParams()
   useStore((s) => s.locale)
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -75,6 +78,14 @@ export function DashboardPage() {
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [])
+
+  const zenHref = useMemo(() => {
+    const p = new URLSearchParams(searchParams?.toString() ?? '')
+    p.set('view', 'user')
+    const q = p.toString()
+    return `${pathname}${q ? `?${q}` : ''}`
+  }, [pathname, searchParams])
+  const showZenBack = searchParams?.get('view') === 'stats'
 
   if (loading) {
     return (
@@ -132,6 +143,14 @@ export function DashboardPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {showZenBack && (
+              <Link
+                href={zenHref}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-teal-200/60 dark:border-teal-800/50 bg-teal-50/60 dark:bg-teal-950/30 text-sm font-medium text-teal-800 dark:text-teal-200 hover:bg-teal-100/70 dark:hover:bg-teal-950/45 transition-colors"
+              >
+                <span>🌸</span> {t('fleurZen.backToFlower')}
+              </Link>
+            )}
             {(isAdmin || isCoach) && (
               <Link
                 href="/?view=coach"

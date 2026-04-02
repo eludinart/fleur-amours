@@ -450,6 +450,7 @@ function SimpleDraw({
   const locale = useStore((s) => s.locale)
   const { user } = useAuth()
   const [intention, setIntention] = useState('')
+  const [frozenIntention, setFrozenIntention] = useState('')
   const [drawState, setDrawState] = useState(STATE.IDLE)
   const [drawnCard, setDrawnCard] = useState<CardType | null>(null)
   const [bgPulse, setBgPulse] = useState(false)
@@ -531,6 +532,7 @@ function SimpleDraw({
   }, [interpretation, currentReadingId, onSaveReflection])
 
   function start() {
+    setFrozenIntention(intention.trim())
     setDrawnCard(null)
     setInterpretation('')
     setDrawState(STATE.SPINNING)
@@ -550,6 +552,8 @@ function SimpleDraw({
     setBgPulse(false)
     setDrawState(STATE.REVEALING)
     setTimeout(() => {
+      const intentSnap = intention.trim()
+      setFrozenIntention(intentSnap)
       setDrawnCard(card)
       setDrawState(STATE.REVEALED)
       const cardData = {
@@ -561,7 +565,7 @@ function SimpleDraw({
       onReadingComplete?.({
         type: 'simple',
         card: cardData,
-        intention: intention.trim() || '',
+        intention: intentSnap || '',
         reflection: '',
       })
     }, 2000)
@@ -574,6 +578,7 @@ function SimpleDraw({
 
   function reset() {
     setIntention('')
+    setFrozenIntention('')
     setDrawnCard(null)
     setDrawState(STATE.IDLE)
     setBgPulse(false)
@@ -623,6 +628,20 @@ function SimpleDraw({
           />
           <p className="text-[10px] text-slate-400 italic">
             {t('tarot.intentionOptional')}
+          </p>
+        </div>
+      )}
+
+      {drawState !== STATE.IDLE && (
+        <div
+          className="rounded-xl border border-violet-200/80 dark:border-violet-800/60 bg-violet-50/50 dark:bg-violet-950/25 px-4 py-3 relative z-[1]"
+          aria-readonly="true"
+        >
+          <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1">
+            {t('tarot.intentionLabel')}
+          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-200 italic whitespace-pre-wrap">
+            {frozenIntention ? `« ${frozenIntention} »` : '—'}
           </p>
         </div>
       )}
@@ -752,6 +771,7 @@ function FourDoorsDraw({
   const locale = useStore((s) => s.locale)
   const { user } = useAuth()
   const [intention, setIntention] = useState('')
+  const [frozenIntention, setFrozenIntention] = useState('')
   const [drawState, setDrawState] = useState(STATE.IDLE)
   const [drawnCards, setDrawnCards] = useState<(CardType | null)[]>([
     null,
@@ -765,6 +785,7 @@ function FourDoorsDraw({
   const [interpretation, setInterpretation] = useState('')
 
   function draw() {
+    setFrozenIntention(intention.trim())
     const picked = FOUR_DOORS.map((d) => d.group[Math.floor(Math.random() * d.group.length)])
     setDrawnCards(picked)
     setRevealedDoors([])
@@ -774,6 +795,7 @@ function FourDoorsDraw({
   }
 
   function startAndReveal(i: number) {
+    setFrozenIntention(intention.trim())
     const picked = FOUR_DOORS.map((d) => d.group[Math.floor(Math.random() * d.group.length)])
     setDrawnCards(picked)
     setRevealedDoors([i])
@@ -865,6 +887,7 @@ function FourDoorsDraw({
 
   function reset() {
     setIntention('')
+    setFrozenIntention('')
     setDrawnCards([null, null, null, null])
     setRevealedDoors([])
     setSynthesis('')
@@ -894,6 +917,20 @@ function FourDoorsDraw({
           />
           <p className="text-[10px] text-slate-400 italic">
             {t('tarot.intentionOptional')}
+          </p>
+        </div>
+      )}
+
+      {drawState !== STATE.IDLE && (
+        <div
+          className="rounded-xl border border-violet-200/80 dark:border-violet-800/60 bg-violet-50/50 dark:bg-violet-950/25 px-4 py-3"
+          aria-readonly="true"
+        >
+          <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1">
+            {t('tarot.intentionLabel')}
+          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-200 italic whitespace-pre-wrap">
+            {frozenIntention ? `« ${frozenIntention} »` : '—'}
           </p>
         </div>
       )}
@@ -1029,8 +1066,6 @@ function FourDoorsDraw({
           />
         </div>
       )}
-
-      <BuyLink show={drawState === STATE.REVEALED && !!synthesis} />
     </div>
   )
 }
@@ -1721,10 +1756,6 @@ export default function TarotPage() {
           />
         </div>
       )}
-
-      <div className="flex justify-center pt-4">
-        <BuyTarotCTA variant="compact" />
-      </div>
 
       <style>{`
         @keyframes card-float {
