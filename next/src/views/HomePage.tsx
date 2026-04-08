@@ -96,56 +96,72 @@ function HomePageInner() {
 
   if (isStatsRoute) {
     return (
-      <div className="flex-1 min-h-0 flex flex-col">
-        {(isCoach || isAdmin) && (
-          <ViewSwitcher
-            view={view}
-            showCoachTab={showCoachTab}
-            isAdmin={!!isAdmin}
-            onSelect={setView}
-            isStatsRoute
-          />
-        )}
-        <DashboardPage />
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex flex-col min-h-0">
+          {(isCoach || isAdmin) && (
+            <div className="sticky top-0 z-20 bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-sm pt-2">
+              <ViewSwitcher
+                view={view}
+                showCoachTab={showCoachTab}
+                isAdmin={!!isAdmin}
+                onSelect={setView}
+                isStatsRoute
+              />
+            </div>
+          )}
+          <DashboardPage />
+        </div>
       </div>
     )
   }
 
   if (view === 'coach' && showCoachTab) {
     return (
-      <div className="flex-1 min-h-0 flex flex-col">
-        <ViewSwitcher
-          view={view}
-          showCoachTab={showCoachTab}
-          isAdmin={!!isAdmin}
-          onSelect={setView}
-          isStatsRoute={false}
-        />
-        <CoachDashboardPage />
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex flex-col min-h-0">
+          <div className="sticky top-0 z-20 bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-sm pt-2">
+            <ViewSwitcher
+              view={view}
+              showCoachTab={showCoachTab}
+              isAdmin={!!isAdmin}
+              onSelect={setView}
+              isStatsRoute={false}
+            />
+          </div>
+          <CoachDashboardPage />
+        </div>
       </div>
     )
   }
   if (view === 'admin' && isAdmin) {
     return (
-      <div className="flex-1 min-h-0 flex flex-col">
-        <ViewSwitcher view={view} showCoachTab={showCoachTab} isAdmin={isAdmin} onSelect={setView} isStatsRoute={false} />
-        <AdminDashboardPage />
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex flex-col min-h-0">
+          <div className="sticky top-0 z-20 bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-sm pt-2">
+            <ViewSwitcher view={view} showCoachTab={showCoachTab} isAdmin={isAdmin} onSelect={setView} isStatsRoute={false} />
+          </div>
+          <AdminDashboardPage />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col">
-      {(isCoach || isAdmin) && (
-        <ViewSwitcher
-          view={view}
-          showCoachTab={showCoachTab}
-          isAdmin={!!isAdmin}
-          onSelect={setView}
-          isStatsRoute={false}
-        />
-      )}
-      <UserFleurZenHome />
+    <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex flex-col min-h-0">
+        {(isCoach || isAdmin) && (
+          <div className="sticky top-0 z-20 bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-sm pt-2">
+            <ViewSwitcher
+              view={view}
+              showCoachTab={showCoachTab}
+              isAdmin={!!isAdmin}
+              onSelect={setView}
+              isStatsRoute={false}
+            />
+          </div>
+        )}
+        <UserFleurZenHome />
+      </div>
     </div>
   )
 }
