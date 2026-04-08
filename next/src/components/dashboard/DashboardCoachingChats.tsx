@@ -116,6 +116,7 @@ export function DashboardCoachingChats() {
 
   const sorted = useMemo(() => sortCoachingRows(rows), [rows])
   const openRows = useMemo(() => sorted.filter((r) => r.status === 'open'), [sorted])
+  const historyRows = useMemo(() => sorted.filter((r) => r.status !== 'open'), [sorted])
 
   if (!loaded) {
     return (
@@ -188,7 +189,7 @@ export function DashboardCoachingChats() {
           </Link>
         </div>
         <ul className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-          {sorted.map((row) => {
+          {historyRows.map((row) => {
             const closed = row.status === 'closed'
             return (
               <li key={`dash-co-${row.id}`}>

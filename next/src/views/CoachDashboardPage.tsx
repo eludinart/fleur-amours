@@ -5,6 +5,18 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { chatApi } from '@/api/chat'
 
+function formatActivity(iso?: string | null): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '—'
+  const now = new Date()
+  const diff = now.getTime() - d.getTime()
+  if (diff < 60_000) return "à l'instant"
+  if (diff < 3_600_000) return `il y a ${Math.floor(diff / 60_000)} min`
+  if (diff < 86_400_000) return `il y a ${Math.floor(diff / 3_600_000)} h`
+  return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
 function StatCard({ label, value, sub, to, icon, color }: { label: string; value?: number; sub?: string; to?: string; icon: string; color: string }) {
   const content = (
     <div
@@ -48,10 +60,37 @@ function ShortcutCard({ to, label, icon }: { to: string; label: string; icon: st
 
 export default function CoachDashboardPage() {
   const [chatStats, setChatStats] = useState<{ total?: number; open?: number; unread_messages?: number } | null>(null)
+  const [openItems, setOpenItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    chatApi.stats().then(setChatStats).catch(() => setChatStats(null)).finally(() => setLoading(false))
+    let cancelled = false
+    Promise.all([
+      chatApi.stats().catch(() => null),
+      chatApi
+        .listConversations({ status: 'open', per_page: 20, dedupe: 'patient_coach' })
+        .catch(() => ({ items: [], total: 0 })),
+    ])
+      .then(([stats, list]) => {
+        if (cancelled) return
+        setChatStats(stats)
+        const items = Array.isArray((list as any)?.items) ? (list as any).items : []
+        const sorted = [...items].sort((a, b) => {
+          const au = Number(a?.unread_count ?? 0)
+          const bu = Number(b?.unread_count ?? 0)
+          if (bu !== au) return bu - au
+          const ta = new Date(a?.last_message_at || a?.created_at || 0).getTime()
+          const tb = new Date(b?.last_message_at || b?.created_at || 0).getTime()
+          return tb - ta
+        })
+        setOpenItems(sorted)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (
@@ -112,6 +151,69 @@ export default function CoachDashboardPage() {
                   color="violet"
                 />
               </div>
+            </section>
+
+            <section>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                  Conversations ouvertes
+                </h2>
+                <Link href="/coach/chat" className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+                  Tout voir →
+                </Link>
+              </div>
+
+              {openItems.length === 0 ? (
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/40 p-5">
+                  <p className="text-sm text-slate-600 dark:text-slate-300">Aucune conversation ouverte pour le moment.</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/40">
+                  <ul className="divide-y divide-slate-200/70 dark:divide-slate-700/70">
+                    {openItems.slice(0, 8).map((c) => {
+                      const unread = Number(c?.unread_count ?? 0)
+                      const assigned = c?.assigned_coach_id != null
+                      const coachLabel = c?.assigned_coach_display_name ? String(c.assigned_coach_display_name) : assigned ? 'Assigné' : 'Non assigné'
+                      return (
+                        <li key={`coach-open-${c.id}`}>
+                          <Link
+                            href={`/coach/chat?conv=${encodeURIComponent(String(c.id))}`}
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="font-semibold text-slate-800 dark:text-slate-100 truncate">
+                                  {c?.user_email ? String(c.user_email) : `Conversation #${c.id}`}
+                                </span>
+                                {unread > 0 ? (
+                                  <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white">
+                                    {unread} non lu{unread > 1 ? 's' : ''}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                <span className="truncate">
+                                  {assigned ? `Coach : ${coachLabel}` : 'À prendre en charge'}
+                                </span>
+                                <span className="opacity-60">·</span>
+                                <span className="shrink-0">{formatActivity(c?.last_message_at || c?.created_at)}</span>
+                              </div>
+                            </div>
+                            <span className="text-slate-400 shrink-0">→</span>
+                          </Link>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  {openItems.length > 8 ? (
+                    <div className="px-4 py-3">
+                      <Link href="/coach/chat" className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+                        Voir {openItems.length - 8} conversation{openItems.length - 8 > 1 ? 's' : ''} de plus →
+                      </Link>
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </section>
 
             <section>

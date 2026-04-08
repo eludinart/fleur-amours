@@ -81,6 +81,8 @@ function staffFooterText(kind: StaffKind, m: Message): string {
 export default function AdminChatPage() {
   const searchParams = useSearchParams()
   const emailParam = searchParams?.get('email') ?? null
+  const convParamRaw = searchParams?.get('conv') ?? null
+  const convParam = convParamRaw && /^\d+$/.test(convParamRaw) ? Number(convParamRaw) : null
   const { isAdmin, isCoach, user } = useAuth()
   const myUserId = user && typeof user.id === 'number' ? user.id : Number(user?.id ?? 0)
   const myName =
@@ -119,8 +121,8 @@ export default function AdminChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
-  const effectiveStatus = emailParam ? 'all' : statusFilter
-  const listPerPage = emailParam ? 500 : 50
+  const effectiveStatus = emailParam || convParam ? 'all' : statusFilter
+  const listPerPage = emailParam || convParam ? 500 : 50
   /** Une tentative ensure_for_patient par navigation email (évite boucles). */
   const ensurePatientAttemptedRef = useRef(false)
 
@@ -223,6 +225,14 @@ export default function AdminChatPage() {
     if (!match) return
     setSelected((prev) => (prev?.id === match.id ? prev : match))
   }, [emailParam, conversations])
+
+  // Sélection depuis le dashboard (paramètre ?conv=ID)
+  useEffect(() => {
+    if (!convParam || conversations.length === 0) return
+    const match = conversations.find((c) => Number(c.id) === convParam)
+    if (!match) return
+    setSelected((prev) => (prev?.id === match.id ? prev : match))
+  }, [convParam, conversations])
 
   const loadMessages = useCallback(async (convId: number, since: string | null) => {
     try {
