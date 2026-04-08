@@ -104,11 +104,10 @@ export function UserFleurZenHome() {
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col relative bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900">
+    <div className="flex-1 min-h-0 overflow-y-auto relative bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_40%,rgba(30,27,75,0.35),transparent)]" />
 
-      <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-start px-4 py-6">
-        <div className="w-full max-w-lg mx-auto space-y-6">
+      <div className="relative z-10 w-full max-w-lg mx-auto px-4 py-6 space-y-6">
           <header className="text-center space-y-1">
             <Breadcrumbs />
             <h1 className="text-lg font-light tracking-[0.25em] uppercase text-white/85">{t('fleurZen.title')}</h1>
@@ -148,7 +147,6 @@ export function UserFleurZenHome() {
               {t('fleurZen.detailsStats')}
             </Link>
           </div>
-        </div>
       </div>
 
       <span className="sr-only" aria-live="polite">
