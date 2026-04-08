@@ -37,8 +37,11 @@ export async function GET(req: NextRequest) {
       id: String(c.id),
       status: c.status,
       assigned_coach_id: c.assigned_coach_id,
+      assigned_coach_display_name: c.assigned_coach_display_name,
       closed_by_role: c.closed_by_role,
       last_message_at: c.last_message_at,
+      last_message_sender_role: c.last_message_sender_role,
+      last_message_preview: c.last_message_preview,
       created_at: c.created_at,
     }))
     return NextResponse.json({ conversations })

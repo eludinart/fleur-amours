@@ -9,6 +9,10 @@ type CoRow = {
   id: string
   status: string
   last_message_at: string | null
+  last_message_sender_role?: string | null
+  last_message_preview?: string | null
+  assigned_coach_id?: number | null
+  assigned_coach_display_name?: string | null
   created_at: string | null
 }
 
@@ -18,6 +22,10 @@ function parseRows(r: unknown): CoRow[] {
       id: string
       status?: string
       last_message_at?: string | null
+      last_message_sender_role?: string | null
+      last_message_preview?: string | null
+      assigned_coach_id?: number | null
+      assigned_coach_display_name?: string | null
       created_at?: string | null
     }>
   }
@@ -26,6 +34,20 @@ function parseRows(r: unknown): CoRow[] {
     id: String(c.id),
     status: String(c.status ?? 'open'),
     last_message_at: c.last_message_at ? String(c.last_message_at) : null,
+    last_message_sender_role:
+      c.last_message_sender_role != null && String(c.last_message_sender_role).trim() !== ''
+        ? String(c.last_message_sender_role).trim()
+        : null,
+    last_message_preview:
+      c.last_message_preview != null && String(c.last_message_preview).trim() !== ''
+        ? String(c.last_message_preview)
+        : null,
+    assigned_coach_id:
+      c.assigned_coach_id != null && Number(c.assigned_coach_id) > 0 ? Number(c.assigned_coach_id) : null,
+    assigned_coach_display_name:
+      c.assigned_coach_display_name != null && String(c.assigned_coach_display_name).trim() !== ''
+        ? String(c.assigned_coach_display_name).trim()
+        : null,
     created_at: c.created_at ? String(c.created_at) : null,
   }))
 }
@@ -51,6 +73,20 @@ function formatActivity(iso: string | null | undefined): string {
   if (diff < 3600000) return t('chat.historyMinutesAgo', { n: Math.floor(diff / 60000) })
   if (diff < 86400000) return t('chat.historyHoursAgo', { n: Math.floor(diff / 3600000) })
   return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function formatPreview(row: CoRow): string {
+  const coachLabel =
+    row.assigned_coach_id != null ? (row.assigned_coach_display_name || 'Accompagnant') : 'Équipe'
+  const previewRaw = (row.last_message_preview || '').replace(/\s+/g, ' ').trim()
+  const preview = previewRaw.length > 90 ? `${previewRaw.slice(0, 87)}…` : previewRaw
+  const prefix =
+    row.last_message_sender_role === 'user'
+      ? 'Vous : '
+      : row.last_message_sender_role
+        ? 'Accompagnement : '
+        : ''
+  return preview ? `${coachLabel} · ${prefix}${preview}` : coachLabel
 }
 
 /**
@@ -116,12 +152,17 @@ export function DashboardCoachingChats() {
               <li key={row.id}>
                 <Link
                   href={`/chat?conv=${encodeURIComponent(row.id)}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200/90 dark:border-emerald-700/80 bg-white/95 dark:bg-slate-900/70 px-3 py-2.5 text-sm font-semibold text-emerald-950 dark:text-emerald-50 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"
+                  className="flex items-start justify-between gap-3 rounded-xl border border-emerald-200/90 dark:border-emerald-700/80 bg-white/95 dark:bg-slate-900/70 px-3 py-2.5 text-emerald-950 dark:text-emerald-50 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"
                 >
-                  <span className="truncate">
-                    {t('chat.conversationHistoryItemLabel', { n: row.id })}
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold truncate">
+                      {t('chat.conversationHistoryItemLabel', { n: row.id })}
+                    </span>
+                    <span className="block text-[11px] text-emerald-800/90 dark:text-emerald-200/90 mt-0.5 truncate">
+                      {formatPreview(row)}
+                    </span>
                   </span>
-                  <span className="shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white">
+                  <span className="shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white mt-0.5">
                     {t('chat.openConversationBadge')}
                   </span>
                 </Link>

@@ -424,6 +424,9 @@ export async function getMyConversations(userId: number, userEmail: string): Pro
     assigned_coach_id: number | null
     closed_by_role: string | null
     last_message_at: string | null
+    last_message_preview: string | null
+    last_message_sender_role: string | null
+    assigned_coach_display_name: string | null
     created_at: string | null
   }>
 > {
@@ -431,10 +434,32 @@ export async function getMyConversations(userId: number, userEmail: string): Pro
   await ensureTables(pool)
   const tConv = table(TBL_CONV)
   const tMsg = table(TBL_MSG)
+  const tUsers = table('users')
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT c.id, c.status, c.assigned_coach_id, c.closed_by_role, c.created_at,
-            (SELECT MAX(created_at) FROM ${tMsg} m WHERE m.conversation_id = c.id) as last_message_at
+    `SELECT
+        c.id,
+        c.status,
+        c.assigned_coach_id,
+        c.closed_by_role,
+        c.created_at,
+        coach_u.display_name AS assigned_coach_display_name,
+        (SELECT MAX(created_at) FROM ${tMsg} m WHERE m.conversation_id = c.id) AS last_message_at,
+        (
+          SELECT m2.sender_role
+          FROM ${tMsg} m2
+          WHERE m2.conversation_id = c.id
+          ORDER BY m2.created_at DESC, m2.id DESC
+          LIMIT 1
+        ) AS last_message_sender_role,
+        (
+          SELECT m3.content
+          FROM ${tMsg} m3
+          WHERE m3.conversation_id = c.id
+          ORDER BY m3.created_at DESC, m3.id DESC
+          LIMIT 1
+        ) AS last_message_preview
      FROM ${tConv} c
+     LEFT JOIN ${tUsers} coach_u ON coach_u.ID = c.assigned_coach_id
      WHERE c.user_id = ? AND c.status != 'deleted'
      ORDER BY c.id DESC`,
     [userId]
@@ -446,6 +471,18 @@ export async function getMyConversations(userId: number, userEmail: string): Pro
     closed_by_role:
       r.closed_by_role != null && String(r.closed_by_role).trim() !== '' ? String(r.closed_by_role) : null,
     last_message_at: r.last_message_at ? String(r.last_message_at) : null,
+    last_message_sender_role:
+      r.last_message_sender_role != null && String(r.last_message_sender_role).trim() !== ''
+        ? String(r.last_message_sender_role).trim()
+        : null,
+    last_message_preview:
+      r.last_message_preview != null && String(r.last_message_preview).trim() !== ''
+        ? String(r.last_message_preview)
+        : null,
+    assigned_coach_display_name:
+      r.assigned_coach_display_name != null && String(r.assigned_coach_display_name).trim() !== ''
+        ? String(r.assigned_coach_display_name).trim()
+        : null,
     created_at: r.created_at ? String(r.created_at) : null,
   }))
 }

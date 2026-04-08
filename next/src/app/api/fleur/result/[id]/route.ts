@@ -18,6 +18,10 @@ export async function GET(
     if (!id) {
       return NextResponse.json({ error: 'id required' }, { status: 400 })
     }
+    const resultId = parseInt(id, 10)
+    if (!Number.isFinite(resultId) || resultId <= 0) {
+      return NextResponse.json({ error: 'id invalide' }, { status: 400 })
+    }
 
     if (!isDbConfigured()) {
       return NextResponse.json(
@@ -29,7 +33,20 @@ export async function GET(
     // L'ownership est vérifié dans getResult uniquement si userId est fourni.
     // On force l'auth pour éviter l'IDOR par énumération d'ID sans JWT.
     const { userId } = await requireAuth(req)
-    const data = await getResult(parseInt(id, 10), userId)
+    let data: Awaited<ReturnType<typeof getResult>>
+    try {
+      data = await getResult(resultId, userId)
+    } catch (err: unknown) {
+      const e = err as Error
+      const msg = (e?.message ?? '').toLowerCase()
+      if (msg.includes('not found') || msg.includes('introuvable')) {
+        return NextResponse.json({ error: 'Résultat introuvable' }, { status: 404 })
+      }
+      if (msg.includes('accès non autorisé') || msg.includes('non autoris')) {
+        return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 })
+      }
+      throw err
+    }
     return NextResponse.json(data)
   } catch (err: unknown) {
     if (err instanceof ApiError) {

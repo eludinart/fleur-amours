@@ -49,8 +49,11 @@ type MyConvoSummary = {
   id: string
   status: string
   assigned_coach_id: number | null
+  assigned_coach_display_name?: string | null
   closed_by_role: string | null
   last_message_at: string | null
+  last_message_sender_role?: string | null
+  last_message_preview?: string | null
   created_at: string | null
 }
 
@@ -60,8 +63,11 @@ function parseMyConversationsPayload(r: unknown): MyConvoSummary[] {
       id: string
       status?: string
       assigned_coach_id?: number | null
+      assigned_coach_display_name?: string | null
       closed_by_role?: string | null
       last_message_at?: string | null
+      last_message_sender_role?: string | null
+      last_message_preview?: string | null
       created_at?: string | null
     }>
   }
@@ -71,8 +77,20 @@ function parseMyConversationsPayload(r: unknown): MyConvoSummary[] {
     status: String(c.status ?? 'open'),
     assigned_coach_id:
       c.assigned_coach_id != null && Number(c.assigned_coach_id) > 0 ? Number(c.assigned_coach_id) : null,
+    assigned_coach_display_name:
+      c.assigned_coach_display_name != null && String(c.assigned_coach_display_name).trim() !== ''
+        ? String(c.assigned_coach_display_name).trim()
+        : null,
     closed_by_role: c.closed_by_role ?? null,
     last_message_at: c.last_message_at ?? null,
+    last_message_sender_role:
+      c.last_message_sender_role != null && String(c.last_message_sender_role).trim() !== ''
+        ? String(c.last_message_sender_role).trim()
+        : null,
+    last_message_preview:
+      c.last_message_preview != null && String(c.last_message_preview).trim() !== ''
+        ? String(c.last_message_preview)
+        : null,
     created_at: c.created_at ?? null,
   }))
 }
@@ -784,6 +802,19 @@ export function ChatPage() {
                     <ul className="space-y-2.5" role="list">
                       {openPickerConvos.map((row) => {
                         const labelTime = formatHistoryRelative(row.last_message_at || row.created_at, t)
+                        const coachLabel =
+                          row.assigned_coach_id != null
+                            ? (row.assigned_coach_display_name || 'Accompagnant')
+                            : 'Équipe'
+                        const previewRaw = (row.last_message_preview || '').replace(/\s+/g, ' ').trim()
+                        const preview =
+                          previewRaw.length > 90 ? `${previewRaw.slice(0, 87)}…` : previewRaw
+                        const previewPrefix =
+                          row.last_message_sender_role === 'user'
+                            ? 'Vous : '
+                            : row.last_message_sender_role
+                              ? 'Accompagnement : '
+                              : ''
                         return (
                           <li key={`open-${row.id}`}>
                             <button
@@ -794,8 +825,14 @@ export function ChatPage() {
                               }}
                               className="w-full text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border-2 border-emerald-600/40 dark:border-emerald-500/55 bg-white/95 dark:bg-slate-950/70 px-3.5 py-3 text-emerald-950 dark:text-emerald-50 shadow-md hover:bg-white dark:hover:bg-slate-900/85 hover:border-emerald-500 dark:hover:border-emerald-400 transition-all"
                             >
-                              <span className="text-sm font-bold truncate">
-                                {t('chat.conversationHistoryItemLabel', { n: row.id })}
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-bold truncate">
+                                  {t('chat.conversationHistoryItemLabel', { n: row.id })}
+                                </span>
+                                <span className="block text-[11px] font-semibold text-emerald-800/85 dark:text-emerald-200/90 truncate mt-0.5">
+                                  {coachLabel}
+                                  {preview ? ` · ${previewPrefix}${preview}` : ''}
+                                </span>
                               </span>
                               <span className="flex flex-wrap items-center gap-2 shrink-0">
                                 <span className="text-[11px] font-semibold text-emerald-800/85 dark:text-emerald-200/90">
