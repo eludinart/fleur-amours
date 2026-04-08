@@ -17,20 +17,26 @@ function currentPeriod(): string {
   return new Date().toISOString().slice(0, 7)
 }
 
-export async function ensureUsageTable(exec: SqlExecutor): Promise<void> {
-  const prefix = process.env.DB_PREFIX || 'wp_'
-  await exec.execute(`
-    CREATE TABLE IF NOT EXISTS ${prefix}fleur_user_usage_monthly (
-      user_id INT NOT NULL,
-      period CHAR(7) NOT NULL,
-      chat_messages_count INT NOT NULL DEFAULT 0,
-      sessions_count INT NOT NULL DEFAULT 0,
-      tirages_count INT NOT NULL DEFAULT 0,
-      fleur_submits_count INT NOT NULL DEFAULT 0,
-      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (user_id, period)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `)
+// Singleton DDL : CREATE TABLE ne s'exécute qu'une fois par process
+let _ensureUsageTablePromise: Promise<void> | null = null
+
+export function ensureUsageTable(exec: SqlExecutor): Promise<void> {
+  if (!_ensureUsageTablePromise) {
+    const prefix = process.env.DB_PREFIX || 'wp_'
+    _ensureUsageTablePromise = exec.execute(`
+      CREATE TABLE IF NOT EXISTS ${prefix}fleur_user_usage_monthly (
+        user_id INT NOT NULL,
+        period CHAR(7) NOT NULL,
+        chat_messages_count INT NOT NULL DEFAULT 0,
+        sessions_count INT NOT NULL DEFAULT 0,
+        tirages_count INT NOT NULL DEFAULT 0,
+        fleur_submits_count INT NOT NULL DEFAULT 0,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, period)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `).then(() => undefined).catch((err) => { _ensureUsageTablePromise = null; throw err })
+  }
+  return _ensureUsageTablePromise
 }
 
 async function ensureRow(exec: SqlExecutor, userId: number, period: string): Promise<void> {

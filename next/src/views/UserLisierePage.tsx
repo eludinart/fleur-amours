@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSocialStore } from '@/store/useSocialStore'
 import { RosaceResonance } from '@/components/social/RosaceResonance'
@@ -166,7 +166,7 @@ export default function UserLisierePage() {
             {status === 'accepted' && (
               <button
                 type="button"
-                onClick={() => navigate(`/clairiere?with=${lisiere.userId}`)}
+                onClick={() => router.push(`/clairiere?with=${lisiere.userId}`)}
                 className="w-full py-3 rounded-2xl bg-violet-500/20 text-violet-700 dark:text-violet-300 font-medium text-sm border border-violet-300/50 dark:border-violet-600/50 hover:bg-violet-500/30 transition-all duration-300"
               >
                 🌿 {t('social.ouvrirClairiere') ?? 'Ouvrir la Clairière'}

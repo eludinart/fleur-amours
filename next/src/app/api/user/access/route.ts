@@ -9,6 +9,9 @@ import { requireAuth } from '@/lib/api-auth'
 import { getPool, table, isDbConfigured } from '@/lib/db'
 import { readMonthlyUsage } from '@/lib/db-usage'
 import { readQuotaBonus } from '@/lib/db-quota-bonus'
+import { cacheGet, cacheSet } from '@/lib/server-cache'
+
+const ACCESS_TTL_MS = 45_000
 
 interface AccessRow extends RowDataPacket {
   token_balance: number
@@ -20,25 +23,35 @@ export const dynamic = 'force-dynamic'
 
 const FREE_DEFAULT_SAP = 50
 
-async function ensureTable(pool: Awaited<ReturnType<typeof getPool>>) {
-  const prefix = process.env.DB_PREFIX || 'wp_'
-  await pool.execute(`
-    CREATE TABLE IF NOT EXISTS ${prefix}fleur_users_access (
-      user_id INT NOT NULL PRIMARY KEY,
-      token_balance INT NOT NULL DEFAULT 0,
-      eternal_sap INT NOT NULL DEFAULT 0,
-      total_accumulated_eternal INT NOT NULL DEFAULT 0,
-      sub_type VARCHAR(20) NULL DEFAULT NULL,
-      last_reset_date DATE NULL DEFAULT NULL,
-      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `)
+// Singleton DDL : CREATE TABLE une seule fois par process
+let _ensureTablePromise: Promise<void> | null = null
+function ensureTable(pool: Awaited<ReturnType<typeof getPool>>): Promise<void> {
+  if (!_ensureTablePromise) {
+    const prefix = process.env.DB_PREFIX || 'wp_'
+    _ensureTablePromise = pool.execute(`
+      CREATE TABLE IF NOT EXISTS ${prefix}fleur_users_access (
+        user_id INT NOT NULL PRIMARY KEY,
+        token_balance INT NOT NULL DEFAULT 0,
+        eternal_sap INT NOT NULL DEFAULT 0,
+        total_accumulated_eternal INT NOT NULL DEFAULT 0,
+        sub_type VARCHAR(20) NULL DEFAULT NULL,
+        last_reset_date DATE NULL DEFAULT NULL,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `).then(() => undefined).catch((err) => { _ensureTablePromise = null; throw err })
+  }
+  return _ensureTablePromise
 }
 
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req)
     const uid = parseInt(userId, 10)
+
+    // Servir depuis le cache si disponible (évite 4 queries DB à chaque poll)
+    const cacheKey = `user_access:${uid}`
+    const cached = cacheGet<object>(cacheKey)
+    if (cached) return NextResponse.json(cached)
 
     if (isDbConfigured()) {
       try {
@@ -51,15 +64,21 @@ export async function GET(req: NextRequest) {
           [uid, FREE_DEFAULT_SAP]
         )
 
-        const [rows] = await pool.execute<AccessRow[]>(
-          `SELECT token_balance, eternal_sap, total_accumulated_eternal FROM ${TBL} WHERE user_id = ?`,
-          [uid]
-        )
+        const [[rows], period] = await Promise.all([
+          pool.execute<AccessRow[]>(
+            `SELECT token_balance, eternal_sap, total_accumulated_eternal FROM ${TBL} WHERE user_id = ?`,
+            [uid]
+          ),
+          Promise.resolve(new Date().toISOString().slice(0, 7)),
+        ])
 
         const row = Array.isArray(rows) ? rows[0] : null
         if (row) {
-          const usage = await readMonthlyUsage(uid)
-          const bonus = await readQuotaBonus(uid, usage.period)
+          // readMonthlyUsage et readQuotaBonus en parallèle
+          const [usage, bonus] = await Promise.all([
+            readMonthlyUsage(uid, period),
+            readQuotaBonus(uid, period),
+          ])
           const baseLimits = {
             chat_messages_per_month: 10,
             sessions_per_month: 2,
@@ -72,7 +91,7 @@ export async function GET(req: NextRequest) {
             tirages_per_month: baseLimits.tirages_per_month + (bonus.tirages_bonus ?? 0),
             fleur_submits_per_month: baseLimits.fleur_submits_per_month + (bonus.fleur_submits_bonus ?? 0),
           }
-          return NextResponse.json({
+          const result = {
             token_balance: Number(row.token_balance) || 0,
             eternal_sap: Number(row.eternal_sap) || 0,
             total_accumulated_eternal: Number(row.total_accumulated_eternal) || 0,
@@ -80,7 +99,9 @@ export async function GET(req: NextRequest) {
             usage,
             limits,
             quota_bonus: bonus,
-          })
+          }
+          cacheSet(cacheKey, result, ACCESS_TTL_MS)
+          return NextResponse.json(result)
         }
       } catch {
         // DB indisponible → fallback stub

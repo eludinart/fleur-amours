@@ -16,29 +16,34 @@ export async function getSessionEmail(id: number): Promise<string | null> {
   return rows[0]?.email ?? null
 }
 
-export async function ensureTable(): Promise<void> {
-  const pool = getPool()
-  const t = tbl()
-  await pool.execute(`
-    CREATE TABLE IF NOT EXISTS ${t} (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      email VARCHAR(255) DEFAULT NULL,
-      first_words TEXT,
-      door_suggested VARCHAR(50) DEFAULT NULL,
-      petals_json TEXT,
-      history_json MEDIUMTEXT,
-      cards_json TEXT,
-      anchors_json TEXT,
-      plan14j_json TEXT,
-      step_data_json MEDIUMTEXT DEFAULT NULL,
-      doors_locked VARCHAR(255) DEFAULT NULL,
-      turn_count INT DEFAULT 0,
-      status VARCHAR(20) DEFAULT 'completed',
-      duration_seconds INT DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `)
+// Singleton DDL — CREATE TABLE une seule fois par process
+let _ensureTablePromise: Promise<void> | null = null
+export function ensureTable(): Promise<void> {
+  if (!_ensureTablePromise) {
+    const pool = getPool()
+    const t = tbl()
+    _ensureTablePromise = pool.execute(`
+      CREATE TABLE IF NOT EXISTS ${t} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(255) DEFAULT NULL,
+        first_words TEXT,
+        door_suggested VARCHAR(50) DEFAULT NULL,
+        petals_json TEXT,
+        history_json MEDIUMTEXT,
+        cards_json TEXT,
+        anchors_json TEXT,
+        plan14j_json TEXT,
+        step_data_json MEDIUMTEXT DEFAULT NULL,
+        doors_locked VARCHAR(255) DEFAULT NULL,
+        turn_count INT DEFAULT 0,
+        status VARCHAR(20) DEFAULT 'completed',
+        duration_seconds INT DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `).then(() => undefined).catch((err) => { _ensureTablePromise = null; throw err })
+  }
+  return _ensureTablePromise
 }
 
 export async function save(body: Record<string, unknown>): Promise<{ id: number }> {

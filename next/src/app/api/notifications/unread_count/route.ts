@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
 import { unreadCountForUser } from '@/lib/db-notifications'
+import { cacheGet, cacheSet } from '@/lib/server-cache'
 
 export const dynamic = 'force-dynamic'
+
+const NOTIF_TTL_MS = 30_000
 
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req)
     const uid = parseInt(userId, 10)
+
+    const cacheKey = `notif_unread:${uid}`
+    const cached = cacheGet<number>(cacheKey)
+    if (cached !== undefined) return NextResponse.json({ unread: cached, count: cached })
+
     const unread = uid ? await unreadCountForUser(uid) : 0
+    cacheSet(cacheKey, unread, NOTIF_TTL_MS)
     return NextResponse.json({ unread, count: unread })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string; code?: string }

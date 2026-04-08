@@ -7,24 +7,29 @@ import { exec, getPool, table } from './db'
 
 const tbl = () => table('fleur_dreamscape')
 
-export async function ensureTable(): Promise<void> {
-  const pool = getPool()
-  const t = tbl()
-  await pool.execute(`
-    CREATE TABLE IF NOT EXISTS ${t} (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id VARCHAR(64) NOT NULL,
-      history_json MEDIUMTEXT,
-      poetic_reflection TEXT,
-      slots_json TEXT,
-      petals_json TEXT,
-      snapshot_base64 LONGTEXT,
-      share_token VARCHAR(64) NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      INDEX idx_user (user_id),
-      INDEX idx_created (created_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `)
+// Singleton DDL — CREATE TABLE une seule fois par process
+let _ensureTablePromise: Promise<void> | null = null
+export function ensureTable(): Promise<void> {
+  if (!_ensureTablePromise) {
+    const pool = getPool()
+    const t = tbl()
+    _ensureTablePromise = pool.execute(`
+      CREATE TABLE IF NOT EXISTS ${t} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id VARCHAR(64) NOT NULL,
+        history_json MEDIUMTEXT,
+        poetic_reflection TEXT,
+        slots_json TEXT,
+        petals_json TEXT,
+        snapshot_base64 LONGTEXT,
+        share_token VARCHAR(64) NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user (user_id),
+        INDEX idx_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `).then(() => undefined).catch((err) => { _ensureTablePromise = null; throw err })
+  }
+  return _ensureTablePromise
 }
 
 export async function save(userId: string, body: Record<string, unknown>): Promise<{ id: number }> {

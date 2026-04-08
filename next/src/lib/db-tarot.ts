@@ -25,19 +25,24 @@ function formatReading(r: RowDataPacket): Record<string, unknown> {
   }
 }
 
-export async function ensureTable(): Promise<void> {
-  const pool = getPool()
-  const t = TBL()
-  await pool.execute(`
-    CREATE TABLE IF NOT EXISTS ${t} (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT DEFAULT NULL,
-      email VARCHAR(255) DEFAULT NULL,
-      type VARCHAR(20) NOT NULL DEFAULT 'simple',
-      payload JSON,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `)
+// Singleton DDL — CREATE TABLE une seule fois par process
+let _ensureTablePromise: Promise<void> | null = null
+export function ensureTable(): Promise<void> {
+  if (!_ensureTablePromise) {
+    const pool = getPool()
+    const t = TBL()
+    _ensureTablePromise = pool.execute(`
+      CREATE TABLE IF NOT EXISTS ${t} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT DEFAULT NULL,
+        email VARCHAR(255) DEFAULT NULL,
+        type VARCHAR(20) NOT NULL DEFAULT 'simple',
+        payload JSON,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `).then(() => undefined).catch((err) => { _ensureTablePromise = null; throw err })
+  }
+  return _ensureTablePromise
 }
 
 export async function save(params: {

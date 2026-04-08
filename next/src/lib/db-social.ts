@@ -182,11 +182,13 @@ export async function getMyChannels(
 /** Table dédiée P2P (évite conflit avec fleur_chat_messages du chat coach qui utilise conversation_id) */
 const P2P_MESSAGES_TABLE = 'fleur_chat_channel_messages'
 
-/** Crée la table des messages P2P si elle n'existe pas */
-async function ensureMessagesTable(pool: Awaited<ReturnType<typeof getPool>>): Promise<void> {
-  const t = table(P2P_MESSAGES_TABLE)
-  try {
-    await pool.execute(`
+// Singleton DDL : CREATE TABLE ne s'exécute qu'une fois par process (évite les metadata locks)
+let _ensureMessagesTablePromise: Promise<void> | null = null
+
+function ensureMessagesTable(pool: Awaited<ReturnType<typeof getPool>>): Promise<void> {
+  if (!_ensureMessagesTablePromise) {
+    const t = table(P2P_MESSAGES_TABLE)
+    _ensureMessagesTablePromise = pool.execute(`
       CREATE TABLE IF NOT EXISTS ${t} (
         id INT AUTO_INCREMENT PRIMARY KEY,
         channel_id INT NOT NULL,
@@ -197,10 +199,9 @@ async function ensureMessagesTable(pool: Awaited<ReturnType<typeof getPool>>): P
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_channel (channel_id, created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    `)
-  } catch {
-    /* table existe peut-être déjà */
+    `).then(() => undefined).catch(() => { _ensureMessagesTablePromise = null })
   }
+  return _ensureMessagesTablePromise
 }
 
 export type ChannelMessage = {
@@ -396,45 +397,30 @@ export async function getClairiereUnreadCount(userId: string): Promise<number> {
   const tCh = table('fleur_chat_channels')
   const t = table(P2P_MESSAGES_TABLE)
   const tMeta = table('usermeta')
+  const metaPrefix = CHANNEL_READ_META_PREFIX
 
   await ensureMessagesTable(pool)
 
-  const [chRows] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, user_a, user_b FROM ${tCh} WHERE user_a = ? OR user_b = ?`,
-    [uid, uid]
+  // Single query: join channels + messages + usermeta to count all unread in one shot
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT COALESCE(SUM(sub.cnt), 0) AS total
+     FROM (
+       SELECT COUNT(m.id) AS cnt
+       FROM ${tCh} c
+       JOIN ${t} m
+         ON m.channel_id = c.id
+         AND m.sender_id != ?
+       LEFT JOIN ${tMeta} um
+         ON um.user_id = ?
+         AND um.meta_key = CONCAT(?, c.id, '_last_read_at')
+       WHERE (c.user_a = ? OR c.user_b = ?)
+         AND (um.meta_value IS NULL OR m.created_at > um.meta_value)
+       GROUP BY c.id
+     ) sub`,
+    [uid, uid, metaPrefix, uid, uid]
   )
-  if (!chRows?.length) return 0
 
-  let total = 0
-  for (const ch of chRows) {
-    const channelId = Number(ch.id)
-    const ua = Number(ch.user_a)
-    const ub = Number(ch.user_b)
-    const otherId = uid === ua ? ub : ua
-
-    const [metaRows] = await pool.execute<RowDataPacket[]>(
-      `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = ? LIMIT 1`,
-      [uid, `${CHANNEL_READ_META_PREFIX}${channelId}_last_read_at`]
-    )
-    const lastReadAt = metaRows?.[0]?.meta_value ? String(metaRows[0].meta_value).trim() : null
-
-    let count: number
-    if (lastReadAt) {
-      const [cRows] = await pool.execute<RowDataPacket[]>(
-        `SELECT COUNT(*) as c FROM ${t} WHERE channel_id = ? AND sender_id = ? AND created_at > ?`,
-        [channelId, otherId, lastReadAt]
-      )
-      count = Number(cRows?.[0]?.c ?? 0)
-    } else {
-      const [cRows] = await pool.execute<RowDataPacket[]>(
-        `SELECT COUNT(*) as c FROM ${t} WHERE channel_id = ? AND sender_id = ?`,
-        [channelId, otherId]
-      )
-      count = Number(cRows?.[0]?.c ?? 0)
-    }
-    total += count
-  }
-  return total
+  return Number(rows?.[0]?.total ?? 0)
 }
 
 /** Retourne l'ID de l'autre utilisateur dans un canal (pour notifications) */

@@ -7,8 +7,11 @@ import { isDbConfigured } from '@/lib/db'
 import { getMyResults } from '@/lib/db-fleur'
 import { listFleurBetaResults } from '@/lib/db-fleur-beta'
 import { requireAuth } from '@/lib/api-auth'
+import { cacheGet, cacheSet } from '@/lib/server-cache'
 
 export const dynamic = 'force-dynamic'
+
+const TTL_MS = 45_000
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,8 +24,15 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const data = await getMyResults(userId)
-    const betaRows = await listFleurBetaResults(parseInt(userId, 10))
+    const cacheKey = `fleur_my_results:${userId}`
+    const cached = cacheGet<object>(cacheKey)
+    if (cached) return NextResponse.json(cached)
+
+    // getMyResults et listFleurBetaResults en parallèle
+    const [data, betaRows] = await Promise.all([
+      getMyResults(userId),
+      listFleurBetaResults(parseInt(userId, 10)),
+    ])
     const betaItems = betaRows.map((b) => ({
       type: 'fleur-beta' as const,
       id: b.id,
@@ -36,7 +46,9 @@ export async function GET(req: NextRequest) {
       const tb = new Date(String(b.created_at ?? 0)).getTime()
       return tb - ta
     })
-    return NextResponse.json({ items })
+    const result = { items }
+    cacheSet(cacheKey, result, TTL_MS)
+    return NextResponse.json(result)
   } catch (err: unknown) {
     const e = err as Error & { status?: number }
     const status = e.status ?? 500

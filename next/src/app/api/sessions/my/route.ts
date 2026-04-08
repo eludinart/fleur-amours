@@ -4,8 +4,11 @@ import { authMe } from '@/lib/db-auth'
 import { my } from '@/lib/db-sessions'
 import { getAuthHeader } from '@/lib/api-auth'
 import { jwtDecode } from '@/lib/jwt'
+import { cacheGet, cacheSet } from '@/lib/server-cache'
 
 export const dynamic = 'force-dynamic'
+
+const TTL_MS = 45_000
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,7 +29,13 @@ export async function GET(req: NextRequest) {
       email = user.email || ''
     }
     const status = req.nextUrl.searchParams.get('status') || undefined
+
+    const cacheKey = `sessions_my:${email}:${status ?? ''}`
+    const cached = cacheGet<object>(cacheKey)
+    if (cached) return NextResponse.json(cached)
+
     const data = await my(email, status)
+    cacheSet(cacheKey, data, TTL_MS)
     return NextResponse.json(data)
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

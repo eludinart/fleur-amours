@@ -4,14 +4,14 @@
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { motion, useMotionValue, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { prairieApi as prairie } from '@/api/prairie'
 import { useStore } from '@/store/useStore'
 import { FleurSociale } from '@/components/FleurSociale'
 import { FOUR_DOORS } from '@/data/tarotCards'
 import { t } from '@/i18n'
-import { usePrairieForceLayout } from '@/hooks/usePrairieForceLayout'
+import { JardinPhaser } from '@/components/JardinPhaser'
 
 const GrandJardinGalaxie = dynamic(
   () => import('@/components/GrandJardinGalaxie').then((m) => ({ default: m.GrandJardinGalaxie })),
@@ -45,17 +45,10 @@ export default function PrairiePage() {
   const [sendingPollen, setSendingPollen] = useState(false)
   const [feedbackArroser, setFeedbackArroser] = useState(null)
   const [feedbackPollen, setFeedbackPollen] = useState(null)
-  const [positionOverrides, setPositionOverrides] = useState({})
-  const [viewMode, setViewMode] = useState('prairie') // 'prairie' | 'galaxie'
-  const [isDraggingFlower, setIsDraggingFlower] = useState(false)
-  const justDraggedRef = useRef(false)
   const containerRef = useRef(null)
-  const gardenRef = useRef(null)
   const galaxieContainerRef = useRef(null)
   const [containerSize, setContainerSize] = useState({ w: 600, h: 400 })
   const appliedUrlParamsRef = useRef(false)
-  const storageKey = `prairie:positions:v1:${String(user?.id ?? '')}`
-  const hasLoadedStorageRef = useRef(false)
 
   useEffect(() => {
     const el = containerRef.current
@@ -68,26 +61,15 @@ export default function PrairiePage() {
     return () => ro.disconnect()
   }, [])
 
-  const scale = useMotionValue(1)
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
-
   const meId = Number(meFleur?.user_id ?? user?.id) || 0
+  const renderer = (searchParams.get('renderer') || 'dom').toLowerCase()
+  const usePhaser = renderer === 'phaser'
   /** Liens où je suis impliqué — pour le layout (proximité), plus de lignes visuelles */
   const myLinks = useMemo(
     () => links.filter((l) => Number(l.user_a) === meId || Number(l.user_b) === meId),
     [links, meId]
   )
-  /** Layout : tous les liens pour former des nuages (fleurs liées proches, non liées éloignées) */
-  const { positions: layoutPositions, settled: layoutSettled } = usePrairieForceLayout(fleurs, meFleur, links)
-
   const allFleurs = useMemo(() => {
-    const pos = layoutSettled ? layoutPositions : {}
-    const getPos = (uid) => {
-      const override = positionOverrides[Number(uid)]
-      if (override) return override
-      return pos[Number(uid)] ?? pos[uid]
-    }
     const byUserId = new Map()
     const selfUserId = Number(meFleur?.user_id ?? user?.id) || 0
 
@@ -95,7 +77,7 @@ export default function PrairiePage() {
       byUserId.set(selfUserId, {
         ...meFleur,
         user_id: selfUserId,
-        position: getPos(selfUserId) ?? meFleur.position ?? { x: 0.5, y: 0.5 },
+        position: meFleur.position ?? { x: 0.5, y: 0.5 },
         is_me: true,
       })
     }
@@ -108,24 +90,33 @@ export default function PrairiePage() {
       byUserId.set(uid, {
         ...f,
         user_id: uid,
-        position: getPos(uid) ?? f.position ?? { x: 0.5, y: 0.5 },
+        position: f.position ?? { x: 0.5, y: 0.5 },
         is_me: !!f.is_me,
       })
     })
 
     return Array.from(byUserId.values())
-  }, [meFleur, fleurs, layoutPositions, layoutSettled, positionOverrides, user?.id])
+  }, [meFleur, fleurs, user?.id])
 
   const isPublic = user?.profile_public === true
 
+  const lastFetchedAtRef = useRef<number>(0)
+  const fetchingRef = useRef(false)
+
   const fetchFleurs = useCallback(async (opts = {}) => {
     const background = !!opts.background
+    // Éviter les appels parallèles
+    if (fetchingRef.current) return
+    // Pour les refreshs en arrière-plan, ne pas relancer si un fetch récent (<55s)
+    if (background && Date.now() - lastFetchedAtRef.current < 55_000) return
+    fetchingRef.current = true
     if (!background) {
       setLoading(true)
       setError(null)
     }
     try {
       const data = await prairie.getFleurs()
+      lastFetchedAtRef.current = Date.now()
       setFleurs(data?.fleurs ?? [])
       setMeFleur(data?.me_fleur ?? null)
       setLinks(data?.links ?? [])
@@ -136,45 +127,9 @@ export default function PrairiePage() {
       setLinks([])
     } finally {
       if (!background) setLoading(false)
+      fetchingRef.current = false
     }
   }, [])
-
-  // Charger l'organisation personnalisée des fleurs (par utilisateur), une seule fois quand user est prêt
-  useEffect(() => {
-    if (!user?.id) return
-    try {
-      const raw = window.localStorage.getItem(storageKey)
-      if (!raw) return
-      const parsed = JSON.parse(raw)
-      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-        // Normaliser les clés en number pour cohérence avec getPos(Number(uid))
-        const next = {}
-        for (const [k, v] of Object.entries(parsed)) {
-          const uid = Number(k)
-          if (!Number.isNaN(uid) && v && typeof v.x === 'number' && typeof v.y === 'number') {
-            next[uid] = { x: v.x, y: v.y }
-          }
-        }
-        if (Object.keys(next).length > 0) {
-          setPositionOverrides(next)
-        }
-      }
-    } catch {
-      // no-op: format invalide ou storage indisponible
-    }
-    hasLoadedStorageRef.current = true
-  }, [storageKey, user?.id])
-
-  // Persister après un drag (ne jamais écrire {} pour ne pas écraser le storage au montage)
-  useEffect(() => {
-    if (!user?.id || !hasLoadedStorageRef.current) return
-    if (Object.keys(positionOverrides).length === 0) return
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(positionOverrides))
-    } catch {
-      // no-op
-    }
-  }, [positionOverrides, storageKey, user?.id])
 
   useEffect(() => {
     const pts = user?.points_de_rosee
@@ -197,15 +152,16 @@ export default function PrairiePage() {
   }, [searchParams, loading, allFleurs])
 
   useEffect(() => {
-    const onFocus = () => fetchFleurs()
+    // Refresh sur focus uniquement si la dernière synchro date de plus de 60s
+    const onFocus = () => fetchFleurs({ background: true })
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
   }, [fetchFleurs])
 
-  // Rafraîchir la présence (points verts / gris) toutes les 30 s
+  // Rafraîchir la présence (points verts / gris) toutes les 60 s
   useEffect(() => {
     if (!user) return
-    const interval = setInterval(() => fetchFleurs({ background: true }), 30000)
+    const interval = setInterval(() => fetchFleurs({ background: true }), 60_000)
     return () => clearInterval(interval)
   }, [user, fetchFleurs])
 
@@ -214,18 +170,6 @@ export default function PrairiePage() {
     window.addEventListener('keydown', onEscape)
     return () => window.removeEventListener('keydown', onEscape)
   }, [])
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const onWheel = (e) => {
-      e.preventDefault()
-      const delta = e.deltaY > 0 ? -0.1 : 0.1
-      scale.set(Math.max(0.3, Math.min(2, scale.get() + delta)))
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
-  }, [scale])
 
   async function handleArroser(fleur) {
     if (pointsDeRosee < 1) return
@@ -280,22 +224,6 @@ export default function PrairiePage() {
     }
   }
 
-  const updateFleurPositionFromPoint = useCallback((f, pointX, pointY) => {
-    const el = gardenRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    if (!rect.width || !rect.height) return
-    // Conversion écran -> coordonnée logique utilisée par left/top:
-    // left% = 36 + x*28 ; top% = 36 + y*28
-    const pctX = ((pointX - rect.left) / rect.width) * 100
-    const pctY = ((pointY - rect.top) / rect.height) * 100
-    const logicalX = (pctX - 36) / 28
-    const logicalY = (pctY - 36) / 28
-    const newX = Math.max(0.02, Math.min(0.98, logicalX))
-    const newY = Math.max(0.02, Math.min(0.98, logicalY))
-    setPositionOverrides((prev) => ({ ...prev, [Number(f.user_id)]: { x: newX, y: newY } }))
-  }, [])
-
   const isLinkedWith = (f) => {
     const fid = Number(f?.user_id)
     if (!meId || !fid) return false
@@ -336,6 +264,19 @@ export default function PrairiePage() {
           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
           <button
             type="button"
+            onClick={() => setViewMode((v) => (v === 'galaxie' ? 'prairie' : 'galaxie'))}
+            className={[
+              'px-2 py-1 rounded-lg border text-[11px] font-semibold transition-colors',
+              viewMode === 'galaxie'
+                ? 'border-violet-300/60 bg-violet-500/15 text-violet-700 dark:text-violet-200 dark:border-violet-500/40'
+                : 'border-emerald-300/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 dark:border-emerald-500/40',
+            ].join(' ')}
+            title={viewMode === 'galaxie' ? 'Retour prairie' : 'Voir galaxie'}
+          >
+            {viewMode === 'galaxie' ? '🌌 Galaxie' : '🌿 Prairie'}
+          </button>
+          <button
+            type="button"
             onClick={() => fetchFleurs()}
             disabled={loading}
             className="p-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
@@ -364,6 +305,36 @@ export default function PrairiePage() {
       >
         {viewMode === 'galaxie' ? (
           <div ref={galaxieContainerRef} className="absolute inset-0 w-full h-full">
+            <div
+              className="absolute inset-0 pointer-events-none"
+              aria-hidden
+              style={{
+                backgroundImage: [
+                  'radial-gradient(900px 600px at 20% 15%, rgba(124,58,237,0.20), transparent 60%)',
+                  'radial-gradient(700px 500px at 82% 30%, rgba(16,185,129,0.18), transparent 62%)',
+                  'radial-gradient(800px 600px at 45% 85%, rgba(245,158,11,0.12), transparent 60%)',
+                  // Star field (patterned sparkle)
+                  'radial-gradient(1.6px 1.6px at 12% 26%, rgba(255,255,255,0.22), transparent 62%)',
+                  'radial-gradient(1.2px 1.2px at 22% 68%, rgba(255,255,255,0.18), transparent 62%)',
+                  'radial-gradient(2.2px 2.2px at 78% 62%, rgba(255,255,255,0.20), transparent 62%)',
+                  'radial-gradient(1.1px 1.1px at 62% 18%, rgba(255,255,255,0.14), transparent 62%)',
+                  'radial-gradient(1.7px 1.7px at 90% 78%, rgba(255,255,255,0.12), transparent 62%)',
+                  'radial-gradient(1.4px 1.4px at 35% 42%, rgba(255,255,255,0.16), transparent 62%)',
+                  'radial-gradient(1.1px 1.1px at 48% 24%, rgba(255,255,255,0.13), transparent 62%)',
+                  'radial-gradient(1.9px 1.9px at 58% 58%, rgba(255,255,255,0.15), transparent 62%)',
+                  'radial-gradient(1.2px 1.2px at 6% 78%, rgba(255,255,255,0.12), transparent 62%)',
+                ].join(','),
+                filter: 'saturate(1.12) contrast(1.06)',
+              }}
+            />
+            <div
+              className="absolute inset-0 pointer-events-none"
+              aria-hidden
+              style={{
+                background:
+                  'radial-gradient(1200px 800px at 50% 55%, rgba(2,6,23,0.06), rgba(2,6,23,0.42) 70%, rgba(2,6,23,0.70) 100%)',
+              }}
+            />
             {allFleurs.length === 0 ? (
               <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 dark:text-slate-400">
                 <span className="text-4xl mb-2">🌌</span>
@@ -379,18 +350,35 @@ export default function PrairiePage() {
               </div>
             ) : (
             <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-slate-500"><span className="animate-pulse">Chargement galaxie…</span></div>}>
-              <GrandJardinGalaxie
-                nodes={allFleurs}
-                links={links}
-                meId={meId}
-                width={containerSize.w}
-                height={containerSize.h}
-                onNodeClick={(node) => {
-                  if (node?.user_id === meId) return
-                  setSelectedFleur(selectedFleur?.id === node?.id ? null : node)
-                }}
-                onBackgroundClick={() => setSelectedFleur(null)}
-              />
+              {usePhaser ? (
+                <JardinPhaser
+                  fleurs={allFleurs}
+                  links={links}
+                  meId={meId}
+                  selectedUserId={selectedFleur?.user_id ?? null}
+                  width={containerSize.w}
+                  height={containerSize.h}
+                  onSelectUserId={(uid) => {
+                    const fleur = allFleurs.find((f) => Number(f?.user_id) === Number(uid))
+                    if (!fleur) return
+                    if (Number(uid) === meId) return
+                    setSelectedFleur((prev) => (Number(prev?.user_id) === Number(uid) ? null : fleur))
+                  }}
+                  onBackgroundClick={() => setSelectedFleur(null)}
+                />
+              ) : (
+                <GrandJardinGalaxie
+                  nodes={allFleurs}
+                  links={links}
+                  meId={meId}
+                  selectedUserId={selectedFleur?.user_id ?? null}
+                  onNodeClick={(node) => {
+                    if (node?.user_id === meId) return
+                    setSelectedFleur(selectedFleur?.id === node?.id ? null : node)
+                  }}
+                  onBackgroundClick={() => setSelectedFleur(null)}
+                />
+              )}
             </Suspense>
             )}
             <AnimatePresence>
@@ -507,7 +495,7 @@ export default function PrairiePage() {
           </div>
         ) : (
         <motion.div
-          className="absolute inset-0 w-[300%] h-[300%] -left-[100%] -top-[100%] bg-gradient-to-br from-emerald-50/80 via-amber-50/50 to-violet-50/60 dark:from-emerald-950/20 dark:via-slate-900/40 dark:to-violet-950/20"
+          className="absolute inset-0 w-[300%] h-[300%] -left-[100%] -top-[100%] bg-gradient-to-br from-emerald-50/85 via-amber-50/55 to-violet-50/65 dark:from-emerald-950/18 dark:via-slate-900/38 dark:to-violet-950/20"
           style={{
             x,
             y,
@@ -515,13 +503,41 @@ export default function PrairiePage() {
             originX: 0.5,
             originY: 0.5,
           }}
-          drag={!isDraggingFlower}
+          drag
+          dragControls={panControls}
+          dragListener={false}
           dragMomentum={false}
         >
+          <div
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden
+            style={{
+              backgroundImage: [
+                'radial-gradient(900px 650px at 18% 20%, rgba(16,185,129,0.18), transparent 62%)',
+                'radial-gradient(820px 600px at 78% 22%, rgba(139,92,246,0.16), transparent 60%)',
+                'radial-gradient(780px 560px at 52% 82%, rgba(245,158,11,0.12), transparent 62%)',
+                'radial-gradient(2px 2px at 14% 26%, rgba(2,6,23,0.10), transparent 60%)',
+                'radial-gradient(1.5px 1.5px at 22% 68%, rgba(2,6,23,0.08), transparent 60%)',
+                'radial-gradient(2.5px 2.5px at 78% 62%, rgba(2,6,23,0.10), transparent 60%)',
+                'radial-gradient(1.2px 1.2px at 62% 18%, rgba(2,6,23,0.08), transparent 60%)',
+                'radial-gradient(1.8px 1.8px at 90% 78%, rgba(2,6,23,0.07), transparent 60%)',
+              ].join(','),
+              filter: 'saturate(1.03) contrast(1.02)',
+            }}
+          />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden
+            style={{
+              backgroundImage:
+                'radial-gradient(1200px 900px at 50% 50%, rgba(2,6,23,0.0), rgba(2,6,23,0.10) 55%, rgba(2,6,23,0.24) 78%, rgba(2,6,23,0.38) 100%)',
+            }}
+          />
           <div
             ref={gardenRef}
             className={`absolute inset-0 flex items-center justify-center ${allFleurs.length === 0 ? 'pointer-events-none' : ''}`}
             onClick={() => selectedFleur && setSelectedFleur(null)}
+            onPointerDown={(e) => panControls.start(e)}
             role="presentation"
           >
             {allFleurs.length === 0 ? (
@@ -544,8 +560,55 @@ export default function PrairiePage() {
               </div>
             ) : (
               <>
+                {usePixi && (
+                  <PrairiePixiJardin
+                    fleurs={allFleurs}
+                    links={links}
+                    meId={meId}
+                    selectedUserId={selectedFleur?.user_id ?? null}
+                    onSelectUserId={(uid) => {
+                      const fleur = allFleurs.find((f) => Number(f?.user_id) === Number(uid))
+                      if (!fleur) return
+                      setSelectedFleur((prev) => (Number(prev?.user_id) === Number(uid) ? null : fleur))
+                    }}
+                  />
+                )}
+                <svg
+                  className={`absolute inset-0 w-full h-full pointer-events-none ${usePixi ? 'opacity-0' : ''}`}
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  aria-hidden
+                >
+                  <defs>
+                    <linearGradient id="prairie-link" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="rgba(16,185,129,0.30)" />
+                      <stop offset="55%" stopColor="rgba(139,92,246,0.22)" />
+                      <stop offset="100%" stopColor="rgba(245,158,11,0.20)" />
+                    </linearGradient>
+                    <filter id="prairie-glow" x="-40%" y="-40%" width="180%" height="180%">
+                      <feGaussianBlur stdDeviation="0.6" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  {prairieLinkLines.map((l, i) => {
+                    const alpha = Math.max(0.10, Math.min(0.28, 0.34 - (l.dist / 42) * 0.22))
+                    const isActive =
+                      (selectedFleur?.user_id && (Number(selectedFleur.user_id) === l.a || Number(selectedFleur.user_id) === l.b)) ||
+                      (meId && (meId === l.a || meId === l.b))
+                    const stroke = isActive ? 'rgba(167,139,250,0.55)' : 'url(#prairie-link)'
+                    const strokeW = isActive ? 0.32 : 0.22
+                    return (
+                      <g key={`${l.a}-${l.b}-${i}`} filter="url(#prairie-glow)" opacity={isActive ? 0.75 : alpha}>
+                        <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={stroke} strokeWidth={strokeW} />
+                      </g>
+                    )
+                  })}
+                </svg>
                 <AnimatePresence>
-                  {allFleurs.map((f, idx) => (
+                  {!usePixi && allFleurs.map((f, idx) => (
                     <motion.div
                       key={f.id ?? f.user_id ?? `fleur-${idx}`}
                       className="absolute -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
@@ -561,18 +624,13 @@ export default function PrairiePage() {
                       transition={{ type: 'spring', stiffness: 140, damping: 26, delay: layoutSettled ? 0 : idx * 0.03 }}
                       drag
                       dragMomentum={false}
-                      dragElastic={0.04}
-                      dragPropagation={false}
+                      dragElastic={0}
+                      onPointerDown={(e) => e.stopPropagation()}
                       onDragStart={() => {
                         justDraggedRef.current = false
-                        setIsDraggingFlower(true)
-                      }}
-                      onDrag={(_, info) => {
-                        updateFleurPositionFromPoint(f, info.point.x, info.point.y)
                       }}
                       onDragEnd={(_, info) => {
                         updateFleurPositionFromPoint(f, info.point.x, info.point.y)
-                        setIsDraggingFlower(false)
                         justDraggedRef.current = true
                         setTimeout(() => { justDraggedRef.current = false }, 100)
                       }}
@@ -583,6 +641,20 @@ export default function PrairiePage() {
                         setSelectedFleur(selectedFleur?.id === f.id ? null : f)
                       }}
                     >
+                      {!f.is_me && (selectedFleur?.id === f.id) && (
+                        <div
+                          className="absolute inset-0 -z-10 rounded-full"
+                          aria-hidden
+                          style={{
+                            transform: 'translate(-8px, -8px)',
+                            width: 'calc(100% + 16px)',
+                            height: 'calc(100% + 16px)',
+                            background:
+                              'radial-gradient(circle at 50% 55%, rgba(167,139,250,0.22), rgba(16,185,129,0.10) 45%, transparent 70%)',
+                            filter: 'blur(1px)',
+                          }}
+                        />
+                      )}
                       {!f.is_me && selectedFleur?.id === f.id && (
                         <motion.div
                           className={`absolute left-1/2 -translate-x-1/2 z-[70] w-56 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-950 shadow-2xl p-3 ${((f.position?.y ?? 0) > 0.5) ? 'bottom-full mb-2' : 'top-full mt-2'}`}

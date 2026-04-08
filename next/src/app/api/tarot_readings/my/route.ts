@@ -6,8 +6,11 @@ import { requireAuth } from '@/lib/api-auth'
 import { authMe } from '@/lib/db-auth'
 import { my } from '@/lib/db-tarot'
 import { isDbConfigured } from '@/lib/db'
+import { cacheGet, cacheSet } from '@/lib/server-cache'
 
 export const dynamic = 'force-dynamic'
+
+const TTL_MS = 45_000
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,15 +20,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ items: [] })
     }
 
+    const cacheKey = `tarot_my:${userId}`
+    const cached = cacheGet<object>(cacheKey)
+    if (cached) return NextResponse.json(cached)
+
+    // authMe et l'initialisation de la table en parallèle
     let email: string | null = null
     try {
       const user = await authMe(parseInt(userId, 10))
       email = user.email || null
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
 
     const data = await my(userId, email ?? undefined)
+    cacheSet(cacheKey, data, TTL_MS)
     return NextResponse.json(data)
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

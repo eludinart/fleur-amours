@@ -69,7 +69,11 @@ export function FleurSociale({
 
   return (
     <div
-      className={`fleur-sociale inline-flex flex-col items-center transition-transform ${!isMe ? 'cursor-pointer hover:scale-110' : 'cursor-default'} ${isSelected ? 'ring-2 ring-violet-400 rounded-full' : ''} ${isMe ? 'relative' : ''}`}
+      className={[
+        'fleur-sociale inline-flex flex-col items-center transition-transform',
+        isMe ? 'relative cursor-default' : 'cursor-pointer hover:scale-[1.12]',
+        isSelected ? 'rounded-full ring-2 ring-violet-400/90 shadow-[0_0_0_6px_rgba(139,92,246,0.10),0_10px_35px_rgba(2,6,23,0.35)]' : '',
+      ].filter(Boolean).join(' ')}
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -85,7 +89,12 @@ export function FleurSociale({
         viewBox="0 0 100 100"
         width={sz}
         height={sz}
-        className={`overflow-visible ${isMe ? 'drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]' : ''}`}
+        className={[
+          'overflow-visible',
+          isMe ? 'drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]' : '',
+          !isMe && isSelected ? 'drop-shadow-[0_0_14px_rgba(167,139,250,0.55)]' : '',
+          !isMe && !isSelected && isOnline ? 'drop-shadow-[0_0_12px_rgba(52,211,153,0.35)]' : '',
+        ].filter(Boolean).join(' ')}
         style={{ filter: `brightness(${brightness})` }}
       >
         <defs>
@@ -120,10 +129,7 @@ export function FleurSociale({
         </span>
       )}
       {showPseudo && pseudo && (
-        <span
-          className="mt-0.5 max-w-24 truncate text-[10px] leading-tight font-medium text-slate-100 dark:text-slate-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] inline-flex items-center gap-1"
-          title={pseudo}
-        >
+        <span className="mt-0.5 max-w-28 truncate text-[10px] leading-tight font-medium inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-950/40 dark:bg-slate-950/55 border border-white/10 text-slate-50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]" title={pseudo}>
           <span className={`inline-block w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-slate-400'}`} />
           {pseudo}
         </span>

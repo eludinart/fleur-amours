@@ -15,7 +15,7 @@ const DB_PREFIX = process.env.DB_PREFIX ?? 'wp_'
 const POOL_CONNECTION_LIMIT = (() => {
   const raw = process.env.MARIADB_POOL_LIMIT ?? ''
   const n = parseInt(raw, 10)
-  return Number.isFinite(n) && n > 0 ? n : 2
+  return Number.isFinite(n) && n > 0 ? n : 10
 })()
 
 const POOL_QUEUE_LIMIT = (() => {
