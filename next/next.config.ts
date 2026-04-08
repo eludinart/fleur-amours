@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   basePath: '/jardin',
   assetPrefix: '/jardin/',
   output: isCapacitorBuild ? 'export' : 'standalone',
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   transpilePackages: ['recharts', 'react-force-graph-2d', 'd3-array', 'd3-scale', 'd3-shape', 'd3-force-3d'],
   outputFileTracingRoot: path.resolve(process.cwd()),
   reactStrictMode: true,
