@@ -119,7 +119,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <ImpersonationBanner />
         <header
           ref={headerRef}
-          className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 pb-2 sm:pb-3 pt-[max(0.75rem,env(safe-area-inset-top,0px),16px)] border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 min-w-0 overflow-hidden relative z-10"
+          className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 min-w-0 overflow-hidden relative z-10"
         >
           <button
             onClick={() => setSidebarOpen((o) => !o)}

@@ -26,18 +26,8 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
-}
-
-/* Android/Capacitor: garder le bas au-dessus de la barre de navigation */
-@media (max-width: 640px) and (pointer: coarse) {
-  body {
-    padding-top: max(env(safe-area-inset-top, 0px), 16px);
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 48px);
-  }
 }
 
 body > div {
