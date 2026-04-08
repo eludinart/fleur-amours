@@ -35,6 +35,7 @@ body {
 /* Android/Capacitor: garder le bas au-dessus de la barre de navigation */
 @media (max-width: 640px) and (pointer: coarse) {
   body {
+    padding-top: max(env(safe-area-inset-top, 0px), 16px);
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 48px);
   }
 }
