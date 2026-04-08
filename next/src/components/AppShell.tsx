@@ -131,7 +131,7 @@ function AppRoutes() {
     return (
       <Suspense fallback={null}>
         <LocaleSync />
-        <div className="scrollbar-cream h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
+        <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
           <LandingPage />
         </div>
       </Suspense>
@@ -574,7 +574,7 @@ function AppRoutes() {
     return (
       <Suspense fallback={<PageFallback />}>
         <LocaleSync />
-        <div className="scrollbar-cream h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
+        <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
           <LandingPage />
         </div>
       </Suspense>
