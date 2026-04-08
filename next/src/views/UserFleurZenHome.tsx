@@ -104,49 +104,47 @@ export function UserFleurZenHome() {
   }
 
   return (
-    <div className="flex-1 min-h-0 relative bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_40%,rgba(30,27,75,0.35),transparent)]" />
+    <div className="flex-1 min-h-0 overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900">
+      <div className="w-full max-w-lg mx-auto px-4 py-6 space-y-6">
+        <header className="text-center space-y-1">
+          <Breadcrumbs />
+          <h1 className="text-lg font-light tracking-[0.25em] uppercase text-white/85">{t('fleurZen.title')}</h1>
+          <p className="text-[11px] text-white/45 font-light tracking-wide">{t('fleurZen.subtitle')}</p>
+        </header>
 
-      <div className="relative z-10 w-full max-w-lg mx-auto px-4 py-6 space-y-6">
-          <header className="text-center space-y-1">
-            <Breadcrumbs />
-            <h1 className="text-lg font-light tracking-[0.25em] uppercase text-white/85">{t('fleurZen.title')}</h1>
-            <p className="text-[11px] text-white/45 font-light tracking-wide">{t('fleurZen.subtitle')}</p>
-          </header>
+        <motion.div
+          className="flex justify-center will-change-transform"
+          animate={reduceMotion ? {} : { scale: [1, 1.02, 1] }}
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : { duration: socialBreathSec, repeat: Infinity, ease: 'easeInOut' }
+          }
+        >
+          <FlowerSVG
+            petals={displayPetals}
+            size={280}
+            animate
+            showLabels
+            showScores={false}
+            labelsOnHoverOnly
+          />
+        </motion.div>
 
-          <motion.div
-            className="flex justify-center will-change-transform"
-            animate={reduceMotion ? {} : { scale: [1, 1.02, 1] }}
-            transition={
-              reduceMotion
-                ? { duration: 0 }
-                : { duration: socialBreathSec, repeat: Infinity, ease: 'easeInOut' }
-            }
+        <p className="text-center text-[10px] text-white/40 max-w-xs mx-auto leading-relaxed">
+          {t('fleurZen.chromaticHint')}
+        </p>
+
+        <FleurTimeScroll snapshots={timeSnapshots} selectedIndex={timeIndex} onSelect={setTimeIndex} />
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <Link
+            href={statsHref}
+            className="text-[11px] tracking-[0.18em] uppercase text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 px-5 py-2.5 rounded-full transition-colors"
           >
-            <FlowerSVG
-              petals={displayPetals}
-              size={280}
-              animate
-              showLabels
-              showScores={false}
-              labelsOnHoverOnly
-            />
-          </motion.div>
-
-          <p className="text-center text-[10px] text-white/40 max-w-xs mx-auto leading-relaxed">
-            {t('fleurZen.chromaticHint')}
-          </p>
-
-          <FleurTimeScroll snapshots={timeSnapshots} selectedIndex={timeIndex} onSelect={setTimeIndex} />
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Link
-              href={statsHref}
-              className="text-[11px] tracking-[0.18em] uppercase text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 px-5 py-2.5 rounded-full transition-colors"
-            >
-              {t('fleurZen.detailsStats')}
-            </Link>
-          </div>
+            {t('fleurZen.detailsStats')}
+          </Link>
+        </div>
       </div>
 
       <span className="sr-only" aria-live="polite">

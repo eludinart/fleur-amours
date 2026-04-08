@@ -17,16 +17,14 @@ function ViewSwitcher({
   isStatsRoute,
 }: {
   view: string
-  /** Dashboard coach : rôle coach OU admin (les admins utilisent les mêmes outils côté API). */
   showCoachTab: boolean
   isAdmin: boolean
   onSelect: (v: string) => void
-  /** Accueil stats (vue détaillée) : on n’active pas l’onglet « Mon Jardin ». */
   isStatsRoute?: boolean
 }) {
   const homeActive = view === 'user' && !isStatsRoute
   return (
-    <div className="flex flex-row flex-nowrap gap-2 mb-4 overflow-x-auto pb-1 scroll-smooth [scrollbar-width:thin]">
+    <div className="shrink-0 flex flex-row flex-nowrap gap-2 mb-4 overflow-x-auto pb-1 scroll-smooth [scrollbar-width:thin]">
       <button
         type="button"
         onClick={() => onSelect('user')}
@@ -75,7 +73,6 @@ function HomePageInner() {
   const showCoachTab = isCoach || isAdmin
   const viewParam = searchParams?.get?.('view') ?? 'user'
   const isStatsRoute = viewParam === 'stats'
-  /** `view=stats` ne doit pas retomber sur admin/coach (sinon l’admin voyait AdminDashboard au lieu du jardin utilisateur). */
   const view = ['user', 'coach', 'admin'].includes(viewParam)
     ? viewParam
     : isStatsRoute
@@ -94,74 +91,63 @@ function HomePageInner() {
     router.replace(q ? `${pathname || '/'}?${q}` : (pathname || '/'))
   }
 
+  // Cas "stats" (DashboardPage a son propre overflow-y-auto)
   if (isStatsRoute) {
     return (
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="flex flex-col min-h-0">
-          {(isCoach || isAdmin) && (
-            <div className="sticky top-0 z-20 bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-sm pt-2">
-              <ViewSwitcher
-                view={view}
-                showCoachTab={showCoachTab}
-                isAdmin={!!isAdmin}
-                onSelect={setView}
-                isStatsRoute
-              />
-            </div>
-          )}
-          <DashboardPage />
-        </div>
+      <div className="flex-1 min-h-0 flex flex-col">
+        {(isCoach || isAdmin) && (
+          <ViewSwitcher
+            view={view}
+            showCoachTab={showCoachTab}
+            isAdmin={!!isAdmin}
+            onSelect={setView}
+            isStatsRoute
+          />
+        )}
+        <DashboardPage />
       </div>
     )
   }
 
+  // Cas "coach" (CoachDashboardPage a son propre overflow-y-auto)
   if (view === 'coach' && showCoachTab) {
     return (
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="flex flex-col min-h-0">
-          <div className="sticky top-0 z-20 bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-sm pt-2">
-            <ViewSwitcher
-              view={view}
-              showCoachTab={showCoachTab}
-              isAdmin={!!isAdmin}
-              onSelect={setView}
-              isStatsRoute={false}
-            />
-          </div>
-          <CoachDashboardPage />
-        </div>
-      </div>
-    )
-  }
-  if (view === 'admin' && isAdmin) {
-    return (
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="flex flex-col min-h-0">
-          <div className="sticky top-0 z-20 bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-sm pt-2">
-            <ViewSwitcher view={view} showCoachTab={showCoachTab} isAdmin={isAdmin} onSelect={setView} isStatsRoute={false} />
-          </div>
-          <AdminDashboardPage />
-        </div>
+      <div className="flex-1 min-h-0 flex flex-col">
+        <ViewSwitcher
+          view={view}
+          showCoachTab={showCoachTab}
+          isAdmin={!!isAdmin}
+          onSelect={setView}
+          isStatsRoute={false}
+        />
+        <CoachDashboardPage />
       </div>
     )
   }
 
-  return (
-    <div className="flex-1 min-h-0 overflow-y-auto">
-      <div className="flex flex-col min-h-0">
-        {(isCoach || isAdmin) && (
-          <div className="sticky top-0 z-20 bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-sm pt-2">
-            <ViewSwitcher
-              view={view}
-              showCoachTab={showCoachTab}
-              isAdmin={!!isAdmin}
-              onSelect={setView}
-              isStatsRoute={false}
-            />
-          </div>
-        )}
-        <UserFleurZenHome />
+  // Cas "admin" (AdminDashboardPage a son propre overflow-y-auto via Layout interne)
+  if (view === 'admin' && isAdmin) {
+    return (
+      <div className="flex-1 min-h-0 flex flex-col">
+        <ViewSwitcher view={view} showCoachTab={showCoachTab} isAdmin={isAdmin} onSelect={setView} isStatsRoute={false} />
+        <AdminDashboardPage />
       </div>
+    )
+  }
+
+  // Cas "user" — UserFleurZenHome a son propre overflow-y-auto (comme DashboardPage)
+  return (
+    <div className="flex-1 min-h-0 flex flex-col">
+      {(isCoach || isAdmin) && (
+        <ViewSwitcher
+          view={view}
+          showCoachTab={showCoachTab}
+          isAdmin={!!isAdmin}
+          onSelect={setView}
+          isStatsRoute={false}
+        />
+      )}
+      <UserFleurZenHome />
     </div>
   )
 }
@@ -179,4 +165,3 @@ export function HomePage() {
     </Suspense>
   )
 }
-
