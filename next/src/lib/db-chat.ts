@@ -238,6 +238,7 @@ export async function listCoaches(): Promise<CoachPublicCard[]> {
        ${joins}
        WHERE u.ID IN (SELECT user_id FROM ${tRoles} WHERE app_role IN ('coach', 'admin'))
        AND COALESCE(um_listed.meta_value, '1') != '0'
+       GROUP BY u.ID
        ORDER BY u.display_name ASC`
     )
     return rows
@@ -282,26 +283,77 @@ export async function startConversation(
   const pool = getPool()
   await ensureTables(pool)
   const tConv = table(TBL_CONV)
+  const tMsg = table(TBL_MSG)
+  // IMPORTANT:
+  // - When coachId is provided (number or null), we must NOT "recycle" the latest conversation
+  //   by mutating assigned_coach_id, otherwise clicking a coach can open an older thread whose
+  //   messages belong to a different coach.
+  // - Instead, look for an existing conversation already assigned to that coach (or unassigned for null).
+  // - Only when coachId is undefined (no intent) do we fallback to "latest conversation".
+
+  const coachIntent =
+    coachId === undefined ? undefined : coachId != null && coachId > 0 ? Number(coachId) : null
+
+  if (coachIntent !== undefined) {
+    // Reuse an existing conversation only if it doesn't contain staff messages
+    // from a different coach/admin than the intended coach. This prevents opening
+    // "recycled" threads created by older buggy logic that reassigned assigned_coach_id.
+    const [match] = await pool.execute<RowDataPacket[]>(
+      coachIntent === null
+        ? `SELECT c.id
+           FROM ${tConv} c
+           WHERE c.user_id = ?
+             AND c.assigned_coach_id IS NULL
+             AND c.status != 'deleted'
+             AND NOT EXISTS (
+               SELECT 1 FROM ${tMsg} m
+               WHERE m.conversation_id = c.id
+                 AND m.sender_role != 'user'
+             )
+           ORDER BY c.id DESC
+           LIMIT 1`
+        : `SELECT c.id
+           FROM ${tConv} c
+           WHERE c.user_id = ?
+             AND c.assigned_coach_id = ?
+             AND c.status != 'deleted'
+             AND NOT EXISTS (
+               SELECT 1 FROM ${tMsg} m
+               WHERE m.conversation_id = c.id
+                 AND m.sender_role != 'user'
+                 AND m.sender_id != ?
+             )
+           ORDER BY c.id DESC
+           LIMIT 1`,
+      coachIntent === null ? [userId] : [userId, coachIntent, coachIntent]
+    )
+    if (match.length > 0) {
+      const id = Number(match[0].id)
+      const meta = await conversationMeta(pool, id)
+      return { id, ...meta }
+    }
+
+    const [ins] = await pool.execute(
+      `INSERT INTO ${tConv} (user_id, user_email, status, assigned_coach_id) VALUES (?, ?, 'open', ?)`,
+      [userId, userEmail, coachIntent]
+    )
+    const id = Number((ins as unknown as { insertId: number }).insertId)
+    return { id, status: 'open', closed_by_role: null }
+  }
+
   const [existing] = await pool.execute<RowDataPacket[]>(
     `SELECT id FROM ${tConv} WHERE user_id = ? AND status != 'deleted' ORDER BY id DESC LIMIT 1`,
     [userId]
   )
   if (existing.length > 0) {
     const id = Number(existing[0].id)
-    if (coachId !== undefined) {
-      if (coachId != null && coachId > 0) {
-        await pool.execute(`UPDATE ${tConv} SET assigned_coach_id = ? WHERE id = ?`, [coachId, id])
-      } else {
-        await pool.execute(`UPDATE ${tConv} SET assigned_coach_id = NULL WHERE id = ?`, [id])
-      }
-    }
     const meta = await conversationMeta(pool, id)
     return { id, ...meta }
   }
-  const insertAssigned = coachId != null && coachId > 0 ? coachId : null
+
   const [ins] = await pool.execute(
-    `INSERT INTO ${tConv} (user_id, user_email, status, assigned_coach_id) VALUES (?, ?, 'open', ?)`,
-    [userId, userEmail, insertAssigned]
+    `INSERT INTO ${tConv} (user_id, user_email, status, assigned_coach_id) VALUES (?, ?, 'open', NULL)`,
+    [userId, userEmail]
   )
   const id = Number((ins as unknown as { insertId: number }).insertId)
   return { id, status: 'open', closed_by_role: null }
@@ -403,7 +455,7 @@ export async function listConversations(
   callerUserId: number,
   isAdmin: boolean,
   isCoach: boolean,
-  opts: { status?: string; per_page?: number }
+  opts: { status?: string; per_page?: number; dedupe?: 'patient_coach' | 'none' }
 ): Promise<{ items: Array<Record<string, unknown>>; total: number }> {
   const pool = getPool()
   await ensureTables(pool)
@@ -416,9 +468,16 @@ export async function listConversations(
   let where = "c.status != 'deleted'"
   const params: (string | number | boolean | null)[] = []
 
+  // Backward/forward compatible "open":
+  // historically we may have more than one "ongoing" status value (e.g. 'open', 'in_progress').
+  // The UI expects the default filter to mean "not closed".
   if (status) {
-    where += ' AND c.status = ?'
-    params.push(status)
+    if (status === 'open') {
+      where += " AND c.status != 'closed'"
+    } else {
+      where += ' AND c.status = ?'
+      params.push(status)
+    }
   }
 
   if (isCoach && !isAdmin) {
@@ -426,9 +485,11 @@ export async function listConversations(
     params.push(callerUserId)
   }
 
-  // Une ligne par patient : éviter les doublons visuels si plusieurs convs non-supprimées
-  // existent pour le même user_id (course sur startConversation, anciennes données, etc.).
-  const dedupeRank = `ROW_NUMBER() OVER (PARTITION BY c.user_id ORDER BY c.updated_at DESC, c.id DESC)`
+  const dedupeMode = opts.dedupe ?? 'patient_coach'
+  const dedupeRank =
+    dedupeMode === 'none'
+      ? `ROW_NUMBER() OVER (PARTITION BY c.id ORDER BY c.updated_at DESC, c.id DESC)`
+      : `ROW_NUMBER() OVER (PARTITION BY c.user_id, COALESCE(c.assigned_coach_id, 0) ORDER BY c.updated_at DESC, c.id DESC)`
 
   const countRes = await exec(
     pool,

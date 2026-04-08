@@ -704,6 +704,71 @@ export async function acceptSeedConnection(
   return { channelId }
 }
 
+export type PendingSeed = {
+  id: number
+  from_user_id: number
+  to_user_id: number
+  intention_id: string
+  created_at: string | null
+}
+
+export async function listPendingSeedsIncoming(params: {
+  userId: number
+  intentionIds?: string[]
+  limit?: number
+}): Promise<PendingSeed[]> {
+  const uid = Number(params.userId)
+  if (!uid) throw new Error('userId requis')
+  const pool = getPool()
+  await ensureSeedsAndLinksTables(pool)
+  const tSeeds = table('fleur_social_seeds')
+  const limit = Math.min(200, Math.max(1, Number(params.limit ?? 50)))
+  const intentionIds = (params.intentionIds ?? []).map((s) => String(s).trim()).filter(Boolean)
+
+  let where = `to_user_id = ? AND status = 'pending'`
+  const args: Array<string | number> = [uid]
+  if (intentionIds.length > 0) {
+    where += ` AND intention_id IN (${intentionIds.map(() => '?').join(',')})`
+    args.push(...intentionIds)
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id, from_user_id, to_user_id, intention_id, created_at
+     FROM ${tSeeds}
+     WHERE ${where}
+     ORDER BY created_at DESC
+     LIMIT ?`,
+    [...args, limit]
+  )
+  return (rows ?? []).map((r) => ({
+    id: Number(r.id),
+    from_user_id: Number(r.from_user_id),
+    to_user_id: Number(r.to_user_id),
+    intention_id: String(r.intention_id ?? '').trim(),
+    created_at: r.created_at ? String(r.created_at) : null,
+  }))
+}
+
+export async function rejectSeedConnection(params: {
+  seedId: number
+  rejectorUserId: number
+}): Promise<void> {
+  const seedId = Number(params.seedId)
+  const rejector = Number(params.rejectorUserId)
+  if (!seedId || !rejector) throw new Error('seedId et rejectorUserId requis')
+  const pool = getPool()
+  await ensureSeedsAndLinksTables(pool)
+  const tSeeds = table('fleur_social_seeds')
+  const [seedRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id, to_user_id, status FROM ${tSeeds} WHERE id = ?`,
+    [seedId]
+  )
+  const seed = seedRows?.[0]
+  if (!seed) throw new Error('Graine introuvable')
+  if (Number(seed.to_user_id) !== rejector) throw new Error('Seul le destinataire peut refuser cette graine')
+  if (String(seed.status) !== 'pending') throw new Error('Cette graine a déjà été traitée')
+  await pool.execute(`UPDATE ${tSeeds} SET status = 'rejected', updated_at = NOW() WHERE id = ?`, [seedId])
+}
+
 /** Visite la Lisière d'un utilisateur (profil public, relation, graines) */
 export async function visitLisiere(
   visitorUserId: number,

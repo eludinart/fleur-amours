@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import { chatApi } from '@/api/chat'
 import { t } from '@/i18n'
 import { useAuth } from '@/contexts/AuthContext'
+import { socialApi, INTENTIONS } from '@/api/social'
+import { toast } from '@/hooks/useToast'
 
 function formatTime(iso: string | null | undefined): string {
   if (!iso) return ''
@@ -95,6 +97,8 @@ export default function AdminChatPage() {
   const [sending, setSending] = useState(false)
   const [statusFilter, setStatusFilter] = useState('open')
   const [error, setError] = useState('')
+  const [patienteleIntention, setPatienteleIntention] = useState(INTENTIONS[0]?.id ?? 'resonance')
+  const [patienteleBusy, setPatienteleBusy] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgAt = useRef<string | null>(null)
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -115,7 +119,7 @@ export default function AdminChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
-  const effectiveStatus = emailParam ? '' : statusFilter
+  const effectiveStatus = emailParam ? 'all' : statusFilter
   const listPerPage = emailParam ? 500 : 50
   /** Une tentative ensure_for_patient par navigation email (évite boucles). */
   const ensurePatientAttemptedRef = useRef(false)
@@ -332,15 +336,45 @@ export default function AdminChatPage() {
     }
   }
 
-  async function deleteConversation(convId: number) {
-    if (!window.confirm('Supprimer définitivement cette conversation et tous ses messages ?')) return
+  async function deleteConversation(conv: { id: number; status?: string; user_email?: string }) {
+    const isClosedConv = conv?.status === 'closed'
+    const label = conv?.user_email ? ` (${conv.user_email})` : ''
+    if (isClosedConv) {
+      if (
+        !window.confirm(
+          `Cette conversation est clôturée${label}.\n\nConfirmer la suppression définitive (irréversible) ?`
+        )
+      )
+        return
+      if (!window.confirm('Dernière confirmation : supprimer définitivement cette conversation ?')) return
+    } else {
+      if (!window.confirm('Supprimer définitivement cette conversation et tous ses messages ?')) return
+    }
     try {
-      await chatApi.deleteConversation(String(convId))
-      setConversations((prev) => prev.filter((c) => c.id !== convId))
-      if (selected?.id === convId) { setSelected(null); setMessages([]) }
+      await chatApi.deleteConversation(String(conv.id))
+      setConversations((prev) => prev.filter((c) => c.id !== conv.id))
+      if (selected?.id === conv.id) {
+        setSelected(null)
+        setMessages([])
+      }
     } catch (err: unknown) {
       const e = err as { message?: string }
       setError(e?.message || 'Erreur lors de la suppression.')
+    }
+  }
+
+  async function requestAddToPatientele() {
+    if (!selected?.user_id) return
+    if (patienteleBusy) return
+    setPatienteleBusy(true)
+    try {
+      await socialApi.sendSeed(String(selected.user_id), String(patienteleIntention))
+      toast("Demande envoyée. Le patient devra accepter pour apparaître dans votre patientèle.", 'success')
+    } catch (e: unknown) {
+      const ex = e as { detail?: string; message?: string }
+      toast(ex?.detail || ex?.message || "Impossible d'envoyer la demande.", 'error')
+    } finally {
+      setPatienteleBusy(false)
     }
   }
 
@@ -359,7 +393,7 @@ export default function AdminChatPage() {
             {t('chat.adminInboxSubtitle')}
           </p>
           <div className="flex gap-1">
-            {[['open', 'Ouvertes'], ['closed', 'Clôturées'], ['', 'Toutes']].map(([val, lbl]) => (
+            {[['open', 'Ouvertes'], ['closed', 'Clôturées']].map(([val, lbl]) => (
               <button
                 key={val}
                 onClick={() => { setStatusFilter(val); setSelected(null) }}
@@ -443,7 +477,7 @@ export default function AdminChatPage() {
                   </button>
                   {convClosed && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); deleteConversation(c.id) }}
+                      onClick={(e) => { e.stopPropagation(); deleteConversation(c) }}
                       title="Supprimer"
                       className="absolute right-2 top-1/2 -translate-y-1/2 md:opacity-0 md:group-hover:opacity-100 w-9 h-9 md:w-6 md:h-6 flex items-center justify-center rounded-full hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-400 hover:text-rose-600 transition-all touch-manipulation"
                     >
@@ -508,6 +542,31 @@ export default function AdminChatPage() {
             </div>
             <div className="flex gap-2 shrink-0">
               {!isClosed && (
+                <div className="hidden sm:flex items-center gap-2 mr-1">
+                  <select
+                    value={patienteleIntention}
+                    onChange={(e) => setPatienteleIntention(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+                    title="Cadre de la demande"
+                  >
+                    {INTENTIONS.map((i) => (
+                      <option key={i.id} value={i.id}>
+                        {i.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={requestAddToPatientele}
+                    disabled={patienteleBusy || !selected?.user_id}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    title="Demander l'ajout à votre patientèle"
+                  >
+                    {patienteleBusy ? '…' : 'Ajouter à patientèle'}
+                  </button>
+                </div>
+              )}
+              {!isClosed && (
                 <button
                   onClick={() => closeConversation(selected.id)}
                   className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 hover:border-rose-400 dark:hover:border-rose-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
@@ -517,7 +576,7 @@ export default function AdminChatPage() {
               )}
               {isClosed && (
                 <button
-                  onClick={() => deleteConversation(selected.id)}
+                  onClick={() => deleteConversation(selected)}
                   className="px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-800 text-xs text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-700 dark:hover:text-rose-300 transition-colors"
                 >
                   Supprimer

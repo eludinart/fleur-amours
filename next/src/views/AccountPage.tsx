@@ -9,6 +9,8 @@ import { prairieApi } from '@/api/prairie'
 import { useStore } from '@/store/useStore'
 import { SUPPORTED_LOCALES, t } from '@/i18n'
 import { PrairieOptInModal } from '@/components/PrairieOptInModal'
+import { INTENTIONS, socialApi } from '@/api/social'
+import { toast } from '@/hooks/useToast'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
@@ -283,6 +285,9 @@ export function AccountPage() {
   const [profileError, setProfileError] = useState('')
   const [profileSuccess, setProfileSuccess] = useState(false)
   const [profileTab, setProfileTab] = useState<'user' | 'coach' | 'admin'>('user')
+  const [pendingSeeds, setPendingSeeds] = useState<Array<{ id: number; from_user_id: number; intention_id: string; created_at: string | null }>>([])
+  const [pendingSeedsLoading, setPendingSeedsLoading] = useState(false)
+  const [pendingBusyId, setPendingBusyId] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const coachShortBioRef = useRef<HTMLTextAreaElement>(null)
   const coachLongBioRef = useRef<HTMLTextAreaElement>(null)
@@ -293,6 +298,63 @@ export function AccountPage() {
     if (profileTab === 'coach' && !hasCoachTab) setProfileTab('user')
     if (profileTab === 'admin' && !isAdmin) setProfileTab('user')
   }, [profileTab, hasCoachTab, isAdmin])
+
+  useEffect(() => {
+    if (!user?.id) return
+    const intentionIds = INTENTIONS.map((i) => i.id).join(',')
+    setPendingSeedsLoading(true)
+    socialApi
+      .pendingSeedsIncoming({ intention_ids: intentionIds, limit: 50 })
+      .then((r) => {
+        const items = (r as { items?: any[] })?.items ?? []
+        setPendingSeeds(
+          Array.isArray(items)
+            ? items.map((s) => ({
+                id: Number(s.id),
+                from_user_id: Number(s.from_user_id),
+                intention_id: String(s.intention_id ?? ''),
+                created_at: s.created_at ? String(s.created_at) : null,
+              }))
+            : []
+        )
+      })
+      .catch(() => setPendingSeeds([]))
+      .finally(() => setPendingSeedsLoading(false))
+  }, [user?.id])
+
+  async function acceptPendingSeed(seedId: number) {
+    if (pendingBusyId) return
+    setPendingBusyId(seedId)
+    try {
+      const res = (await socialApi.acceptConnection(String(seedId))) as { channelId?: number }
+      toast('Demande acceptée.', 'success')
+      setPendingSeeds((prev) => prev.filter((s) => s.id !== seedId))
+      if (res?.channelId) {
+        // Ne force pas la navigation, mais laisse un accès rapide via la Clairière.
+        // Le bouton "Ouvrir la Clairière" est disponible dans la navigation latérale.
+      }
+    } catch (e: unknown) {
+      const ex = e as { detail?: string; message?: string }
+      toast(ex?.detail || ex?.message || "Impossible d'accepter.", 'error')
+    } finally {
+      setPendingBusyId(null)
+    }
+  }
+
+  async function rejectPendingSeed(seedId: number) {
+    if (pendingBusyId) return
+    setPendingBusyId(seedId)
+    try {
+      await socialApi.rejectConnection(String(seedId))
+      toast('Demande refusée.', 'success')
+      setPendingSeeds((prev) => prev.filter((s) => s.id !== seedId))
+    } catch (e: unknown) {
+      const ex = e as { detail?: string; message?: string }
+      toast(ex?.detail || ex?.message || 'Impossible de refuser.', 'error')
+    } finally {
+      setPendingBusyId(null)
+    }
+  }
 
   useEffect(() => {
     billingApi
@@ -538,6 +600,97 @@ export function AccountPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {(user as { email?: string })?.email}
           </p>
+        </div>
+
+        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20 p-6 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-bold text-emerald-900 dark:text-emerald-100">
+                🌿 Demandes d’accompagnement
+              </h2>
+              <p className="text-xs text-emerald-800/80 dark:text-emerald-200/80 mt-0.5">
+                Invitations ou demandes à valider (coach ↔ patient).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!user?.id) return
+                const intentionIds = INTENTIONS.map((i) => i.id).join(',')
+                setPendingSeedsLoading(true)
+                socialApi
+                  .pendingSeedsIncoming({ intention_ids: intentionIds, limit: 50 })
+                  .then((r) => {
+                    const items = (r as { items?: any[] })?.items ?? []
+                    setPendingSeeds(
+                      Array.isArray(items)
+                        ? items.map((s) => ({
+                            id: Number(s.id),
+                            from_user_id: Number(s.from_user_id),
+                            intention_id: String(s.intention_id ?? ''),
+                            created_at: s.created_at ? String(s.created_at) : null,
+                          }))
+                        : []
+                    )
+                  })
+                  .catch(() => setPendingSeeds([]))
+                  .finally(() => setPendingSeedsLoading(false))
+              }}
+              className="px-3 py-2 rounded-xl text-xs font-semibold border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/30 transition-colors"
+            >
+              Rafraîchir
+            </button>
+          </div>
+
+          {pendingSeedsLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <span className="w-6 h-6 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" />
+            </div>
+          ) : pendingSeeds.length === 0 ? (
+            <p className="text-sm text-emerald-900/70 dark:text-emerald-100/70">
+              Aucune demande en attente.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {pendingSeeds.map((s) => {
+                const label = INTENTIONS.find((i) => i.id === s.intention_id)?.label ?? s.intention_id
+                return (
+                  <div
+                    key={s.id}
+                    className="rounded-xl border border-emerald-200/70 dark:border-emerald-800/60 bg-white/60 dark:bg-slate-900/40 px-4 py-3 flex items-start justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        Demande #{s.id} · {label}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        De l’utilisateur #{s.from_user_id}
+                        {s.created_at ? ` · ${new Date(s.created_at).toLocaleDateString('fr-FR')}` : ''}
+                      </p>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => acceptPendingSeed(s.id)}
+                        disabled={pendingBusyId === s.id}
+                        className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {pendingBusyId === s.id ? '…' : 'Accepter'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => rejectPendingSeed(s.id)}
+                        disabled={pendingBusyId === s.id}
+                        className="px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold hover:bg-rose-50 dark:hover:bg-rose-950/25 disabled:opacity-50"
+                      >
+                        Refuser
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 p-6 space-y-4">

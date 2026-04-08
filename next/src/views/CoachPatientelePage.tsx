@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { coachPatientsApi } from '@/api/coachPatients'
 import { sapApi } from '@/api/billing'
+import { chatApi } from '@/api/chat'
 import { useAuth } from '@/contexts/AuthContext'
 import { INTENTIONS } from '@/api/social'
 import { FlowerSVG } from '@/components/FlowerSVG'
@@ -33,6 +34,7 @@ export default function CoachPatientelePage() {
   const pathname = usePathname() || ''
   const routeRoot = pathWithoutBase(pathname).split('/').filter(Boolean)[0]
   const suiviBase = routeRoot === 'admin' ? '/admin/suivi' : '/coach/suivi'
+  const chatBase = routeRoot === 'admin' ? '/admin/chat' : '/coach/chat'
 
   const { isAdmin, isCoach } = useAuth()
   const [patients, setPatients] = useState([])
@@ -48,6 +50,9 @@ export default function CoachPatientelePage() {
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [rebuildPatientId, setRebuildPatientId] = useState<number | null>(null)
   const locale = useStore((s) => s.locale) || 'fr'
+
+  const [conversations, setConversations] = useState<Array<any>>([])
+  const [loadingConvs, setLoadingConvs] = useState(true)
 
   const intentionLabel = useMemo(() => {
     const map = new Map()
@@ -75,6 +80,36 @@ export default function CoachPatientelePage() {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoadingConvs(true)
+    chatApi
+      .listConversations({ status: 'all', per_page: 200, dedupe: 'none' })
+      .then((r) => {
+        if (cancelled) return
+        const items = (r as { items?: Array<any> })?.items ?? []
+        setConversations(Array.isArray(items) ? items : [])
+      })
+      .catch(() => {
+        if (!cancelled) setConversations([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingConvs(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const convOpen = useMemo(
+    () => conversations.filter((c) => String(c?.status ?? 'open') !== 'closed'),
+    [conversations]
+  )
+  const convClosed = useMemo(
+    () => conversations.filter((c) => String(c?.status ?? '') === 'closed'),
+    [conversations]
+  )
 
   async function copyLink() {
     if (!inviteLink) return
@@ -473,6 +508,94 @@ export default function CoachPatientelePage() {
                   </div>
                 )
               })}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/40 p-5 space-y-3">
+          <div className="flex items-end justify-between gap-3 flex-wrap">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-widest">
+                Conversations d&apos;accompagnement
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Basé sur la messagerie (conversations ouvertes et clôturées).
+              </p>
+            </div>
+            <Link href={chatBase} className="text-xs font-semibold text-violet-700 dark:text-violet-300 hover:underline">
+              Ouvrir la messagerie →
+            </Link>
+          </div>
+
+          {loadingConvs ? (
+            <div className="flex items-center justify-center py-10">
+              <span className="w-8 h-8 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
+            </div>
+          ) : conversations.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">Aucune conversation.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                { title: `Ouvertes (${convOpen.length})`, rows: convOpen },
+                { title: `Clôturées (${convClosed.length})`, rows: convClosed },
+              ].map((g) => (
+                <div
+                  key={g.title}
+                  className="rounded-2xl border border-slate-200/70 dark:border-slate-700/60 bg-white/40 dark:bg-slate-950/20 p-4 space-y-2 min-w-0"
+                >
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    {g.title}
+                  </p>
+                  {g.rows.length === 0 ? (
+                    <p className="text-xs text-slate-400">—</p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {g.rows.slice(0, 12).map((c) => {
+                        const email = String(c?.user_email ?? '').trim()
+                        const convId = String(c?.id ?? '')
+                        const coachName = (c?.assigned_coach_display_name ? String(c.assigned_coach_display_name).trim() : '') || ''
+                        const assignedCoachId = c?.assigned_coach_id != null ? Number(c.assigned_coach_id) : null
+                        const badge =
+                          assignedCoachId && coachName
+                            ? `Coach: ${coachName}`
+                            : assignedCoachId
+                              ? `Coach ID: ${assignedCoachId}`
+                              : 'Équipe'
+                        const href = email ? `${chatBase}?email=${encodeURIComponent(email)}` : `${chatBase}?conv=${encodeURIComponent(convId)}`
+                        return (
+                          <li key={`${g.title}-${convId}`}>
+                            <Link
+                              href={href}
+                              className="block rounded-xl border border-slate-200/70 dark:border-slate-700/60 bg-white/60 dark:bg-slate-900/50 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors min-w-0"
+                              title={email || convId}
+                            >
+                              <div className="flex items-center justify-between gap-2 min-w-0">
+                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">
+                                  {email || `Conversation #${convId}`}
+                                </span>
+                                <span className="text-[10px] text-slate-400 shrink-0">#{convId}</span>
+                              </div>
+                              <div className="mt-1 flex items-center justify-between gap-2">
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{badge}</span>
+                                {(c?.unread_count ?? 0) > 0 ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white shrink-0">
+                                    {c.unread_count > 99 ? '99+' : c.unread_count}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </Link>
+                          </li>
+                        )
+                      })}
+                      {g.rows.length > 12 ? (
+                        <li className="text-[11px] text-slate-400">
+                          + {g.rows.length - 12} autres… (voir “Ouvrir la messagerie”)
+                        </li>
+                      ) : null}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </section>

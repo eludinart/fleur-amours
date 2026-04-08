@@ -7,6 +7,15 @@ export const socialApi = {
     api.post('/api/social/send_seed', { targetUserId, intentionId }),
   acceptConnection: (seedId: string) =>
     api.post('/api/social/accept_connection', { seedId }),
+  rejectConnection: (seedId: string) =>
+    api.post('/api/social/reject_connection', { seedId }),
+  pendingSeedsIncoming: (params: { intention_ids?: string; limit?: number } = {}) => {
+    const clean = Object.fromEntries(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '')
+    )
+    const q = new URLSearchParams(clean as Record<string, string>).toString()
+    return api.get(`/api/social/pending_seeds_incoming${q ? '?' + q : ''}`)
+  },
   getMyChannels: () => api.get('/api/social/my_channels'),
   getChannelMessages: (channelId: string) =>
     api.get(`/api/social/channel_messages?channel_id=${encodeURIComponent(channelId)}`),

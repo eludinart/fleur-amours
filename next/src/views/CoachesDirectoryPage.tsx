@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { chatApi } from '@/api/chat'
+import { INTENTIONS, socialApi } from '@/api/social'
 import {
   type Coach,
   coachPrimaryTitle,
@@ -12,11 +13,28 @@ import {
 import { ContextualHint } from '@/components/ContextualHint'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
+import { toast } from '@/hooks/useToast'
 
 function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
   const title = coachPrimaryTitle(c)
   const handle = coachPseudoHandle(c)
   const [open, setOpen] = useState(false)
+  const [intentionId, setIntentionId] = useState(INTENTIONS[0]?.id ?? 'resonance')
+  const [reqBusy, setReqBusy] = useState(false)
+
+  async function requestCoach() {
+    if (reqBusy) return
+    setReqBusy(true)
+    try {
+      await socialApi.sendSeed(String(c.id), String(intentionId))
+      toast("Demande envoyée. Le coach devra l'accepter.", 'success')
+    } catch (e: unknown) {
+      const ex = e as { detail?: string; message?: string }
+      toast(ex?.detail || ex?.message || "Impossible d'envoyer la demande.", 'error')
+    } finally {
+      setReqBusy(false)
+    }
+  }
 
   return (
     <div
@@ -199,6 +217,30 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
           >
             {t('coaches.contactByMessage')}
           </Link>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={intentionId}
+              onChange={(e) => setIntentionId(e.target.value)}
+              className="flex-1 px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-200"
+              title="Cadre de la demande"
+            >
+              {INTENTIONS.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={requestCoach}
+              disabled={reqBusy}
+              className="px-4 py-2.5 rounded-2xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Demander à être accompagné"
+            >
+              {reqBusy ? '…' : 'Demander'}
+            </button>
+          </div>
         </div>
       )}
     </div>

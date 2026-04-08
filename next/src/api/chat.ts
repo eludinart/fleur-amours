@@ -19,7 +19,7 @@ export const chatApi = {
   listConversations: (params: Record<string, unknown> = {}) => {
     const clean = Object.fromEntries(
       Object.entries(params).filter(
-        ([, v]) => v !== undefined && v !== null && v !== ''
+        ([k, v]) => v !== undefined && v !== null && (k === 'status' ? true : v !== '')
       )
     )
     const q = new URLSearchParams(clean as Record<string, string>).toString()

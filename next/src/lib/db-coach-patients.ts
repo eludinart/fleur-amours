@@ -340,11 +340,12 @@ export async function getCoachPatients(coachUserId: number): Promise<{ patients:
   let seedRows: RowDataPacket[] = []
   try {
     ;[seedRows] = await pool.execute<RowDataPacket[]>(
-      `SELECT to_user_id, intention_id, updated_at
+      `SELECT from_user_id, to_user_id, intention_id, updated_at
        FROM ${tSeeds}
-       WHERE from_user_id = ? AND status = 'accepted'
+       WHERE status = 'accepted'
+         AND (from_user_id = ? OR to_user_id = ?)
        ORDER BY updated_at DESC`,
-      [coachUserId]
+      [coachUserId, coachUserId]
     )
   } catch {
     return { patients: [] }
@@ -359,7 +360,9 @@ export async function getCoachPatients(coachUserId: number): Promise<{ patients:
   >()
 
   for (const r of seedRows ?? []) {
-    const pid = Number((r as any).to_user_id)
+    const fromId = Number((r as any).from_user_id)
+    const toId = Number((r as any).to_user_id)
+    const pid = fromId === coachUserId ? toId : fromId
     const intentionId = String((r as any).intention_id ?? '').trim()
     if (!pid || !intentionId) continue
     if (!byPatient.has(pid)) byPatient.set(pid, { patientUserId: pid, intentionIds: new Set() })
@@ -424,11 +427,12 @@ export async function getUserCoaches(userId: number): Promise<{ coaches: CoachRe
   let seedRows: RowDataPacket[] = []
   try {
     ;[seedRows] = await pool.execute<RowDataPacket[]>(
-      `SELECT from_user_id, intention_id, updated_at
+      `SELECT from_user_id, to_user_id, intention_id, updated_at
        FROM ${tSeeds}
-       WHERE to_user_id = ? AND status = 'accepted'
+       WHERE status = 'accepted'
+         AND (from_user_id = ? OR to_user_id = ?)
        ORDER BY updated_at DESC`,
-      [userId]
+      [userId, userId]
     )
   } catch {
     return { coaches: [] }
@@ -443,7 +447,9 @@ export async function getUserCoaches(userId: number): Promise<{ coaches: CoachRe
   >()
 
   for (const r of seedRows ?? []) {
-    const cid = Number((r as any).from_user_id)
+    const fromId = Number((r as any).from_user_id)
+    const toId = Number((r as any).to_user_id)
+    const cid = fromId === userId ? toId : fromId
     const intentionId = String((r as any).intention_id ?? '').trim()
     if (!cid || !intentionId) continue
     if (!byCoach.has(cid)) byCoach.set(cid, { coachUserId: cid, intentionIds: new Set() })
