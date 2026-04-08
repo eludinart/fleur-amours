@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { useStore } from '@/store/useStore'
 import { SUPPORTED_LOCALES, t } from '@/i18n'
 
-const FLAGS: Record<string, string> = { fr: '🇫🇷', en: '🇬🇧', es: '🇪🇸' }
+const FLAGS: Record<string, string> = { fr: '🇫🇷', en: '🇬🇧', es: '🇪🇸', it: '🇮🇹', de: '🇩🇪' }
 
 export function LanguageSelector() {
   const locale = (useStore((s) => s.locale) || 'fr') as string

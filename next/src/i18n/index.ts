@@ -1,8 +1,10 @@
 import fr from './locales/fr.json'
 import en from './locales/en.json'
 import es from './locales/es.json'
+import it from './locales/it.json'
+import de from './locales/de.json'
 
-const locales: Record<string, Record<string, unknown>> = { fr, en, es }
+const locales: Record<string, Record<string, unknown>> = { fr, en, es, it, de }
 
 let currentLocale = 'fr'
 
@@ -14,6 +16,8 @@ export const SUPPORTED_LOCALES = [
   { code: 'fr', label: 'Français' },
   { code: 'en', label: 'English' },
   { code: 'es', label: 'Español' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'de', label: 'Deutsch' },
 ]
 
 export function getLocale() {

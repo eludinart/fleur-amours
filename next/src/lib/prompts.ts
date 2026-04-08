@@ -264,6 +264,8 @@ export function getLangInstruction(locale: string): string {
     fr: 'French (Français)',
     en: 'English',
     es: 'Spanish (Español)',
+    it: 'Italian (Italiano)',
+    de: 'German (Deutsch)',
   }
   const target = langs[locale] ?? langs.fr
   return `\n\nLANGUAGE RULE: The user's interface is in ${locale.toUpperCase()}. You MUST respond ONLY in ${target}. All output (questions, reflections, explanations, synthesis) must be in that language.`

@@ -1,5 +1,7 @@
 import enCards from './tarotCards.en.json'
 import esCards from './tarotCards.es.json'
+import itCards from './tarotCards.it.json'
+import deCards from './tarotCards.de.json'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 export const BACK_IMG = `${basePath}/verso-cartes.webp`
@@ -22,6 +24,14 @@ export function getCardTranslated(
     const t = (esCards as { cards?: Record<string, CardRecord> })?.cards?.[card.name]
     if (t) return { ...card, desc: t.desc, synth: t.synth }
   }
+  if (locale === 'it') {
+    const t = (itCards as { cards?: Record<string, CardRecord> })?.cards?.[card.name]
+    if (t) return { ...card, desc: t.desc, synth: t.synth }
+  }
+  if (locale === 'de') {
+    const t = (deCards as { cards?: Record<string, CardRecord> })?.cards?.[card.name]
+    if (t) return { ...card, desc: t.desc, synth: t.synth }
+  }
   return card
 }
 
@@ -36,6 +46,14 @@ export function getDoorTranslated(
   }
   if (locale === 'es') {
     const t = (esCards as { doors?: Record<string, DoorRecord> })?.doors?.[door.key]
+    if (t) return { ...door, title: t.title, subtitle: t.subtitle, aspect: t.aspect }
+  }
+  if (locale === 'it') {
+    const t = (itCards as { doors?: Record<string, DoorRecord> })?.doors?.[door.key]
+    if (t) return { ...door, title: t.title, subtitle: t.subtitle, aspect: t.aspect }
+  }
+  if (locale === 'de') {
+    const t = (deCards as { doors?: Record<string, DoorRecord> })?.doors?.[door.key]
     if (t) return { ...door, title: t.title, subtitle: t.subtitle, aspect: t.aspect }
   }
   return door

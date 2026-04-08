@@ -5,6 +5,8 @@
 
 import enCards from './tarotCards.en.json'
 import esCards from './tarotCards.es.json'
+import itCards from './tarotCards.it.json'
+import deCards from './tarotCards.de.json'
 
 type FleurInterpretationData = {
   intro?: string
@@ -17,7 +19,12 @@ type FleurInterpretationData = {
 type LocaleData = { fleurInterpretation?: FleurInterpretationData }
 
 export function getFleurInterpretationLocale(locale: string | null) {
-  const data: LocaleData | null = locale === 'en' ? enCards : locale === 'es' ? esCards : null
+  const data: LocaleData | null =
+    locale === 'en' ? enCards :
+    locale === 'es' ? esCards :
+    locale === 'it' ? itCards :
+    locale === 'de' ? deCards :
+    null
   const fi = data?.fleurInterpretation
   if (!fi) return null
   return {
