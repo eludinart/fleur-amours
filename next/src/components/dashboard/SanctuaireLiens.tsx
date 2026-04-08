@@ -33,7 +33,7 @@ export function SanctuaireLiens({ prairieFleurs = [], prairieLinks = [], prairie
       <p className="text-sm text-slate-600 dark:text-slate-400">{t('dashboard.sanctuaireLiensDesc')}</p>
       <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
         {linkedFleurs.map((f) => (
-          <Link key={f.user_id} href={`/prairie?view=galaxie&profile=${f.user_id}`} className="inline-flex flex-col items-center gap-1.5 group">
+          <Link key={f.user_id} href={`/prairie?profile=${f.user_id}`} className="inline-flex flex-col items-center gap-1.5 group">
             <FleurSociale scores={f.scores} lastActivityAt={f.last_activity_at} avatarEmoji={f.avatar_emoji} pseudo={f.pseudo} size={44} />
             <span className="text-xs font-medium text-slate-700 dark:text-slate-300 text-center max-w-[80px] truncate group-hover:text-accent">{f.pseudo || '—'}</span>
           </Link>

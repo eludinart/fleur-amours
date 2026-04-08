@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 'use client'
 
 import dynamic from 'next/dynamic'
@@ -64,7 +64,7 @@ export default function PrairiePage() {
   const meId = Number(meFleur?.user_id ?? user?.id) || 0
   const renderer = (searchParams.get('renderer') || 'dom').toLowerCase()
   const usePhaser = renderer === 'phaser'
-  /** Liens où je suis impliqué — pour le layout (proximité), plus de lignes visuelles */
+  /** Liens où je suis impliqué — ast en en-tête ; le rendu galaxie reçoit `links` complet */
   const myLinks = useMemo(
     () => links.filter((l) => Number(l.user_a) === meId || Number(l.user_b) === meId),
     [links, meId]
@@ -204,34 +204,6 @@ export default function PrairiePage() {
     }
   }
 
-  async function handleCreateLink(fleur) {
-    try {
-      await prairie.addLink(fleur.user_id)
-      await fetchFleurs()
-      setSelectedFleur(null)
-    } catch (err) {
-      setError(err?.detail || err?.message)
-    }
-  }
-
-  async function handleRemoveLink(fleur) {
-    try {
-      await prairie.removeLink(fleur.user_id)
-      await fetchFleurs()
-      setSelectedFleur(null)
-    } catch (err) {
-      setError(err?.detail || err?.message)
-    }
-  }
-
-  const isLinkedWith = (f) => {
-    const fid = Number(f?.user_id)
-    if (!meId || !fid) return false
-    const ua = Math.min(meId, fid)
-    const ub = Math.max(meId, fid)
-    return myLinks.some((l) => Number(l.user_a) === ua && Number(l.user_b) === ub)
-  }
-
   if (!isPublic) {
     return (
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-4 py-12">
@@ -264,19 +236,6 @@ export default function PrairiePage() {
           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
           <button
             type="button"
-            onClick={() => setViewMode((v) => (v === 'galaxie' ? 'prairie' : 'galaxie'))}
-            className={[
-              'px-2 py-1 rounded-lg border text-[11px] font-semibold transition-colors',
-              viewMode === 'galaxie'
-                ? 'border-violet-300/60 bg-violet-500/15 text-violet-700 dark:text-violet-200 dark:border-violet-500/40'
-                : 'border-emerald-300/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 dark:border-emerald-500/40',
-            ].join(' ')}
-            title={viewMode === 'galaxie' ? 'Retour prairie' : 'Voir galaxie'}
-          >
-            {viewMode === 'galaxie' ? '🌌 Galaxie' : '🌿 Prairie'}
-          </button>
-          <button
-            type="button"
             onClick={() => fetchFleurs()}
             disabled={loading}
             className="p-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
@@ -301,9 +260,8 @@ export default function PrairiePage() {
       <div
         ref={containerRef}
         className="flex-1 min-h-[300px] overflow-hidden relative bg-gradient-to-br from-emerald-950/40 via-slate-900/60 to-violet-950/40"
-        style={{ touchAction: viewMode === 'galaxie' ? 'none' : undefined }}
+        style={{ touchAction: 'none' }}
       >
-        {viewMode === 'galaxie' ? (
           <div ref={galaxieContainerRef} className="absolute inset-0 w-full h-full">
             <div
               className="absolute inset-0 pointer-events-none"
@@ -424,26 +382,26 @@ export default function PrairiePage() {
                         🌸 {t('prairie.envoyerPollen')}
                       </button>
                     </div>
-<button
-                                      type="button"
-                                      onClick={() => {
-                                        setSelectedFleur(null)
-                                        router.push(`/lisiere/${selectedFleur.user_id}`)
-                                      }}
-                                      className="w-full mt-2 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs"
-                                    >
-                                      🌿 {t('social.voirLisiere')}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setSelectedFleur(null)
-                                        router.push(`/jardin/duo?invite_user_id=${selectedFleur.user_id}&invite_pseudo=${encodeURIComponent(selectedFleur.pseudo || '')}`)
-                                      }}
-                                      className="w-full mt-1.5 px-3 py-1.5 rounded-lg bg-violet-500/20 text-violet-700 dark:text-violet-300 text-xs"
-                                    >
-                                      💕 {t('prairie.inviteDuo')}
-                                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFleur(null)
+                        router.push(`/lisiere/${selectedFleur.user_id}`)
+                      }}
+                      className="w-full mt-2 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs"
+                    >
+                      🌿 {t('social.voirLisiere')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFleur(null)
+                        router.push(`/jardin/duo?invite_user_id=${selectedFleur.user_id}&invite_pseudo=${encodeURIComponent(selectedFleur.pseudo || '')}`)
+                      }}
+                      className="w-full mt-1.5 px-3 py-1.5 rounded-lg bg-violet-500/20 text-violet-700 dark:text-violet-300 text-xs"
+                    >
+                      💕 {t('prairie.inviteDuo')}
+                    </button>
                   </>
                 ) : (
                   <div className="mt-2">
@@ -493,367 +451,6 @@ export default function PrairiePage() {
             )}
           </AnimatePresence>
           </div>
-        ) : (
-        <motion.div
-          className="absolute inset-0 w-[300%] h-[300%] -left-[100%] -top-[100%] bg-gradient-to-br from-emerald-50/85 via-amber-50/55 to-violet-50/65 dark:from-emerald-950/18 dark:via-slate-900/38 dark:to-violet-950/20"
-          style={{
-            x,
-            y,
-            scale,
-            originX: 0.5,
-            originY: 0.5,
-          }}
-          drag
-          dragControls={panControls}
-          dragListener={false}
-          dragMomentum={false}
-        >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden
-            style={{
-              backgroundImage: [
-                'radial-gradient(900px 650px at 18% 20%, rgba(16,185,129,0.18), transparent 62%)',
-                'radial-gradient(820px 600px at 78% 22%, rgba(139,92,246,0.16), transparent 60%)',
-                'radial-gradient(780px 560px at 52% 82%, rgba(245,158,11,0.12), transparent 62%)',
-                'radial-gradient(2px 2px at 14% 26%, rgba(2,6,23,0.10), transparent 60%)',
-                'radial-gradient(1.5px 1.5px at 22% 68%, rgba(2,6,23,0.08), transparent 60%)',
-                'radial-gradient(2.5px 2.5px at 78% 62%, rgba(2,6,23,0.10), transparent 60%)',
-                'radial-gradient(1.2px 1.2px at 62% 18%, rgba(2,6,23,0.08), transparent 60%)',
-                'radial-gradient(1.8px 1.8px at 90% 78%, rgba(2,6,23,0.07), transparent 60%)',
-              ].join(','),
-              filter: 'saturate(1.03) contrast(1.02)',
-            }}
-          />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden
-            style={{
-              backgroundImage:
-                'radial-gradient(1200px 900px at 50% 50%, rgba(2,6,23,0.0), rgba(2,6,23,0.10) 55%, rgba(2,6,23,0.24) 78%, rgba(2,6,23,0.38) 100%)',
-            }}
-          />
-          <div
-            ref={gardenRef}
-            className={`absolute inset-0 flex items-center justify-center ${allFleurs.length === 0 ? 'pointer-events-none' : ''}`}
-            onClick={() => selectedFleur && setSelectedFleur(null)}
-            onPointerDown={(e) => panControls.start(e)}
-            role="presentation"
-          >
-            {allFleurs.length === 0 ? (
-              <div className="pointer-events-auto text-center px-6 py-8 rounded-2xl bg-white/5 dark:bg-white/5 border border-slate-700/50 backdrop-blur-sm max-w-sm">
-                <span className="text-5xl mb-3 block">🌻</span>
-                <p className="text-slate-300 dark:text-slate-300 text-base font-medium mb-2">
-                  {t('prairie.noFleurs')}
-                </p>
-                <p className="text-slate-500 dark:text-slate-500 text-sm mb-3">
-                  {t('prairie.noFleursHint')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => fetchFleurs()}
-                  disabled={loading}
-                  className="text-sm text-violet-400 hover:text-violet-300 font-medium"
-                >
-                  🔄 {t('prairie.refresh')}
-                </button>
-              </div>
-            ) : (
-              <>
-                {usePixi && (
-                  <PrairiePixiJardin
-                    fleurs={allFleurs}
-                    links={links}
-                    meId={meId}
-                    selectedUserId={selectedFleur?.user_id ?? null}
-                    onSelectUserId={(uid) => {
-                      const fleur = allFleurs.find((f) => Number(f?.user_id) === Number(uid))
-                      if (!fleur) return
-                      setSelectedFleur((prev) => (Number(prev?.user_id) === Number(uid) ? null : fleur))
-                    }}
-                  />
-                )}
-                <svg
-                  className={`absolute inset-0 w-full h-full pointer-events-none ${usePixi ? 'opacity-0' : ''}`}
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                  aria-hidden
-                >
-                  <defs>
-                    <linearGradient id="prairie-link" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="rgba(16,185,129,0.30)" />
-                      <stop offset="55%" stopColor="rgba(139,92,246,0.22)" />
-                      <stop offset="100%" stopColor="rgba(245,158,11,0.20)" />
-                    </linearGradient>
-                    <filter id="prairie-glow" x="-40%" y="-40%" width="180%" height="180%">
-                      <feGaussianBlur stdDeviation="0.6" result="blur" />
-                      <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  {prairieLinkLines.map((l, i) => {
-                    const alpha = Math.max(0.10, Math.min(0.28, 0.34 - (l.dist / 42) * 0.22))
-                    const isActive =
-                      (selectedFleur?.user_id && (Number(selectedFleur.user_id) === l.a || Number(selectedFleur.user_id) === l.b)) ||
-                      (meId && (meId === l.a || meId === l.b))
-                    const stroke = isActive ? 'rgba(167,139,250,0.55)' : 'url(#prairie-link)'
-                    const strokeW = isActive ? 0.32 : 0.22
-                    return (
-                      <g key={`${l.a}-${l.b}-${i}`} filter="url(#prairie-glow)" opacity={isActive ? 0.75 : alpha}>
-                        <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={stroke} strokeWidth={strokeW} />
-                      </g>
-                    )
-                  })}
-                </svg>
-                <AnimatePresence>
-                  {!usePixi && allFleurs.map((f, idx) => (
-                    <motion.div
-                      key={f.id ?? f.user_id ?? `fleur-${idx}`}
-                      className="absolute -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
-                      style={{
-                        left: `${36 + (f.position?.x ?? 0) * 28}%`,
-                        top: `${36 + (f.position?.y ?? 0) * 28}%`,
-                        zIndex: selectedFleur?.id === f.id ? 60 : (f.is_me ? 10 : 5),
-                      }}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.8, opacity: 0 }}
-                      whileDrag={{ scale: 1.04 }}
-                      transition={{ type: 'spring', stiffness: 140, damping: 26, delay: layoutSettled ? 0 : idx * 0.03 }}
-                      drag
-                      dragMomentum={false}
-                      dragElastic={0}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onDragStart={() => {
-                        justDraggedRef.current = false
-                      }}
-                      onDragEnd={(_, info) => {
-                        updateFleurPositionFromPoint(f, info.point.x, info.point.y)
-                        justDraggedRef.current = true
-                        setTimeout(() => { justDraggedRef.current = false }, 100)
-                      }}
-                      onClick={(e) => {
-                        if (f.is_me) return
-                        e.stopPropagation()
-                        if (justDraggedRef.current) return
-                        setSelectedFleur(selectedFleur?.id === f.id ? null : f)
-                      }}
-                    >
-                      {!f.is_me && (selectedFleur?.id === f.id) && (
-                        <div
-                          className="absolute inset-0 -z-10 rounded-full"
-                          aria-hidden
-                          style={{
-                            transform: 'translate(-8px, -8px)',
-                            width: 'calc(100% + 16px)',
-                            height: 'calc(100% + 16px)',
-                            background:
-                              'radial-gradient(circle at 50% 55%, rgba(167,139,250,0.22), rgba(16,185,129,0.10) 45%, transparent 70%)',
-                            filter: 'blur(1px)',
-                          }}
-                        />
-                      )}
-                      {!f.is_me && selectedFleur?.id === f.id && (
-                        <motion.div
-                          className={`absolute left-1/2 -translate-x-1/2 z-[70] w-56 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-950 shadow-2xl p-3 ${((f.position?.y ?? 0) > 0.5) ? 'bottom-full mb-2' : 'top-full mt-2'}`}
-                          data-flower-popover
-                          onClick={(e) => e.stopPropagation()}
-                          initial={{ opacity: 0, scale: 0.9, y: (f.position?.y ?? 0) > 0.5 ? 4 : -4 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <p className="font-medium text-slate-800 dark:text-slate-100 text-sm mb-1">
-                            {f.pseudo} {f.avatar_emoji}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                            {t('prairie.pointsRosee')}: {pointsDeRosee}
-                          </p>
-                          {!showPollen ? (
-                            <div className="space-y-2">
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleArroser(f)}
-                                  disabled={pointsDeRosee < 1 || arrosing}
-                                  className="flex-1 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-50 text-xs font-medium"
-                                >
-                                  💧 {t('prairie.arroser')}
-                                </button>
-                                <button
-                                  onClick={() => setShowPollen(true)}
-                                  className="flex-1 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-400 hover:bg-amber-500/30 text-xs font-medium"
-                                >
-                                  🌸 {t('prairie.envoyerPollen')}
-                                </button>
-                              </div>
-                              <div className="border-t border-slate-200 dark:border-slate-600 pt-2 space-y-1">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedFleur(null)
-                                    setShowPollen(false)
-                                    router.push(`/lisiere/${f.user_id}`)
-                                  }}
-                                  className="w-full px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/30 text-xs font-medium text-left"
-                                >
-                                  🌿 {t('social.voirLisiere')}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedFleur(null)
-                                    setShowPollen(false)
-                                    router.push(`/duo?invite_user_id=${f.user_id}&invite_pseudo=${encodeURIComponent(f.pseudo || '')}`)
-                                  }}
-                                  className="w-full px-3 py-1.5 rounded-lg bg-violet-500/20 text-violet-700 dark:text-violet-300 hover:bg-violet-500/30 text-xs font-medium text-left"
-                                  title={t('prairie.inviteDuoHint')}
-                                >
-                                  💕 {t('prairie.inviteDuo')}
-                                </button>
-                                {isLinkedWith(f) ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveLink(f)}
-                                    className="w-full px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-700 dark:text-rose-400 hover:bg-rose-500/30 text-xs font-medium text-left"
-                                    title={t('prairie.removeLinkHint')}
-                                  >
-                                    🔗✕ {t('prairie.removeLink')}
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCreateLink(f)}
-                                    className="w-full px-3 py-1.5 rounded-lg bg-slate-500/15 text-slate-600 dark:text-slate-400 hover:bg-slate-500/25 text-xs font-medium text-left"
-                                    title={t('prairie.createLinkHint')}
-                                  >
-                                    🔗 {t('prairie.createLink')}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
-                                Choisir une carte :
-                              </p>
-                              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                                {FOUR_DOORS.map((door) => (
-                                  <div key={door.key} className="space-y-1.5">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 sticky top-0 bg-white dark:bg-slate-800 py-0.5 z-10">
-                                      {door.subtitle}
-                                    </p>
-                                    <div className="grid grid-cols-4 gap-1.5">
-                                      {door.group.map((card) => (
-                                        <button
-                                          key={`${door.key}-${card.name}`}
-                                          type="button"
-                                          onClick={() => handlePollen(f, card)}
-                                          disabled={sendingPollen}
-                                          title={card.name}
-                                          className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-violet-300 dark:hover:border-violet-500 transition-colors text-left"
-                                        >
-                                          <img
-                                            src={card.img}
-                                            alt={card.name}
-                                            loading="lazy"
-                                            className="w-full aspect-[3/4] object-cover"
-                                          />
-                                          <span className="block px-1 py-0.5 text-[9px] leading-tight text-slate-700 dark:text-slate-200 truncate">
-                                            {card.name}
-                                          </span>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              <button
-                                onClick={() => setShowPollen(false)}
-                                className="mt-1.5 text-[10px] text-slate-500 hover:text-slate-700"
-                              >
-                                {t('common.cancel')}
-                              </button>
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-                      <div className="relative">
-                        <FleurSociale
-                          scores={f.scores}
-                          lastActivityAt={f.last_activity_at}
-                          size={f.is_me ? 52 : 44}
-                          avatarEmoji={f.avatar_emoji}
-                          pseudo={f.pseudo}
-                          social={f.social}
-                          isOnline={!!f?.presence?.is_online}
-                          showPseudo
-                          isMe={!!f.is_me}
-                          isSelected={selectedFleur?.id === f.id}
-                          onClick={f.is_me ? undefined : () => { if (!justDraggedRef.current) setSelectedFleur(selectedFleur?.id === f.id ? null : f) }}
-                        />
-                        {feedbackArroser?.fleurId === f.id && (
-                          <motion.div
-                            className="absolute inset-0 pointer-events-none flex items-center justify-center"
-                            initial={{ opacity: 1 }}
-                            animate={{ opacity: 0 }}
-                            transition={{ duration: 1.2 }}
-                          >
-                            {[...Array(6)].map((_, i) => (
-                              <motion.span
-                                key={i}
-                                className="absolute text-lg"
-                                initial={{ y: 0, opacity: 1, scale: 1 }}
-                                animate={{
-                                  y: -25 - (i % 3) * 12,
-                                  x: (i - 2.5) * 14,
-                                  opacity: 0,
-                                  scale: 0.6,
-                                }}
-                                transition={{ duration: 1, delay: i * 0.06 }}
-                                style={{ left: '50%', top: '50%' }}
-                              >
-                                💧
-                              </motion.span>
-                            ))}
-                          </motion.div>
-                        )}
-                        {feedbackPollen?.fleurId === f.id && (
-                          <motion.div
-                            className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible"
-                            initial={{ opacity: 1 }}
-                            animate={{ opacity: 0 }}
-                            transition={{ duration: 1.4 }}
-                          >
-                            {[...Array(8)].map((_, i) => (
-                              <motion.span
-                                key={i}
-                                className="absolute text-sm"
-                                initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
-                                animate={{
-                                  scale: [0, 1.2, 0.8],
-                                  opacity: [1, 0.9, 0],
-                                  x: Math.cos((i / 8) * Math.PI * 2) * 40,
-                                  y: Math.sin((i / 8) * Math.PI * 2) * 40 - 20,
-                                }}
-                                transition={{ duration: 1.2, delay: i * 0.04 }}
-                                style={{ left: '50%', top: '50%' }}
-                              >
-                                🌸
-                              </motion.span>
-                            ))}
-                          </motion.div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </>
-            )}
-          </div>
-        </motion.div>
-        )}
       </div>
     </div>
   )
