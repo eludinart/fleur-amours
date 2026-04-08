@@ -17,6 +17,7 @@
 html {
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -24,6 +25,7 @@ body {
   min-height: 100dvh;
   margin: 0;
   overflow: hidden;
+  overscroll-behavior: none;
   display: flex;
   flex-direction: column;
   color: rgb(var(--foreground-rgb));
@@ -36,6 +38,7 @@ body > div {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 /* Scrollbar sobre — fond comme le thème, curseur légèrement plus foncé */

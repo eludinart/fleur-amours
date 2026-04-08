@@ -41,7 +41,14 @@ export function FleurTimeScroll({ snapshots, selectedIndex, onSelect, className 
   useEffect(() => {
     const i = selectedIndex < 0 ? 0 : selectedIndex + 1
     const el = itemRefs.current[i]
-    el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    if (!el || !scrollRef.current) return
+    // Scroll uniquement dans le conteneur horizontal — évite tout scroll vertical parasite
+    const container = scrollRef.current
+    const elLeft = el.offsetLeft
+    const elWidth = el.offsetWidth
+    const containerWidth = container.offsetWidth
+    const targetScrollLeft = elLeft - containerWidth / 2 + elWidth / 2
+    container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' })
   }, [selectedIndex])
 
   const n = snapshots.length

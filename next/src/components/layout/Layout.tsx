@@ -182,7 +182,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <main
           key={locale}
-          className="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden p-4 pb-[max(1rem,env(safe-area-inset-bottom,48px))] md:p-6 md:pb-6"
+          className="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden overscroll-none p-4 pb-[max(1rem,env(safe-area-inset-bottom,48px))] md:p-6 md:pb-6"
         >
           <FormBackBar />
           <div className="flex-1 min-h-0 flex flex-col">
