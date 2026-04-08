@@ -143,7 +143,7 @@ export async function getFleurs(
         `SELECT email, MAX(created_at) AS mx FROM ${tSess} WHERE email IN (${ph(allEmails.length)}) GROUP BY email`,
         allEmails
       )
-    : Promise.resolve([[]] as [RowDataPacket[], any])
+    : Promise.resolve([[] as RowDataPacket[], [] as any] as [RowDataPacket[], any])
 
   // Requête 5 : dernier tirage tarot par user_id
   const tarotPromise = pool.execute<RowDataPacket[]>(
@@ -158,7 +158,7 @@ export async function getFleurs(
        SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS today
      FROM ${tRosee} WHERE to_user_id IN (${ph(allIds.length)}) GROUP BY to_user_id`,
     allIds
-  ).catch(() => [[]] as [RowDataPacket[], any])
+  ).catch(() => [[] as RowDataPacket[], [] as any] as [RowDataPacket[], any])
 
   // Requête 7 : stats pollen
   const pollenPromise = pool.execute<RowDataPacket[]>(
@@ -167,7 +167,7 @@ export async function getFleurs(
        SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS today
      FROM ${tPollen} WHERE to_user_id IN (${ph(allIds.length)}) GROUP BY to_user_id`,
     allIds
-  ).catch(() => [[]] as [RowDataPacket[], any])
+  ).catch(() => [[] as RowDataPacket[], [] as any] as [RowDataPacket[], any])
 
   // Requête 8 : présence
   const presenceBatchPromise = pool.execute<RowDataPacket[]>(
