@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { TelemetryClient } from '@/components/telemetry/TelemetryClient'
 
 export const metadata: Metadata = {
   title: "Fleur d'AmOurs",
@@ -27,6 +28,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen min-h-[100svh] min-h-[100dvh] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans antialiased">
+        <TelemetryClient />
         {children}
       </body>
     </html>

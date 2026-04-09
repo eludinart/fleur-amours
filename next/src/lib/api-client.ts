@@ -110,6 +110,35 @@ async function request(
 ): Promise<unknown> {
   const base = getBase()
   const url = path.startsWith('http') ? path : `${base}${path}`
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now()
+
+  // Best-effort telemetry (client only, avoid hard dependency)
+  const traceId =
+    typeof window !== 'undefined' && typeof crypto !== 'undefined' && 'getRandomValues' in crypto
+      ? (() => {
+          const bytes = new Uint8Array(8)
+          crypto.getRandomValues(bytes)
+          return `t_${Array.from(bytes)
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('')}`
+        })()
+      : null
+  if (typeof window !== 'undefined') {
+    void import('@/lib/telemetry/client')
+      .then(({ track }) => {
+        track({
+          name: 'api_request',
+          feature: 'api',
+          trace_id: traceId ?? undefined,
+          properties: {
+            path,
+            url,
+            method: (options.method || 'GET').toUpperCase(),
+          },
+        })
+      })
+      .catch(() => {})
+  }
 
   // Sur Capacitor, ajouter Authorization: Bearer si token disponible
   const token = getAuthToken()
@@ -119,6 +148,7 @@ async function request(
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
   if (_requestLocale) headers['X-Locale'] = _requestLocale
+  if (traceId) headers['X-Trace-Id'] = traceId
 
   let res: Response
   try {
@@ -131,6 +161,26 @@ async function request(
     const msg = base
       ? `Impossible de joindre le serveur (${url}). Vérifiez votre connexion.`
       : 'Impossible de joindre le serveur. Vérifiez votre connexion.'
+    if (typeof window !== 'undefined') {
+      const durationMs = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startedAt
+      void import('@/lib/telemetry/client')
+        .then(({ track }) => {
+          track({
+            name: 'api_error',
+            feature: 'api',
+            trace_id: traceId ?? undefined,
+            properties: {
+              path,
+              url,
+              method: (options.method || 'GET').toUpperCase(),
+              status: 0,
+              duration_ms: Math.round(durationMs),
+              kind: 'network',
+            },
+          })
+        })
+        .catch(() => {})
+    }
     throw new ApiError(0, msg, String(networkErr))
   }
 
@@ -171,6 +221,27 @@ async function request(
     } catch {
       // ignore
     }
+    if (typeof window !== 'undefined') {
+      const durationMs = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startedAt
+      void import('@/lib/telemetry/client')
+        .then(({ track }) => {
+          track({
+            name: 'api_error',
+            feature: 'api',
+            trace_id: traceId ?? undefined,
+            properties: {
+              path,
+              url,
+              method: (options.method || 'GET').toUpperCase(),
+              status: res.status,
+              duration_ms: Math.round(durationMs),
+              code: errorCode,
+              detail,
+            },
+          })
+        })
+        .catch(() => {})
+    }
     throw new ApiError(res.status, detail, raw, errorCode)
   }
 
@@ -178,6 +249,25 @@ async function request(
   const text = await res.text()
   if (!text?.trim()) throw new ApiError(res.status, 'Réponse vide du serveur.', text)
   try {
+    if (typeof window !== 'undefined') {
+      const durationMs = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startedAt
+      void import('@/lib/telemetry/client')
+        .then(({ track }) => {
+          track({
+            name: 'api_response',
+            feature: 'api',
+            trace_id: traceId ?? undefined,
+            properties: {
+              path,
+              url,
+              method: (options.method || 'GET').toUpperCase(),
+              status: res.status,
+              duration_ms: Math.round(durationMs),
+            },
+          })
+        })
+        .catch(() => {})
+    }
     return JSON.parse(text)
   } catch {
     const preview = text.length > 200 ? `${text.slice(0, 200)}…` : text

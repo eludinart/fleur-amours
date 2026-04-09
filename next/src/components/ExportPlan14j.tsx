@@ -5,6 +5,11 @@ import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 
+type Html2PdfPagebreakOptions = {
+  mode?: Array<'avoid-all' | 'css' | 'legacy'>
+  avoid?: string | string[]
+}
+
 type ExportPlan14jProps = {
   targetRef?: React.RefObject<HTMLElement | null>
   pdfRef?: React.RefObject<HTMLElement | null>
@@ -81,27 +86,26 @@ export function ExportPlan14j({ targetRef, pdfRef, imageRef, filename }: ExportP
       await waitForFonts()
       await waitForImages(clone)
 
-      await html2pdf()
-        .set({
-          margin: 10,
-          filename: filename || "Exploration de Ma Fleur d'Amours — Fleur d'AmOurs.pdf",
-          image: { type: 'jpeg', quality: 0.95 },
-          pagebreak: { mode: ['css', 'legacy'], avoid: '.pdf-avoid-break, .day, h2, h3' },
-          html2canvas: {
-            scale: 2,
-            backgroundColor: '#ffffff',
-            useCORS: true,
-            logging: false,
-            scrollX: 0,
-            scrollY: 0,
-            windowWidth: clone.scrollWidth || undefined,
-            windowHeight: clone.scrollHeight || undefined,
-            onclone: (doc: Document) => {
-              const root = doc.querySelector('[data-pdf-export="1"]') as HTMLElement | null
-              if (!root) return
-              // Force a clean print look.
-              const style = doc.createElement('style')
-              style.textContent = `
+      const options = {
+        margin: 10,
+        filename: filename || "Exploration de Ma Fleur d'Amours — Fleur d'AmOurs.pdf",
+        image: { type: 'jpeg', quality: 0.95 },
+        pagebreak: { mode: ['css', 'legacy'], avoid: '.pdf-avoid-break, .day, h2, h3' } satisfies Html2PdfPagebreakOptions,
+        html2canvas: {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: clone.scrollWidth || undefined,
+          windowHeight: clone.scrollHeight || undefined,
+          onclone: (doc: Document) => {
+            const root = doc.querySelector('[data-pdf-export="1"]') as HTMLElement | null
+            if (!root) return
+            // Force a clean print look.
+            const style = doc.createElement('style')
+            style.textContent = `
                 [data-pdf-export="1"] { background: #fff !important; color: #000 !important; }
                 [data-pdf-export="1"] { opacity: 1 !important; visibility: visible !important; transform: none !important; }
                 [data-pdf-export="1"], [data-pdf-export="1"] * {
@@ -121,11 +125,15 @@ export function ExportPlan14j({ targetRef, pdfRef, imageRef, filename }: ExportP
                   page-break-inside: avoid !important;
                 }
               `
-              doc.head.appendChild(style)
-            },
+            doc.head.appendChild(style)
           },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        })
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      } as const
+
+      await html2pdf()
+        // html2pdf.js supports `pagebreak`, but some type definitions omit it.
+        .set(options as unknown as Record<string, unknown>)
         .from(clone)
         .save()
 

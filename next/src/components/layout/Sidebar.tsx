@@ -115,6 +115,7 @@ function buildNavGroups(
         { to: '/admin/sessions', label: translate('nav.adminSessions'), icon: '📋' },
         { to: '/admin/tirages', label: translate('nav.adminTirages'), icon: '🎴' },
         { to: '/admin/science', label: translate('nav.adminScience'), icon: '🧬' },
+        { to: '/admin/telemetry', label: 'Télémétrie', icon: '🧭' },
         { to: '/admin/users', label: translate('nav.adminUsers'), icon: '👥' },
         { to: '/admin/prompts', label: translate('nav.adminPrompts'), icon: '✏️' },
         { to: '/admin/promo', label: translate('nav.adminPromo'), icon: '🎁' },

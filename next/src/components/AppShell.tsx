@@ -48,6 +48,7 @@ import AdminUsersPage from '@/views/AdminUsersPage'
 import AdminSessionsPage from '@/views/AdminSessionsPage'
 import AdminSciencePage from '@/views/AdminSciencePage'
 import AdminBroadcastsPage from '@/views/AdminBroadcastsPage'
+import AdminTelemetryPage from '@/views/AdminTelemetryPage'
 import CoachSuiviPage from '@/views/CoachSuiviPage'
 import CoachPatientelePage from '@/views/CoachPatientelePage'
 import PushNotificationPriming from '@/components/PushNotificationPriming'
@@ -456,6 +457,13 @@ function AppRoutes() {
         <ProtectedLayout adminOnly>
           <Layout>
             <AdminSciencePage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+      telemetry: (
+        <ProtectedLayout adminOnly>
+          <Layout>
+            <AdminTelemetryPage />
           </Layout>
         </ProtectedLayout>
       ),
