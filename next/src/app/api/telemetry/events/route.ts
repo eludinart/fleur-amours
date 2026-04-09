@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     const from = searchParams.get('from') || undefined
     const to = searchParams.get('to') || undefined
     const event = searchParams.get('event') || undefined
+    const env = searchParams.get('env') || undefined
     const userIdRaw = searchParams.get('user_id')
     const anonId = searchParams.get('anon_id') || undefined
     const limitRaw = searchParams.get('limit') || undefined
@@ -27,6 +28,7 @@ export async function GET(req: NextRequest) {
       fromIso: from,
       toIso: to,
       eventName: event,
+      env: env === 'production' || env === 'development' ? env : undefined,
       userId: Number.isFinite(userId as any) ? (userId as number) : undefined,
       anonId,
       limit,

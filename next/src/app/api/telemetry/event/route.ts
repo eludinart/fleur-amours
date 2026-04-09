@@ -7,6 +7,7 @@ import crypto from 'crypto'
 import { isDbConfigured } from '@/lib/db'
 import { getUserIdFromRequest } from '@/lib/api-auth'
 import { insertTelemetryEvents, type TelemetryEventRow } from '@/lib/db-events'
+import { mergeIngestTelemetryEnv } from '@/lib/telemetry/env'
 
 export const dynamic = 'force-dynamic'
 
@@ -87,8 +88,12 @@ export async function POST(req: NextRequest) {
       const trace_id = safeString(ev?.trace_id, 64)
       const session_id = safeString(ev?.session_id, 64)
       const feature = safeString(ev?.feature, 64)
-      const env = safeString(ev?.env, 24) ?? safeString(process.env.APP_ENV, 24)
       const app_host = safeString(ev?.app_host, 80) ?? appHost
+      const envMerged = mergeIngestTelemetryEnv(
+        typeof ev?.env === 'string' ? ev.env : null,
+        app_host
+      )
+      const env = safeString(envMerged, 24)
 
       rows.push({
         ts,

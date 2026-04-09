@@ -104,6 +104,7 @@ export async function listTelemetryEvents({
   fromIso,
   toIso,
   eventName,
+  env,
   userId,
   anonId,
   limit = 200,
@@ -111,6 +112,7 @@ export async function listTelemetryEvents({
   fromIso?: string
   toIso?: string
   eventName?: string
+  env?: string
   userId?: number
   anonId?: string
   limit?: number
@@ -133,6 +135,10 @@ export async function listTelemetryEvents({
   if (eventName) {
     where.push('event_name = ?')
     params.push(eventName)
+  }
+  if (env) {
+    where.push('env = ?')
+    params.push(env)
   }
   if (Number.isFinite(userId as any)) {
     where.push('user_id = ?')

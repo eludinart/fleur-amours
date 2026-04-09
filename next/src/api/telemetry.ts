@@ -21,6 +21,7 @@ export const telemetryApi = {
     from,
     to,
     event,
+    env,
     user_id,
     anon_id,
     limit = 200,
@@ -28,6 +29,7 @@ export const telemetryApi = {
     from?: string
     to?: string
     event?: string
+    env?: 'production' | 'development'
     user_id?: number
     anon_id?: string
     limit?: number
@@ -36,6 +38,7 @@ export const telemetryApi = {
     if (from) p.set('from', from)
     if (to) p.set('to', to)
     if (event) p.set('event', event)
+    if (env) p.set('env', env)
     if (typeof user_id === 'number') p.set('user_id', String(user_id))
     if (anon_id) p.set('anon_id', anon_id)
     p.set('limit', String(limit))

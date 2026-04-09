@@ -140,6 +140,18 @@ type FunnelRow = {
   count: number
 }
 
+type TelemetryEnvFilter = 'all' | 'production' | 'development'
+
+function envBadgeClass(env: string | null | undefined): string {
+  if (env === 'production') {
+    return 'bg-emerald-900/30 text-emerald-300 border border-emerald-700/40'
+  }
+  if (env === 'development') {
+    return 'bg-slate-700/40 text-slate-300 border border-slate-600/50'
+  }
+  return 'bg-slate-800/40 text-slate-500 border border-slate-700/40'
+}
+
 function computeBasicFunnel(items: TelemetryEventItem[]): FunnelRow[] {
   const counts: Record<string, number> = {}
   const interesting = [
@@ -165,6 +177,7 @@ export default function AdminTelemetryPage() {
   const [userId, setUserId] = useState<string>('')
   const [anonId, setAnonId] = useState<string>('')
   const [limit, setLimit] = useState<number>(200)
+  const [envFilter, setEnvFilter] = useState<TelemetryEnvFilter>('all')
 
   const [items, setItems] = useState<TelemetryEventItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -177,11 +190,12 @@ export default function AdminTelemetryPage() {
 
   useEffect(() => {
     setSelected(null)
-  }, [from, to, event, userId, anonId])
+  }, [from, to, event, userId, anonId, envFilter])
 
-  async function load() {
+  async function load(overrides?: { env?: TelemetryEnvFilter }) {
     setLoading(true)
     setErrorMsg(null)
+    const effectiveEnv = overrides?.env ?? envFilter
     try {
       const fromIso = from ? new Date(`${from}T00:00:00.000Z`).toISOString() : undefined
       const toIso = to ? new Date(`${to}T23:59:59.999Z`).toISOString() : undefined
@@ -190,6 +204,7 @@ export default function AdminTelemetryPage() {
         from: fromIso,
         to: toIso,
         event: event.trim() || undefined,
+        env: effectiveEnv === 'all' ? undefined : effectiveEnv,
         user_id: Number.isFinite(uid as any) ? (uid as number) : undefined,
         anon_id: anonId.trim() || undefined,
         limit,
@@ -323,6 +338,39 @@ export default function AdminTelemetryPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Explorateur d&apos;événements (usage, erreurs, API, flows).
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              Environnement
+            </span>
+            <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+              {(
+                [
+                  { id: 'all' as const, label: 'Tous' },
+                  { id: 'production' as const, label: 'Production' },
+                  { id: 'development' as const, label: 'Développement' },
+                ] as const
+              ).map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setEnvFilter(id)
+                    void load({ env: id })
+                  }}
+                  className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    envFilter === id
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <span className="text-[10px] text-slate-500">
+              Colonne <span className="font-mono">env</span> : prod vs dev (voir aussi détail).
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button
@@ -415,6 +463,7 @@ export default function AdminTelemetryPage() {
               setEvent('')
               setUserId('')
               setAnonId('')
+              setEnvFilter('all')
             }}
             className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
@@ -464,12 +513,14 @@ export default function AdminTelemetryPage() {
         <Kpi
           label="Events"
           value={kpis.total}
-          active={!event && !onlyProblems && !urgentOnly && !slowOnly}
+          active={!event && !onlyProblems && !urgentOnly && !slowOnly && envFilter === 'all'}
           onClick={() => {
             setEvent('')
             setOnlyProblems(false)
             setUrgentOnly(false)
             setSlowOnly(false)
+            setEnvFilter('all')
+            void load({ env: 'all' })
           }}
         />
         <Kpi
@@ -630,7 +681,7 @@ export default function AdminTelemetryPage() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800">
-                {['Date', 'Event', 'Flags', 'Feature', 'Path', 'user_id', 'anon_id', ''].map((h) => (
+                {['Date', 'Env', 'Event', 'Flags', 'Feature', 'Path', 'user_id', 'anon_id', ''].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest"
@@ -651,6 +702,13 @@ export default function AdminTelemetryPage() {
                 >
                   <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-500">
                     {formatTs(it.ts)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase ${envBadgeClass(it.env)}`}
+                    >
+                      {it.env === 'production' ? 'prod' : it.env === 'development' ? 'dev' : '—'}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs text-slate-700 dark:text-slate-200">
@@ -695,7 +753,7 @@ export default function AdminTelemetryPage() {
               )})}
               {visibleItems.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400 italic">
+                  <td colSpan={9} className="px-4 py-10 text-center text-sm text-slate-400 italic">
                     Aucun événement pour ces filtres.
                   </td>
                 </tr>

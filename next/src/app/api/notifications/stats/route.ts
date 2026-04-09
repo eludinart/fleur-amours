@@ -19,8 +19,10 @@ export async function GET(req: NextRequest) {
     const total = Number(totRows?.[0]?.total ?? 0)
     const [delRows] = await pool.execute<RowDataPacket[]>(`SELECT COUNT(*) as delivered FROM ${tD}`)
     const delivered = Number(delRows?.[0]?.delivered ?? 0)
-    const [readRows] = await pool.execute<RowDataPacket[]>(`SELECT COUNT(*) as read FROM ${tD} WHERE read_at IS NOT NULL`)
-    const read = Number(readRows?.[0]?.read ?? 0)
+    const [readRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) as read_count FROM ${tD} WHERE read_at IS NOT NULL`
+    )
+    const read = Number(readRows?.[0]?.read_count ?? 0)
     const [unreadRows] = await pool.execute<RowDataPacket[]>(`SELECT COUNT(*) as unread FROM ${tD} WHERE read_at IS NULL`)
     /** Toutes les livraisons encore « non lues » (tous comptes) — utile pour la vue admin globale */
     const unread = Number(unreadRows?.[0]?.unread ?? 0)

@@ -2,6 +2,21 @@
 'use client'
 
 import { ApiError } from '@/lib/api-client'
+import { normalizeTelemetryEnv, type TelemetryTier } from '@/lib/telemetry/env'
+
+/** Env télémétrie côté navigateur (build + hostname). */
+export function getClientTelemetryEnv(): TelemetryTier {
+  const pub = (
+    process.env.NEXT_PUBLIC_TELEMETRY_ENV ||
+    process.env.NEXT_PUBLIC_APP_ENV ||
+    ''
+  ).trim()
+  if (pub) return normalizeTelemetryEnv(pub)
+  if (typeof window !== 'undefined') {
+    return normalizeTelemetryEnv(null, { hostname: window.location.hostname })
+  }
+  return 'development'
+}
 
 export type TelemetryEventName =
   | 'page_view'
@@ -111,7 +126,7 @@ export function track(ev: TelemetryEvent) {
     path: ev.path ?? window.location.pathname + window.location.search,
     referrer: ev.referrer ?? document.referrer ?? '',
     app_host: window.location.host,
-    env: (process.env.NEXT_PUBLIC_APP_ENV ?? '').trim() || undefined,
+    env: getClientTelemetryEnv(),
     properties: ev.properties ?? {},
   }
   queue.push(item)
