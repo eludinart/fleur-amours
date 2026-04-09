@@ -29,6 +29,68 @@ function safeJson(v: unknown): string {
   }
 }
 
+const SLOW_API_MS = 1500
+const VERY_SLOW_API_MS = 3500
+const LONG_PAGE_MS = 2 * 60 * 1000
+
+function getDurationMs(it: TelemetryEventItem): number | null {
+  const p = it.properties || {}
+  const v = (p as any)?.duration_ms
+  if (typeof v === 'number' && Number.isFinite(v)) return v
+  if (typeof v === 'string') {
+    const n = parseFloat(v)
+    return Number.isFinite(n) ? n : null
+  }
+  return null
+}
+
+type Flag = { id: 'error' | 'slow' | 'very_slow' | 'long_page' | 'vital_poor'; label: string; cls: string }
+
+function computeFlags(it: TelemetryEventItem): Flag[] {
+  const flags: Flag[] = []
+  const name = it.name
+  const p = it.properties || {}
+
+  if (name === 'api_error' || name === 'client_exception' || name === 'unhandled_rejection') {
+    flags.push({ id: 'error', label: 'ERROR', cls: 'bg-red-700/20 text-red-300 border border-red-700/40' })
+  }
+
+  if (name === 'web_vital') {
+    const rating = String((p as any)?.rating ?? '').toLowerCase()
+    if (rating === 'poor') {
+      flags.push({ id: 'vital_poor', label: 'POOR VITAL', cls: 'bg-amber-700/15 text-amber-300 border border-amber-700/35' })
+    }
+  }
+
+  const dur = getDurationMs(it)
+  if (dur != null) {
+    if (name === 'api_response' || name === 'api_error' || name === 'api_request') {
+      if (dur >= VERY_SLOW_API_MS) {
+        flags.push({ id: 'very_slow', label: `VERY SLOW ${Math.round(dur)}ms`, cls: 'bg-orange-700/15 text-orange-300 border border-orange-700/35' })
+      } else if (dur >= SLOW_API_MS) {
+        flags.push({ id: 'slow', label: `SLOW ${Math.round(dur)}ms`, cls: 'bg-amber-700/15 text-amber-300 border border-amber-700/35' })
+      }
+    }
+    if (name === 'page_duration' && dur >= LONG_PAGE_MS) {
+      flags.push({ id: 'long_page', label: `LONG ${Math.round(dur / 1000)}s`, cls: 'bg-slate-700/20 text-slate-200 border border-slate-600/40' })
+    }
+  }
+
+  // UI errors (quand on les instrumentera côté UI)
+  if (name === 'ui_error_shown') {
+    flags.push({ id: 'error', label: 'UI ERROR', cls: 'bg-red-700/20 text-red-300 border border-red-700/40' })
+  }
+
+  return flags
+}
+
+function rowTone(flags: Flag[]): string {
+  if (flags.some((f) => f.id === 'error')) return 'bg-red-950/10'
+  if (flags.some((f) => f.id === 'very_slow')) return 'bg-orange-950/10'
+  if (flags.some((f) => f.id === 'slow' || f.id === 'vital_poor')) return 'bg-amber-950/10'
+  return ''
+}
+
 function Kpi({
   label,
   value,
@@ -84,6 +146,7 @@ export default function AdminTelemetryPage() {
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<TelemetryEventItem | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [onlyProblems, setOnlyProblems] = useState(false)
 
   useEffect(() => {
     setSelected(null)
@@ -125,10 +188,20 @@ export default function AdminTelemetryPage() {
     const pageViews = items.filter((x) => x.name === 'page_view').length
     const uniqUsers = new Set(items.map((x) => x.user_id).filter((x) => x != null)).size
     const uniqAnon = new Set(items.map((x) => x.anon_id).filter(Boolean)).size
-    return { total, apiErrors, clientErrors, pageViews, uniqUsers, uniqAnon }
+    const slowApi = items.filter((x) => {
+      if (x.name !== 'api_response' && x.name !== 'api_error') return false
+      const d = getDurationMs(x)
+      return d != null && d >= SLOW_API_MS
+    }).length
+    const problems = items.filter((x) => computeFlags(x).length > 0).length
+    return { total, apiErrors, clientErrors, pageViews, uniqUsers, uniqAnon, slowApi, problems }
   }, [items])
 
   const funnel = useMemo(() => computeBasicFunnel(items), [items])
+  const visibleItems = useMemo(() => {
+    if (!onlyProblems) return items
+    return items.filter((x) => computeFlags(x).length > 0)
+  }, [items, onlyProblems])
 
   return (
     <div className="space-y-6">
@@ -227,15 +300,28 @@ export default function AdminTelemetryPage() {
           >
             Reset filtres
           </button>
+          <button
+            onClick={() => setOnlyProblems((v) => !v)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+              onlyProblems
+                ? 'border-rose-700/40 bg-rose-950/20 text-rose-200'
+                : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+            title="Affiche uniquement les événements marqués (erreur / lenteur / vital poor)."
+          >
+            Problèmes uniquement
+          </button>
           {errorMsg && <span className="text-xs text-red-400 ml-auto">{errorMsg}</span>}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-3">
         <Kpi label="Events" value={kpis.total} />
         <Kpi label="Page views" value={kpis.pageViews} />
         <Kpi label="API errors" value={kpis.apiErrors} />
         <Kpi label="Client errors" value={kpis.clientErrors} />
+        <Kpi label="API slow (≥1.5s)" value={kpis.slowApi} hint="api_response/api_error duration_ms" />
+        <Kpi label="Flags" value={kpis.problems} hint="events marqués" />
         <Kpi label="Users (uniq)" value={kpis.uniqUsers} hint="user_id non-null" />
         <Kpi label="Anon (uniq)" value={kpis.uniqAnon} hint="anon_id" />
       </div>
@@ -262,13 +348,15 @@ export default function AdminTelemetryPage() {
           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
             Derniers événements
           </p>
-          <span className="text-xs text-slate-400">{items.length} item(s)</span>
+          <span className="text-xs text-slate-400">
+            {visibleItems.length} item(s){onlyProblems ? ' (filtrés)' : ''}
+          </span>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800">
-                {['Date', 'Event', 'Feature', 'Path', 'user_id', 'anon_id', ''].map((h) => (
+                {['Date', 'Event', 'Flags', 'Feature', 'Path', 'user_id', 'anon_id', ''].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest"
@@ -279,10 +367,13 @@ export default function AdminTelemetryPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((it) => (
+              {visibleItems.map((it) => {
+                const flags = computeFlags(it)
+                const tone = rowTone(flags)
+                return (
                 <tr
                   key={it.id}
-                  className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                  className={`border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 ${tone}`}
                 >
                   <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-500">
                     {formatTs(it.ts)}
@@ -291,6 +382,22 @@ export default function AdminTelemetryPage() {
                     <span className="font-mono text-xs text-slate-700 dark:text-slate-200">
                       {it.name}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {flags.length === 0 ? (
+                      <span className="text-[10px] text-slate-300">—</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {flags.slice(0, 3).map((f) => (
+                          <span key={f.label} className={`text-[10px] px-2 py-0.5 rounded-full ${f.cls}`}>
+                            {f.label}
+                          </span>
+                        ))}
+                        {flags.length > 3 && (
+                          <span className="text-[10px] text-slate-400">+{flags.length - 3}</span>
+                        )}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500">
                     {it.feature || '—'}
@@ -311,10 +418,10 @@ export default function AdminTelemetryPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
-              {items.length === 0 && !loading && (
+              )})}
+              {visibleItems.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400 italic">
+                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400 italic">
                     Aucun événement pour ces filtres.
                   </td>
                 </tr>
