@@ -153,10 +153,10 @@ export async function POST(req: NextRequest) {
   const emerge = String(r?.ce_qui_a_emerge ?? '').trim()
   const traj = String(r?.trajectoire_cartes ?? '').trim()
   const citations = (Array.isArray(r?.citations) ? r?.citations : [])
-    .filter((x): x is string => typeof x === 'string' && x.trim())
+    .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
     .slice(0, 4)
   const actionsOut = (Array.isArray(r?.actions_a_oeuvrer) ? r?.actions_a_oeuvrer : [])
-    .filter((x): x is string => typeof x === 'string' && x.trim())
+    .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
     .slice(0, 4)
 
   const fallback = 'Cette promenade onirique a nourri le jardin intérieur.'

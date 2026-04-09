@@ -23,7 +23,9 @@ export function scoresToPetals(
   if (!scores || typeof scores !== 'object') return {}
   const vals = Object.values(scores).filter((v) => typeof v === 'number')
   const dataMax = vals.length ? Math.max(...vals) : 0
-  const scale = dataMax > 0 ? dataMax : 1
+  // If the data already looks normalized (0..1), do NOT renormalize again.
+  // Otherwise, petals can appear "inflated" (e.g. when comparing sessions).
+  const scale = dataMax > 1.05 ? dataMax : 1
   const out: Record<string, number> = {}
   for (const p of ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros']) {
     out[p] = Math.min(1, Math.max(0, (scores[p] ?? 0) / scale))

@@ -325,6 +325,9 @@ export async function authRegister(
   const [ins] = await pool.execute<RowDataPacket[]>('SELECT LAST_INSERT_ID() as id')
   const userId = Number(ins[0]?.id)
 
+  // Première connexion: l'inscription connecte immédiatement, donc on fixe aussi le last_login.
+  await updateLastLogin(userId)
+
   await pool.execute(
     `INSERT INTO ${prefix}usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)`,
     [userId, `${prefix}capabilities`, `a:1:{s:10:"subscriber";i:1;}`]

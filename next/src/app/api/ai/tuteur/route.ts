@@ -178,11 +178,15 @@ export async function POST(req: NextRequest) {
       door_summary_preview: null,
       explore_petal: null,
       suggest_card: null,
+      _openrouter_error: 'OPENROUTER_API_KEY non configurée',
       provider: 'node-no-key',
     })
   }
 
-  const result = await openrouterCall(systemPrompt, oaiMessages, { maxTokens: 1200 })
+  const result = await openrouterCall(systemPrompt, oaiMessages, {
+    maxTokens: 1200,
+    responseFormatJson: true,
+  })
   const question = (result && typeof result === 'object' && (result.question ?? result.first_question)) as string | undefined
 
   if (result && question && typeof question === 'string') {
@@ -286,6 +290,7 @@ export async function POST(req: NextRequest) {
     door_summary_preview: null,
     explore_petal: null,
     suggest_card: null,
+    _openrouter_error: 'OpenRouter indisponible ou réponse non-JSON',
     provider: 'node-fallback',
   })
 }

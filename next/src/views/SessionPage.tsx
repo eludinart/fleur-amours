@@ -23,6 +23,7 @@ import { FOUR_DOORS, BACK_IMG, getCardTranslated, getDoorTranslated } from '@/da
 import { BuyTarotCTA } from '@/components/BuyTarotCTA'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { ExportPlan14j } from '@/components/ExportPlan14j'
+import { SessionPreviewPrintable } from '@/components/SessionPreviewPrintable'
 import { TranslatableContent } from '@/components/TranslatableContent'
 import { NoteCard } from '@/components/NoteCard'
 import { AlertBox, AlertBoxLink } from '@/components/AlertBox'
@@ -488,6 +489,12 @@ function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, a
   const [expandedDetail, setExpandedDetail] = useState(null)
   const [sessionDetailZoom, setSessionDetailZoom] = useState(null) // { type: 'flower' } | { type: 'card', door, card }
   const [completedSessionIndex, setCompletedSessionIndex] = useState(0)
+  const sessionPreviewPdfRef = useRef(null)
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
+  const appUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}${basePath}`.replace(/\/+$/, '')
+      : ''
 
   useEffect(() => {
     if (!userEmail) { setLoadingSessions(false); setLoadingCompleted(false); return }
@@ -760,12 +767,18 @@ function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, a
                       className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-sm font-bold transition-colors">
                       ✕
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSession(expandedSessionId)}
-                      className="text-[10px] text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                      {t('common.delete')}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <ExportPlan14j
+                        pdfRef={sessionPreviewPdfRef}
+                        filename="Exploration de Ma Fleur d'Amours — Fleur d'AmOurs.pdf"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSession(expandedSessionId)}
+                        className="text-[10px] text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                        {t('common.delete')}
+                      </button>
+                    </div>
                   </div>
                   <div className="p-4 pt-12 space-y-4">
                   {expandedDetail === null ? (
@@ -774,6 +787,32 @@ function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, a
                         <p className="text-xs text-red-500">{expandedDetail.error}</p>
                       ) : (
                         <>
+                          {/* Printable PDF layout (offscreen but renderable) */}
+                          {/* Keep printable DOM in normal viewport so images/SVG render correctly before capture */}
+                          <div
+                            ref={sessionPreviewPdfRef}
+                            style={{ position: 'fixed', left: 0, top: 0, opacity: 0, pointerEvents: 'none', zIndex: -1 }}
+                          >
+                            <SessionPreviewPrintable
+                              title="Exploration de Ma Fleur d'Amours"
+                              appName="Fleur d'AmOurs — Tarot Fleur d'Amours"
+                              appUrl={appUrl}
+                              createdAt={expandedDetail.created_at}
+                              petals={expandedDetail.petals}
+                              drawnCards={(() => {
+                                const drawn = (expandedDetail.cards_drawn || []).map((item) => {
+                                  const name = typeof item === 'object' && item?.card_name ? item.card_name : item
+                                  const found = findCardByName(name)
+                                  if (!found) return null
+                                  const door = (typeof item === 'object' && item?.door) ? item.door : found.door
+                                  return { door, card: found.card }
+                                }).filter(Boolean)
+                                return drawn
+                              })()}
+                              anchors={expandedDetail.anchors || []}
+                              plan14j={expandedDetail.plan14j || null}
+                            />
+                          </div>
                           {/* Fleur + cartes (zoomables) */}
                           {((expandedDetail.petals && Object.keys(expandedDetail.petals || {}).length > 0) || (expandedDetail.cards_drawn?.length > 0)) && (
                             <div className="flex flex-col items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
@@ -3184,6 +3223,12 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
   const [saved, setSaved]     = useState(false)
   const generated             = useRef(false)
   const planExportRef         = useRef(null)
+  const planPdfRef            = useRef(null)
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
+  const appUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}${basePath}`.replace(/\/+$/, '')
+      : ''
 
   async function generate() {
     if (generated.current) return
@@ -3365,7 +3410,24 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
         </div>
       )}
       <div className="flex justify-end">
-        <ExportPlan14j targetRef={planExportRef} />
+        <ExportPlan14j
+          imageRef={planExportRef}
+          pdfRef={planPdfRef}
+          filename="Exploration de Ma Fleur d'Amours — Fleur d'AmOurs.pdf"
+        />
+      </div>
+      {/* Printable PDF layout (offscreen but renderable for html2canvas/html2pdf) */}
+      <div ref={planPdfRef} style={{ position: 'fixed', left: 0, top: 0, opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
+        <SessionPreviewPrintable
+          title="Exploration de Ma Fleur d'Amours"
+          appName="Fleur d'AmOurs — Tarot Fleur d'Amours"
+          appUrl={appUrl}
+          createdAt={sessionMeta?.created_at}
+          petals={petals}
+          drawnCards={(drawnCardsWithDetails || []).map((d) => ({ door: d.door, card: d.card }))}
+          anchors={anchors}
+          plan14j={plan}
+        />
       </div>
       <div ref={planExportRef} className="space-y-6">
       <div className="flex flex-col items-center">

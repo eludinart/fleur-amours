@@ -49,7 +49,12 @@ export async function GET(
       return NextResponse.json({ error: 'Token invalide' }, { status: 401 })
     }
 
-    const email = await getEmailFromToken(req)
+    const isStaff =
+      payload.role === 'admin' ||
+      payload.role === 'administrator' ||
+      payload.role === 'coach'
+
+    const email = isStaff ? null : await getEmailFromToken(req)
     const session = await getById(sessionId, email ?? undefined)
 
     if (!session) {

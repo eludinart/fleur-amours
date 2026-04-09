@@ -12,6 +12,8 @@ import { VoiceTextInput } from '@/components/VoiceTextInput'
 import { FleurInterpretation } from '@/components/FleurInterpretation'
 import { BuyTarotCTA } from '@/components/BuyTarotCTA'
 import { ShareFleurButton } from '@/components/ShareFleurButton'
+import { ExportPlan14j } from '@/components/ExportPlan14j'
+import { FleurPrintable } from '@/components/FleurPrintable'
 
 const DEFINITION_SLUG = 'fleur-amour-individuel'
 
@@ -46,6 +48,7 @@ function ResultView({ result, answers: answersProp, onReset }) {
   const setHasCompletedFirstFleur = useStore((s) => s.setHasCompletedFirstFleur)
   const [showCelebration, setShowCelebration] = useState(!hasCompletedFirstFleur)
   const flowerRef = useRef(null)
+  const fleurPdfRef = useRef(null)
   const { scores, analysis, composite } = result
 
   const dismissCelebration = () => {
@@ -113,9 +116,17 @@ function ResultView({ result, answers: answersProp, onReset }) {
         </div>
       </div>
 
+      {/* Printable PDF layout (offscreen) */}
+      <div style={{ position: 'fixed', left: -100000, top: 0, opacity: 0, pointerEvents: 'none' }}>
+        <div ref={fleurPdfRef}>
+          <FleurPrintable result={result} answers={answersForAi} />
+        </div>
+      </div>
+
       <FleurInterpretation scores={scores} answers={answersForAi} resultId={result.id || result.result_id} interpretation={result.interpretation} />
 
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-2 flex-wrap">
+        <ExportPlan14j pdfRef={fleurPdfRef} imageRef={flowerRef} />
         <ShareFleurButton
           targetRef={flowerRef}
           shareUrl={result.id ? `/fleur?result=${result.id}` : result.result_id ? `/fleur?result=${result.result_id}` : '/fleur'}

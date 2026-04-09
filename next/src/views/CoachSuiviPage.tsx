@@ -8,6 +8,7 @@ import { sessionsApi } from '@/api/sessions'
 import { aiApi } from '@/api/ai'
 import { useDebounce } from '@/hooks/useDebounce'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
+import { SessionDetailModal, type SessionForDetail } from '@/components/sessions/SessionDetailModal'
 
 const PETAL_LABELS: Record<string, string> = {
   agape: 'Agapè',
@@ -483,9 +484,12 @@ function UserDetailPanel({
   const [tab, setTab] = useState('ensemble')
   const [patientFicheLoading, setPatientFicheLoading] = useState(false)
   const [patientFicheError, setPatientFicheError] = useState<string | null>(null)
+  const [selectedSession, setSelectedSession] = useState<SessionForDetail | null>(null)
+  const [loadingSession, setLoadingSession] = useState(false)
 
   useEffect(() => {
     setTab('ensemble')
+    setSelectedSession(null)
   }, [email])
 
   useEffect(() => {
@@ -525,6 +529,29 @@ function UserDetailPanel({
     }
   }
   const coachPatientFicheReady = data?.coach_patient_snapshot ? true : false
+
+  async function openSessionDetail(id: string) {
+    if (!id) return
+    setLoadingSession(true)
+    try {
+      const full = (await sessionsApi.get(id)) as SessionForDetail
+      setSelectedSession(full)
+    } catch {
+      /* ignore (best-effort UI) */
+    } finally {
+      setLoadingSession(false)
+    }
+  }
+
+  async function refreshSessionDetail(id: string) {
+    if (!id) return
+    try {
+      const full = (await sessionsApi.get(id)) as SessionForDetail
+      setSelectedSession(full)
+    } catch {
+      /* ignore */
+    }
+  }
 
   return (
     <div
@@ -977,7 +1004,16 @@ function UserDetailPanel({
                 return (
                   <div
                     key={s.id}
-                    className={`rounded-xl border p-3.5 transition-colors ${
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openSessionDetail(String(s.id))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        void openSessionDetail(String(s.id))
+                      }
+                    }}
+                    className={`rounded-xl border p-3.5 transition-all cursor-pointer hover:brightness-110 ${
                       (s.max_shadow_level ?? 0) >= 1
                         ? `${sp2?.bg} ${sp2?.border}`
                         : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30'
@@ -1043,16 +1079,31 @@ function UserDetailPanel({
                               d&apos;ombre
                             </span>
                           )}
+                          <span className="ml-auto text-slate-300 dark:text-slate-600">
+                            Voir le détail →
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
                 )
               })}
+
+              {loadingSession && (
+                <p className="text-xs text-slate-400 italic">Chargement de la séance…</p>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {selectedSession && (
+        <SessionDetailModal
+          session={selectedSession}
+          onClose={() => setSelectedSession(null)}
+          onRefresh={refreshSessionDetail}
+        />
+      )}
     </div>
   )
 }
