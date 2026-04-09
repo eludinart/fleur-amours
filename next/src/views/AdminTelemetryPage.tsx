@@ -91,23 +91,47 @@ function rowTone(flags: Flag[]): string {
   return ''
 }
 
+function isUrgent(flags: Flag[]): boolean {
+  return flags.some((f) => f.id === 'error' || f.id === 'very_slow' || f.id === 'vital_poor')
+}
+
 function Kpi({
   label,
   value,
   hint,
+  onClick,
+  active = false,
 }: {
   label: string
   value: string | number
   hint?: string
+  onClick?: () => void
+  active?: boolean
 }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+  const clickable = typeof onClick === 'function'
+  const cls = `rounded-2xl border bg-white dark:bg-slate-900 p-4 text-left transition-colors ${
+    active
+      ? 'border-violet-400/60 dark:border-violet-500/50 bg-violet-50/40 dark:bg-violet-950/10'
+      : 'border-slate-200 dark:border-slate-700'
+  } ${clickable ? 'hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer' : ''}`
+
+  const Inner = (
+    <>
       <p className="text-xs text-slate-400">{label}</p>
       <p className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-0.5">
         {value}
       </p>
       {hint && <p className="text-[10px] text-slate-400 mt-1">{hint}</p>}
-    </div>
+    </>
+  )
+
+  if (!clickable) {
+    return <div className={cls}>{Inner}</div>
+  }
+  return (
+    <button type="button" onClick={onClick} className={cls}>
+      {Inner}
+    </button>
   )
 }
 
@@ -144,9 +168,12 @@ export default function AdminTelemetryPage() {
 
   const [items, setItems] = useState<TelemetryEventItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [clearing, setClearing] = useState(false)
   const [selected, setSelected] = useState<TelemetryEventItem | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [onlyProblems, setOnlyProblems] = useState(false)
+  const [urgentOnly, setUrgentOnly] = useState(false)
+  const [slowOnly, setSlowOnly] = useState(false)
 
   useEffect(() => {
     setSelected(null)
@@ -176,6 +203,27 @@ export default function AdminTelemetryPage() {
     }
   }
 
+  async function clearAll() {
+    if (clearing) return
+    const ok1 = confirm(
+      'Effacer TOUS les logs de télémétrie ? Cette action est irréversible.'
+    )
+    if (!ok1) return
+    const ok2 = confirm('Confirmation: supprimer définitivement tous les événements ?')
+    if (!ok2) return
+    setClearing(true)
+    setErrorMsg(null)
+    try {
+      await telemetryApi.clearAll()
+      setItems([])
+      setSelected(null)
+    } catch (e: any) {
+      setErrorMsg(e?.detail ?? e?.message ?? 'Erreur')
+    } finally {
+      setClearing(false)
+    }
+  }
+
   useEffect(() => {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -199,9 +247,71 @@ export default function AdminTelemetryPage() {
 
   const funnel = useMemo(() => computeBasicFunnel(items), [items])
   const visibleItems = useMemo(() => {
-    if (!onlyProblems) return items
-    return items.filter((x) => computeFlags(x).length > 0)
-  }, [items, onlyProblems])
+    if (!onlyProblems && !urgentOnly && !slowOnly) return items
+    return items.filter((x) => {
+      const flags = computeFlags(x)
+      if (urgentOnly) return isUrgent(flags)
+      if (slowOnly) {
+        if (x.name !== 'api_response' && x.name !== 'api_error') return false
+        const d = getDurationMs(x)
+        return d != null && d >= SLOW_API_MS
+      }
+      return flags.length > 0
+    })
+  }, [items, onlyProblems, urgentOnly, slowOnly])
+
+  const topErrors = useMemo(() => {
+    type Row = {
+      key: string
+      kind: 'api_error' | 'client_exception' | 'ui_error_shown' | 'unhandled_rejection'
+      count: number
+      last_ts: string
+      sample_path?: string | null
+      status?: number
+      code?: string | null
+      message?: string
+    }
+    const map = new Map<string, Row>()
+    for (const it of items) {
+      if (!['api_error', 'client_exception', 'ui_error_shown', 'unhandled_rejection'].includes(it.name)) continue
+      const p = it.properties || {}
+      const status = typeof (p as any)?.status === 'number' ? (p as any).status : undefined
+      const code = typeof (p as any)?.code === 'string' ? (p as any).code : null
+      const detail =
+        typeof (p as any)?.detail === 'string'
+          ? (p as any).detail
+          : typeof (p as any)?.message === 'string'
+            ? (p as any).message
+            : ''
+      const msg = String(detail || it.name || 'error').slice(0, 160)
+      const key = it.name === 'api_error'
+        ? `api_error|${status ?? 'na'}|${code ?? 'na'}|${msg}`
+        : `${it.name}|${msg}`
+
+      const prev = map.get(key)
+      if (!prev) {
+        map.set(key, {
+          key,
+          kind: it.name as Row['kind'],
+          count: 1,
+          last_ts: it.ts,
+          sample_path: it.path ?? null,
+          status,
+          code,
+          message: msg,
+        })
+      } else {
+        prev.count += 1
+        if (new Date(it.ts).getTime() > new Date(prev.last_ts).getTime()) {
+          prev.last_ts = it.ts
+          prev.sample_path = it.path ?? prev.sample_path
+        }
+      }
+    }
+    return Array.from(map.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12)
+  }, [items])
 
   return (
     <div className="space-y-6">
@@ -214,13 +324,23 @@ export default function AdminTelemetryPage() {
             Explorateur d&apos;événements (usage, erreurs, API, flows).
           </p>
         </div>
-        <button
-          onClick={() => void load()}
-          className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-rose-500 shadow-md hover:opacity-90 disabled:opacity-50"
-          disabled={loading}
-        >
-          {loading ? 'Chargement…' : 'Rafraîchir'}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => void load()}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-rose-500 shadow-md hover:opacity-90 disabled:opacity-50"
+            disabled={loading || clearing}
+          >
+            {loading ? 'Chargement…' : 'Rafraîchir'}
+          </button>
+          <button
+            onClick={() => void clearAll()}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-200 bg-red-950/40 border border-red-700/50 hover:bg-red-950/55 disabled:opacity-50"
+            disabled={clearing || loading}
+            title="Supprime tous les événements enregistrés (TRUNCATE)."
+          >
+            {clearing ? 'Suppression…' : 'Effacer tous les logs'}
+          </button>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
@@ -311,17 +431,103 @@ export default function AdminTelemetryPage() {
           >
             Problèmes uniquement
           </button>
+          <button
+            onClick={() => setSlowOnly((v) => !v)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+              slowOnly
+                ? 'border-amber-700/40 bg-amber-950/20 text-amber-200'
+                : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+            title={`Affiche seulement les événements API avec duration_ms ≥ ${SLOW_API_MS}ms.`}
+          >
+            API slow
+          </button>
+          <button
+            onClick={() => {
+              setUrgentOnly((v) => !v)
+              if (!urgentOnly) setOnlyProblems(false)
+            }}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+              urgentOnly
+                ? 'border-red-700/40 bg-red-950/25 text-red-200'
+                : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+            title="Affiche seulement ERROR + VERY SLOW + POOR VITAL."
+          >
+            Urgent
+          </button>
           {errorMsg && <span className="text-xs text-red-400 ml-auto">{errorMsg}</span>}
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-3">
-        <Kpi label="Events" value={kpis.total} />
-        <Kpi label="Page views" value={kpis.pageViews} />
-        <Kpi label="API errors" value={kpis.apiErrors} />
-        <Kpi label="Client errors" value={kpis.clientErrors} />
-        <Kpi label="API slow (≥1.5s)" value={kpis.slowApi} hint="api_response/api_error duration_ms" />
-        <Kpi label="Flags" value={kpis.problems} hint="events marqués" />
+        <Kpi
+          label="Events"
+          value={kpis.total}
+          active={!event && !onlyProblems && !urgentOnly && !slowOnly}
+          onClick={() => {
+            setEvent('')
+            setOnlyProblems(false)
+            setUrgentOnly(false)
+            setSlowOnly(false)
+          }}
+        />
+        <Kpi
+          label="Page views"
+          value={kpis.pageViews}
+          active={event.trim() === 'page_view'}
+          onClick={() => {
+            setEvent('page_view')
+            setOnlyProblems(false)
+            setUrgentOnly(false)
+            setSlowOnly(false)
+          }}
+        />
+        <Kpi
+          label="API errors"
+          value={kpis.apiErrors}
+          active={event.trim() === 'api_error'}
+          onClick={() => {
+            setEvent('api_error')
+            setOnlyProblems(true)
+            setUrgentOnly(false)
+            setSlowOnly(false)
+          }}
+        />
+        <Kpi
+          label="Client errors"
+          value={kpis.clientErrors}
+          active={event.trim() === 'client_exception'}
+          onClick={() => {
+            setEvent('client_exception')
+            setOnlyProblems(true)
+            setUrgentOnly(false)
+            setSlowOnly(false)
+          }}
+        />
+        <Kpi
+          label="API slow (≥1.5s)"
+          value={kpis.slowApi}
+          hint="api_response/api_error duration_ms"
+          active={slowOnly}
+          onClick={() => {
+            setEvent('')
+            setOnlyProblems(false)
+            setUrgentOnly(false)
+            setSlowOnly(true)
+          }}
+        />
+        <Kpi
+          label="Flags"
+          value={kpis.problems}
+          hint="events marqués"
+          active={onlyProblems}
+          onClick={() => {
+            setOnlyProblems(true)
+            setUrgentOnly(false)
+            setSlowOnly(false)
+          }}
+        />
         <Kpi label="Users (uniq)" value={kpis.uniqUsers} hint="user_id non-null" />
         <Kpi label="Anon (uniq)" value={kpis.uniqAnon} hint="anon_id" />
       </div>
@@ -341,6 +547,74 @@ export default function AdminTelemetryPage() {
         <p className="text-[10px] text-slate-400 mt-3">
           Pour des funnels précis par formulaire, utilisez les events <span className="font-mono">flow_*</span> avec un identifiant de flow/step dans <span className="font-mono">properties</span>.
         </p>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+            Top erreurs (groupées)
+          </p>
+          <p className="text-[10px] text-slate-400">
+            Clique pour filtrer rapidement sur un type d&apos;erreur.
+          </p>
+        </div>
+        {topErrors.length === 0 ? (
+          <p className="text-sm text-slate-400 italic mt-3">Aucune erreur sur la période.</p>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-800">
+                  {['Type', 'Message', 'Count', 'Dernière', 'Path', ''].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {topErrors.map((r) => (
+                  <tr
+                    key={r.key}
+                    className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                  >
+                    <td className="px-4 py-3">
+                      <span className="font-mono text-xs text-red-300">
+                        {r.kind}
+                        {r.kind === 'api_error' && r.status != null ? ` (${r.status})` : ''}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 max-w-[520px] truncate">
+                      {r.message || '—'}
+                      {r.kind === 'api_error' && r.code ? (
+                        <span className="ml-2 text-[10px] text-slate-400 font-mono">code {r.code}</span>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-500">{r.count}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{formatTs(r.last_ts)}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500 max-w-[320px] truncate">{r.sample_path || '—'}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => {
+                          setEvent(r.kind)
+                          setOnlyProblems(true)
+                          setUrgentOnly(false)
+                          void load()
+                        }}
+                        className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline"
+                      >
+                        Filtrer
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">

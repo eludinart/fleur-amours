@@ -1,5 +1,6 @@
 import { api } from '@/lib/api-client'
 import { fleurApi } from './fleur'
+import { fleurBetaApi } from './fleur-beta'
 import { tarotReadingsApi } from './tarotReadings'
 import { sessionsApi } from './sessions'
 import { billingApi } from './billing'
@@ -75,6 +76,15 @@ export async function fetchDashboardData() {
               const personA = (duo as Record<string, unknown>)?.person_a as Record<string, unknown> | undefined
               if (personA?.scores) {
                 fleurSlots[i] = { ...item, scores: personA.scores, type: 'duo' }
+              }
+            } else if (item.type === 'fleur-beta' && item.id) {
+              const res = await fleurBetaApi.getResult(String(item.id))
+              if ((res as Record<string, unknown>)?.scores) {
+                fleurSlots[i] = {
+                  ...item,
+                  scores: (res as Record<string, unknown>).scores,
+                  type: 'fleur-beta',
+                }
               }
             } else if (item.id) {
               const res = await fleurApi.getResult(item.id as string)

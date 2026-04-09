@@ -178,3 +178,12 @@ export async function listTelemetryEvents({
   }))
 }
 
+export async function clearTelemetryEvents(): Promise<void> {
+  if (!isDbConfigured()) return
+  await ensureTelemetryTable()
+  const pool = getPool()
+  const t = table('app_events')
+  // TRUNCATE is fast; resets auto-increment
+  await exec(pool, `TRUNCATE TABLE ${t}`)
+}
+

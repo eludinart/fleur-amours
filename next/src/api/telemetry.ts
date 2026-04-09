@@ -41,5 +41,6 @@ export const telemetryApi = {
     p.set('limit', String(limit))
     return api.get(`/api/telemetry/events?${p.toString()}`) as Promise<{ items: TelemetryEventItem[] }>
   },
+  clearAll: () => api.delete('/api/telemetry/events') as Promise<{ ok: boolean }>,
 }
 
