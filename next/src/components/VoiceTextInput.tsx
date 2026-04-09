@@ -20,6 +20,7 @@ type VoiceTextInputProps = {
   compact?: boolean
   autoStart?: boolean
   onLiveUpdate?: (text: string) => void
+  micAddon?: React.ReactNode
 }
 
 export function VoiceTextInput({
@@ -38,8 +39,10 @@ export function VoiceTextInput({
   compact = false,
   autoStart = false,
   onLiveUpdate,
+  micAddon,
 }: VoiceTextInputProps) {
   const baseAtStartRef = useRef('')
+  const prevValueRef = useRef<string>(value ?? '')
   const { listening, interimText, supported, error: speechError, start, stop, reset } =
     useSpeech({
       onResult: (t) => {
@@ -51,6 +54,21 @@ export function VoiceTextInput({
     })
 
   const [hasAutoStarted, setHasAutoStarted] = useState(false)
+
+  // Quand l'hôte "vide" l'input (ex. après envoi), on s'assure que la dictée
+  // ne continue pas à concaténer sur une ancienne base.
+  useEffect(() => {
+    const cur = value ?? ''
+    const prev = prevValueRef.current ?? ''
+    prevValueRef.current = cur
+    // Ne pas exécuter au montage si l'input démarre déjà vide.
+    if (!prev && !cur) return
+    if (cur !== '') return
+    baseAtStartRef.current = ''
+    if (listening) stop()
+    reset()
+  }, [value, listening, stop, reset])
+
   useEffect(() => {
     if (autoStart && supported && !listening && !hasAutoStarted) {
       const timer = setTimeout(() => {
@@ -79,6 +97,7 @@ export function VoiceTextInput({
     else {
       baseAtStartRef.current = value ?? ''
       reset()
+      // Must start synchronously on user gesture for some browsers.
       start()
     }
   }
@@ -159,6 +178,11 @@ export function VoiceTextInput({
               </svg>
             </button>
           )}
+          {micAddon ? (
+            <div className="shrink-0">
+              {micAddon}
+            </div>
+          ) : null}
 
           {(submitLabel || compact) && onSubmit && (
             <button

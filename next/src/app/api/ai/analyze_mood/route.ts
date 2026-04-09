@@ -8,6 +8,7 @@ import { requireAuth } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
 import { getAnalyzeMoodPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction, isValidPetal, isValidCard } from '@/lib/prompts'
+import { parseDreamscapeConfigFromPrompt } from '@/lib/dreamscape-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,6 +95,7 @@ export async function POST(req: NextRequest) {
     userMsg +=
       "\n[Nouvelle promenade — choisis des cartes variées, évite La Tige et Le Bouton si tu les as déjà souvent proposées.]"
   }
+  userMsg += `\n[Promenade — tours utilisateur déjà effectués: ${userTurns}]`
   if (Object.keys(cardPositions).length > 0) {
     const lines = Object.entries(cardPositions).map(
       ([pos, carte]) => `${pos}:${carte}`
@@ -102,20 +104,17 @@ export async function POST(req: NextRequest) {
     if (allRevealed) {
       userMsg +=
         "\n[Toutes les cartes sont à l'endroit — tu peux proposer 1 remplacement pertinent si la dynamique de l'échange l'appelle.]"
-      if (userTurns >= 12) {
-        userMsg +=
-          "\n[Promenade déjà longue — si une trajectoire ou des intentions ont émergé, propose de clôturer (propose_close : true) avec 1 à 3 actions concrètes.]"
-      }
     }
   }
   userMsg += getLangInstruction(locale)
   messages.push({ role: 'user', content: userMsg })
 
   const systemPrompt = await getAnalyzeMoodPrompt()
+  const dreamscapeConfig = parseDreamscapeConfigFromPrompt(systemPrompt)
   const result = await openrouterCall(
     systemPrompt,
     messages.map((m) => ({ role: m.role, content: m.content })),
-    { maxTokens: 300 }
+    { maxTokens: dreamscapeConfig.max_tokens ?? 300 }
   )
 
   if (
@@ -126,6 +125,7 @@ export async function POST(req: NextRequest) {
   ) {
     const r = result as Record<string, unknown>
     const phrase = String(r.phrase ?? '').trim()
+    const question = String(r.question ?? '').trim()
 
     const activePetals: Record<string, number> = {}
     const petalsArr = Array.isArray(r.petals) ? r.petals : []
@@ -145,10 +145,17 @@ export async function POST(req: NextRequest) {
         .replace(/œ/g, 'oe')
         .replace(/[^a-z]/g, '')
 
+    // Keep only the most salient 1-3 petals per turn.
+    const uniquePetals: string[] = []
     for (const p of petalsArr) {
       const key = tr(String(p))
-      if (PETAL_NAMES.includes(key)) activePetals[key] = 0.8
+      if (!PETAL_NAMES.includes(key)) continue
+      if (!uniquePetals.includes(key)) uniquePetals.push(key)
+      if (uniquePetals.length >= 3) break
     }
+    uniquePetals.forEach((k, idx) => {
+      activePetals[k] = idx === 0 ? 0.9 : idx === 1 ? 0.65 : 0.45
+    })
 
     let shadowCard: string | null = String(r.shadow_card ?? '').trim() || null
     if (shadowCard && !isValidPetal(shadowCard)) shadowCard = null
@@ -178,8 +185,15 @@ export async function POST(req: NextRequest) {
     const cartes = (Array.isArray(r.cartes) ? r.cartes : [])
       .filter((x): x is string => typeof x === 'string')
 
+    const combined = [phrase, question].filter(Boolean).join(' ').trim()
+    const poetic = (dreamscapeConfig.force_question_finale && combined && !combined.trim().endsWith('?'))
+      ? (combined.trimEnd() + ' ?')
+      : combined
+
     return NextResponse.json({
-      poetic_reflection: phrase,
+      poetic_reflection: poetic,
+      open_question: question || null,
+      dreamscape_config: dreamscapeConfig,
       active_petals: activePetals,
       petals_deficit: petalsDeficit,
       cards_to_reveal: cartes,

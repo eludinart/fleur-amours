@@ -23,9 +23,20 @@ export const aiApi = {
     api.post('/api/ai/card-question', payload),
   fleurInterpretation: (payload: Record<string, unknown>) =>
     api.post('/api/ai/fleur-interpretation', payload),
-  analyzeMood: (payload: { text: string }) =>
+  analyzeMood: (payload: {
+    text: string
+    history?: Array<{ role?: string; content?: string }>
+    card_positions?: Record<string, string>
+    all_revealed?: boolean
+  }) =>
     api.post('/api/ai/analyze_mood', payload),
-  dreamscapeSummarize: (payload: { history: Array<{ role: string; content: string }> }) =>
+  dreamscapeSummarize: (payload: {
+    history: Array<{ role: string; content: string }>
+    slots?: Array<{ position?: string; card?: string; faceDown?: boolean }>
+    petals?: Record<string, number>
+    path?: string[]
+    actions?: string[]
+  }) =>
     api.post('/api/ai/dreamscape_summarize', payload),
   helpChat: (payload: {
     message: string

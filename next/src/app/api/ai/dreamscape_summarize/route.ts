@@ -14,14 +14,32 @@ function getLocale(req: NextRequest): string {
   return req.headers.get('x-locale') || 'fr'
 }
 
-const DREAMSCAPE_SUMMARIZE_SYSTEM = `Tu es le Tuteur maïeutique du jardin intérieur. À partir de la conversation et du contexte du tirage ci-dessous, génère un résumé détaillé et riche (8 à 15 phrases) du parcours. Inclus :
-- L'évolution des échanges et des thèmes abordés
-- Le climat intérieur et ce qui a émergé (intentions, tensions, joies)
-- Les cartes et leur sens dans les positions (Agapè, Philautia, etc.) si présentes
-- La trajectoire et ce qu'elle révèle
-- Les pétales de la fleur marqués et leur signification
-- Les actions ou engagements repérés
-Ton chaleureux et poétique, sans conseil direct. Sépare les paragraphes par une ligne vide (double saut de ligne) pour une lecture agréable. Réponds UNIQUEMENT en texte brut, sans JSON.`
+const DREAMSCAPE_SUMMARIZE_SYSTEM = `Tu es le Tuteur maïeutique du jardin intérieur.
+
+Ta tâche: produire une synthèse très utile et explicite de la promenade onirique.
+
+Tu DOIS répondre en JSON STRICT (sans markdown, sans texte autour).
+
+Schéma JSON attendu :
+{
+  "intention_depart": "<2-4 lignes : ce que la personne cherchait, la question implicite>",
+  "ce_qui_a_emerge": "<12-20 lignes : ce qui a bougé, tensions/lumières, avant→après, décisions qui se dessinent>",
+  "trajectoire_cartes": "<8-14 lignes : la trajectoire (ordre), et 1-2 phrases de sens vécu par carte/position si présentes>",
+  "citations": ["<2 à 4 citations courtes de l'utilisateur, entre guillemets, max 140 caractères chacune>"],
+  "actions_a_oeuvrer": ["<3 à 7 actions concrètes, courtes, non-prescriptives, qui reprennent les mots de la personne>"]
+}
+
+Contraintes impératives :
+- Aucune morale, aucun conseil direct.
+- Être spécifique : évite les généralités. Donne des détails concrets.
+- Tu dois écrire des sections SUBSTANTIELLES :
+  - intention_depart: minimum 240 caractères
+  - ce_qui_a_emerge: minimum 900 caractères
+  - trajectoire_cartes: minimum 600 caractères (si des cartes/positions existent), sinon explique clairement pourquoi cette section est plus courte
+  - actions_a_oeuvrer: 3 à 7 puces
+- Si aucune action n'est donnée dans le contexte, propose 3 à 5 actions très prudentes, formulées comme un engagement libre (ex: "Je peux…").
+- Les citations doivent venir de l'utilisateur (pas de l'IA), et être reconnaissables.
+`
 
 export async function POST(req: NextRequest) {
   try {
@@ -127,13 +145,36 @@ export async function POST(req: NextRequest) {
   const result = await openrouterCall(
     DREAMSCAPE_SUMMARIZE_SYSTEM,
     [{ role: 'user', content: userContent }],
-    { maxTokens: 800, rawText: true }
+    { maxTokens: 1800, responseFormatJson: true }
   )
 
-  const summary =
-    typeof result === 'string' && result.trim()
-      ? result.trim()
-      : 'Cette promenade onirique a nourri le jardin intérieur.'
+  const r = (result && typeof result === 'object' && !Array.isArray(result)) ? (result as Record<string, unknown>) : null
+  const intention = String(r?.intention_depart ?? '').trim()
+  const emerge = String(r?.ce_qui_a_emerge ?? '').trim()
+  const traj = String(r?.trajectoire_cartes ?? '').trim()
+  const citations = (Array.isArray(r?.citations) ? r?.citations : [])
+    .filter((x): x is string => typeof x === 'string' && x.trim())
+    .slice(0, 4)
+  const actionsOut = (Array.isArray(r?.actions_a_oeuvrer) ? r?.actions_a_oeuvrer : [])
+    .filter((x): x is string => typeof x === 'string' && x.trim())
+    .slice(0, 4)
 
-  return NextResponse.json({ summary })
+  const fallback = 'Cette promenade onirique a nourri le jardin intérieur.'
+  const summaryText = [intention && `Intention de départ\n${intention}`,
+    emerge && `Ce qui a émergé\n${emerge}`,
+    traj && `Trajectoire & cartes\n${traj}`,
+    citations.length ? `Citations\n- ${citations.join('\n- ')}` : '',
+    actionsOut.length ? `Actions à œuvrer\n- ${actionsOut.join('\n- ')}` : '',
+  ].filter(Boolean).join('\n\n') || fallback
+
+  return NextResponse.json({
+    summary: summaryText,
+    sections: {
+      intention_depart: intention || null,
+      ce_qui_a_emerge: emerge || null,
+      trajectoire_cartes: traj || null,
+      citations,
+      actions_a_oeuvrer: actionsOut,
+    },
+  })
 }

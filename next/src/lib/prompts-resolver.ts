@@ -4,7 +4,7 @@
  */
 import { readFile } from 'fs/promises'
 import { join } from 'path'
-import { getActiveContent } from './prompts-db'
+import { getActiveContent, getPromptOverride } from './prompts-db'
 import {
   TUTEUR_SYSTEM_PROMPT,
   THRESHOLD_SYSTEM_PROMPT,
@@ -51,8 +51,10 @@ export async function getThresholdPrompt(): Promise<string> {
   return THRESHOLD_SYSTEM_PROMPT
 }
 
-/** Prompt Dreamscape : overrides > constante (pas de table dédiée) */
+/** Prompt Dreamscape : DB override > overrides file > constante */
 export async function getAnalyzeMoodPrompt(): Promise<string> {
+  const fromDb = await getPromptOverride('analyze_mood')
+  if (fromDb && fromDb.trim()) return fromDb
   const overrides = await readOverrides()
   if (overrides?.analyze_mood) return overrides.analyze_mood
   return ANALYZE_MOOD_SYSTEM_PROMPT

@@ -543,30 +543,6 @@ export default function DreamscapeHistoriquePage() {
                               >
                                 {shareLoadingId === item.id ? '…' : '📤 ' + t('common.share')}
                               </button>
-                              {item.snapshot && (
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    try {
-                                      const socialImg = await buildSocialCardImage(item.snapshot, item.poeticReflection)
-                                      const a = document.createElement('a')
-                                      a.href = socialImg || item.snapshot
-                                      a.download = `promenade-onirique-${item.id}-reseaux-sociaux.png`
-                                      a.click()
-                                      toast(t('share.imageDownloaded'), 'success')
-                                    } catch {
-                                      const a = document.createElement('a')
-                                      a.href = item.snapshot
-                                      a.download = `promenade-onirique-${item.id}.png`
-                                      a.click()
-                                      toast(t('share.imageDownloaded'), 'success')
-                                    }
-                                  }}
-                                  className="flex-1 min-w-[120px] px-4 py-2.5 rounded-xl border border-white/20 bg-white/10 text-white/90 font-medium hover:bg-white/20 transition-colors"
-                                >
-                                  {t('dreamscapeHistorique.downloadSocial')}
-                                </button>
-                              )}
                               {shareMenuId === item.id && shareMenuUrl && (
                                 <>
                                   <div className="fixed inset-0 z-40" onClick={() => { setShareMenuId(null); setShareMenuUrl(null) }} aria-hidden="true" />

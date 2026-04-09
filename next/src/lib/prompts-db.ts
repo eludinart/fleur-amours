@@ -7,6 +7,7 @@ import { getPool, table, isDbConfigured } from './db'
 
 const TBL = () => table('fleur_ai_prompts')
 const TBL_ACTIVE = () => table('fleur_ai_prompts_active')
+const TBL_OVERRIDES = () => table('fleur_ai_prompt_overrides')
 
 async function ensureTables() {
   if (!isDbConfigured()) return false
@@ -44,6 +45,14 @@ async function ensureTables() {
   } catch {
     // ignorer si existe
   }
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS ${prefix}fleur_ai_prompt_overrides (
+      k VARCHAR(64) PRIMARY KEY,
+      content LONGTEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `)
   return true
 }
 
@@ -236,4 +245,30 @@ export async function getActiveContent() {
     coach = Array.isArray(r) && r[0] ? (r[0] as { content: string }).content : null
   }
   return { tuteur, threshold, coach }
+}
+
+export async function getPromptOverride(key: string): Promise<string | null> {
+  if (!(await ensureTables())) return null
+  const pool = getPool()
+  const k = String(key || '').trim()
+  if (!k) return null
+  const [rows] = await pool.execute<(RowDataPacket & { content: string })[]>(
+    `SELECT content FROM ${TBL_OVERRIDES()} WHERE k = ?`,
+    [k]
+  )
+  return Array.isArray(rows) && rows[0] ? String((rows[0] as { content: string }).content ?? '') : null
+}
+
+export async function setPromptOverride(key: string, content: string): Promise<void> {
+  if (!(await ensureTables())) {
+    throw new Error('Base MariaDB non configurée (MARIADB_HOST, MARIADB_PASSWORD, etc.)')
+  }
+  const pool = getPool()
+  const k = String(key || '').trim()
+  if (!k) throw new Error('Clé override manquante')
+  const c = String(content ?? '')
+  await pool.execute(
+    `INSERT INTO ${TBL_OVERRIDES()} (k, content) VALUES (?, ?) ON DUPLICATE KEY UPDATE content = VALUES(content)`,
+    [k, c]
+  )
 }

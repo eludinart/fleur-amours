@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/api-auth'
 import { getAnalyzeMoodPrompt } from '@/lib/prompts-resolver'
+import { setPromptOverride } from '@/lib/prompts-db'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +23,8 @@ export async function POST(req: NextRequest) {
   try {
     await requireAdmin(req)
     const body = await req.json().catch(() => ({}))
+    const content = String((body as { content?: unknown })?.content ?? '')
+    await setPromptOverride('analyze_mood', content)
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
