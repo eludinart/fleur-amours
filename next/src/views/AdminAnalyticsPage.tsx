@@ -23,17 +23,9 @@ import {
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
 import { sessionsApi } from '@/api/sessions'
 import { useAuth } from '@/contexts/AuthContext'
+import { PETAL_DEFS, PETAL_BY_ID } from '@/lib/petal-theme'
 
-const PETAL_COLORS: Record<string, string> = {
-  agape: '#f43f5e',
-  philautia: '#f59e0b',
-  mania: '#ef4444',
-  storge: '#0d9488',
-  pragma: '#6366f1',
-  philia: '#10b981',
-  ludus: '#0ea5e9',
-  eros: '#8b5cf6',
-}
+const PETAL_COLORS: Record<string, string> = Object.fromEntries(PETAL_DEFS.map((p) => [p.id, p.color]))
 const PETAL_KEYS = [
   'agape',
   'philautia',
@@ -436,10 +428,10 @@ function DoorChart({ data }: { data: DoorPoint[] }) {
       </p>
     )
   const colors: Record<string, string> = {
-    love: '#f43f5e',
-    vegetal: '#10b981',
-    elements: '#0ea5e9',
-    life: '#8b5cf6',
+    love: PETAL_BY_ID.agape.color,
+    vegetal: PETAL_BY_ID.philia.color,
+    elements: PETAL_BY_ID.ludus.color,
+    life: PETAL_BY_ID.eros.color,
   }
   return (
     <div className="flex flex-col items-center gap-3">

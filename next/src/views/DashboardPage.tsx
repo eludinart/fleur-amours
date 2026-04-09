@@ -2,13 +2,14 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   StatsOverview,
   SanctuaireLiens,
+  DashboardPowerPhrase,
   FleurSynthese,
   EvolutionRadar,
   ChronicleList,
@@ -19,6 +20,7 @@ import {
   DashboardCoachingChats,
   DashboardMyCoaches,
 } from '@/components/dashboard'
+import { DashboardTuteurFab } from '@/components/dashboard/DashboardTuteurFab'
 import { BuyTarotCTA } from '@/components/BuyTarotCTA'
 
 const EvolutionChart = dynamic(
@@ -29,7 +31,12 @@ import { DashboardSkeleton } from '@/components/DashboardSkeleton'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { ContextualHint } from '@/components/ContextualHint'
 import { InfoBubble } from '@/components/InfoBubble'
-import { fetchDashboardData } from '@/api/dashboard'
+import { fetchDashboardData, dashboardApi } from '@/api/dashboard'
+import { climateKindFromTrend } from '@/lib/dashboard-climate'
+import { dominantPetalId, weakPetalsClickFilter } from '@/lib/petal-tarot'
+import { isSessionMantraEcho } from '@/lib/session-mantra-echo'
+import { personalFlowerHeaderLine } from '@/lib/flower-header-line'
+import { PETAL_DEFS } from '@/components/FlowerSVG'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -40,10 +47,14 @@ export function DashboardPage() {
   const { user, isAdmin, isCoach } = useAuth()
   const pathname = usePathname() || '/'
   const searchParams = useSearchParams()
-  useStore((s) => s.locale)
+  const router = useRouter()
+  const reduceMotion = useReducedMotion()
+  const locale = useStore((s) => s.locale)
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [gardenWhisper, setGardenWhisper] = useState('')
+  const [climateKind, setClimateKind] = useState<null | 'mist' | 'wind' | 'sun' | 'mixed'>(null)
   const lastFullRefreshRef = useRef(0)
 
   const silverMode = (data?.access?.total_accumulated_eternal ?? 0) >= 200
@@ -79,6 +90,37 @@ export function DashboardPage() {
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [])
 
+  useEffect(() => {
+    if (!data) return
+    const snaps = (data as { last5Snapshots?: unknown[] }).last5Snapshots ?? []
+    const agg = (data as { petals_aggregate?: Record<string, number> }).petals_aggregate ?? {}
+    if (snaps.length < 2) {
+      setClimateKind(null)
+      const dom = dominantPetalId(agg)
+      const label = dom ? PETAL_DEFS.find((p) => p.id === dom)?.name ?? dom : ''
+      setGardenWhisper(dom ? t('dashboard.whisperSinglePetal', { petal: label }) : '')
+      return
+    }
+    let cancelled = false
+    dashboardApi
+      .getTrend(snaps)
+      .then((r) => {
+        if (cancelled) return
+        const tr = String((r as { trend?: string })?.trend ?? '').trim()
+        setGardenWhisper(tr)
+        setClimateKind(tr ? climateKindFromTrend(tr) : null)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setGardenWhisper('')
+          setClimateKind(null)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [data])
+
   const zenHref = useMemo(() => {
     const p = new URLSearchParams(searchParams?.toString() ?? '')
     p.set('view', 'user')
@@ -86,6 +128,25 @@ export function DashboardPage() {
     return `${pathname}${q ? `?${q}` : ''}`
   }, [pathname, searchParams])
   const showZenBack = searchParams?.get('view') === 'stats'
+
+  const sessionEpigraph = useMemo(() => {
+    if (!data) return ''
+    const sm = (data as { sessionMantra?: string | null }).sessionMantra ?? null
+    const agg = ((data as { petals_aggregate?: Record<string, number> }).petals_aggregate ??
+      {}) as Record<string, number>
+    if (sm && !isSessionMantraEcho(sm)) return String(sm).trim()
+    return personalFlowerHeaderLine(agg, t)
+  }, [data, locale])
+
+  const petalsAggregate = (data?.petals_aggregate ?? {}) as Record<string, number>
+  const pulsePetalId = useMemo(() => dominantPetalId(petalsAggregate), [petalsAggregate])
+  const clickablePetalsFilter = useMemo(() => weakPetalsClickFilter(petalsAggregate), [petalsAggregate])
+  const handleWeakPetalTirage = useCallback(
+    (petalId: string) => {
+      router.push(`/tirage?petal=${encodeURIComponent(petalId)}`)
+    },
+    [router]
+  )
 
   if (loading) {
     return (
@@ -111,7 +172,6 @@ export function DashboardPage() {
 
   const stats = data?.stats ?? {}
   const access = data?.access ?? {}
-  const petalsAggregate = data?.petals_aggregate ?? {}
   const petalsAvg30d = data?.petals_avg_30d ?? {}
   const currentSession = data?.currentSession ?? null
   const chronicle = data?.chronicle ?? []
@@ -137,7 +197,12 @@ export function DashboardPage() {
           <div>
             <Breadcrumbs />
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">{t('dashboard.title')}</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboardSubtitle')}</p>
+            {sessionEpigraph ? (
+              <p className="mt-3 text-lg sm:text-xl font-medium text-center sm:text-left leading-snug text-violet-800 dark:text-violet-100/90 max-w-2xl italic">
+                « {sessionEpigraph} »
+              </p>
+            ) : null}
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">{t('dashboardSubtitle')}</p>
             <div className="mt-3 max-w-xl">
               <ContextualHint hintId="ctx_dashboard_nav" messageKey="onboarding.contextual.dashboard" />
             </div>
@@ -215,10 +280,10 @@ export function DashboardPage() {
         <SanctuaireLiens prairieFleurs={prairieFleurs} prairieLinks={prairieLinks} prairieMeFleur={prairieMeFleur} meId={meId} />
 
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('statsOverview.title')}</h2>
-          <InfoBubble title={t('dashboard.statsLabel')} content={t('dashboard.statsDesc')} />
+          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('dashboard.climateSectionTitle')}</h2>
+          <InfoBubble title={t('dashboard.climateSectionTitle')} content={t('dashboard.climateSectionDesc')} />
         </div>
-        <StatsOverview stats={stats} />
+        <StatsOverview stats={stats} climateKind={climateKind} />
 
         <SèveTracker
           tokenBalance={access?.token_balance ?? 0}
@@ -226,8 +291,19 @@ export function DashboardPage() {
           totalAccumulatedEternal={access?.total_accumulated_eternal ?? 0}
         />
 
+        <p className="text-xs text-slate-500 dark:text-slate-400 -mt-4">{t('fleurSynthese.petalDrawHint')}</p>
+
+        <DashboardPowerPhrase petals={petalsAggregate as Record<string, number>} className="max-w-2xl mx-auto" />
+
         <div className="space-y-8">
-          <FleurSynthese petals={petalsAggregate} size={240} />
+          <FleurSynthese
+            petals={petalsAggregate}
+            size={240}
+            pulsePetalId={pulsePetalId}
+            disablePulse={!!reduceMotion}
+            onPetalClick={handleWeakPetalTirage}
+            clickablePetals={clickablePetalsFilter}
+          />
           <EvolutionRadar currentPetals={currentSession?.petals} avgPetals30d={petalsAvg30d} currentSession={currentSession} />
           <GhostComparator timeline={timeline} />
         </div>
@@ -239,7 +315,7 @@ export function DashboardPage() {
           <InsightCard snapshots={last5Snapshots} />
         </div>
 
-        <ChronicleList chronicle={chronicle} />
+        <ChronicleList chronicle={chronicle} journalTitle whisper={gardenWhisper || null} />
 
         <motion.div
           initial={{ opacity: 0 }}
@@ -283,6 +359,8 @@ export function DashboardPage() {
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('quickLinks.dreamscape')}</span>
           </Link>
         </motion.div>
+
+        <DashboardTuteurFab petals={petalsAggregate as Record<string, number>} />
       </div>
     </div>
   )

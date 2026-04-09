@@ -3,6 +3,8 @@
 
 import { useEffect, useId, useState } from 'react'
 import { scoresToPetals } from '@/components/FlowerSVG'
+import { FLOWER_PERSON_GRADIENT, PETAL_BY_ID } from '@/lib/petal-theme'
+import { dominantPetalId } from '@/lib/petal-tarot'
 import { t } from '@/i18n'
 
 const PETALS = [
@@ -47,6 +49,7 @@ export function FleurSociale({
 }) {
   const uid = useId().replace(/:/g, '')
   const petals = scoresToPetals(scores)
+  const pulseId = isMe ? dominantPetalId(petals) : null
   const lastAt = lastActivityAt ? new Date(lastActivityAt).getTime() : 0
   const [mounted, setMounted] = useState(false)
 
@@ -109,18 +112,38 @@ export function FleurSociale({
             const halfLen = MIN_LEN + intensity * (MAX_LEN - MIN_LEN)
             return (
               <g key={p.id} transform={`rotate(${p.angle})`}>
-                <path
-                  d={petalPath(halfLen, PETAL_W)}
-                  fill={`url(#${gradient.id})`}
-                  stroke={gradient.stroke}
-                  strokeWidth={isMe ? 1.2 : 0.8}
-                  strokeOpacity={0.8}
-                  opacity={0.5 + intensity * 0.5}
-                />
+                <g>
+                  {pulseId === p.id ? (
+                    <animateTransform
+                      attributeName="transform"
+                      attributeType="XML"
+                      type="scale"
+                      values="1;1.02;1"
+                      keyTimes="0;0.5;1"
+                      dur="3.2s"
+                      repeatCount="indefinite"
+                    />
+                  ) : null}
+                  <path
+                    d={petalPath(halfLen, PETAL_W)}
+                    fill={`url(#${gradient.id})`}
+                    stroke={gradient.stroke}
+                    strokeWidth={isMe ? 1.2 : 0.8}
+                    strokeOpacity={0.8}
+                    opacity={0.5 + intensity * 0.5}
+                  />
+                </g>
               </g>
             )
           })}
-          <circle cx={0} cy={0} r={isMe ? 5 : 4} fill={isMe ? '#fef3c7' : '#fda4af'} stroke={isMe ? '#d97706' : '#f43f5e'} strokeWidth={isMe ? 1 : 0.6} />
+          <circle
+            cx={0}
+            cy={0}
+            r={isMe ? 5 : 4}
+            fill={isMe ? '#fef3c7' : FLOWER_PERSON_GRADIENT.a.fill}
+            stroke={isMe ? '#d97706' : PETAL_BY_ID.agape.color}
+            strokeWidth={isMe ? 1 : 0.6}
+          />
         </g>
       </svg>
       {avatarEmoji && (

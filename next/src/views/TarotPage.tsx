@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import {
@@ -20,6 +20,7 @@ import { billingApi } from '@/api/billing'
 import { toast } from '@/hooks/useToast'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { ShareTirageButton } from '@/components/ShareTirageButton'
+import { PETAL_ORDER } from '@/lib/petal-tarot'
 
 const STATE = {
   IDLE: 'idle',
@@ -440,12 +441,18 @@ function SimpleDraw({
   onSaveReflection,
   quotaExceeded,
   landingCard,
+  initialIntention,
+  petalFlow = false,
 }: {
   onReadingComplete?: (data: Record<string, unknown>) => void | Promise<unknown>
   currentReadingId: string | null
   onSaveReflection?: (id: string, updates: Record<string, unknown>) => void
   quotaExceeded: boolean
   landingCard?: CardType | null
+  /** Suggestion préremplie (ex. depuis un pétale) — modifiable avant le tirage */
+  initialIntention?: string
+  /** Flux fleur : pas de carte imposée ; compte à rebours doux optionnel */
+  petalFlow?: boolean
 }) {
   const locale = useStore((s) => s.locale)
   const { user } = useAuth()
@@ -457,13 +464,23 @@ function SimpleDraw({
   const [contentReady, setContentReady] = useState(false)
   const [interpretLoading, setInterpretLoading] = useState(false)
   const [interpretation, setInterpretation] = useState('')
+  const [autoSecLeft, setAutoSecLeft] = useState<number | null>(null)
+  const [userCancelledAuto, setUserCancelledAuto] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const indexRef = useRef(0)
   const landingHandledRef = useRef(false)
+  const initialIntentionRef = useRef('')
+  const startDrawRef = useRef<() => void>(() => {})
 
   useEffect(() => () => {
     if (timerRef.current) clearInterval(timerRef.current)
   }, [])
+
+  useEffect(() => {
+    if (initialIntention == null || initialIntention === '') return
+    setIntention(initialIntention)
+    if (petalFlow) initialIntentionRef.current = initialIntention
+  }, [initialIntention, petalFlow])
 
   // Pré-sélectionner la carte de la landing page sans animation
   useEffect(() => {
@@ -505,10 +522,11 @@ function SimpleDraw({
       return
     const cardT = getCardTranslated(drawnCard, locale)
     setInterpretLoading(true)
+    const intentForAi = (frozenIntention.trim() || intention.trim()) || undefined
     tarotReadingsApi
       .interpret({
         type: 'simple',
-        intention: intention.trim() || undefined,
+        intention: intentForAi,
         cards: [
           {
             name: (cardT || drawnCard).name,
@@ -523,7 +541,7 @@ function SimpleDraw({
       })
       .catch(() => {})
       .finally(() => setInterpretLoading(false))
-  }, [contentReady, drawnCard, user?.id, intention, locale])
+  }, [contentReady, drawnCard, user?.id, intention, frozenIntention, locale])
 
   useEffect(() => {
     if (interpretation && currentReadingId && onSaveReflection) {
@@ -532,6 +550,8 @@ function SimpleDraw({
   }, [interpretation, currentReadingId, onSaveReflection])
 
   function start() {
+    setUserCancelledAuto(true)
+    setAutoSecLeft(null)
     setFrozenIntention(intention.trim())
     setDrawnCard(null)
     setInterpretation('')
@@ -542,6 +562,29 @@ function SimpleDraw({
       indexRef.current = i
     }, 80)
   }
+
+  startDrawRef.current = start
+
+  const PETAL_AUTO_DRAW_S = 12
+  useEffect(() => {
+    if (!petalFlow || quotaExceeded || drawState !== STATE.IDLE || userCancelledAuto) {
+      setAutoSecLeft(null)
+      return undefined
+    }
+    let left = PETAL_AUTO_DRAW_S
+    setAutoSecLeft(left)
+    const id = setInterval(() => {
+      left -= 1
+      if (left <= 0) {
+        clearInterval(id)
+        setAutoSecLeft(null)
+        startDrawRef.current()
+        return
+      }
+      setAutoSecLeft(left)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [petalFlow, quotaExceeded, drawState, userCancelledAuto])
 
   function stop() {
     if (timerRef.current) {
@@ -577,7 +620,12 @@ function SimpleDraw({
   }
 
   function reset() {
-    setIntention('')
+    setUserCancelledAuto(false)
+    if (petalFlow && initialIntentionRef.current) {
+      setIntention(initialIntentionRef.current)
+    } else {
+      setIntention('')
+    }
     setFrozenIntention('')
     setDrawnCard(null)
     setDrawState(STATE.IDLE)
@@ -585,7 +633,8 @@ function SimpleDraw({
     setContentReady(false)
     setInterpretation('')
     setInterpretLoading(false)
-    start()
+    setAutoSecLeft(null)
+    if (!petalFlow) start()
   }
 
   return (
@@ -616,19 +665,55 @@ function SimpleDraw({
       </p>
 
       {drawState === STATE.IDLE && (
-        <div className="space-y-1 relative z-[1]">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-            {t('tarot.intentionLabel')}
-          </p>
-          <VoiceTextInput
-            value={intention}
-            onChange={setIntention}
-            placeholder={t('tarot.intentionPlaceholder')}
-            rows={2}
-          />
-          <p className="text-[10px] text-slate-400 italic">
-            {t('tarot.intentionOptional')}
-          </p>
+        <div className="space-y-3 relative z-[1]">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+              {t('tarot.intentionLabel')}
+            </p>
+            <VoiceTextInput
+              value={intention}
+              onChange={setIntention}
+              placeholder={t('tarot.intentionPlaceholder')}
+              rows={3}
+            />
+            <p className="text-[10px] text-slate-400 italic">
+              {petalFlow ? t('tarot.petalFlowIntentionHelper') : t('tarot.intentionOptional')}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              disabled={quotaExceeded}
+              onClick={() => !quotaExceeded && start()}
+              className={`w-full sm:w-auto px-8 py-3 rounded-full font-bold text-sm text-white shadow-lg transition-all bg-gradient-to-r from-violet-500 to-accent
+                ${quotaExceeded ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-95 active:scale-[0.98]'}`}
+              style={{ boxShadow: '0 4px 20px rgba(139,92,246,0.35)' }}
+            >
+              {t('tarot.launchDraw')}
+            </button>
+            {petalFlow && autoSecLeft != null && autoSecLeft > 0 && !userCancelledAuto && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 text-center sm:text-left flex-1 min-w-0">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                  {t('tarot.petalAutoDrawIn').replace('{n}', String(autoSecLeft))}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserCancelledAuto(true)
+                    setAutoSecLeft(null)
+                  }}
+                  className="text-[11px] font-medium text-teal-600 dark:text-teal-400 hover:underline shrink-0"
+                >
+                  {t('tarot.petalAutoDrawCancel')}
+                </button>
+              </div>
+            )}
+          </div>
+          {petalFlow && (
+            <p className="text-[10px] text-center text-slate-500 dark:text-slate-400">
+              {t('tarot.clickCardToDrawHint')}
+            </p>
+          )}
         </div>
       )}
 
@@ -1261,15 +1346,33 @@ function ReadingDetailReflection({
 
 function ReadingsList({
   readings,
+  readingsLoading,
   onDelete,
   onUpdate,
+  initialOpenReadingId,
+  onClearReadingQuery,
 }: {
   readings: Record<string, unknown>[]
+  readingsLoading?: boolean
   onDelete: (id: string) => void
   onUpdate: (id: string, updates: Record<string, unknown>) => void
+  initialOpenReadingId?: string | null
+  onClearReadingQuery?: () => void
 }) {
   const locale = useStore((s) => s.locale)
   const [detailId, setDetailId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!initialOpenReadingId || readingsLoading) return
+    const want = String(initialOpenReadingId)
+    const found = readings.some((r) => String((r as { id?: unknown }).id) === want)
+    if (found) setDetailId(want)
+  }, [initialOpenReadingId, readings, readingsLoading])
+
+  const closeDetail = () => {
+    setDetailId(null)
+    onClearReadingQuery?.()
+  }
   const detail = readings.find(
     (r) => String((r as { id?: string }).id) === detailId
   ) as ReadingType | undefined
@@ -1383,7 +1486,7 @@ function ReadingsList({
       {detailId && detail && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
-          onClick={() => setDetailId(null)}
+          onClick={closeDetail}
         >
           <div
             className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-700 max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-xl"
@@ -1400,7 +1503,7 @@ function ReadingsList({
                 <div className="flex items-center gap-2">
                   <ShareTirageButton reading={detail} showLabel />
                   <button
-                    onClick={() => setDetailId(null)}
+                    onClick={closeDetail}
                     className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     aria-label="Fermer"
                   >
@@ -1526,12 +1629,29 @@ export default function TarotPage() {
   const setHasDoneFirstTirage = useStore((s) => s.setHasDoneFirstTirage)
   const { user } = useAuth()
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname() || '/tirage'
   const [hash, setHash] = useState('')
+  const readingOpenParam = searchParams?.get('reading')?.trim() || null
+
+  const clearReadingQuery = useCallback(() => {
+    const p = new URLSearchParams(searchParams?.toString() ?? '')
+    if (!p.has('reading')) return
+    p.delete('reading')
+    const q = p.toString()
+    router.replace(`${pathname}${q ? `?${q}` : ''}`, { scroll: false })
+  }, [router, pathname, searchParams])
 
   // landing_card : carte pré-sélectionnée depuis la landing page (intent card_analysis)
+  // petal : id pétale → intention suggérée + tirage libre parmi tout le jeu (pas de carte « amour » imposée)
   const landingCardName = searchParams?.get('landing_card') || null
-  const landingCardObj = landingCardName
-    ? (ALL_CARDS.find((c) => c.name === decodeURIComponent(landingCardName)) ?? null)
+  const petalKeyRaw = (searchParams?.get('petal') || '').toLowerCase().trim()
+  const isPetalFlow =
+    !!petalKeyRaw && (PETAL_ORDER as readonly string[]).includes(petalKeyRaw)
+  const petalSuggestedIntention = isPetalFlow ? t(`tarot.petalIntent.${petalKeyRaw}`) : ''
+  const resolvedLandingName = landingCardName || null
+  const landingCardObj = resolvedLandingName
+    ? (ALL_CARDS.find((c) => c.name === decodeURIComponent(resolvedLandingName)) ?? null)
     : null
   const landingCardTranslated = landingCardObj
     ? (getCardTranslated(landingCardObj, locale) ?? landingCardObj)
@@ -1548,9 +1668,15 @@ export default function TarotPage() {
 
   // Si une carte de landing est présente, forcer l'onglet simple
   useEffect(() => {
-    if (landingCardName) setTab('simple')
-  }, [landingCardName])
-  const { readings, addReading, updateReading, deleteReading } = useReadings()
+    if (resolvedLandingName || isPetalFlow) setTab('simple')
+  }, [resolvedLandingName, isPetalFlow])
+  const {
+    readings,
+    loading: readingsLoading,
+    addReading,
+    updateReading,
+    deleteReading,
+  } = useReadings()
   const [currentSimpleReadingId, setCurrentSimpleReadingId] = useState<
     string | null
   >(null)
@@ -1563,6 +1689,10 @@ export default function TarotPage() {
     if (searchParams?.get('tab') === 'list' || hash === '#section-tirages')
       setTab('list')
   }, [searchParams, hash])
+
+  useEffect(() => {
+    if (readingOpenParam) setTab('list')
+  }, [readingOpenParam])
 
   const SAP_PER_DRAW = 5
   useEffect(() => {
@@ -1646,8 +1776,8 @@ export default function TarotPage() {
     <div className="w-full max-w-2xl mx-auto space-y-6 py-2 min-w-0">
       <Breadcrumbs />
 
-      {/* Bannière contextuelle quand l'utilisateur vient de la landing */}
-      {landingCardName && (
+      {/* Bannière : carte landing préchoisie */}
+      {resolvedLandingName && (
         <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-r from-violet-50 to-rose-50 dark:from-violet-950/30 dark:to-rose-950/20 p-4 flex items-start gap-3">
           <span className="text-2xl shrink-0">✨</span>
           <div className="flex-1 min-w-0">
@@ -1656,6 +1786,20 @@ export default function TarotPage() {
             </p>
             <p className="text-xs text-violet-600/70 dark:text-violet-400/70 mt-0.5">
               {t('tarot.landingCardHint') || 'L\'analyse de l\'IA se chargera automatiquement. Vous pouvez explorer le reste de l\'application ensuite.'}
+            </p>
+          </div>
+        </div>
+      )}
+      {/* Bannière : arrivée depuis un pétale de la fleur (tirage pas automatique) */}
+      {isPetalFlow && !resolvedLandingName && (
+        <div className="rounded-2xl border border-teal-200/80 dark:border-teal-800/60 bg-gradient-to-r from-teal-50/90 to-violet-50/80 dark:from-teal-950/25 dark:to-violet-950/20 p-4 flex items-start gap-3">
+          <span className="text-2xl shrink-0">🌸</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-teal-800 dark:text-teal-200">
+              {t('tarot.petalFlowWelcome')}
+            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
+              {t('tarot.petalFlowHint')}
             </p>
           </div>
         </div>
@@ -1737,6 +1881,10 @@ export default function TarotPage() {
           onSaveReflection={updateReading}
           quotaExceeded={!!quotaError}
           landingCard={landingCardTranslated}
+          initialIntention={
+            isPetalFlow && !landingCardObj ? petalSuggestedIntention : undefined
+          }
+          petalFlow={isPetalFlow && !landingCardObj}
         />
       )}
       {tab === 'four' && (
@@ -1751,8 +1899,11 @@ export default function TarotPage() {
         <div id="section-tirages">
           <ReadingsList
             readings={readings}
+            readingsLoading={readingsLoading}
             onDelete={deleteReading}
             onUpdate={updateReading}
+            initialOpenReadingId={readingOpenParam}
+            onClearReadingQuery={clearReadingQuery}
           />
         </div>
       )}

@@ -6,11 +6,106 @@ import { sessionsApi } from './sessions'
 import { billingApi } from './billing'
 import { dreamscapeApi } from './dreamscape'
 import { prairieApi } from './prairie'
+import { isSessionMantraEcho } from '@/lib/session-mantra-echo'
+import {
+  buildDreamscapeChronicleSummary,
+  buildReadingChronicleSummary,
+  buildSessionChronicleSummary,
+} from '@/lib/chronicle-summary'
 
 function formatShortDate(s: string | undefined): string {
   if (!s) return ''
   const d = new Date(s)
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
+function inferChronicleTone(
+  type: string,
+  synthesis: unknown
+): 'shadow' | 'light' | 'neutral' {
+  const s = String(synthesis ?? '').toLowerCase()
+  if (!s) return 'neutral'
+  const shadowKw = [
+    'ombre',
+    'difficile',
+    'peur',
+    'tension',
+    'lourd',
+    'perte',
+    'sombre',
+    'crise',
+    'douleur',
+    'colère',
+    'rage',
+    'vide',
+    'effondrement',
+    'shadow',
+    'fear',
+    'heavy',
+    'grief',
+    'pain',
+    'anger',
+    'dark',
+    'crisis',
+    'loss',
+    'empty',
+    'anxiety',
+    'worry',
+    'hard',
+    'struggle',
+  ]
+  const lightKw = [
+    'lumière',
+    'apais',
+    'joie',
+    'force',
+    'réuss',
+    'ouvert',
+    'douce',
+    'paix',
+    'sérén',
+    'gratitude',
+    'soulag',
+    'clair',
+    'light',
+    'calm',
+    'joy',
+    'peace',
+    'open',
+    'soft',
+    'clear',
+    'relief',
+    'hope',
+    'ease',
+    'gentle',
+    'bright',
+  ]
+  const sh = shadowKw.some((k) => s.includes(k))
+  const li = lightKw.some((k) => s.includes(k))
+  if (type === 'tirage' || type === 'session' || type === 'session_anchor') {
+    if (sh && !li) return 'shadow'
+    if (li && !sh) return 'light'
+  }
+  if (type === 'dreamscape') {
+    if (sh && !li) return 'shadow'
+    if (li && !sh) return 'light'
+  }
+  return 'neutral'
+}
+
+function extractSessionMantra(s: Record<string, unknown> | null | undefined): string | null {
+  if (!s) return null
+  const sd = s.step_data as Record<string, unknown> | undefined
+  const planRaw = sd?.plan14j ?? s.plan14j
+  const plan = planRaw && typeof planRaw === 'object' ? (planRaw as Record<string, unknown>) : null
+  const syn = plan?.synthesis ?? plan?.synthesis_suggestion
+  if (typeof syn === 'string' && syn.trim()) return syn.trim().slice(0, 320)
+  const fw = s.first_words
+  if (typeof fw === 'string' && fw.trim()) {
+    const t = fw.trim().slice(0, 220)
+    if (!isSessionMantraEcho(t)) return t
+  }
+  return null
 }
 
 const EMPTY_STATS = {
@@ -171,29 +266,54 @@ export async function fetchDashboardData() {
     const plan = (s.step_data as Record<string, unknown>)?.plan14j ?? s.plan14j
     const synthesis = (plan as Record<string, unknown>)?.synthesis || (plan as Record<string, unknown>)?.synthesis_suggestion
     if (synthesis) {
-      chronicle.push({ type: 'session', id: s.id, synthesis, created_at: s.created_at })
+      const line = buildSessionChronicleSummary(String(synthesis), s.first_words as string | undefined)
+      chronicle.push({
+        type: 'session',
+        id: s.id,
+        synthesis: line,
+        created_at: s.created_at,
+        tone: inferChronicleTone('session', line),
+      })
     }
     const anchors = (s.anchors ?? []) as Array<{ synthesis?: string }>
     anchors.forEach((a) => {
       if (a?.synthesis) {
-        chronicle.push({ type: 'session_anchor', id: s.id, synthesis: a.synthesis, created_at: s.created_at })
+        const line = buildSessionChronicleSummary(String(a.synthesis), null)
+        chronicle.push({
+          type: 'session_anchor',
+          id: s.id,
+          synthesis: line,
+          created_at: s.created_at,
+          tone: inferChronicleTone('session_anchor', line),
+        })
       }
     })
   }
   for (const r of readings as Record<string, unknown>[]) {
     const createdAt = r.createdAt ? new Date(r.createdAt as string).getTime() : 0
     if (createdAt < thirtyDaysAgo) continue
-    if (r.synthesis) {
-      chronicle.push({ type: 'tirage', id: r.id, synthesis: r.synthesis, created_at: r.createdAt })
+    const line = buildReadingChronicleSummary(r)
+    if (line) {
+      chronicle.push({
+        type: 'tirage',
+        id: r.id,
+        synthesis: line,
+        created_at: r.createdAt,
+        tone: inferChronicleTone('tirage', line),
+      })
     }
   }
   for (const d of dreamscapeItems as Record<string, unknown>[]) {
     const createdAt = d.savedAt ? new Date(d.savedAt as string).getTime() : 0
     if (createdAt < thirtyDaysAgo) continue
-    const history = d.history as Array<{ role: string; content: string }> | undefined
-    const synthesis =
-      (d.poeticReflection as string) || history?.find((m) => m.role === 'assistant')?.content || 'Promenade onirique'
-    chronicle.push({ type: 'dreamscape', id: d.id, synthesis, created_at: d.savedAt })
+    const line = buildDreamscapeChronicleSummary(d)
+    chronicle.push({
+      type: 'dreamscape',
+      id: d.id,
+      synthesis: line,
+      created_at: d.savedAt,
+      tone: inferChronicleTone('dreamscape', line),
+    })
   }
   chronicle.sort((a, b) => new Date((b.created_at as string) || 0).getTime() - new Date((a.created_at as string) || 0).getTime())
 
@@ -324,6 +444,7 @@ export async function fetchDashboardData() {
   timeline.sort((a, b) => new Date((b.date as string) || 0).getTime() - new Date((a.date as string) || 0).getTime())
 
   const last5Snapshots = timeline.slice(0, 5)
+  const sessionMantra = extractSessionMantra((sessions as Record<string, unknown>[])[0])
 
   return {
     stats,
@@ -341,6 +462,7 @@ export async function fetchDashboardData() {
     prairieFleurs,
     prairieLinks,
     prairieMeFleur,
+    sessionMantra,
   }
   } catch (err) {
     console.error('fetchDashboardData error:', err)
@@ -360,6 +482,7 @@ export async function fetchDashboardData() {
       prairieFleurs: [],
       prairieLinks: [],
       prairieMeFleur: null,
+      sessionMantra: null,
     }
   }
 }
@@ -369,4 +492,11 @@ export const dashboardApi = {
   getInsight: (petals: Record<string, number>, locale = 'fr') =>
     api.post('/api/ai/dashboard-insight', { petals, locale }),
   getTrend: (snapshots: unknown[]) => api.post('/api/ai/dashboard-trend', { snapshots }),
+  getFlowerStateHaiku: (body: {
+    mode: 'blend' | 'snapshot'
+    petals: Record<string, number>
+    locale: string
+    cacheKey: string
+    snapshotMeta?: { dateIso?: string; type?: string; label?: string }
+  }) => api.post('/api/ai/flower-state-haiku', body),
 }

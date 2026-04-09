@@ -9,7 +9,23 @@ import { InfoBubble } from '@/components/InfoBubble'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 
-export function FleurSynthese({ petals = {}, size = 240, className = '' }) {
+export function FleurSynthese({
+  petals = {},
+  size = 240,
+  className = '',
+  pulsePetalId = null,
+  disablePulse = false,
+  onPetalClick,
+  clickablePetals = null,
+}: {
+  petals?: Record<string, number>
+  size?: number
+  className?: string
+  pulsePetalId?: string | null
+  disablePulse?: boolean
+  onPetalClick?: (petalId: string) => void
+  clickablePetals?: Set<string> | null
+}) {
   useStore((s) => s.locale)
   const flowerRef = useRef(null)
   const hasData = Object.values(petals || {}).some((v) => (v ?? 0) > 0.05)
@@ -31,7 +47,17 @@ export function FleurSynthese({ petals = {}, size = 240, className = '' }) {
       <p className="text-center text-xs text-slate-500 dark:text-slate-400 mb-4">{t('fleurSynthese.subtitle')}</p>
       <div ref={flowerRef} className="flex justify-center flex-1 items-center py-4">
         {hasData ? (
-          <FlowerSVG petals={petals} size={size} animate showLabels showScores={false} />
+          <FlowerSVG
+            petals={petals}
+            size={size}
+            animate
+            showLabels
+            showScores={false}
+            pulsePetalId={pulsePetalId}
+            disablePulse={disablePulse}
+            onPetalClick={onPetalClick}
+            clickablePetals={clickablePetals}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500">
             <span className="text-5xl mb-2">🌸</span>

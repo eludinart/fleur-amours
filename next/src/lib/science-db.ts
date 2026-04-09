@@ -72,7 +72,8 @@ const DEFAULT_CONFIG: ScienceConfig = {
   evidence_update_max_messages: 30,
 
   science_profile_ttl_minutes: 24 * 60,
-  science_generation_version: 'v1',
+  /** Incrémenter pour invalider le cache profil (ex. nouveau champ meta). */
+  science_generation_version: 'v2',
 }
 
 async function ensureTables(): Promise<boolean> {

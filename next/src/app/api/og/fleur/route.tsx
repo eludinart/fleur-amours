@@ -24,22 +24,12 @@ import {
   OgKicker,
   OgSubhook,
 } from '@/lib/og-share-chrome'
+import { PETAL_DEFS, PETAL_COLOR_UNKNOWN_DOMINANT } from '@/lib/petal-theme'
 
 export const dynamic = 'force-dynamic'
 
 const W = 1200
 const H = 630
-
-const PETAL_DEFS = [
-  { id: 'agape', name: 'Agapè', angle: 0, color: '#f43f5e' },
-  { id: 'philautia', name: 'Philautia', angle: 45, color: '#f59e0b' },
-  { id: 'mania', name: 'Mania', angle: 90, color: '#ef4444' },
-  { id: 'storge', name: 'Storgè', angle: 135, color: '#0d9488' },
-  { id: 'pragma', name: 'Pragma', angle: 180, color: '#6366f1' },
-  { id: 'philia', name: 'Philia', angle: 225, color: '#10b981' },
-  { id: 'ludus', name: 'Ludus', angle: 270, color: '#0ea5e9' },
-  { id: 'eros', name: 'Éros', angle: 315, color: '#8b5cf6' },
-]
 
 function petalPath(halfLen: number, width: number): string {
   const tip = halfLen * 2
@@ -117,7 +107,7 @@ export async function GET(req: NextRequest) {
   }
 
   const dominantDef = PETAL_DEFS.find((p) => p.id === dominant)
-  const dominantColor = dominantDef?.color || '#8b5cf6'
+  const dominantColor = dominantDef?.color || PETAL_COLOR_UNKNOWN_DOMINANT
   const dominantName = dominantDef?.name || ''
 
   const trustChips = [OG_CHIP_FREE, OG_CHIP_PRIVATE, OG_CHIP_FAST] as const

@@ -29,10 +29,43 @@ const cards = [
   { key: 'dreamscape', labelKey: 'statsOverview.dreamscape', valueKey: 'dreamscape_count', icon: '🌙', gradient: 'from-indigo-500/20 to-violet-600/20', border: 'border-indigo-200/60 dark:border-indigo-800/60', iconBg: 'bg-indigo-500/20', to: '/dreamscape/historique' },
 ]
 
-export function StatsOverview({ stats = {}, className = '' }) {
+const CLIMATE_ICONS: Record<string, string> = {
+  mist: '🌫️',
+  wind: '🍃',
+  sun: '☀️',
+  mixed: '🌤️',
+}
+
+export function StatsOverview({
+  stats = {},
+  className = '',
+  climateKind = null,
+}: {
+  stats?: Record<string, unknown>
+  className?: string
+  climateKind?: 'mist' | 'wind' | 'sun' | 'mixed' | null
+}) {
   useStore((s) => s.locale)
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className={`grid grid-cols-2 sm:grid-cols-5 gap-4 ${className}`}>
+    <div className={className}>
+      {climateKind ? (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 flex items-center gap-3 rounded-2xl border border-teal-200/50 dark:border-teal-800/40 bg-teal-50/40 dark:bg-teal-950/25 px-4 py-3"
+        >
+          <span className="text-2xl" aria-hidden>
+            {CLIMATE_ICONS[climateKind] ?? CLIMATE_ICONS.mixed}
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-teal-800 dark:text-teal-200">
+              {t('dashboard.climateHint')}
+            </p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">{t(`dashboard.climate.${climateKind}`)}</p>
+          </div>
+        </motion.div>
+      ) : null}
+    <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-5 gap-4">
       {cards.map((c) => (
         <Link key={c.key} href={c.to} className="block min-w-0">
           <motion.div
@@ -50,5 +83,6 @@ export function StatsOverview({ stats = {}, className = '' }) {
         </Link>
       ))}
     </motion.div>
+    </div>
   )
 }

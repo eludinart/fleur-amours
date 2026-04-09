@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
-import { setLocaleForRequests } from '@/lib/api-client'
+import { setLocaleForRequests, isCapacitor } from '@/lib/api-client'
 import { useStore } from '@/store/useStore'
 import { Layout } from '@/components/layout/Layout'
 import { LoginPage } from '@/views/LoginPage'
@@ -59,6 +59,27 @@ const AdminAnalyticsPage = dynamic(
 )
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
+
+/** Aligné sur AuthContext.bootstrap : indique qu’une session est plausible avant la fin de me(). */
+function readAuthSessionHint(): boolean {
+  if (typeof window === 'undefined') return false
+  return (
+    !!localStorage.getItem('auth_user') ||
+    (isCapacitor() && !!localStorage.getItem('auth_token'))
+  )
+}
+
+/** Placeholder léger : même famille visuelle que la landing, sans CTA connexion (évite flash « hors app »). */
+function HomeAuthLoadingShell() {
+  return (
+    <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full flex items-center justify-center overflow-hidden bg-[#fdf6ed]">
+      <span
+        className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"
+        aria-hidden
+      />
+    </div>
+  )
+}
 
 function RedirectHome() {
   const router = useRouter()
@@ -121,20 +142,42 @@ function LocaleSync() {
 function AppRoutes() {
   const pathname = usePathname()
   const { user, loading, isAdmin, isCoach } = useAuth()
+  const [routesMounted, setRoutesMounted] = useState(false)
   const segments = getPathSegments(pathname?.replace(basePath, '') || '')
   const route = segments[0] || 'home'
   const subRoute = segments[1]
   const subRoute2 = segments[2]
 
-  // Pour la route home sans session confirmée : afficher la landing immédiatement
-  // (évite le flash de spinner sombre sur la page d'accueil publique)
+  useEffect(() => {
+    setRoutesMounted(true)
+  }, [])
+
+  // Home + chargement auth : ne pas afficher la landing (CTA login/register) si une session est plausible —
+  // sinon les utilisateurs connectés voyaient la landing une fraction de seconde puis le tableau de bord.
+  // Avant hydratation client, pas de lecture localStorage : placeholder léger identique SSR/1er paint.
   if (loading && route === 'home') {
+    if (!routesMounted) {
+      return (
+        <Suspense fallback={null}>
+          <LocaleSync />
+          <HomeAuthLoadingShell />
+        </Suspense>
+      )
+    }
+    if (!readAuthSessionHint()) {
+      return (
+        <Suspense fallback={null}>
+          <LocaleSync />
+          <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
+            <LandingPage />
+          </div>
+        </Suspense>
+      )
+    }
     return (
       <Suspense fallback={null}>
         <LocaleSync />
-        <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
-          <LandingPage />
-        </div>
+        <HomeAuthLoadingShell />
       </Suspense>
     )
   }

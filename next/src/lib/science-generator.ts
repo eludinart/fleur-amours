@@ -34,6 +34,8 @@ type ScienceAIOutput = {
     has_chat_context: boolean
     evidence_item_count: number
     generation_version: string
+    /** Phrase poétique courte pour le dashboard (cache avec le profil). */
+    power_phrase?: string
   }
 }
 
@@ -43,6 +45,30 @@ type PetalId = (typeof PETAL_IDS)[number]
 function clamp01(n: number): number {
   if (!Number.isFinite(n)) return 0
   return Math.max(0, Math.min(1, n))
+}
+
+/** POST dashboard envoie les pétales affichés (ex. time-scroll) : on les utilise pour la phrase si cohérents. */
+function hasMeaningfulClientPetals(petals: Record<string, number> | undefined): boolean {
+  if (!petals || typeof petals !== 'object') return false
+  return PETAL_IDS.some((p) => clamp01(Number(petals[p] ?? 0)) > 0.02)
+}
+
+function buildPetalsForPhrase(
+  requested: Record<string, number> | undefined,
+  baseline: Record<string, number>
+): Record<PetalId, number> {
+  const out: Record<PetalId, number> = {} as Record<PetalId, number>
+  const useClient = hasMeaningfulClientPetals(requested)
+  for (const p of PETAL_IDS) {
+    out[p] = useClient
+      ? clamp01(Number(requested?.[p] ?? baseline[p] ?? 0))
+      : clamp01(Number(baseline[p] ?? 0))
+  }
+  return out
+}
+
+function rankPetalsByValue(petals: Record<PetalId, number>): PetalId[] {
+  return [...PETAL_IDS].sort((a, b) => petals[b] - petals[a])
 }
 
 function safeLocale(locale: string): 'fr' | 'en' | 'es' {
@@ -150,11 +176,177 @@ function petalLabel(locale: 'fr' | 'en' | 'es'): Record<PetalId, string> {
   }
 }
 
+/** Glose courte après le nom officiel — pour qu'un novice comprenne la forme d'amour nommée. */
+function petalPlain(locale: 'fr' | 'en' | 'es'): Record<PetalId, string> {
+  if (locale === 'en') {
+    return {
+      agape: 'giving that widens outward',
+      philautia: 'gentleness toward yourself',
+      mania: 'intensity that surges',
+      storge: 'warm roots, the feel of home',
+      pragma: 'the steady ground of daily life',
+      philia: 'friendship walking beside you',
+      ludus: 'playful lightness',
+      eros: 'desire, bodily warmth',
+    }
+  }
+  if (locale === 'es') {
+    return {
+      agape: 'la entrega hacia los demás',
+      philautia: 'la ternura hacia ti',
+      mania: 'la intensidad que sube',
+      storge: 'las raíces del hogar',
+      pragma: 'lo cotidiano que sostiene',
+      philia: 'la amistad a tu lado',
+      ludus: 'la ligereza del juego',
+      eros: 'el deseo, el calor del cuerpo',
+    }
+  }
+  return {
+    agape: 'le don vers les autres',
+    philautia: 'la tendresse envers toi',
+    mania: "l'élan qui emporte",
+    storge: 'les racines du foyer',
+    pragma: 'le quotidien qui tient debout',
+    philia: "les liens d'amis",
+    ludus: 'la joie du jeu',
+    eros: 'le désir, la chaleur du corps',
+  }
+}
+
+/** Nom d'affichage officiel + glose (toujours ensemble dans les phrases de pouvoir). */
+function petalCaption(locale: 'fr' | 'en' | 'es', id: PetalId): string {
+  const n = petalLabel(locale)[id]
+  const g = petalPlain(locale)[id]
+  if (locale === 'en') {
+    return `${n} (${g})`
+  }
+  return `${n} — ${g}`
+}
+
 function normalizePetalTags(input: unknown): PetalId[] {
   const arr = Array.isArray(input) ? input : []
   return arr
     .map((x) => String(x ?? '').trim().toLowerCase())
     .filter((t): t is PetalId => PETAL_IDS.includes(t as PetalId))
+}
+
+function fallbackPowerPhrase(
+  locale: 'fr' | 'en' | 'es',
+  top: PetalId,
+  second: PetalId | null,
+  weakest: PetalId,
+  petals: Record<PetalId, number>
+): string {
+  const cTop = petalCaption(locale, top)
+  const cWeak = petalCaption(locale, weakest)
+  const vTop = clamp01(Number(petals[top] ?? 0))
+  const vWeak = clamp01(Number(petals[weakest] ?? 0))
+  const highIntensity = (top === 'mania' || top === 'eros') && vTop >= 0.48
+  const anchorWeak =
+    (weakest === 'storge' || weakest === 'pragma' || weakest === 'philautia') && vWeak <= 0.38
+
+  if (locale === 'en') {
+    if (highIntensity && anchorWeak) {
+      return `${cTop}—\nbreathe: leave a little rain\nfor ${cWeak}.`
+    }
+    if (highIntensity) {
+      return `${cTop} lights the garden—\nkeep a shaded corner\nwhere you can stand.`
+    }
+    const sec = second && second !== top ? petalCaption(locale, second) : null
+    return sec
+      ? `${cTop} leads the wind,\n${sec} answers lower—\nthe whole wheel turns.`
+      : `${cTop} fills the noon;\nother hues wait softly\nat the edge of dusk.`
+  }
+  if (locale === 'es') {
+    if (highIntensity && anchorWeak) {
+      return `${cTop}—\nrespira: deja un poco de lluvia\npara ${cWeak}.`
+    }
+    if (highIntensity) {
+      return `${cTop} ilumina el jardín;\nguarda un rincón de sombra\ndonde apoyarte.`
+    }
+    const sec = second && second !== top ? petalCaption(locale, second) : null
+    return sec
+      ? `${cTop} abre el camino,\n${sec} murmura abajo—\nel círculo sigue.`
+      : `${cTop} llena el mediodía;\notros matices asoman\nal borde del ocaso.`
+  }
+  if (highIntensity && anchorWeak) {
+    return `${cTop} —\nrespire : sans éteindre\n${cWeak}.`
+  }
+  if (highIntensity) {
+    return `${cTop} éclaire le jardin ;\nlaisse un coin d'ombre\noù poser les pieds.`
+  }
+  const sec = second && second !== top ? petalCaption(locale, second) : null
+  return sec
+    ? `${cTop} mène le vent,\n${sec} répond plus bas —\ntout le cercle vit.`
+    : `${cTop} tient le jour ;\nailleurs, d'autres couleurs\nau bord du crépuscule.`
+}
+
+async function generatePowerPhraseLLM(params: {
+  locale: 'fr' | 'en' | 'es'
+  petals: Record<PetalId, number>
+  top: PetalId
+  second: PetalId | null
+  weakest: PetalId
+}): Promise<string | null> {
+  const { locale, petals, top, second, weakest } = params
+  const snapshot = Object.fromEntries(PETAL_IDS.map((p) => [p, Math.round(petals[p] * 1000) / 1000]))
+  const capTop = petalCaption(locale, top)
+  const capWeak = petalCaption(locale, weakest)
+  const capSecond = second ? petalCaption(locale, second) : null
+
+  const level2Rule =
+    locale === 'en'
+      ? `
+
+Reading level: LEVEL 2 only — a present-moment relational snapshot (how the forms converse, breathe together). FORBIDDEN: time passing, trends, evolution, "lately / before / over time". FORBIDDEN: phrases like "current pattern" or "overall profile" (other UI blocks cover that).`
+      : locale === 'es'
+        ? `
+
+Nivel de lectura: solo NIVEL 2 — instante relacional presente (cómo conversan las formas). PROHIBIDO: tiempo, tendencias, evolución, "antes / ahora / con el tiempo". PROHIBIDO: "patrón actual" o "perfil global".`
+        : `
+
+Niveau de lecture : uniquement NIVEAU 2 — instantané relationnel présent (dialogue sensible entre les formes). INTERDIT : temps qui passe, tendance, évolution, « depuis », « par rapport à avant ». INTERDIT : « motif actuel », « profil global » (d'autres blocs de l'interface le disent déjà).`
+
+  const sys = `Tu rédiges UNE "phrase de pouvoir" pour un tableau de bord bien-être (métaphore jardin intérieur, huit formes d'amour).
+Sortie JSON strict, une seule clé : {"phrase":"..."}
+${level2Rule}
+
+Forme obligatoire — haïku d'inspiration occidentale :
+- Exactement 3 lignes dans la chaîne "phrase", séparées par un seul saut de ligne \\n entre chaque ligne (pas de ligne vide).
+- Chaque ligne : courte (souvent 5 à 12 mots), rythme poétique, images concrètes (souffle, eau, lumière, racines, vent, jardin…).
+
+Noms des huit formes : tu DOIS utiliser les libellés officiels quand tu cites une forme (orthographe exacte du produit : FR Agapè, Philautia, Mania, Storgè, Pragma, Philia, Ludus, Éros ; EN Agape, Philautia, Mania, Storge, Pragma, Philia, Ludus, Eros ; ES Ágape, Filautia, Manía, Storgè, Pragma, Filia, Ludus, Eros).
+Règle de clarté : chaque fois qu'un de ces noms apparaît, il doit être immédiatement compréhensible pour un novice — ajoute la même glose qu'en référence : en FR et ES après un tiret long — ; en EN entre parenthèses après le nom. Exemple FR : « Philia — les liens d'amis ». Ne cite pas les noms seuls sans glose.
+
+Tutoiement (FR) / "you" (EN) / "tú" (ES). Ton doux, jamais culpabilisant, pas d'impératifs moraux ("tu dois").
+Sans chiffres ni pourcentages. Ne dis pas "score" ni "données".
+Longueur max ~420 caractères pour toute la chaîne "phrase".
+${getLangInstruction(locale)}`
+
+  const user =
+    locale === 'en'
+      ? `Inner garden cues (0 = quiet, 1 = very present), JSON:\n${JSON.stringify(snapshot)}\n\nStrongest (name + gloss pattern): ${capTop}\nSecond accent: ${capSecond ?? 'not much contrast'}\nQuietest: ${capWeak}\n\nWrite {"phrase":"line1\\nline2\\nline3"}; when you name a form, use the official English label plus the gloss in parentheses as shown.`
+      : locale === 'es'
+        ? `Matices del jardín interior (0 = discreto, 1 = muy presente), JSON:\n${JSON.stringify(snapshot)}\n\nMás vivo (nombre + glosa): ${capTop}\nSegundo matiz: ${capSecond ?? 'poco diferenciado'}\nMás callado: ${capWeak}\n\nEscribe {"phrase":"línea1\\nlínea2\\nlínea3"}; al nombrar una forma, usa la etiqueta oficial y la glosa con " — " como en el ejemplo.`
+        : `Métaphore jardin intérieur (0 = discret, 1 = très présent), JSON :\n${JSON.stringify(snapshot)}\n\nDominant (nom + glose) : ${capTop}\nSecond relief : ${capSecond ?? 'peu différencié'}\nPlus discret : ${capWeak}\n\nÉcris {"phrase":"ligne1\\nligne2\\nligne3"} ; quand tu nommes une forme, reprends le nom officiel FR et la glose après " — " comme dans les références.`
+
+  const result = await openrouterCall(sys, [{ role: 'user', content: user }], {
+    maxTokens: 280,
+    responseFormatJson: true,
+  })
+  if (!result || typeof result !== 'object') return null
+  const o = result as Record<string, unknown>
+  let raw = String(o.phrase ?? o.power_phrase ?? '').trim()
+  if (!raw) return null
+  raw = raw.replace(/\r\n/g, '\n').replace(/\n{2,}/g, '\n').trim()
+  const lines = raw.split('\n').map((l) => l.trim()).filter(Boolean)
+  if (lines.length === 1 && raw.includes('.')) {
+    const parts = raw.split(/\.\s+/).map((p) => p.replace(/\.\s*$/, '').trim()).filter(Boolean)
+    if (parts.length >= 3) raw = `${parts[0]}.\n${parts[1]}.\n${parts[2]}.`
+    else if (parts.length === 2) raw = `${parts[0]}.\n${parts[1]}.\n…`
+  }
+  return raw.length > 420 ? `${raw.slice(0, 417)}…` : raw
 }
 
 export async function generateScienceProfile(params: {
@@ -334,15 +526,35 @@ export async function generateScienceProfile(params: {
       const ageMinutes = Number.isFinite(t) ? (Date.now() - t) / 60000 : Infinity
       const versionOk = !cached.generation_version || cached.generation_version === config.science_generation_version
       if (ageMinutes <= config.science_profile_ttl_minutes && versionOk) {
+        const cachedMeta = cached.meta && typeof cached.meta === 'object' ? cached.meta : {}
+        let powerPhraseCached: string | undefined =
+          typeof (cachedMeta as { power_phrase?: string }).power_phrase === 'string'
+            ? String((cachedMeta as { power_phrase: string }).power_phrase).trim()
+            : undefined
+        // Phrase alignée sur les pétales affichés : recalcul léger (pas de LLM) si le client envoie un profil.
+        if (hasMeaningfulClientPetals(params.petals)) {
+          const pf: Record<PetalId, number> = {} as Record<PetalId, number>
+          for (const p of PETAL_IDS) {
+            pf[p] = clamp01(Number(params.petals?.[p] ?? 0))
+          }
+          const ord = rankPetalsByValue(pf)
+          const topP = ord[0] ?? 'pragma'
+          const secondP = ord.length > 1 ? ord[1] : null
+          const weakP = ord[ord.length - 1] ?? topP
+          powerPhraseCached = fallbackPowerPhrase(locale, topP, secondP, weakP, pf)
+        }
         return {
           facts: cached.facts ?? [],
           hypotheses: cached.hypotheses ?? [],
           meta: {
             config_version: 'science-db-cache',
-            evidence_sources: [],
-            has_chat_context: cached.meta?.has_chat_context ?? false,
-            evidence_item_count: cached.meta?.evidence_item_count ?? 0,
+            evidence_sources: Array.isArray((cachedMeta as { evidence_sources?: string[] }).evidence_sources)
+              ? (cachedMeta as { evidence_sources: string[] }).evidence_sources
+              : [],
+            has_chat_context: Boolean((cachedMeta as { has_chat_context?: boolean }).has_chat_context),
+            evidence_item_count: Number((cachedMeta as { evidence_item_count?: number }).evidence_item_count ?? 0),
             generation_version: cached.generation_version ?? config.science_generation_version,
+            power_phrase: powerPhraseCached,
           },
         }
       }
@@ -813,6 +1025,20 @@ export async function generateScienceProfile(params: {
     })
   }
 
+  const petalsForPhrase = buildPetalsForPhrase(params.petals, petalsBaseline as Record<string, number>)
+  const ordPhrase = rankPetalsByValue(petalsForPhrase)
+  const topPower = ordPhrase[0] ?? 'pragma'
+  const secondPower = ordPhrase.length > 1 ? ordPhrase[1] : null
+  const weakestPower = ordPhrase[ordPhrase.length - 1] ?? topPower
+  const powerPhrase =
+    (await generatePowerPhraseLLM({
+      locale,
+      petals: petalsForPhrase,
+      top: topPower,
+      second: secondPower,
+      weakest: weakestPower,
+    })) ?? fallbackPowerPhrase(locale, topPower, secondPower, weakestPower, petalsForPhrase)
+
   const meta: ScienceAIOutput['meta'] = {
     config_version: config.science_generation_version,
     evidence_sources: Array.from(new Set(evidenceSourcesUsed)),
@@ -820,6 +1046,7 @@ export async function generateScienceProfile(params: {
       evidenceSourcesUsed.includes('chat_clairiere') || evidenceSourcesUsed.includes('chat_coach'),
     evidence_item_count: evidenceItems.length,
     generation_version: config.science_generation_version,
+    power_phrase: powerPhrase,
   }
 
   // Persistance (token economy)

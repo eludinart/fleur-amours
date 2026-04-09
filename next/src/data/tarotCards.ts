@@ -2,6 +2,7 @@ import enCards from './tarotCards.en.json'
 import esCards from './tarotCards.es.json'
 import itCards from './tarotCards.it.json'
 import deCards from './tarotCards.de.json'
+import { PETAL_BY_ID } from '@/lib/petal-theme'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 export const BACK_IMG = `${basePath}/verso-cartes.webp`
@@ -163,8 +164,56 @@ export function getCardImageByName(name: string): string | undefined {
 }
 
 export const FOUR_DOORS = [
-  { key: 'love', group: LOVE, title: "Cycle de la Fleur d'amour", subtitle: 'La Porte du Cœur', aspect: "L'Essence", color: 'text-rose-600', border: 'border-rose-300 dark:border-rose-800', glowColor: '#f43f5e', shadowColor: 'rgba(244,63,94,0.2)', bgFrom: 'rgba(254,226,226,1)', bgTo: 'rgba(253,242,248,1)' },
-  { key: 'vegetal', group: VEGETAL, title: 'Cycle du végétal', subtitle: 'La Porte du Temps', aspect: 'Le Processus', color: 'text-emerald-600', border: 'border-emerald-300 dark:border-emerald-800', glowColor: '#10b981', shadowColor: 'rgba(16,185,129,0.2)', bgFrom: 'rgba(209,250,229,1)', bgTo: 'rgba(236,253,245,1)' },
-  { key: 'elements', group: ELEMENTS, title: 'Cycle des éléments', subtitle: 'La Porte du Climat', aspect: "L'Environnement", color: 'text-sky-600', border: 'border-sky-300 dark:border-sky-800', glowColor: '#0ea5e9', shadowColor: 'rgba(14,165,233,0.2)', bgFrom: 'rgba(224,242,254,1)', bgTo: 'rgba(240,249,255,1)' },
-  { key: 'life', group: LIFE, title: "Cycle de la vie", subtitle: "La Porte de l'Histoire", aspect: "L'Expérience", color: 'text-violet-600', border: 'border-violet-300 dark:border-violet-800', glowColor: '#8b5cf6', shadowColor: 'rgba(139,92,246,0.2)', bgFrom: 'rgba(237,233,254,1)', bgTo: 'rgba(245,243,255,1)' },
+  {
+    key: 'love',
+    group: LOVE,
+    title: "Cycle de la Fleur d'amour",
+    subtitle: 'La Porte du Cœur',
+    aspect: "L'Essence",
+    color: 'text-rose-600',
+    border: 'border-rose-300 dark:border-rose-800',
+    glowColor: PETAL_BY_ID.agape.color,
+    shadowColor: 'rgba(236,134,152,0.24)',
+    bgFrom: 'rgba(255,241,245,1)',
+    bgTo: 'rgba(252,232,237,1)',
+  },
+  {
+    key: 'vegetal',
+    group: VEGETAL,
+    title: 'Cycle du végétal',
+    subtitle: 'La Porte du Temps',
+    aspect: 'Le Processus',
+    color: 'text-emerald-600',
+    border: 'border-emerald-300 dark:border-emerald-800',
+    glowColor: PETAL_BY_ID.philia.color,
+    shadowColor: 'rgba(18,196,142,0.24)',
+    bgFrom: 'rgba(209,250,229,1)',
+    bgTo: 'rgba(236,253,245,1)',
+  },
+  {
+    key: 'elements',
+    group: ELEMENTS,
+    title: 'Cycle des éléments',
+    subtitle: 'La Porte du Climat',
+    aspect: "L'Environnement",
+    color: 'text-sky-600',
+    border: 'border-sky-300 dark:border-sky-800',
+    glowColor: PETAL_BY_ID.ludus.color,
+    shadowColor: 'rgba(20,196,232,0.24)',
+    bgFrom: 'rgba(224,242,254,1)',
+    bgTo: 'rgba(240,249,255,1)',
+  },
+  {
+    key: 'life',
+    group: LIFE,
+    title: "Cycle de la vie",
+    subtitle: "La Porte de l'Histoire",
+    aspect: "L'Expérience",
+    color: 'text-violet-600',
+    border: 'border-violet-300 dark:border-violet-800',
+    glowColor: PETAL_BY_ID.eros.color,
+    shadowColor: 'rgba(149,89,242,0.24)',
+    bgFrom: 'rgba(237,233,254,1)',
+    bgTo: 'rgba(245,243,255,1)',
+  },
 ]

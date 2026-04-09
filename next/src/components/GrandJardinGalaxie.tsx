@@ -5,17 +5,9 @@ import { useMemo, useRef, useEffect, useLayoutEffect, useCallback, useState } fr
 import ForceGraph2D from 'react-force-graph-2d'
 import { forceCollide, forceLink, forceManyBody, forceCenter, forceRadial } from 'd3-force-3d'
 import { scoresToPetals } from '@/components/FlowerSVG'
+import { PETAL_DEFS, PETAL_BY_ID } from '@/lib/petal-theme'
 
-const PETALS = [
-  { id: 'agape', angle: 0, color: '#f43f5e' },
-  { id: 'philautia', angle: 45, color: '#f59e0b' },
-  { id: 'mania', angle: 90, color: '#ef4444' },
-  { id: 'storge', angle: 135, color: '#0d9488' },
-  { id: 'pragma', angle: 180, color: '#6366f1' },
-  { id: 'philia', angle: 225, color: '#10b981' },
-  { id: 'ludus', angle: 270, color: '#0ea5e9' },
-  { id: 'eros', angle: 315, color: '#8b5cf6' },
-]
+const PETALS = PETAL_DEFS.map((p) => ({ id: p.id, angle: p.angle, color: p.color }))
 
 const MIN_LEN = 4
 const MAX_LEN = 14
@@ -175,7 +167,7 @@ export function GrandJardinGalaxie({
         ctx.arc(0, 0, isMe ? 6 : 5, 0, 2 * Math.PI)
         ctx.fillStyle = isMe ? '#fef3c7' : '#fda4af'
         ctx.fill()
-        ctx.strokeStyle = isMe ? '#d97706' : '#f43f5e'
+        ctx.strokeStyle = isMe ? '#d97706' : PETAL_BY_ID.agape.color
         ctx.lineWidth = isMe ? 1.2 : 0.8
         ctx.stroke()
 

@@ -50,8 +50,9 @@ function buildNavGroups(
     { to: '/mes-fleurs', label: translate('nav.mesFleurs'), icon: '📄', title: translate('nav.mesFleursTooltip') },
   ]
 
-  const explorerItems: NavItem[] = [
+  const pratiqueItems: NavItem[] = [
     { to: '/tirage', label: translate('nav.tirages'), icon: '🎴', end: false, title: translate('nav.tiragesFullTooltip') },
+    { to: '/cartes', label: translate('nav.cartes'), icon: '🃏', end: false, title: translate('nav.cartesTooltip') },
   ]
 
   const accompagnerItems: NavItem[] = [
@@ -67,7 +68,12 @@ function buildNavGroups(
   const groups: NavGroup[] = [
     { label: "Fleur d'AmOurs", items: accueilItems },
     { label: translate('decouvrir'), items: decouvrirItems },
-    { label: translate('explorer'), items: explorerItems },
+    {
+      label: translate('nav.pratique'),
+      collapsible: true,
+      defaultOpen: true,
+      items: pratiqueItems,
+    },
     { label: translate('accompagnement'), items: accompagnerItems },
     { label: translate('compte'), items: compteItems },
   ]
@@ -361,6 +367,21 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
               <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider opacity-90">
                 {t('layout.phare')}
               </span>
+            </Link>
+          </div>
+
+          <div className="shrink-0 px-3 py-3 border-b border-slate-200 dark:border-slate-700">
+            <Link
+              href="/tirage"
+              onClick={onClose}
+              className={`group/cta flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-xl text-sm font-bold tracking-wide transition-all shadow-md ${
+                pathWithoutBase.startsWith('tirage')
+                  ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30'
+                  : 'bg-teal-500/15 text-teal-800 dark:text-teal-200 border border-teal-400/40 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:shadow-teal-500/25'
+              }`}
+            >
+              <span className="text-xl">🎴</span>
+              <span>{t('nav.drawTirage')}</span>
             </Link>
           </div>
 

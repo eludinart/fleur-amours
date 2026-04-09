@@ -13,18 +13,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts'
-import { PETAL_DEFS } from '@/components/FlowerSVG'
-
-const PETAL_COLORS: Record<string, string> = {
-  agape: '#f43f5e',
-  philautia: '#f59e0b',
-  mania: '#ef4444',
-  storge: '#0d9488',
-  pragma: '#6366f1',
-  philia: '#10b981',
-  ludus: '#0ea5e9',
-  eros: '#8b5cf6',
-}
+import { PETAL_DEFS, petalColor } from '@/lib/petal-theme'
 
 const PETAL_LABELS = Object.fromEntries(PETAL_DEFS.map((p) => [p.id, p.name]))
 
@@ -107,9 +96,12 @@ export function EvolutionChart({ timeline = [], className = '' }) {
               labelFormatter={(label) => label}
             />
             <Legend />
-            {[...selectedPetals].map((pId) => (
-              <Line key={pId} type="monotone" dataKey={pId} name={PETAL_LABELS[pId] || pId} stroke={PETAL_COLORS[pId] || '#94a3b8'} strokeWidth={2} dot={{ r: 3, fill: PETAL_COLORS[pId] }} activeDot={{ r: 5 }} />
-            ))}
+            {[...selectedPetals].map((pId) => {
+              const c = petalColor(pId) || '#94a3b8'
+              return (
+                <Line key={pId} type="monotone" dataKey={pId} name={PETAL_LABELS[pId] || pId} stroke={c} strokeWidth={2} dot={{ r: 3, fill: c }} activeDot={{ r: 5 }} />
+              )
+            })}
           </LineChart>
         </ResponsiveContainer>
       </div>
