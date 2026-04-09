@@ -17,9 +17,14 @@ function currentPeriod(): string {
   return new Date().toISOString().slice(0, 7)
 }
 
-export async function ensureQuotaBonusTable(exec: SqlExecutor): Promise<void> {
-  const prefix = process.env.DB_PREFIX || 'wp_'
-  await exec.execute(`
+// Singleton DDL — même pattern que db-usage (évite un round-trip CREATE à chaque GET /api/user/access)
+let _ensureQuotaBonusTablePromise: Promise<void> | null = null
+
+export function ensureQuotaBonusTable(exec: SqlExecutor): Promise<void> {
+  if (!_ensureQuotaBonusTablePromise) {
+    const prefix = process.env.DB_PREFIX || 'wp_'
+    _ensureQuotaBonusTablePromise = exec
+      .execute(`
     CREATE TABLE IF NOT EXISTS ${prefix}fleur_user_quota_bonus_monthly (
       user_id INT NOT NULL,
       period CHAR(7) NOT NULL,
@@ -31,6 +36,13 @@ export async function ensureQuotaBonusTable(exec: SqlExecutor): Promise<void> {
       PRIMARY KEY (user_id, period)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `)
+      .then(() => undefined)
+      .catch((err) => {
+        _ensureQuotaBonusTablePromise = null
+        throw err
+      })
+  }
+  return _ensureQuotaBonusTablePromise
 }
 
 async function ensureRow(exec: SqlExecutor, userId: number, period: string): Promise<void> {

@@ -336,6 +336,12 @@ export async function authRegister(
     `INSERT INTO ${prefix}usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)`,
     [userId, `${prefix}user_level`, '0']
   )
+  // Par défaut, tout nouvel utilisateur est visible dans le Grand Jardin.
+  // (Comportement inversable dans "Mon compte".)
+  await pool.execute(
+    `INSERT INTO ${prefix}usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)`,
+    [userId, 'fleur_profile_public', '1']
+  )
 
   const wpRole = await getWpRole(userId)
   const appRole = await getAppRole(userId, wpRole)

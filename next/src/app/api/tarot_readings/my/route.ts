@@ -3,7 +3,6 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { authMe } from '@/lib/db-auth'
 import { my } from '@/lib/db-tarot'
 import { isDbConfigured } from '@/lib/db'
 import { cacheGet, cacheSet } from '@/lib/server-cache'
@@ -24,14 +23,8 @@ export async function GET(req: NextRequest) {
     const cached = cacheGet<object>(cacheKey)
     if (cached) return NextResponse.json(cached)
 
-    // authMe et l'initialisation de la table en parallèle
-    let email: string | null = null
-    try {
-      const user = await authMe(parseInt(userId, 10))
-      email = user.email || null
-    } catch { /* ignore */ }
-
-    const data = await my(userId, email ?? undefined)
+    // Pas d’authMe ici : requireAuth a déjà validé le JWT ; my() filtre par user_id uniquement.
+    const data = await my(userId)
     cacheSet(cacheKey, data, TTL_MS)
     return NextResponse.json(data)
   } catch (err: unknown) {

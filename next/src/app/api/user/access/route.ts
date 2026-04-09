@@ -7,8 +7,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { RowDataPacket } from 'mysql2'
 import { requireAuth } from '@/lib/api-auth'
 import { getPool, table, isDbConfigured } from '@/lib/db'
-import { readMonthlyUsage } from '@/lib/db-usage'
-import { readQuotaBonus } from '@/lib/db-quota-bonus'
+import { ensureUsageTable, readMonthlyUsage } from '@/lib/db-usage'
+import { ensureQuotaBonusTable, readQuotaBonus } from '@/lib/db-quota-bonus'
 import { cacheGet, cacheSet } from '@/lib/server-cache'
 
 const ACCESS_TTL_MS = 45_000
@@ -56,7 +56,14 @@ export async function GET(req: NextRequest) {
     if (isDbConfigured()) {
       try {
         const pool = getPool()
-        await ensureTable(pool)
+        const period = new Date().toISOString().slice(0, 7)
+
+        await Promise.all([
+          ensureTable(pool),
+          ensureUsageTable(pool),
+          ensureQuotaBonusTable(pool),
+        ])
+
         const TBL = table('fleur_users_access')
 
         await pool.execute(
@@ -64,14 +71,11 @@ export async function GET(req: NextRequest) {
           [uid, FREE_DEFAULT_SAP]
         )
 
-        const [[rows], period] = await Promise.all([
-          pool.execute<AccessRow[]>(
-            `SELECT token_balance, eternal_sap, total_accumulated_eternal FROM ${TBL} WHERE user_id = ?`,
-            [uid]
-          ),
-          Promise.resolve(new Date().toISOString().slice(0, 7)),
-        ])
-
+        const [rowsPacket] = await pool.execute<AccessRow[]>(
+          `SELECT token_balance, eternal_sap, total_accumulated_eternal FROM ${TBL} WHERE user_id = ?`,
+          [uid]
+        )
+        const rows = rowsPacket as AccessRow[]
         const row = Array.isArray(rows) ? rows[0] : null
         if (row) {
           // readMonthlyUsage et readQuotaBonus en parallèle

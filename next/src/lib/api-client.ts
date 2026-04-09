@@ -22,6 +22,11 @@ function getBase(): string {
   return `${window.location.origin}${BASE_PATH}`
 }
 
+/** Même origine que `api.*` (ex. sur localhost, toujours `/jardin` même si NEXT_PUBLIC_API_URL est défini sans basePath). */
+export function getResolvedApiBase(): string {
+  return getBase()
+}
+
 /** Retourne true si le code s'exécute dans une WebView Capacitor. */
 export function isCapacitor(): boolean {
   return typeof window !== 'undefined' &&
@@ -129,6 +134,7 @@ async function request(
         track({
           name: 'api_request',
           feature: 'api',
+          path,
           trace_id: traceId ?? undefined,
           properties: {
             path,
@@ -168,6 +174,7 @@ async function request(
           track({
             name: 'api_error',
             feature: 'api',
+            path,
             trace_id: traceId ?? undefined,
             properties: {
               path,
@@ -228,6 +235,7 @@ async function request(
           track({
             name: 'api_error',
             feature: 'api',
+            path,
             trace_id: traceId ?? undefined,
             properties: {
               path,
@@ -256,6 +264,7 @@ async function request(
           track({
             name: 'api_response',
             feature: 'api',
+            path,
             trace_id: traceId ?? undefined,
             properties: {
               path,

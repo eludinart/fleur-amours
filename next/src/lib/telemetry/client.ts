@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 'use client'
 
-import { ApiError } from '@/lib/api-client'
+import { ApiError, getResolvedApiBase } from '@/lib/api-client'
 import { normalizeTelemetryEnv, type TelemetryTier } from '@/lib/telemetry/env'
 
 /** Env télémétrie côté navigateur (build + hostname). */
@@ -95,16 +95,10 @@ const queue: QueueItem[] = []
 let flushTimer: ReturnType<typeof setTimeout> | null = null
 let isFlushing = false
 
-function getBasePath(): string {
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
-  return basePath.replace(/\/+$/, '')
-}
-
 function buildUrl(): string {
-  const base = process.env.NEXT_PUBLIC_API_URL?.trim()
-  if (base) return `${base.replace(/\/+$/, '')}/api/telemetry/event`
   if (typeof window === 'undefined') return '/api/telemetry/event'
-  return `${window.location.origin}${getBasePath()}/api/telemetry/event`
+  const base = getResolvedApiBase().replace(/\/+$/, '')
+  return `${base}/api/telemetry/event`
 }
 
 function scheduleFlush(ms = 1500) {
