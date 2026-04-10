@@ -5,7 +5,7 @@ import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { useResolvedShareUrl } from '@/hooks/useResolvedShareUrl'
-import { canUseNativeShare } from '@/utils/share-social'
+import { shouldOfferNativeShare } from '@/utils/share-social'
 import { ShareSocialButtons } from './ShareSocialButtons'
 import { ogMetaDescriptionTirage, ogMetaTitleTirage } from '@/lib/og-share-copy'
 import { getTirageShareableId } from '@/lib/tirage-share-id'
@@ -120,11 +120,16 @@ export function ShareTirageButton({
       setMenuOpen(true)
       return
     }
-    if (canUseNativeShare()) {
+    const textWithUrl =
+      sharePayload.text.includes(publicPageUrl)
+        ? sharePayload.text
+        : `${sharePayload.text}\n\n${publicPageUrl}`
+
+    if (shouldOfferNativeShare()) {
       try {
         await navigator.share({
           title: sharePayload.title,
-          text: sharePayload.text,
+          text: textWithUrl,
           url: publicPageUrl,
         })
         toast(t('share.shareSuccess'), 'success')

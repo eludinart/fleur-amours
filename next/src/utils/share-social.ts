@@ -68,3 +68,16 @@ export function getLinkedInShareUrl(payload: SharePayload): string {
 export function canUseNativeShare(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.share
 }
+
+/**
+ * N’utiliser `navigator.share` que sur appareils tactile / pointer grossier.
+ * Sur Windows (souris), le sélecteur « Partager » gère souvent mal `url` et propose
+ * surtout une image (PNG) au lieu du lien public — on préfère le menu (réseaux + copie).
+ */
+export function shouldOfferNativeShare(): boolean {
+  if (!canUseNativeShare()) return false
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
+  const touchPoints = navigator.maxTouchPoints ?? 0
+  const coarse = window.matchMedia?.('(pointer: coarse)')?.matches ?? false
+  return touchPoints > 0 || coarse
+}

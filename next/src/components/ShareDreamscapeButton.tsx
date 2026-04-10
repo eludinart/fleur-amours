@@ -5,7 +5,7 @@ import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { useResolvedShareUrl } from '@/hooks/useResolvedShareUrl'
-import { canUseNativeShare } from '@/utils/share-social'
+import { shouldOfferNativeShare } from '@/utils/share-social'
 import { dreamscapeApi } from '@/api/dreamscape'
 import { ShareSocialButtons } from './ShareSocialButtons'
 import { ogMetaDescriptionDreamscape, ogMetaTitleDreamscape } from '@/lib/og-share-copy'
@@ -132,12 +132,14 @@ export function ShareDreamscapeButton({
       const bp = basePath.startsWith('/') ? basePath : `/${basePath}`
       const url = `${origin}${bp.replace(/\/+$/, '')}/dreamscape/partage/${tok}`
       const payload = { title, text: shareText, url }
+      const textWithUrl =
+        payload.text.includes(payload.url) ? payload.text : `${payload.text}\n\n${payload.url}`
 
-      if (canUseNativeShare()) {
+      if (shouldOfferNativeShare()) {
         try {
           await navigator.share({
             title: payload.title,
-            text: payload.text,
+            text: textWithUrl,
             url: payload.url,
           })
           toast(t('share.shareSuccess'), 'success')

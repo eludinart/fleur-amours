@@ -5,7 +5,7 @@ import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { useResolvedShareUrl } from '@/hooks/useResolvedShareUrl'
-import { canUseNativeShare, sharePayloadForNativeWithFiles } from '@/utils/share-social'
+import { shouldOfferNativeShare, sharePayloadForNativeWithFiles } from '@/utils/share-social'
 import { ShareSocialButtons } from './ShareSocialButtons'
 import { ogMetaDescriptionFleur, ogMetaTitleFleur } from '@/lib/og-share-copy'
 
@@ -115,7 +115,7 @@ export function ShareFleurButton({
       return
     }
     // Mobile : priorité au partage natif (ouvre WhatsApp, Twitter, etc.)
-    if (canUseNativeShare() && targetRef?.current) {
+    if (shouldOfferNativeShare() && targetRef?.current) {
       try {
         setLoading(true)
         const { default: html2canvas } = await import('html2canvas')
