@@ -70,8 +70,8 @@ export default function DreamscapeHistoriquePage() {
   const [summaries, setSummaries] = useState({}) // id -> summary
   const [loadingSummary, setLoadingSummary] = useState({}) // id -> true
   const [shareLoadingId, setShareLoadingId] = useState(null)
-  const [shareMenuId, setShareMenuId] = useState(null)
-  const [shareMenuUrl, setShareMenuUrl] = useState(null)
+  /** Même payload pour partage natif et menu réseaux (aligné tirages / fin de promenade). */
+  const [shareMenu, setShareMenu] = useState(null)
   /** Régénération PNG : file d’attente { id, slots, petals } */
   const [regenQueue, setRegenQueue] = useState([])
   const snapshotBoxRef = useRef(null)
@@ -288,7 +288,10 @@ export default function DreamscapeHistoriquePage() {
                 >
                   <button
                     type="button"
-                    onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                    onClick={() => {
+                      setExpandedId(isExpanded ? null : item.id)
+                      if (isExpanded) setShareMenu((m) => (m?.itemId === item.id ? null : m))
+                    }}
                     className="w-full text-left p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors flex flex-col gap-2"
                   >
                     <p className="text-sm text-slate-700 dark:text-slate-200 italic line-clamp-2 leading-relaxed">
@@ -524,13 +527,11 @@ export default function DreamscapeHistoriquePage() {
                                         toast(t('share.shareSuccess'), 'success')
                                       } catch (e) {
                                         if ((e as Error).name !== 'AbortError') {
-                                          setShareMenuId(item.id)
-                                          setShareMenuUrl(fullUrl)
+                                          setShareMenu({ itemId: item.id, payload: sharePayload })
                                         }
                                       }
                                     } else {
-                                      setShareMenuId(item.id)
-                                      setShareMenuUrl(fullUrl)
+                                      setShareMenu({ itemId: item.id, payload: sharePayload })
                                     }
                                   } catch (e) {
                                     toast(e?.message || 'Impossible de partager', 'error')
@@ -543,15 +544,16 @@ export default function DreamscapeHistoriquePage() {
                               >
                                 {shareLoadingId === item.id ? '…' : '📤 ' + t('common.share')}
                               </button>
-                              {shareMenuId === item.id && shareMenuUrl && (
+                              {shareMenu?.itemId === item.id && shareMenu.payload && (
                                 <>
-                                  <div className="fixed inset-0 z-40" onClick={() => { setShareMenuId(null); setShareMenuUrl(null) }} aria-hidden="true" />
+                                  <div className="fixed inset-0 z-40" onClick={() => setShareMenu(null)} aria-hidden="true" />
                                   <div className="absolute left-0 top-full mt-1 z-50 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-3 min-w-[200px]">
                                     <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{t('common.share')}</p>
                                     <ShareSocialButtons
-                                      payload={{ url: shareMenuUrl, title: 'Promenade Onirique — Fleur d\'AmOurs', text: 'Découvrez ma promenade onirique' }}
-                                      onCopyLink={() => { setShareMenuId(null); setShareMenuUrl(null) }}
+                                      payload={shareMenu.payload}
+                                      onCopyLink={() => setShareMenu(null)}
                                       variant="labels"
+                                      encourageLine={t('share.encourageDreamscapeMenu')}
                                     />
                                   </div>
                                 </>
