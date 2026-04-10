@@ -2,8 +2,17 @@ import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 import './globals.css'
 import { TelemetryClient } from '@/components/telemetry/TelemetryClient'
+import { getAppPublicOrigin } from '@/lib/app-public-url'
+
+const basePathSeg = (process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin').replace(/\/$/, '')
+const publicOrigin = getAppPublicOrigin()
+const metadataBase =
+  publicOrigin && publicOrigin.startsWith('http')
+    ? new URL(`${publicOrigin.replace(/\/+$/, '')}${basePathSeg}/`)
+    : undefined
 
 export const metadata: Metadata = {
+  metadataBase,
   title: "Fleur d'AmOurs",
   description: "Jardin Fleur d'AmOurs",
 }

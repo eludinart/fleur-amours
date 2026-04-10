@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
+import { useResolvedShareUrl } from '@/hooks/useResolvedShareUrl'
 import { canUseNativeShare } from '@/utils/share-social'
 import { ShareSocialButtons } from './ShareSocialButtons'
 import { ogMetaDescriptionTirage, ogMetaTitleTirage } from '@/lib/og-share-copy'
@@ -64,14 +65,9 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
   useStore((s) => s.locale)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const base =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}${basePath}`.replace(/\/+$/, '')
-      : ''
-
-  // Prefer a beautiful public share page over the protected /tirage route
-  const publicPageUrl =
-    reading?.id ? `${base}/tirage/partage/${reading.id}` : `${base}/tirage`
+  const publicPageUrl = useResolvedShareUrl(
+    reading?.id ? `/tirage/partage/${reading.id}` : '/tirage'
+  )
 
   const text = buildShareText(reading || {})
 
@@ -113,6 +109,10 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
   }, [reading])
 
   const handleShare = useCallback(async () => {
+    if (!publicPageUrl) {
+      setMenuOpen(true)
+      return
+    }
     if (canUseNativeShare()) {
       try {
         await navigator.share({
@@ -129,7 +129,7 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
     } else {
       setMenuOpen(true)
     }
-  }, [reading, publicPageUrl])
+  }, [publicPageUrl, text])
 
   return (
     <div className="relative">
@@ -148,7 +148,11 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
           <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} aria-hidden="true" />
           <div className="absolute right-0 top-full mt-1 z-50 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-3 min-w-[200px]">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{t('common.share')}</p>
-            <ShareSocialButtons payload={sharePayload} onCopyLink={() => setMenuOpen(false)} variant="labels" />
+            {publicPageUrl ? (
+              <ShareSocialButtons payload={sharePayload} onCopyLink={() => setMenuOpen(false)} variant="labels" />
+            ) : (
+              <p className="text-sm text-slate-600 dark:text-slate-300 py-2">{t('share.linkPreparing')}</p>
+            )}
           </div>
         </>
       )}

@@ -1,6 +1,6 @@
 /**
  * GET /api/og/tirage?id=…
- * Carte Open Graph 1200×630 — tirage tarot, narration + preuve + CTA.
+ * Carte Open Graph 1200×627 — tirage tarot (spec LinkedIn) + preuve + CTA.
  */
 import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
@@ -31,7 +31,7 @@ import {
 export const dynamic = 'force-dynamic'
 
 const W = 1200
-const H = 630
+const H = 627
 
 function absoluteCardImageUrl(img: string | null | undefined, req: NextRequest): string | undefined {
   if (!img?.trim()) return undefined
@@ -332,6 +332,13 @@ export async function GET(req: NextRequest) {
         <OgConversionFooter ctaLabel={OG_TAROT_CTA} variant="dark" />
       </div>
     ),
-    { width: W, height: H }
+    {
+      width: W,
+      height: H,
+      headers: {
+        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+        'Content-Disposition': 'inline; filename="og-tirage.png"',
+      },
+    }
   )
 }

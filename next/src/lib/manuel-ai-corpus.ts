@@ -5,9 +5,7 @@
 import { existsSync, readFileSync, statSync } from 'fs'
 import { join } from 'path'
 import type { ManuelManifest, ManuelManifestSection } from '@/lib/manuel'
-
-const REF_HEADER =
-  '\n\n=== Référence — Manuel du Tarot Fleur d’ÅmÔurs (texte canon ; aligner vocabulaire et cadre du jeu ; ne pas contredire ces extraits) ===\n'
+import { formatMoreChaptersLine, getManuelAiStrings } from '@/lib/manuel-ai-i18n'
 
 function manuelAiEnabled(): boolean {
   const v = String(process.env.MANUEL_AI_CONTEXT ?? '1').trim().toLowerCase()
@@ -110,21 +108,23 @@ function readBodySample(root: string, file: string, maxLen: number): string {
 /**
  * Sommaire compact (titres) — utile quand il n’y a pas de requête ciblée.
  */
-export function getManuelTitleIndex(maxChars = 4_000): string {
+export function getManuelTitleIndex(maxChars = 4_000, locale?: string): string {
   const manifest = loadManifest()
   if (!manifest) return ''
+  const { tocHeading } = getManuelAiStrings(locale)
   const lines: string[] = []
   let used = 0
   for (const s of manifest.sections) {
     const line = `- ${s.title} (${s.file.replace(/\.md$/i, '')})`
     if (used + line.length + 1 > maxChars) {
-      lines.push(`… et ${manifest.sections.length - lines.length} autres chapitres.`)
+      const remaining = manifest.sections.length - lines.length
+      lines.push(formatMoreChaptersLine(locale, remaining))
       break
     }
     lines.push(line)
     used += line.length + 1
   }
-  return ['Chapitres du manuel (sommaire) :', ...lines].join('\n')
+  return [tocHeading, ...lines].join('\n')
 }
 
 export type ManuelAiContextOpts = {
@@ -132,6 +132,8 @@ export type ManuelAiContextOpts = {
   retrievalQuery?: string
   /** Plafond de caractères pour tout le bloc (sommaire + extraits). */
   maxChars?: number
+  /** Locale UI (`x-locale`) : en-têtes et libellés du bloc manuel pour le modèle. */
+  locale?: string
 }
 
 /**
@@ -171,7 +173,8 @@ export function buildManuelAiContext(opts: ManuelAiContextOpts = {}): string {
       : quickRanked
 
   const sommaireBudget = Math.min(3_500, Math.floor(maxTotal * 0.28))
-  let sommaire = getManuelTitleIndex(sommaireBudget)
+  const aiStrings = getManuelAiStrings(opts.locale)
+  let sommaire = getManuelTitleIndex(sommaireBudget, opts.locale)
   let out = sommaire + '\n\n'
 
   const budgetForExcerpts = maxTotal - out.length - 120
@@ -221,7 +224,7 @@ export function buildManuelAiContext(opts: ManuelAiContextOpts = {}): string {
   }
 
   if (words.size === 0 && n === 0) {
-    out += '(Extraits : aucun chapitre lu — vérifiez public/manuel.)'
+    out += aiStrings.excerptsMissing
   }
 
   return out.trim()
@@ -234,5 +237,6 @@ export function appendManuelReferenceToSystem(system: string, opts: ManuelAiCont
   if (!manuelAiEnabled()) return system
   const block = buildManuelAiContext(opts)
   if (!block) return system
-  return system + REF_HEADER + block
+  const header = getManuelAiStrings(opts.locale).refHeader
+  return system + header + block
 }

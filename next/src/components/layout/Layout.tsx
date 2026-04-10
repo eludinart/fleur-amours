@@ -30,6 +30,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggle } = useTheme()
   const fontSizePreference = useStore((s) => s.fontSizePreference)
   const locale = useStore((s) => s.locale)
+  /** Même rendu que les enfants : évite que t() reste en fr après réhydratation persist (useEffect trop tard, sans re-render). */
+  if (typeof window !== 'undefined') {
+    setI18nLocale(locale || 'fr')
+  }
   const headerRef = useRef<HTMLElement>(null)
   const pathname = usePathname() || ''
   const pathWithoutBase = pathname.replace('/jardin', '').replace(/^\/+|\/+$/g, '') || ''
@@ -38,10 +42,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.fontSize = fontSizePreference === 'large' ? 'large' : ''
   }, [fontSizePreference])
-
-  useEffect(() => {
-    setI18nLocale(locale || 'fr')
-  }, [locale])
 
   useEffect(() => {
     if (!user?.id) {

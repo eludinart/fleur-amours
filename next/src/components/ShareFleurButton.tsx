@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
+import { useResolvedShareUrl } from '@/hooks/useResolvedShareUrl'
 import { canUseNativeShare } from '@/utils/share-social'
 import { ShareSocialButtons } from './ShareSocialButtons'
 import { ogMetaDescriptionFleur, ogMetaTitleFleur } from '@/lib/og-share-copy'
@@ -27,12 +28,20 @@ export function ShareFleurButton({
   const [loading, setLoading] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const base = typeof window !== 'undefined' ? `${window.location.origin}${basePath}`.replace(/\/+$/, '') : ''
-  const fullUrl = shareUrl ? base + (shareUrl.startsWith('/') ? shareUrl : `/${shareUrl}`) : typeof window !== 'undefined' ? window.location.href : ''
+  const fullUrl = useResolvedShareUrl(shareUrl ?? null)
 
   // Extract result id from shareUrl (e.g. /fleur?result=42) for OG image
   const resultId = shareUrl?.match(/[?&]result=(\d+)/)?.[1] ?? null
-  const ogImageUrl = resultId ? `${base}/api/og/fleur?id=${resultId}` : null
+  const ogImageUrl = useMemo(() => {
+    if (!resultId || !fullUrl.startsWith('http')) return null
+    try {
+      const { origin } = new URL(fullUrl)
+      const bp = (basePath.startsWith('/') ? basePath : `/${basePath}`).replace(/\/$/, '')
+      return `${origin}${bp}/api/og/fleur?id=${resultId}`
+    } catch {
+      return null
+    }
+  }, [resultId, fullUrl])
 
   const sharePayload = {
     url: fullUrl,
@@ -98,6 +107,10 @@ export function ShareFleurButton({
   }, [targetRef, filename])
 
   const handleShare = useCallback(async () => {
+    if (!fullUrl) {
+      setMenuOpen(true)
+      return
+    }
     // Mobile : priorité au partage natif (ouvre WhatsApp, Twitter, etc.)
     if (canUseNativeShare() && targetRef?.current) {
       try {
@@ -153,7 +166,11 @@ export function ShareFleurButton({
           />
           <div className="absolute right-0 top-full mt-1 z-50 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-3 min-w-[200px] space-y-2">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{t('common.share')}</p>
-            <ShareSocialButtons payload={sharePayload} onCopyLink={() => setMenuOpen(false)} variant="labels" />
+            {fullUrl ? (
+              <ShareSocialButtons payload={sharePayload} onCopyLink={() => setMenuOpen(false)} variant="labels" />
+            ) : (
+              <p className="text-sm text-slate-600 dark:text-slate-300 py-2">{t('share.linkPreparing')}</p>
+            )}
             {targetRef && (
               <button
                 type="button"

@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { t } from '@/i18n'
+import { t, setLocale as syncI18nLocale } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
 export function LoginPage() {
-  useStore((s) => s.locale)
+  const locale = useStore((s) => s.locale)
+  if (typeof window !== 'undefined') {
+    syncI18nLocale(locale || 'fr')
+  }
   const setHasSeenOnboardingTour = useStore((s) => s.setHasSeenOnboardingTour)
   const { login, register } = useAuth()
   const router = useRouter()

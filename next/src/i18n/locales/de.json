@@ -126,14 +126,14 @@
     "title": "Handbuch — Fleur d'AmOurs Tarot",
     "toc": "Inhalt",
     "search": "Abschnitt suchen…",
-    "intro": "Dieses Handbuch folgt dem Booklet des Fleur d'AmOurs Tarot. Nutzen Sie das Inhaltsverzeichnis.",
-    "introHint": "Tipp: Die Suche filtert die Titel.",
+    "intro": "Dieses Handbuch entspricht dem Booklet des Fleur d'AmOurs Tarot: Einführung, Legesysteme, Karten und Schlagwort-Tabellen. Nutzen Sie das Inhaltsverzeichnis zur Navigation.",
+    "introHint": "Tipp: Die Suche filtert die Titel im Inhaltsverzeichnis.",
     "empty": "Abschnitt nicht gefunden.",
     "backToc": "Zurück zum Inhalt",
     "prev": "Zurück",
     "next": "Weiter",
     "manifestMissing": "Handbuch nicht verfügbar",
-    "manifestMissingHint": "Statische Dateien müssen unter public/manuel/ liegen."
+    "manifestMissingHint": "Die statischen Dateien (manifest.json und Kapitel) müssen unter public/manuel/ liegen. Kopieren Sie docs/MANUEL nach next/public/manuel und führen Sie den Build erneut aus."
   },
 
   "admin": {
@@ -212,7 +212,7 @@
     "notifications": "Benachrichtigungen",
     "changeLanguage": "Sprache ändern",
     "phare": "Leuchtturm",
-    "cardsManager": "Kartenverwaltung",
+    "cardsManager": "Tarot-Handbuch",
     "pushPrimingTitle": "Benachrichtigungen für deinen Garten",
     "pushPrimingBody": "Für eine gute Funktionsweise der App empfehlen wir dir, Benachrichtigungen zu akzeptieren: Du wirst über neue Nachrichten (Lichtung, Coach…) informiert, auch wenn die App nicht geöffnet ist.",
     "pushPrimingHint": "Du kannst diese Einstellung später in den Browser- oder Telefoneinstellungen ändern.",

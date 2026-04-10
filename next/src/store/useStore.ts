@@ -118,6 +118,9 @@ export const useStore = create<StoreState>()(
     {
       name: 'fleur-amours-store',
       version: 8,
+      onRehydrateStorage: () => (state) => {
+        if (state?.locale) setI18nLocale(String(state.locale))
+      },
       migrate: (persistedState: unknown) => {
         const s = persistedState as Record<string, unknown>
         if (!s) return undefined

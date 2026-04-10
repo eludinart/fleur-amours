@@ -39,10 +39,15 @@ export function getWhatsAppShareUrl(payload: SharePayload): string {
 }
 
 /**
- * LinkedIn — sharing API
+ * LinkedIn — ouvre le fil avec le compositeur actif.
+ * `sharing/share-offsite/?url=` renvoie souvent une page vide ou une erreur depuis ~2022–2024 ;
+ * le paramètre `text` préremplit le lien (à coller / publier après connexion).
  */
 export function getLinkedInShareUrl(payload: SharePayload): string {
-  return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(payload.url)}`
+  const url = (payload.url || '').trim()
+  const chunk = [payload.text?.trim(), url].filter(Boolean).join('\n\n')
+  const text = chunk || url
+  return `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`
 }
 
 /**

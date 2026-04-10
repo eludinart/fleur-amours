@@ -1,6 +1,6 @@
 /**
  * GET /api/og/dreamscape?token=…
- * Carte Open Graph 1200×630 — conversion : promesse, sens, CTA.
+ * Carte Open Graph 1200×627 — Dreamscape (spec LinkedIn).
  */
 import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
@@ -26,7 +26,7 @@ import {
 export const dynamic = 'force-dynamic'
 
 const W = 1200
-const H = 630
+const H = 627
 
 function truncate(s: string | null | undefined, max: number): string {
   if (!s) return ''
@@ -183,6 +183,13 @@ export async function GET(req: NextRequest) {
         <OgConversionFooter ctaLabel={OG_DREAMSCAPE_CTA} variant="dark" />
       </div>
     ),
-    { width: W, height: H }
+    {
+      width: W,
+      height: H,
+      headers: {
+        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+        'Content-Disposition': 'inline; filename="og-dreamscape.png"',
+      },
+    }
   )
 }

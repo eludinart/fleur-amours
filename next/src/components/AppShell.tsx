@@ -3,7 +3,8 @@
 import dynamic from 'next/dynamic'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
-import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { LocaleSync } from '@/components/LocaleSync'
 import { setLocaleForRequests, isCapacitor } from '@/lib/api-client'
 import { useStore } from '@/store/useStore'
 import { Layout } from '@/components/layout/Layout'
@@ -32,8 +33,6 @@ import MesFleursPage from '@/views/MesFleursPage'
 import ManuelOnlinePage from '@/views/ManuelOnlinePage'
 import DreamscapePage from '@/views/DreamscapePage'
 import DreamscapeHistoriquePage from '@/views/DreamscapeHistoriquePage'
-import DreamscapePartagePage from '@/views/DreamscapePartagePage'
-import TiragePartagePage from '@/views/TiragePartagePage'
 import PrairiePage from '@/views/PrairiePage'
 import UserLisierePage from '@/views/UserLisierePage'
 import ClairierePage from '@/views/ClairierePage'
@@ -131,14 +130,6 @@ function ProtectedLayout({
   return <>{children}</>
 }
 
-function LocaleSync() {
-  const locale = useStore((s) => s.locale)
-  useEffect(() => {
-    setLocaleForRequests(locale || 'fr')
-  }, [locale])
-  return null
-}
-
 function AppRoutes() {
   const pathname = usePathname()
   const { user, loading, isAdmin, isCoach } = useAuth()
@@ -196,29 +187,7 @@ function AppRoutes() {
     return <LoginPage />
   }
 
-  // Public: TiragePartagePage (no Layout, no auth)
-  if (route === 'tirage' && subRoute === 'partage' && subRoute2) {
-    return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-900"><span className="w-8 h-8 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" /></div>}>
-        <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-900">
-          <LocaleSync />
-          <TiragePartagePage />
-        </div>
-      </Suspense>
-    )
-  }
-
-  // Public: DreamscapePartagePage (no Layout, no auth)
-  if (route === 'dreamscape' && subRoute === 'partage' && subRoute2) {
-    return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-900"><span className="w-8 h-8 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" /></div>}>
-        <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
-          <LocaleSync />
-          <DreamscapePartagePage />
-        </div>
-      </Suspense>
-    )
-  }
+  /* Pages publiques tirage/partage et dreamscape/partage : app/tirage/partage/[id] et app/dreamscape/partage/[token] */
 
   const PageFallback = () => (
     <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-900">

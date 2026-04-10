@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
     const systemPrompt = appendManuelReferenceToSystem(await getThresholdPrompt(), {
       retrievalQuery: firstWords,
       maxChars: 8_000,
+      locale,
     })
     const result = await openrouterCall(
       systemPrompt,

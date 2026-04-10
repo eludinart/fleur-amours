@@ -189,7 +189,7 @@
     "notifications": "Notifications",
     "changeLanguage": "Change language",
     "phare": "Beacon",
-    "cardsManager": "Cards Manager",
+    "cardsManager": "Tarot manual",
     "pushPrimingTitle": "Notifications for your Garden",
     "pushPrimingBody": "For the app to work as intended, we recommend allowing notifications: you’ll be alerted to new messages (Glade, coach, etc.) even when the app isn’t open.",
     "pushPrimingHint": "You can change this later in your browser or device settings.",
@@ -442,6 +442,11 @@
   },
 
   "share": {
+    "publicLinkLabel": "Link to share (copy or use the buttons)",
+    "linkPreparing": "Preparing link…",
+    "pasteHint": "On LinkedIn: paste this link into a post, or use the LinkedIn button below (sign-in required).",
+    "localhostWarning": "On localhost, LinkedIn and other networks cannot open this link (it only exists on your computer). To test previews, deploy to a public URL or use a tunnel (ngrok, etc.).",
+    "linkedinButtonTitle": "Open LinkedIn with text ready to post",
     "linkCopied": "Link copied",
     "shareSuccess": "Shared",
     "copyError": "Unable to copy",

@@ -147,6 +147,7 @@ export async function POST(req: NextRequest) {
   const dreamscapeSystem = appendManuelReferenceToSystem(DREAMSCAPE_SUMMARIZE_SYSTEM, {
     retrievalQuery: `${convText.slice(-3_500)} ${slotCards}`.slice(0, 5_000),
     maxChars: 12_000,
+    locale: getLocale(req),
   })
 
   const result = await openrouterCall(

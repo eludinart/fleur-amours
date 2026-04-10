@@ -149,6 +149,7 @@ export async function POST(req: NextRequest) {
 
   const systemPrompt = appendManuelReferenceToSystem(await getTuteurPrompt(), {
     retrievalQuery: `${cardName}\n${transcript}`.slice(0, 6_000),
+    locale,
   })
 
   if (billTuteurSap && uid > 0) {

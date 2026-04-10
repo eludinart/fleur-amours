@@ -70,7 +70,11 @@ export async function POST(req: NextRequest) {
 
     const sys = appendManuelReferenceToSystem(
       `Tu réponds UNIQUEMENT par un JSON {"context":"string"} — une seule clé, texte court (2–3 phrases). Pas de markdown.`,
-      { retrievalQuery: `${cardName} ${context} ${lines}`.slice(0, 3_000), maxChars: 8_000 },
+      {
+        retrievalQuery: `${cardName} ${context} ${lines}`.slice(0, 3_000),
+        maxChars: 8_000,
+        locale,
+      },
     )
     const raw = await openrouterCall(sys, [{ role: 'user', content: userContent }], {
       maxTokens: 400,

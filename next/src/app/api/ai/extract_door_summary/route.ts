@@ -138,6 +138,7 @@ export async function POST(req: NextRequest) {
     const doorSystem = appendManuelReferenceToSystem(SYSTEM, {
       retrievalQuery: `${doorName} ${tail}`.slice(0, 4_000),
       maxChars: 10_000,
+      locale,
     })
     const result = await openrouterCall(doorSystem, messages, {
       maxTokens: 1200,

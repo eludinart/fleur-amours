@@ -9,6 +9,7 @@ import { my as mySessions } from './db-sessions'
 import { getMyResults, getResult, getDuoResult } from './db-fleur'
 import { listFleurBetaScoresForScience } from './db-fleur-beta'
 import { buildManuelAiContext } from './manuel-ai-corpus'
+import { getManuelAiStrings } from './manuel-ai-i18n'
 
 type ScienceAIOutput = {
   facts: Array<{
@@ -285,12 +286,16 @@ function fallbackPowerPhrase(
 
 async function generatePowerPhraseLLM(params: {
   locale: 'fr' | 'en' | 'es'
+  /** Locale UI brute (it, de, …) pour les libellés du bloc manuel. */
+  localeRaw?: string
   petals: Record<PetalId, number>
   top: PetalId
   second: PetalId | null
   weakest: PetalId
 }): Promise<string | null> {
-  const { locale, petals, top, second, weakest } = params
+  const { locale, localeRaw, petals, top, second, weakest } = params
+  const manuelUiLocale = localeRaw ?? locale
+  const manuelStrings = getManuelAiStrings(manuelUiLocale)
   const snapshot = Object.fromEntries(PETAL_IDS.map((p) => [p, Math.round(petals[p] * 1000) / 1000]))
   const capTop = petalCaption(locale, top)
   const capWeak = petalCaption(locale, weakest)
@@ -335,9 +340,10 @@ ${getLangInstruction(locale)}`
   const manuelCtx = buildManuelAiContext({
     retrievalQuery: `${capTop} ${capWeak} ${capSecond ?? ''}`,
     maxChars: 5_000,
+    locale: manuelUiLocale,
   })
   if (manuelCtx) {
-    user += `\n\nRéférence manuel (extraits) :\n${manuelCtx}`
+    user += `\n\n${manuelStrings.scienceReferenceLabel}\n${manuelCtx}`
   }
 
   const result = await openrouterCall(sys, [{ role: 'user', content: user }], {
@@ -1042,6 +1048,7 @@ export async function generateScienceProfile(params: {
   const powerPhrase =
     (await generatePowerPhraseLLM({
       locale,
+      localeRaw: params.locale,
       petals: petalsForPhrase,
       top: topPower,
       second: secondPower,

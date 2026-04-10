@@ -9,13 +9,13 @@ import {
   OG_DREAMSCAPE_KICKER,
   OG_DREAMSCAPE_SUB,
 } from '@/lib/og-share-copy'
+import { getAppPublicOrigin } from '@/lib/app-public-url'
 
 const SOCIAL_WIDTH = 1200
 const SOCIAL_HEIGHT = 630
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
 
 function fillWrappedLines(
   ctx: CanvasRenderingContext2D,
@@ -51,12 +51,17 @@ function fillWrappedLines(
 }
 
 /**
- * Retourne l'URL de base pour les liens partagés.
+ * Base absolue pour les liens partagés (Promenade, etc.).
+ * En navigateur : toujours `origin` réel + `basePath` — évite un NEXT_PUBLIC_APP_URL
+ * pointant vers un autre domaine ou sans `/jardin`, ce qui casse LinkedIn.
  */
 export function getShareBaseUrl(): string {
-  if (typeof window === 'undefined') return appUrl ? String(appUrl).replace(/\/+$/, '') : ''
-  if (appUrl) return String(appUrl).replace(/\/+$/, '')
-  return `${window.location.origin}${basePath}`.replace(/\/+$/, '')
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}${basePath}`.replace(/\/+$/, '')
+  }
+  const o = getAppPublicOrigin()
+  if (o) return `${o}${basePath}`.replace(/\/+$/, '')
+  return ''
 }
 
 /**

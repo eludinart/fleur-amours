@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import {
@@ -58,6 +58,20 @@ const LABELS: Record<string, string> = {
   link: 'Lien',
 }
 
+/** http ou https — nécessaire pour le dev en localhost (http://). */
+function isAbsoluteHttpUrl(u: string): boolean {
+  return /^https?:\/\//i.test((u || '').trim())
+}
+
+function isLocalDevUrl(u: string): boolean {
+  try {
+    const h = new URL(u).hostname.toLowerCase()
+    return h === 'localhost' || h === '127.0.0.1' || h.endsWith('.local')
+  } catch {
+    return /localhost|127\.0\.0\.1/i.test(u || '')
+  }
+}
+
 export function ShareSocialButtons({
   payload,
   onCopyLink,
@@ -65,25 +79,58 @@ export function ShareSocialButtons({
   variant = 'compact',
   className = '',
 }: ShareSocialButtonsProps) {
+  const urlOk = useMemo(() => isAbsoluteHttpUrl(payload.url), [payload.url])
+  const localhostShare = useMemo(() => (payload.url ? isLocalDevUrl(payload.url) : false), [payload.url])
+
+  const safePayload = useMemo((): SharePayload => {
+    if (urlOk) return payload
+    const fallback = typeof window !== 'undefined' ? window.location.href : ''
+    return { ...payload, url: fallback || payload.url }
+  }, [payload, urlOk])
+
   const copyLink = useCallback(() => {
-    navigator.clipboard?.writeText(payload.url).then(
+    const toCopy = urlOk ? payload.url : safePayload.url
+    navigator.clipboard?.writeText(toCopy).then(
       () => {
         toast(t('share.linkCopied'), 'success')
         onCopyLink?.()
       },
       () => toast(t('share.copyError'), 'error')
     )
-  }, [payload.url, onCopyLink])
+  }, [payload.url, safePayload.url, urlOk, onCopyLink])
 
   const buttons = [
-    { key: 'twitter', href: getTwitterShareUrl(payload), icon: ICONS.twitter },
-    { key: 'facebook', href: getFacebookShareUrl(payload), icon: ICONS.facebook },
-    { key: 'whatsapp', href: getWhatsAppShareUrl(payload), icon: ICONS.whatsapp },
-    { key: 'linkedin', href: getLinkedInShareUrl(payload), icon: ICONS.linkedin },
+    { key: 'twitter', href: getTwitterShareUrl(safePayload), icon: ICONS.twitter },
+    { key: 'facebook', href: getFacebookShareUrl(safePayload), icon: ICONS.facebook },
+    { key: 'whatsapp', href: getWhatsAppShareUrl(safePayload), icon: ICONS.whatsapp },
+    { key: 'linkedin', href: getLinkedInShareUrl(safePayload), icon: ICONS.linkedin },
   ].filter((b) => !exclude.includes(b.key as never))
 
   return (
-    <div className={`flex flex-wrap items-center gap-1 ${className}`}>
+    <div className={`flex flex-col gap-2 ${className}`}>
+      <div className="space-y-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {t('share.publicLinkLabel')}
+        </p>
+        {!urlOk ? (
+          <p className="text-xs text-amber-700 dark:text-amber-300">{t('share.linkPreparing')}</p>
+        ) : null}
+        <input
+          type="text"
+          readOnly
+          value={urlOk ? payload.url : safePayload.url}
+          onFocus={(e) => e.target.select()}
+          className="w-full text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-2 py-1.5 text-slate-800 dark:text-slate-200"
+          aria-label={t('share.publicLinkLabel')}
+        />
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">{t('share.pasteHint')}</p>
+        {localhostShare ? (
+          <p className="text-[11px] rounded-lg bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 px-2 py-1.5 border border-amber-200/80 dark:border-amber-800/60">
+            {t('share.localhostWarning')}
+          </p>
+        ) : null}
+      </div>
+      <div className="flex flex-wrap items-center gap-1">
       {buttons.map(({ key, href, icon }) => (
         <a
           key={key}
@@ -91,7 +138,7 @@ export function ShareSocialButtons({
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
-          title={LABELS[key]}
+          title={key === 'linkedin' ? t('share.linkedinButtonTitle') : LABELS[key]}
           aria-label={LABELS[key]}
         >
           {icon}
@@ -108,6 +155,7 @@ export function ShareSocialButtons({
         {ICONS.link}
         {variant === 'labels' && <span className="text-xs font-medium">{t('common.copyLink')}</span>}
       </button>
+      </div>
     </div>
   )
 }

@@ -465,6 +465,11 @@
   },
 
   "share": {
+    "publicLinkLabel": "Lien à partager (copiez-le ou utilisez les boutons)",
+    "linkPreparing": "Préparation du lien…",
+    "pasteHint": "Sur LinkedIn : collez ce lien dans une publication, ou utilisez le bouton LinkedIn ci-dessous (connexion requise).",
+    "localhostWarning": "En localhost, LinkedIn et les autres réseaux ne peuvent pas ouvrir ce lien (il n’existe que sur votre PC). Pour tester l’aperçu, déployez sur un domaine public ou utilisez un tunnel (ngrok, etc.).",
+    "linkedinButtonTitle": "Ouvrir LinkedIn avec le texte prêt à publier",
     "linkCopied": "Lien copié",
     "shareSuccess": "Partagé",
     "copyError": "Impossible de copier",

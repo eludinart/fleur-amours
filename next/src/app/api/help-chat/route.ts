@@ -46,7 +46,11 @@ export async function POST(req: NextRequest) {
     })
 
     const result = await openrouterCall(
-      appendManuelReferenceToSystem(HELP_SYSTEM, { retrievalQuery: message, maxChars: 10_000 }),
+      appendManuelReferenceToSystem(HELP_SYSTEM, {
+        retrievalQuery: message,
+        maxChars: 10_000,
+        locale,
+      }),
       messages,
       {
         maxTokens: 600,

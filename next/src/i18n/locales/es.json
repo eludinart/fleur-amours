@@ -103,14 +103,14 @@
     "title": "Manual — Tarot Fleur d'AmOurs",
     "toc": "Índice",
     "search": "Buscar una sección…",
-    "intro": "Este manual sigue el folleto del Tarot Fleur d'AmOurs. Usa el índice para navegar.",
-    "introHint": "La búsqueda filtra los títulos del índice.",
+    "intro": "Este manual reproduce el folleto del Tarot Fleur d'AmOurs: introducción, tiradas, cartas y tablas de palabras clave. Usa el índice para navegar.",
+    "introHint": "Consejo: la búsqueda filtra los títulos del índice.",
     "empty": "Sección no encontrada.",
     "backToc": "Volver al índice",
     "prev": "Anterior",
     "next": "Siguiente",
     "manifestMissing": "Manual no disponible",
-    "manifestMissingHint": "Los archivos deben estar en public/manuel/."
+    "manifestMissingHint": "Los archivos estáticos (manifest.json y capítulos) deben estar en public/manuel/. Copie docs/MANUEL en next/public/manuel y vuelva a compilar."
   },
 
   "admin": {
@@ -187,7 +187,7 @@
     "notifications": "Notificaciones",
     "changeLanguage": "Cambiar idioma",
     "phare": "Faro",
-    "cardsManager": "Gestor de cartas",
+    "cardsManager": "Manual del tarot",
     "pushPrimingTitle": "Notificaciones para tu Jardín",
     "pushPrimingBody": "Para que la aplicación funcione correctamente, te recomendamos aceptar las notificaciones: recibirás avisos de mensajes nuevos (Clairière, coach…) incluso cuando la app no esté abierta.",
     "pushPrimingHint": "Podrás cambiar esta opción más tarde en los ajustes del navegador o del teléfono.",

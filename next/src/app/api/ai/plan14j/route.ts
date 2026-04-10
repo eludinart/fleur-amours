@@ -138,6 +138,7 @@ export async function POST(req: NextRequest) {
   const planSystem = appendManuelReferenceToSystem(PLAN14J_SYSTEM, {
     retrievalQuery: [notes, cardsDrawn.join(' ')].filter(Boolean).join('\n').slice(0, 4_000),
     maxChars: 14_000,
+    locale,
   })
 
   const result = await openrouterCall(planSystem, [{ role: 'user', content: userContent }], {
