@@ -1,0 +1,769 @@
+{
+  "source": "MANUEL du tarot fleur d'ÅmÔurs.pdf",
+  "generatedAt": "2026-04-10T09:57:27.269Z",
+  "pdfPages": 204,
+  "bookToPdfOffset": null,
+  "splitMode": "sequential-toc-in-pdf-parse-text",
+  "sections": [
+    {
+      "id": "le-sol-fertile-du-jardin-d-amours",
+      "title": "Le Sol Fertile du Jardin d’ÅmÔurs",
+      "bookPage": 8,
+      "pdfStart1": 2,
+      "pdfEnd1": 5,
+      "file": "01-le-sol-fertile-du-jardin-d-amours.md"
+    },
+    {
+      "id": "la-genese-du-tarot-fleur-d-amours",
+      "title": "La Genèse du Tarot Fleur d’ÅmÔurs",
+      "bookPage": 9,
+      "pdfStart1": 6,
+      "pdfEnd1": 6,
+      "file": "02-la-genese-du-tarot-fleur-d-amours.md"
+    },
+    {
+      "id": "l-amour-comme-prisme-de-la-conscience",
+      "title": "L’Amour comme Prisme de la Conscience",
+      "bookPage": 9,
+      "pdfStart1": 2,
+      "pdfEnd1": 6,
+      "file": "03-l-amour-comme-prisme-de-la-conscience.md"
+    },
+    {
+      "id": "le-systeme-et-le-grand-recit",
+      "title": "Le Système et le Grand Récit",
+      "bookPage": 10,
+      "pdfStart1": 7,
+      "pdfEnd1": 7,
+      "file": "04-le-systeme-et-le-grand-recit.md"
+    },
+    {
+      "id": "le-manuel-la-boussole-du-jardinier",
+      "title": "Le Manuel : La Boussole du Jardinier",
+      "bookPage": 10,
+      "pdfStart1": 2,
+      "pdfEnd1": 2,
+      "file": "05-le-manuel-la-boussole-du-jardinier.md"
+    },
+    {
+      "id": "applique-au-couple-de-la-tour-de-babel-au-langage-commun",
+      "title": "Appliqué au Couple : De la Tour de Babel au Langage Commun",
+      "bookPage": 11,
+      "pdfStart1": 2,
+      "pdfEnd1": 8,
+      "file": "06-applique-au-couple-de-la-tour-de-babel-au-langage-commun.md"
+    },
+    {
+      "id": "le-serment-du-jardinier",
+      "title": "Le Serment du Jardinier",
+      "bookPage": 12,
+      "pdfStart1": 9,
+      "pdfEnd1": 10,
+      "file": "07-le-serment-du-jardinier.md"
+    },
+    {
+      "id": "poser-une-intention-claire",
+      "title": "Poser une Intention Claire",
+      "bookPage": 14,
+      "pdfStart1": 11,
+      "pdfEnd1": 12,
+      "file": "08-poser-une-intention-claire.md"
+    },
+    {
+      "id": "la-regle-du-tuteur",
+      "title": "La Règle du Tuteur",
+      "bookPage": 16,
+      "pdfStart1": 13,
+      "pdfEnd1": 14,
+      "file": "09-la-regle-du-tuteur.md"
+    },
+    {
+      "id": "tirages-rapides",
+      "title": "Tirages rapides",
+      "bookPage": 18,
+      "pdfStart1": 15,
+      "pdfEnd1": 15,
+      "file": "10-tirages-rapides.md"
+    },
+    {
+      "id": "1-niveau-1-le-petale-du-jour-l-entree-emotionnelle",
+      "title": "1. Niveau 1 : Le Pétale du Jour  (L’entrée émotionnelle)",
+      "bookPage": 18,
+      "pdfStart1": 2,
+      "pdfEnd1": 2,
+      "file": "11-1-niveau-1-le-petale-du-jour-l-entree-emotionnelle.md"
+    },
+    {
+      "id": "2-niveau-2-les-deux-petales-en-dialogue-le-processus",
+      "title": "2. Niveau 2 : Les Deux Pétales en Dialogue (Le processus)",
+      "bookPage": 19,
+      "pdfStart1": 2,
+      "pdfEnd1": 2,
+      "file": "12-2-niveau-2-les-deux-petales-en-dialogue-le-processus.md"
+    },
+    {
+      "id": "3-niveau-3-les-trois-mouvements-du-jardin",
+      "title": "3. Niveau 3 : Les Trois Mouvements du Jardin",
+      "bookPage": 20,
+      "pdfStart1": 2,
+      "pdfEnd1": 2,
+      "file": "13-3-niveau-3-les-trois-mouvements-du-jardin.md"
+    },
+    {
+      "id": "les-jeux-systemiques-du-tarot-fleur-d-amours",
+      "title": "Les Jeux Systémiques du Tarot Fleur d’ÅmÔurs",
+      "bookPage": 21,
+      "pdfStart1": 2,
+      "pdfEnd1": 18,
+      "file": "14-les-jeux-systemiques-du-tarot-fleur-d-amours.md"
+    },
+    {
+      "id": "dessiner-sa-fleur-d-amours",
+      "title": "Dessiner Sa Fleur d’ÅmÔurs",
+      "bookPage": 22,
+      "pdfStart1": 19,
+      "pdfEnd1": 19,
+      "file": "15-dessiner-sa-fleur-d-amours.md"
+    },
+    {
+      "id": "les-quatre-portes-du-jardin-d-amours",
+      "title": "Les Quatre Portes du Jardin d’ÅmÔurs",
+      "bookPage": 27,
+      "pdfStart1": 2,
+      "pdfEnd1": 26,
+      "file": "16-les-quatre-portes-du-jardin-d-amours.md"
+    },
+    {
+      "id": "la-fleur-d-amours-deployee",
+      "title": "La Fleur d’ÅmÔurs déployée",
+      "bookPage": 30,
+      "pdfStart1": 27,
+      "pdfEnd1": 32,
+      "file": "17-la-fleur-d-amours-deployee.md"
+    },
+    {
+      "id": "la-triple-fleur",
+      "title": "La Triple Fleur",
+      "bookPage": 35,
+      "pdfStart1": 33,
+      "pdfEnd1": 38,
+      "file": "18-la-triple-fleur.md"
+    },
+    {
+      "id": "la-danse-des-cartes",
+      "title": "La Danse des Cartes",
+      "bookPage": 41,
+      "pdfStart1": 39,
+      "pdfEnd1": 44,
+      "file": "19-la-danse-des-cartes.md"
+    },
+    {
+      "id": "la-fleur-d-amours",
+      "title": "La Fleur d’ÅmÔurs",
+      "bookPage": 44,
+      "pdfStart1": 45,
+      "pdfEnd1": 45,
+      "file": "20-la-fleur-d-amours.md"
+    },
+    {
+      "id": "agape",
+      "title": "AGAPÈ",
+      "bookPage": 46,
+      "pdfStart1": 46,
+      "pdfEnd1": 47,
+      "file": "21-agape.md"
+    },
+    {
+      "id": "eros",
+      "title": "ÉROS",
+      "bookPage": 48,
+      "pdfStart1": 48,
+      "pdfEnd1": 49,
+      "file": "22-eros.md"
+    },
+    {
+      "id": "philia",
+      "title": "PHILIA",
+      "bookPage": 50,
+      "pdfStart1": 50,
+      "pdfEnd1": 51,
+      "file": "23-philia.md"
+    },
+    {
+      "id": "storge",
+      "title": "STORGÈ",
+      "bookPage": 52,
+      "pdfStart1": 52,
+      "pdfEnd1": 53,
+      "file": "24-storge.md"
+    },
+    {
+      "id": "pragma",
+      "title": "PRAGMA",
+      "bookPage": 54,
+      "pdfStart1": 54,
+      "pdfEnd1": 55,
+      "file": "25-pragma.md"
+    },
+    {
+      "id": "ludus",
+      "title": "LUDUS",
+      "bookPage": 56,
+      "pdfStart1": 56,
+      "pdfEnd1": 57,
+      "file": "26-ludus.md"
+    },
+    {
+      "id": "mania",
+      "title": "MANIA",
+      "bookPage": 58,
+      "pdfStart1": 58,
+      "pdfEnd1": 59,
+      "file": "27-mania.md"
+    },
+    {
+      "id": "philautia",
+      "title": "PHILAUTIA",
+      "bookPage": 60,
+      "pdfStart1": 60,
+      "pdfEnd1": 62,
+      "file": "28-philautia.md"
+    },
+    {
+      "id": "cycle-du-vegetal",
+      "title": "Cycle du Végétal",
+      "bookPage": 62,
+      "pdfStart1": 63,
+      "pdfEnd1": 63,
+      "file": "29-cycle-du-vegetal.md"
+    },
+    {
+      "id": "les-racines",
+      "title": "LES RACINES",
+      "bookPage": 64,
+      "pdfStart1": 64,
+      "pdfEnd1": 65,
+      "file": "30-les-racines.md"
+    },
+    {
+      "id": "la-tige",
+      "title": "LA TIGE",
+      "bookPage": 66,
+      "pdfStart1": 66,
+      "pdfEnd1": 67,
+      "file": "31-la-tige.md"
+    },
+    {
+      "id": "les-feuilles",
+      "title": "LES FEUILLES",
+      "bookPage": 68,
+      "pdfStart1": 68,
+      "pdfEnd1": 69,
+      "file": "32-les-feuilles.md"
+    },
+    {
+      "id": "le-bouton",
+      "title": "LE BOUTON",
+      "bookPage": 70,
+      "pdfStart1": 70,
+      "pdfEnd1": 71,
+      "file": "33-le-bouton.md"
+    },
+    {
+      "id": "la-fleur",
+      "title": "LA FLEUR",
+      "bookPage": 72,
+      "pdfStart1": 72,
+      "pdfEnd1": 73,
+      "file": "34-la-fleur.md"
+    },
+    {
+      "id": "le-fruit",
+      "title": "LE FRUIT",
+      "bookPage": 74,
+      "pdfStart1": 74,
+      "pdfEnd1": 75,
+      "file": "35-le-fruit.md"
+    },
+    {
+      "id": "le-pollen",
+      "title": "LE POLLEN",
+      "bookPage": 76,
+      "pdfStart1": 76,
+      "pdfEnd1": 77,
+      "file": "36-le-pollen.md"
+    },
+    {
+      "id": "le-nectar",
+      "title": "LE NECTAR",
+      "bookPage": 78,
+      "pdfStart1": 78,
+      "pdfEnd1": 79,
+      "file": "37-le-nectar.md"
+    },
+    {
+      "id": "la-graine-endormie",
+      "title": "LA GRAINE ENDORMIE",
+      "bookPage": 80,
+      "pdfStart1": 80,
+      "pdfEnd1": 81,
+      "file": "38-la-graine-endormie.md"
+    },
+    {
+      "id": "la-germination",
+      "title": "LA GERMINATION",
+      "bookPage": 82,
+      "pdfStart1": 82,
+      "pdfEnd1": 84,
+      "file": "39-la-germination.md"
+    },
+    {
+      "id": "les-elements",
+      "title": "Les Éléments",
+      "bookPage": 84,
+      "pdfStart1": 85,
+      "pdfEnd1": 85,
+      "file": "40-les-elements.md"
+    },
+    {
+      "id": "le-feu",
+      "title": "LE FEU",
+      "bookPage": 86,
+      "pdfStart1": 86,
+      "pdfEnd1": 87,
+      "file": "41-le-feu.md"
+    },
+    {
+      "id": "l-ether",
+      "title": "L’ÉTHER",
+      "bookPage": 88,
+      "pdfStart1": 88,
+      "pdfEnd1": 89,
+      "file": "42-l-ether.md"
+    },
+    {
+      "id": "l-eau",
+      "title": "L’EAU",
+      "bookPage": 90,
+      "pdfStart1": 90,
+      "pdfEnd1": 91,
+      "file": "43-l-eau.md"
+    },
+    {
+      "id": "l-air",
+      "title": "L’AIR",
+      "bookPage": 92,
+      "pdfStart1": 92,
+      "pdfEnd1": 93,
+      "file": "44-l-air.md"
+    },
+    {
+      "id": "la-terre",
+      "title": "LA TERRE",
+      "bookPage": 94,
+      "pdfStart1": 94,
+      "pdfEnd1": 96,
+      "file": "45-la-terre.md"
+    },
+    {
+      "id": "cycle-de-la-terre",
+      "title": "Cycle de la Terre",
+      "bookPage": 96,
+      "pdfStart1": 97,
+      "pdfEnd1": 97,
+      "file": "46-cycle-de-la-terre.md"
+    },
+    {
+      "id": "le-mineral",
+      "title": "LE MINÉRAL",
+      "bookPage": 98,
+      "pdfStart1": 98,
+      "pdfEnd1": 99,
+      "file": "47-le-mineral.md"
+    },
+    {
+      "id": "l-argile",
+      "title": "L’ARGILE",
+      "bookPage": 100,
+      "pdfStart1": 100,
+      "pdfEnd1": 101,
+      "file": "48-l-argile.md"
+    },
+    {
+      "id": "l-humus",
+      "title": "L’HUMUS",
+      "bookPage": 102,
+      "pdfStart1": 102,
+      "pdfEnd1": 103,
+      "file": "49-l-humus.md"
+    },
+    {
+      "id": "le-cristal",
+      "title": "LE CRISTAL",
+      "bookPage": 104,
+      "pdfStart1": 104,
+      "pdfEnd1": 105,
+      "file": "50-le-cristal.md"
+    },
+    {
+      "id": "la-roche-mere",
+      "title": "LA ROCHE-MÈRE",
+      "bookPage": 106,
+      "pdfStart1": 106,
+      "pdfEnd1": 107,
+      "file": "51-la-roche-mere.md"
+    },
+    {
+      "id": "la-cendre-fertile",
+      "title": "LA CENDRE FERTILE",
+      "bookPage": 108,
+      "pdfStart1": 108,
+      "pdfEnd1": 110,
+      "file": "52-la-cendre-fertile.md"
+    },
+    {
+      "id": "cycle-de-l-eau",
+      "title": "Cycle de l’Eau",
+      "bookPage": 110,
+      "pdfStart1": 111,
+      "pdfEnd1": 111,
+      "file": "53-cycle-de-l-eau.md"
+    },
+    {
+      "id": "la-source-profonde",
+      "title": "LA SOURCE PROFONDE",
+      "bookPage": 112,
+      "pdfStart1": 112,
+      "pdfEnd1": 113,
+      "file": "54-la-source-profonde.md"
+    },
+    {
+      "id": "la-pluie",
+      "title": "LA PLUIE",
+      "bookPage": 114,
+      "pdfStart1": 114,
+      "pdfEnd1": 115,
+      "file": "55-la-pluie.md"
+    },
+    {
+      "id": "la-brume",
+      "title": "LA BRUME",
+      "bookPage": 116,
+      "pdfStart1": 116,
+      "pdfEnd1": 117,
+      "file": "56-la-brume.md"
+    },
+    {
+      "id": "la-vague",
+      "title": "LA VAGUE",
+      "bookPage": 118,
+      "pdfStart1": 118,
+      "pdfEnd1": 119,
+      "file": "57-la-vague.md"
+    },
+    {
+      "id": "l-estuaire",
+      "title": "L’ESTUAIRE",
+      "bookPage": 120,
+      "pdfStart1": 120,
+      "pdfEnd1": 121,
+      "file": "58-l-estuaire.md"
+    },
+    {
+      "id": "l-ocean",
+      "title": "L’OCÉAN",
+      "bookPage": 122,
+      "pdfStart1": 122,
+      "pdfEnd1": 124,
+      "file": "59-l-ocean.md"
+    },
+    {
+      "id": "cycle-de-l-air",
+      "title": "Cycle de l’Air",
+      "bookPage": 124,
+      "pdfStart1": 125,
+      "pdfEnd1": 125,
+      "file": "60-cycle-de-l-air.md"
+    },
+    {
+      "id": "le-souffle",
+      "title": "LE SOUFFLE",
+      "bookPage": 126,
+      "pdfStart1": 126,
+      "pdfEnd1": 127,
+      "file": "61-le-souffle.md"
+    },
+    {
+      "id": "le-vent-solaire",
+      "title": "LE VENT SOLAIRE",
+      "bookPage": 128,
+      "pdfStart1": 128,
+      "pdfEnd1": 129,
+      "file": "62-le-vent-solaire.md"
+    },
+    {
+      "id": "l-echo",
+      "title": "L’ÉCHO",
+      "bookPage": 130,
+      "pdfStart1": 130,
+      "pdfEnd1": 131,
+      "file": "63-l-echo.md"
+    },
+    {
+      "id": "l-alize",
+      "title": "L’ALIZÉ",
+      "bookPage": 132,
+      "pdfStart1": 132,
+      "pdfEnd1": 133,
+      "file": "64-l-alize.md"
+    },
+    {
+      "id": "le-verbe",
+      "title": "LE VERBE",
+      "bookPage": 134,
+      "pdfStart1": 134,
+      "pdfEnd1": 135,
+      "file": "65-le-verbe.md"
+    },
+    {
+      "id": "le-messager",
+      "title": "LE MESSAGER",
+      "bookPage": 136,
+      "pdfStart1": 136,
+      "pdfEnd1": 138,
+      "file": "66-le-messager.md"
+    },
+    {
+      "id": "cycle-du-feu",
+      "title": "Cycle du Feu",
+      "bookPage": 138,
+      "pdfStart1": 139,
+      "pdfEnd1": 139,
+      "file": "67-cycle-du-feu.md"
+    },
+    {
+      "id": "les-braises",
+      "title": "LES BRAISES",
+      "bookPage": 140,
+      "pdfStart1": 140,
+      "pdfEnd1": 141,
+      "file": "68-les-braises.md"
+    },
+    {
+      "id": "le-c-ur-du-feu",
+      "title": "LE CŒUR DU FEU",
+      "bookPage": 142,
+      "pdfStart1": 142,
+      "pdfEnd1": 143,
+      "file": "69-le-c-ur-du-feu.md"
+    },
+    {
+      "id": "la-flamme",
+      "title": "LA FLAMME",
+      "bookPage": 144,
+      "pdfStart1": 144,
+      "pdfEnd1": 145,
+      "file": "70-la-flamme.md"
+    },
+    {
+      "id": "la-lumiere",
+      "title": "LA LUMIÈRE",
+      "bookPage": 146,
+      "pdfStart1": 146,
+      "pdfEnd1": 147,
+      "file": "71-la-lumiere.md"
+    },
+    {
+      "id": "le-soleil-interieur",
+      "title": "LE SOLEIL INTÉRIEUR",
+      "bookPage": 148,
+      "pdfStart1": 148,
+      "pdfEnd1": 149,
+      "file": "72-le-soleil-interieur.md"
+    },
+    {
+      "id": "le-volcan",
+      "title": "LE VOLCAN",
+      "bookPage": 150,
+      "pdfStart1": 150,
+      "pdfEnd1": 152,
+      "file": "73-le-volcan.md"
+    },
+    {
+      "id": "cycle-de-l-ether",
+      "title": "Cycle de l’Éther",
+      "bookPage": 152,
+      "pdfStart1": 153,
+      "pdfEnd1": 153,
+      "file": "74-cycle-de-l-ether.md"
+    },
+    {
+      "id": "l-harmonie-des-cycles",
+      "title": "L’HARMONIE DES CYCLES",
+      "bookPage": 154,
+      "pdfStart1": 154,
+      "pdfEnd1": 155,
+      "file": "75-l-harmonie-des-cycles.md"
+    },
+    {
+      "id": "l-invisible",
+      "title": "L’INVISIBLE",
+      "bookPage": 156,
+      "pdfStart1": 156,
+      "pdfEnd1": 157,
+      "file": "76-l-invisible.md"
+    },
+    {
+      "id": "le-mandala-cosmique",
+      "title": "LE MANDALA COSMIQUE",
+      "bookPage": 158,
+      "pdfStart1": 158,
+      "pdfEnd1": 159,
+      "file": "77-le-mandala-cosmique.md"
+    },
+    {
+      "id": "l-unite",
+      "title": "L’UNITÉ",
+      "bookPage": 160,
+      "pdfStart1": 160,
+      "pdfEnd1": 161,
+      "file": "78-l-unite.md"
+    },
+    {
+      "id": "la-source-lumineuse",
+      "title": "LA SOURCE LUMINEUSE",
+      "bookPage": 162,
+      "pdfStart1": 162,
+      "pdfEnd1": 163,
+      "file": "79-la-source-lumineuse.md"
+    },
+    {
+      "id": "le-silence-etoile",
+      "title": "LE SILENCE ÉTOILÉ",
+      "bookPage": 164,
+      "pdfStart1": 164,
+      "pdfEnd1": 166,
+      "file": "80-le-silence-etoile.md"
+    },
+    {
+      "id": "cycle-de-la-vie",
+      "title": "Cycle de la Vie",
+      "bookPage": 166,
+      "pdfStart1": 167,
+      "pdfEnd1": 167,
+      "file": "81-cycle-de-la-vie.md"
+    },
+    {
+      "id": "l-abeille",
+      "title": "L’ABEILLE",
+      "bookPage": 168,
+      "pdfStart1": 168,
+      "pdfEnd1": 169,
+      "file": "82-l-abeille.md"
+    },
+    {
+      "id": "l-ame-du-monde",
+      "title": "L’ÂME DU MONDE",
+      "bookPage": 170,
+      "pdfStart1": 170,
+      "pdfEnd1": 171,
+      "file": "83-l-ame-du-monde.md"
+    },
+    {
+      "id": "l-offrande",
+      "title": "L’OFFRANDE",
+      "bookPage": 172,
+      "pdfStart1": 172,
+      "pdfEnd1": 173,
+      "file": "84-l-offrande.md"
+    },
+    {
+      "id": "la-spirale-de-la-vie",
+      "title": "LA SPIRALE DE LA VIE",
+      "bookPage": 174,
+      "pdfStart1": 174,
+      "pdfEnd1": 175,
+      "file": "85-la-spirale-de-la-vie.md"
+    },
+    {
+      "id": "la-danse-du-monde",
+      "title": "LA DANSE DU MONDE",
+      "bookPage": 176,
+      "pdfStart1": 176,
+      "pdfEnd1": 177,
+      "file": "86-la-danse-du-monde.md"
+    },
+    {
+      "id": "la-memoire-de-la-seve",
+      "title": "LA MÉMOIRE DE LA SÈVE",
+      "bookPage": 178,
+      "pdfStart1": 178,
+      "pdfEnd1": 179,
+      "file": "87-la-memoire-de-la-seve.md"
+    },
+    {
+      "id": "la-naissance",
+      "title": "LA NAISSANCE",
+      "bookPage": 180,
+      "pdfStart1": 180,
+      "pdfEnd1": 181,
+      "file": "88-la-naissance.md"
+    },
+    {
+      "id": "la-transmission",
+      "title": "LA TRANSMISSION",
+      "bookPage": 182,
+      "pdfStart1": 182,
+      "pdfEnd1": 183,
+      "file": "89-la-transmission.md"
+    },
+    {
+      "id": "la-conscience-collective",
+      "title": "LA CONSCIENCE COLLECTIVE",
+      "bookPage": 184,
+      "pdfStart1": 184,
+      "pdfEnd1": 185,
+      "file": "90-la-conscience-collective.md"
+    },
+    {
+      "id": "la-presence",
+      "title": "LA PRESENCE",
+      "bookPage": 186,
+      "pdfStart1": 186,
+      "pdfEnd1": 187,
+      "file": "91-la-presence.md"
+    },
+    {
+      "id": "la-metamorphose",
+      "title": "LA METAMORPHOSE",
+      "bookPage": 188,
+      "pdfStart1": 188,
+      "pdfEnd1": 189,
+      "file": "92-la-metamorphose.md"
+    },
+    {
+      "id": "le-grand-passage",
+      "title": "LE GRAND PASSAGE",
+      "bookPage": 190,
+      "pdfStart1": 190,
+      "pdfEnd1": 190,
+      "file": "93-le-grand-passage.md"
+    },
+    {
+      "id": "l-herbier-des-mots-cles",
+      "title": "L'Herbier des Mots-Clés",
+      "bookPage": 192,
+      "pdfStart1": 3,
+      "pdfEnd1": 3,
+      "file": "94-l-herbier-des-mots-cles.md"
+    },
+    {
+      "id": "remerciements-les-jardiniers-de-l-ame",
+      "title": "Remerciements : Les Jardiniers de l'Âme",
+      "bookPage": 204,
+      "pdfStart1": 3,
+      "pdfEnd1": 5,
+      "file": "95-remerciements-les-jardiniers-de-l-ame.md"
+    }
+  ]
+}

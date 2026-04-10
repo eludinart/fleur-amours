@@ -97,6 +97,22 @@
     "optional": "opcional"
   },
 
+  "manuel": {
+    "pageTitle": "Manual del tarot",
+    "pageDesc": "Guía del Tarot Fleur d'AmOurs: índice y capítulos.",
+    "title": "Manual — Tarot Fleur d'AmOurs",
+    "toc": "Índice",
+    "search": "Buscar una sección…",
+    "intro": "Este manual sigue el folleto del Tarot Fleur d'AmOurs. Usa el índice para navegar.",
+    "introHint": "La búsqueda filtra los títulos del índice.",
+    "empty": "Sección no encontrada.",
+    "backToc": "Volver al índice",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "manifestMissing": "Manual no disponible",
+    "manifestMissingHint": "Los archivos deben estar en public/manuel/."
+  },
+
   "admin": {
     "impersonationBanner": "Conectado como {name}",
     "impersonationDisconnect": "Volver al perfil admin",
@@ -117,7 +133,7 @@
     "pratique": "Práctica",
     "drawTirage": "Hacer una tirada",
     "cartes": "Cartas",
-    "cartesTooltip": "Explorar las cartas del tarot Fleur d'Amours.",
+    "cartesTooltip": "Manual en línea del Tarot Fleur d'AmOurs (índice y capítulos).",
     "chat": "Acompañamiento",
     "homeTitle": "Mi Jardín. Mi Jardín.",
     "mesFleursTitle": "Consulta tus Flores (Mi Flor y Dúo).",

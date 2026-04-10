@@ -120,6 +120,22 @@
     "optional": "facultatif"
   },
 
+  "manuel": {
+    "pageTitle": "Manuel du tarot",
+    "pageDesc": "Guide du Tarot Fleur d'AmOurs : sommaire interactif et chapitres.",
+    "title": "Manuel — Tarot Fleur d'AmOurs",
+    "toc": "Sommaire",
+    "search": "Rechercher une section…",
+    "intro": "Ce manuel reprend le contenu du livret du Tarot Fleur d'AmOurs : introduction, tirages, cartes et herbiers. Utilise le sommaire pour naviguer.",
+    "introHint": "Astuce : la recherche filtre les titres du sommaire.",
+    "empty": "Chapitre introuvable.",
+    "backToc": "Retour au sommaire",
+    "prev": "Précédent",
+    "next": "Suivant",
+    "manifestMissing": "Manuel indisponible",
+    "manifestMissingHint": "Les fichiers statiques (manifest.json et chapitres) doivent être présents dans public/manuel/. Copiez docs/MANUEL vers next/public/manuel puis relancez le build."
+  },
+
   "admin": {
     "impersonationBanner": "Connecté en tant que {name}",
     "impersonationDisconnect": "Revenir au profil admin",
@@ -140,7 +156,7 @@
     "pratique": "Pratique",
     "drawTirage": "Faire un tirage",
     "cartes": "Cartes",
-    "cartesTooltip": "Parcourir les cartes et fiches du tarot Fleur d'AmOurs.",
+    "cartesTooltip": "Manuel en ligne du tarot Fleur d'AmOurs (sommaire et chapitres).",
     "chat": "Accompagnement",
     "homeTitle": "Mon Jardin. Mon Jardin.",
     "mesFleursTitle": "Consultez vos Fleurs (Ma Fleur et Duo).",
@@ -196,7 +212,7 @@
     "notifications": "Notifications",
     "changeLanguage": "Changer la langue",
     "phare": "Phare",
-    "cardsManager": "Cards Manager",
+    "cardsManager": "Manuel du tarot",
     "pushPrimingTitle": "Notifications pour ton Jardin",
     "pushPrimingBody": "Pour un bon fonctionnement de l’application, nous te recommandons d’accepter les notifications : tu seras averti des nouveaux messages (Clairière, coach…) même lorsque l’app n’est pas ouverte.",
     "pushPrimingHint": "Tu pourras changer ce réglage plus tard dans les paramètres du navigateur ou de ton téléphone.",

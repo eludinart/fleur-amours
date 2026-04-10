@@ -120,6 +120,22 @@
     "optional": "facoltativo"
   },
 
+  "manuel": {
+    "pageTitle": "Manuale del tarocco",
+    "pageDesc": "Guida al Tarocco Fleur d'AmOurs: indice e capitoli.",
+    "title": "Manuale — Tarocco Fleur d'AmOurs",
+    "toc": "Indice",
+    "search": "Cerca una sezione…",
+    "intro": "Questo manuale riprende il libretto del Tarocco Fleur d'AmOurs. Usa l'indice.",
+    "introHint": "La ricerca filtra i titoli.",
+    "empty": "Sezione non trovata.",
+    "backToc": "Torna all'indice",
+    "prev": "Precedente",
+    "next": "Seguente",
+    "manifestMissing": "Manuale non disponibile",
+    "manifestMissingHint": "I file devono essere in public/manuel/."
+  },
+
   "admin": {
     "impersonationBanner": "Connesso come {name}",
     "impersonationDisconnect": "Torna al profilo admin",
@@ -140,7 +156,7 @@
     "pratique": "Pratica",
     "drawTirage": "Fare una lettura",
     "cartes": "Carte",
-    "cartesTooltip": "Sfoglia le carte del tarocchi Fleur d'Amours.",
+    "cartesTooltip": "Manuale online del Tarocco Fleur d'AmOurs (indice e capitoli).",
     "chat": "Accompagnamento",
     "homeTitle": "Il mio Giardino. Il mio Giardino.",
     "mesFleursTitle": "Consulta i tuoi Fiori (Il mio Fiore e Duo).",

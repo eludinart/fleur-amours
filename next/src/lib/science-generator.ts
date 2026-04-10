@@ -8,6 +8,7 @@ import { my as myTarotReadings } from './db-tarot'
 import { my as mySessions } from './db-sessions'
 import { getMyResults, getResult, getDuoResult } from './db-fleur'
 import { listFleurBetaScoresForScience } from './db-fleur-beta'
+import { buildManuelAiContext } from './manuel-ai-corpus'
 
 type ScienceAIOutput = {
   facts: Array<{
@@ -324,12 +325,20 @@ Sans chiffres ni pourcentages. Ne dis pas "score" ni "données".
 Longueur max ~420 caractères pour toute la chaîne "phrase".
 ${getLangInstruction(locale)}`
 
-  const user =
+  let user =
     locale === 'en'
       ? `Inner garden cues (0 = quiet, 1 = very present), JSON:\n${JSON.stringify(snapshot)}\n\nStrongest (name + gloss pattern): ${capTop}\nSecond accent: ${capSecond ?? 'not much contrast'}\nQuietest: ${capWeak}\n\nWrite {"phrase":"line1\\nline2\\nline3"}; when you name a form, use the official English label plus the gloss in parentheses as shown.`
       : locale === 'es'
         ? `Matices del jardín interior (0 = discreto, 1 = muy presente), JSON:\n${JSON.stringify(snapshot)}\n\nMás vivo (nombre + glosa): ${capTop}\nSegundo matiz: ${capSecond ?? 'poco diferenciado'}\nMás callado: ${capWeak}\n\nEscribe {"phrase":"línea1\\nlínea2\\nlínea3"}; al nombrar una forma, usa la etiqueta oficial y la glosa con " — " como en el ejemplo.`
         : `Métaphore jardin intérieur (0 = discret, 1 = très présent), JSON :\n${JSON.stringify(snapshot)}\n\nDominant (nom + glose) : ${capTop}\nSecond relief : ${capSecond ?? 'peu différencié'}\nPlus discret : ${capWeak}\n\nÉcris {"phrase":"ligne1\\nligne2\\nligne3"} ; quand tu nommes une forme, reprends le nom officiel FR et la glose après " — " comme dans les références.`
+
+  const manuelCtx = buildManuelAiContext({
+    retrievalQuery: `${capTop} ${capWeak} ${capSecond ?? ''}`,
+    maxChars: 5_000,
+  })
+  if (manuelCtx) {
+    user += `\n\nRéférence manuel (extraits) :\n${manuelCtx}`
+  }
 
   const result = await openrouterCall(sys, [{ role: 'user', content: user }], {
     maxTokens: 280,

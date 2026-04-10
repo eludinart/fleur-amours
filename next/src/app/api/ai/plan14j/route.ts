@@ -10,6 +10,7 @@ import { openrouterCall } from '@/lib/openrouter'
 import { getLangInstruction } from '@/lib/prompts'
 import { getById, update } from '@/lib/db-sessions'
 import { isDbConfigured } from '@/lib/db'
+import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
 
 export const dynamic = 'force-dynamic'
 
@@ -134,11 +135,15 @@ export async function POST(req: NextRequest) {
     'Génère le plan personnalisé en JSON strict avec les clés: synthesis (string), levers (array de 3 strings), plan_14j (array de 14 objets {day, theme, action, context}).' +
     getLangInstruction(locale)
 
-  const result = await openrouterCall(
-    PLAN14J_SYSTEM,
-    [{ role: 'user', content: userContent }],
-    { maxTokens: 2400, responseFormatJson: true }
-  )
+  const planSystem = appendManuelReferenceToSystem(PLAN14J_SYSTEM, {
+    retrievalQuery: [notes, cardsDrawn.join(' ')].filter(Boolean).join('\n').slice(0, 4_000),
+    maxChars: 14_000,
+  })
+
+  const result = await openrouterCall(planSystem, [{ role: 'user', content: userContent }], {
+    maxTokens: 2400,
+    responseFormatJson: true,
+  })
 
   if (!result || typeof result !== 'object') {
     return NextResponse.json({

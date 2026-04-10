@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, ApiError } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
 import { getLangInstruction } from '@/lib/prompts'
+import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
 
 export const dynamic = 'force-dynamic'
 
@@ -142,10 +143,16 @@ export async function POST(req: NextRequest) {
     '\n\n' +
     getLangInstruction(getLocale(req))
 
+  const slotCards = slots.map((s) => String(s.card ?? '').trim()).filter(Boolean).join(' ')
+  const dreamscapeSystem = appendManuelReferenceToSystem(DREAMSCAPE_SUMMARIZE_SYSTEM, {
+    retrievalQuery: `${convText.slice(-3_500)} ${slotCards}`.slice(0, 5_000),
+    maxChars: 12_000,
+  })
+
   const result = await openrouterCall(
-    DREAMSCAPE_SUMMARIZE_SYSTEM,
+    dreamscapeSystem,
     [{ role: 'user', content: userContent }],
-    { maxTokens: 1800, responseFormatJson: true }
+    { maxTokens: 1800, responseFormatJson: true },
   )
 
   const r = (result && typeof result === 'object' && !Array.isArray(result)) ? (result as Record<string, unknown>) : null

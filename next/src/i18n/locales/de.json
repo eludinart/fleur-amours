@@ -120,6 +120,22 @@
     "optional": "optional"
   },
 
+  "manuel": {
+    "pageTitle": "Tarot-Handbuch",
+    "pageDesc": "Leitfaden zum Fleur d'AmOurs Tarot: Inhaltsverzeichnis und Kapitel.",
+    "title": "Handbuch — Fleur d'AmOurs Tarot",
+    "toc": "Inhalt",
+    "search": "Abschnitt suchen…",
+    "intro": "Dieses Handbuch folgt dem Booklet des Fleur d'AmOurs Tarot. Nutzen Sie das Inhaltsverzeichnis.",
+    "introHint": "Tipp: Die Suche filtert die Titel.",
+    "empty": "Abschnitt nicht gefunden.",
+    "backToc": "Zurück zum Inhalt",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "manifestMissing": "Handbuch nicht verfügbar",
+    "manifestMissingHint": "Statische Dateien müssen unter public/manuel/ liegen."
+  },
+
   "admin": {
     "impersonationBanner": "Angemeldet als {name}",
     "impersonationDisconnect": "Zum Admin-Profil zurückkehren",
@@ -140,7 +156,7 @@
     "pratique": "Praxis",
     "drawTirage": "Eine Ziehung machen",
     "cartes": "Karten",
-    "cartesTooltip": "Karten des Fleur d'Amours-Tarots durchstöbern.",
+    "cartesTooltip": "Online-Handbuch zum Fleur d'AmOurs Tarot (Inhalt und Kapitel).",
     "chat": "Begleitung",
     "homeTitle": "Mein Garten. Mein Garten.",
     "mesFleursTitle": "Deine Blumen ansehen (Meine Blume und Duo).",

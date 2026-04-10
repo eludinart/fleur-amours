@@ -25,7 +25,7 @@ const routeMeta: Record<
   prairie: { titleKey: 'prairie.grandJardin', descKey: 'prairie.optInBody' },
   clairiere: { titleKey: 'social.clairiere', descKey: 'social.clairiereDesc' },
   'mes-fleurs': { titleKey: 'mesFleurs.title', descKey: 'mesFleurs.subtitle' },
-  cartes: { title: 'Cartes', descKey: 'mesFleurs.subtitle' },
+  cartes: { titleKey: 'manuel.pageTitle', descKey: 'manuel.pageDesc' },
   boutique: { titleKey: 'prairie.boutique', descKey: 'prairie.boutique' },
   login: { title: 'Connexion', descKey: 'login.subtitleLogin' },
 }

@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
+import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
 import { getLangInstruction } from '@/lib/prompts'
 
 export const dynamic = 'force-dynamic'
@@ -44,10 +45,14 @@ export async function POST(req: NextRequest) {
       content: message + getLangInstruction(locale),
     })
 
-    const result = await openrouterCall(HELP_SYSTEM, messages, {
-      maxTokens: 600,
-      rawText: true,
-    })
+    const result = await openrouterCall(
+      appendManuelReferenceToSystem(HELP_SYSTEM, { retrievalQuery: message, maxChars: 10_000 }),
+      messages,
+      {
+        maxTokens: 600,
+        rawText: true,
+      },
+    )
 
     const reply =
       typeof result === 'string' && result.trim()

@@ -16,6 +16,7 @@ import {
 import { openrouterCall } from '@/lib/openrouter'
 import { getTuteurPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction } from '@/lib/prompts'
+import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
 import { getCardInfo } from '@/lib/card-info'
 import { isValidCard } from '@/lib/prompts'
 
@@ -146,7 +147,9 @@ export async function POST(req: NextRequest) {
   }
   oaiMessages.push({ role: 'user', content: userContent })
 
-  const systemPrompt = await getTuteurPrompt()
+  const systemPrompt = appendManuelReferenceToSystem(await getTuteurPrompt(), {
+    retrievalQuery: `${cardName}\n${transcript}`.slice(0, 6_000),
+  })
 
   if (billTuteurSap && uid > 0) {
     const bal = await getSapBalance(uid)

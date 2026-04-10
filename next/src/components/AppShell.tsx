@@ -29,7 +29,7 @@ import FleurPage from '@/views/FleurPage'
 import FleurBetaPage from '@/views/FleurBetaPage'
 import DuoPage from '@/views/DuoPage'
 import MesFleursPage from '@/views/MesFleursPage'
-import CardsPage from '@/views/CardsPage'
+import ManuelOnlinePage from '@/views/ManuelOnlinePage'
 import DreamscapePage from '@/views/DreamscapePage'
 import DreamscapeHistoriquePage from '@/views/DreamscapeHistoriquePage'
 import DreamscapePartagePage from '@/views/DreamscapePartagePage'
@@ -335,13 +335,6 @@ function AppRoutes() {
         </Layout>
       </ProtectedLayout>
     ),
-    cartes: (
-      <ProtectedLayout>
-        <Layout>
-          <CardsPage />
-        </Layout>
-      </ProtectedLayout>
-    ),
     coaches: (
       <ProtectedLayout>
         <Layout>
@@ -613,6 +606,21 @@ function AppRoutes() {
           <ProtectedLayout adminOnly>
             <Layout>
               <DiagnosticPage />
+            </Layout>
+          </ProtectedLayout>
+        </div>
+      </Suspense>
+    )
+  }
+
+  if (route === 'cartes') {
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
+          <LocaleSync />
+          <ProtectedLayout>
+            <Layout>
+              <ManuelOnlinePage chapterSlug={subRoute} />
             </Layout>
           </ProtectedLayout>
         </div>

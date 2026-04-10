@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
 import { getLangInstruction } from '@/lib/prompts'
+import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
 
 export const dynamic = 'force-dynamic'
 
@@ -130,7 +131,15 @@ export async function POST(req: NextRequest) {
   const messages = [...oaiMessages, { role: 'user' as const, content: userContent }]
 
   if (process.env.OPENROUTER_API_KEY?.trim()) {
-    const result = await openrouterCall(SYSTEM, messages, {
+    const tail = oaiMessages
+      .slice(-8)
+      .map((m) => m.content)
+      .join('\n')
+    const doorSystem = appendManuelReferenceToSystem(SYSTEM, {
+      retrievalQuery: `${doorName} ${tail}`.slice(0, 4_000),
+      maxChars: 10_000,
+    })
+    const result = await openrouterCall(doorSystem, messages, {
       maxTokens: 1200,
       responseFormatJson: true,
     })

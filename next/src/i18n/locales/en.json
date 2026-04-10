@@ -97,6 +97,22 @@
     "optional": "optional"
   },
 
+  "manuel": {
+    "pageTitle": "Tarot manual",
+    "pageDesc": "Fleur d'AmOurs Tarot guide: interactive table of contents and chapters.",
+    "title": "Manual — Fleur d'AmOurs Tarot",
+    "toc": "Table of contents",
+    "search": "Search a section…",
+    "intro": "This manual mirrors the Fleur d'AmOurs Tarot booklet: introduction, spreads, cards, and keyword tables. Use the table of contents to browse.",
+    "introHint": "Tip: search filters section titles.",
+    "empty": "Section not found.",
+    "backToc": "Back to contents",
+    "prev": "Previous",
+    "next": "Next",
+    "manifestMissing": "Manual unavailable",
+    "manifestMissingHint": "Static files (manifest.json and chapters) must exist under public/manuel/. Copy docs/MANUEL into next/public/manuel and rebuild."
+  },
+
   "admin": {
     "impersonationBanner": "Connected as {name}",
     "impersonationDisconnect": "Return to admin profile",
@@ -117,7 +133,7 @@
     "pratique": "Practice",
     "drawTirage": "Draw a card",
     "cartes": "Cards",
-    "cartesTooltip": "Browse Fleur d'Amours tarot cards and sheets.",
+    "cartesTooltip": "Online manual for the Fleur d'AmOurs Tarot (contents and chapters).",
     "chat": "Support",
     "homeTitle": "My Garden. My Garden.",
     "mesFleursTitle": "View your Flowers (My Flower and Duo).",

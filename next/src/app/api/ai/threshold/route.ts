@@ -7,6 +7,7 @@ import { requireAuth } from '@/lib/api-auth'
 import { openrouterCall } from '@/lib/openrouter'
 import { getThresholdPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction } from '@/lib/prompts'
+import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,7 +53,10 @@ export async function POST(req: NextRequest) {
     getLangInstruction(locale)
 
   if (process.env.OPENROUTER_API_KEY) {
-    const systemPrompt = await getThresholdPrompt()
+    const systemPrompt = appendManuelReferenceToSystem(await getThresholdPrompt(), {
+      retrievalQuery: firstWords,
+      maxChars: 8_000,
+    })
     const result = await openrouterCall(
       systemPrompt,
       [{ role: 'user', content: msg }],

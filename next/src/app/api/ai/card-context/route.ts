@@ -7,6 +7,7 @@ import { requireAuth } from '@/lib/api-auth'
 import { getCardInfo } from '@/lib/card-info'
 import { openrouterCall } from '@/lib/openrouter'
 import { getLangInstruction } from '@/lib/prompts'
+import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,11 +68,14 @@ export async function POST(req: NextRequest) {
       `En 2–3 phrases maximum, propose un texte bref, poétique et invitant — pas de conseil prescriptif — qui relie cette carte au vécu évoqué (ou ouvre doucement la réflexion si l’historique est vide).` +
       getLangInstruction(locale)
 
-    const raw = await openrouterCall(
+    const sys = appendManuelReferenceToSystem(
       `Tu réponds UNIQUEMENT par un JSON {"context":"string"} — une seule clé, texte court (2–3 phrases). Pas de markdown.`,
-      [{ role: 'user', content: userContent }],
-      { maxTokens: 400, responseFormatJson: true }
+      { retrievalQuery: `${cardName} ${context} ${lines}`.slice(0, 3_000), maxChars: 8_000 },
     )
+    const raw = await openrouterCall(sys, [{ role: 'user', content: userContent }], {
+      maxTokens: 400,
+      responseFormatJson: true,
+    })
 
     if (raw && typeof raw === 'object') {
       const c = String((raw as Record<string, unknown>).context ?? '').trim()
