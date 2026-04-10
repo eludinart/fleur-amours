@@ -477,7 +477,8 @@
     "exportError": "Erreur lors de l'export",
     "imageDownloaded": "Image téléchargée",
     "pdfDownloaded": "PDF téléchargé",
-    "tirageShareText": "Découvrez Fleur d'AmOurs — Tirages intuitifs"
+    "tirageShareText": "Découvrez Fleur d'AmOurs — Tirages intuitifs",
+    "tirageNeedsServerId": "Ce tirage n’est pas enregistré sur le serveur (hors connexion ou identifiant local). Connectez-vous pour obtenir un lien public avec aperçu sur les réseaux sociaux."
   },
 
   "dreamscapeCanvas": {

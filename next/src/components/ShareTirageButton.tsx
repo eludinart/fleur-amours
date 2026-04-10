@@ -8,6 +8,7 @@ import { useResolvedShareUrl } from '@/hooks/useResolvedShareUrl'
 import { canUseNativeShare } from '@/utils/share-social'
 import { ShareSocialButtons } from './ShareSocialButtons'
 import { ogMetaDescriptionTirage, ogMetaTitleTirage } from '@/lib/og-share-copy'
+import { getTirageShareableId } from '@/lib/tirage-share-id'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
@@ -65,9 +66,8 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
   useStore((s) => s.locale)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const publicPageUrl = useResolvedShareUrl(
-    reading?.id ? `/tirage/partage/${reading.id}` : '/tirage'
-  )
+  const shareId = getTirageShareableId(reading as Record<string, unknown> | undefined)
+  const publicPageUrl = useResolvedShareUrl(shareId ? `/tirage/partage/${shareId}` : false)
 
   const text = buildShareText(reading || {})
 
@@ -79,13 +79,14 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
 
   // Inject OG meta for current page when a reading is open
   useEffect(() => {
-    if (!reading?.id || typeof window === 'undefined') return
-    const ogImgUrl = `${window.location.origin}${basePath}/api/og/tirage?id=${reading.id}`
-    const cardName = reading.type === 'simple'
-      ? (reading.card?.name || '')
-      : (reading.cards?.map((c) => c.name).join(' · ') || '')
+    if (!shareId || typeof window === 'undefined') return
+    const ogImgUrl = `${window.location.origin}${basePath}/api/og/tirage?id=${shareId}`
+    const cardName =
+      reading?.type === 'simple'
+        ? (reading.card?.name || '')
+        : (reading?.cards?.map((c) => c.name).join(' · ') || '')
     const synthSnippet =
-      reading.type === 'simple' ? (reading.card?.synth ?? null) : (reading.synthesis ?? null)
+      reading?.type === 'simple' ? (reading.card?.synth ?? null) : (reading?.synthesis ?? null)
     const title = ogMetaTitleTirage(cardName)
     const desc = ogMetaDescriptionTirage(cardName || 'tarot', synthSnippet)
     const metas: Array<{ attr: string; key: string; content: string }> = [
@@ -106,7 +107,7 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
       }
       el.setAttribute('content', content)
     })
-  }, [reading])
+  }, [reading, shareId])
 
   const handleShare = useCallback(async () => {
     if (!publicPageUrl) {
@@ -150,6 +151,10 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{t('common.share')}</p>
             {publicPageUrl ? (
               <ShareSocialButtons payload={sharePayload} onCopyLink={() => setMenuOpen(false)} variant="labels" />
+            ) : reading && !shareId ? (
+              <p className="text-sm text-amber-800 dark:text-amber-200 py-2 leading-snug">
+                {t('share.tirageNeedsServerId')}
+              </p>
             ) : (
               <p className="text-sm text-slate-600 dark:text-slate-300 py-2">{t('share.linkPreparing')}</p>
             )}

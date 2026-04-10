@@ -454,7 +454,8 @@
     "exportError": "Export error",
     "imageDownloaded": "Image downloaded",
     "pdfDownloaded": "PDF downloaded",
-    "tirageShareText": "Discover Fleur d'AmOurs — Intuitive readings"
+    "tirageShareText": "Discover Fleur d'AmOurs — Intuitive readings",
+    "tirageNeedsServerId": "This draw isn’t saved on the server (offline or local id). Sign in to get a public link with a proper social preview."
   },
 
   "dreamscapeCanvas": {

@@ -131,10 +131,14 @@ export function OgBrandHeader({
 export function OgConversionFooter({
   ctaLabel,
   variant,
+  leftHint,
 }: {
   ctaLabel: string
   variant: 'dark' | 'warm'
+  /** Texte réassurance à gauche (conversion). Défaut : invitation générique. */
+  leftHint?: string
 }) {
+  const hint = leftHint ?? 'Un clic pour rejoindre l’expérience'
   return (
     <div
       style={{
@@ -148,23 +152,26 @@ export function OgConversionFooter({
         alignItems: 'center',
         justifyContent: 'space-between',
         background:
-          variant === 'dark' ? 'rgba(2,6,23,0.72)' : 'rgba(253,248,240,0.92)',
-        borderTop: variant === 'dark' ? '1px solid rgba(139,92,246,0.22)' : '1px solid rgba(180,120,80,0.18)',
+          variant === 'dark' ? 'rgba(2,6,23,0.78)' : 'rgba(253,248,240,0.92)',
+        borderTop: variant === 'dark' ? '1px solid rgba(139,92,246,0.28)' : '1px solid rgba(180,120,80,0.18)',
       }}
     >
       <div
         style={{
-          fontSize: 15,
-          color: variant === 'dark' ? 'rgba(226,232,240,0.75)' : 'rgba(80,50,30,0.72)',
+          fontSize: 14,
+          fontWeight: 600,
+          color: variant === 'dark' ? 'rgba(226,232,240,0.82)' : 'rgba(80,50,30,0.72)',
           fontFamily:
             'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
+          maxWidth: 560,
+          lineHeight: 1.35,
         }}
       >
-        <span style={{ opacity: 0.9 }}>✿</span>
-        <span>Un clic pour rejoindre l’expérience</span>
+        <span style={{ opacity: 0.9, flexShrink: 0 }}>✿</span>
+        <span>{hint}</span>
       </div>
       <div
         style={{
@@ -175,16 +182,16 @@ export function OgConversionFooter({
               ? 'linear-gradient(120deg, #7c3aed 0%, #db2777 55%, #c026d3 100%)'
               : `linear-gradient(120deg, #b45309 0%, #c2410c 45%, #7c3aed 100%)`,
           color: '#ffffff',
-          fontSize: 17,
-          fontWeight: 700,
-          padding: '12px 26px',
+          fontSize: 18,
+          fontWeight: 800,
+          padding: '13px 28px',
           borderRadius: 999,
-          letterSpacing: '-0.01em',
+          letterSpacing: '-0.02em',
           fontFamily:
             'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
           boxShadow:
             variant === 'dark'
-              ? '0 10px 36px rgba(124,58,237,0.45), 0 2px 8px rgba(0,0,0,0.35)'
+              ? '0 12px 40px rgba(124,58,237,0.5), 0 2px 10px rgba(0,0,0,0.4)'
               : '0 10px 32px rgba(180,83,9,0.28), 0 2px 8px rgba(0,0,0,0.08)',
         }}
       >

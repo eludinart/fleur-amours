@@ -26,15 +26,20 @@ export const OG_FLEUR_SUB =
 export const OG_FLEUR_CTA = 'Faire le test gratuit'
 export const OG_FLEUR_CHIPS = ['8 dimensions', 'Visuel unique', 'Interprétation guidée'] as const
 
-/** Tirage tarot */
+/** Tirage tarot — visuel OG orienté conversion (aperçu riche + CTA clair) */
 export const OG_TAROT_KICKER_SIMPLE = 'Tirage en ligne'
+/** Quand le tirage est chargé depuis la base : ancre « contenu réel » pour le scroll social */
+export const OG_TAROT_KICKER_SHARED = 'Tirage partagé avec vous'
 export const OG_TAROT_KICKER_4 = 'Tirage 4 portes'
-export const OG_TAROT_HOOK_SIMPLE = 'Une carte pour éclairer votre chemin.'
-export const OG_TAROT_HOOK_4 = 'Quatre cartes, une lecture d’ensemble.'
-export const OG_TAROT_SUB = 'Tarot d’accompagnement — symboles, cartes et synthèse.'
-export const OG_TAROT_CTA = 'Tirer mes cartes gratuitement'
-export const OG_TAROT_CHIPS_SIMPLE = ['Intention', 'Symbolique', 'Synthèse'] as const
-export const OG_TAROT_CHIPS_4 = ['4 positions', 'Vue d’ensemble', 'Message clair'] as const
+export const OG_TAROT_HOOK_SIMPLE = 'Donnez un sens doux à ce que vous vivez.'
+export const OG_TAROT_HOOK_4 = 'Quatre cartes pour une lecture d’ensemble claire.'
+export const OG_TAROT_SUB =
+  'Symboles, intention et synthèse — tout sur Fleur d’AmOurs, en quelques minutes.'
+export const OG_TAROT_CTA = 'Voir ce tirage gratuitement'
+/** Sous le pied de carte OG (réassurance clic) */
+export const OG_TAROT_FOOTER_MICRO = 'Gratuit pour découvrir · bienveillant · sans engagement'
+export const OG_TAROT_CHIPS_SIMPLE = ['Carte + intention', 'Lecture guidée', 'Synthèse'] as const
+export const OG_TAROT_CHIPS_4 = ['4 portes', 'Vue d’ensemble', 'Message actionnable'] as const
 
 /** Meta descriptions max ~155 chars for social snippets */
 export function ogMetaDescriptionDreamscape(synthesisSnippet: string | null | undefined): string {
@@ -60,7 +65,7 @@ export function ogMetaDescriptionTirage(cardHint: string, synthSnippet: string |
   const mid = synthSnippet?.trim()
     ? `« ${synthSnippet.trim().slice(0, 75)}${synthSnippet.length > 75 ? '…' : ''} » `
     : ''
-  const close = 'Tirez vos cartes gratuitement et recevez votre synthèse.'
+  const close = 'Voir ce tirage sur Fleur d’AmOurs — gratuit pour commencer, synthèse guidée.'
   return (open + mid + close).slice(0, 300)
 }
 

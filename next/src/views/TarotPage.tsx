@@ -816,6 +816,24 @@ function SimpleDraw({
         </div>
       )}
 
+      {drawState === STATE.REVEALED && drawnCard && contentReady && currentReadingId && (
+        <div className="flex justify-center relative z-[1]">
+          <ShareTirageButton
+            reading={{
+              id: currentReadingId,
+              type: 'simple',
+              card: {
+                name: (getCardTranslated(drawnCard, locale) || drawnCard).name ?? '',
+                synth: (getCardTranslated(drawnCard, locale) || drawnCard).synth,
+              },
+              intention: frozenIntention,
+              createdAt: new Date().toISOString(),
+            }}
+            showLabel
+          />
+        </div>
+      )}
+
       {drawState === STATE.REVEALED && drawnCard && contentReady && (
         <SimpleReflection
           readingId={currentReadingId}
@@ -1140,6 +1158,28 @@ function FourDoorsDraw({
               {synthesis}
             </p>
           )}
+        </div>
+      )}
+
+      {synthesis && currentReadingId && (
+        <div
+          className="flex justify-center"
+          style={{ animation: 'content-rise 0.6s ease 3.5s both' }}
+        >
+          <ShareTirageButton
+            reading={{
+              id: currentReadingId,
+              type: 'four',
+              cards: drawnCards.filter((c): c is CardType => Boolean(c)).map((c) => {
+                const ct = getCardTranslated(c, locale) || c
+                return { name: ct.name ?? '', synth: ct.synth }
+              }),
+              synthesis,
+              intention: frozenIntention,
+              createdAt: new Date().toISOString(),
+            }}
+            showLabel
+          />
         </div>
       )}
 
