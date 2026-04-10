@@ -447,7 +447,10 @@
     "exportError": "Error al exportar",
     "imageDownloaded": "Imagen descargada",
     "pdfDownloaded": "PDF descargado",
-    "tirageShareText": "Descubre Fleur d'AmOurs — Tiradas intuitivas"
+    "tirageShareText": "Descubre Fleur d'AmOurs — Tiradas intuitivas",
+    "encourageDreamscapeTitle": "Compartir este paseo onírico (enlace + vista previa social)",
+    "dreamscapeShareText": "Descubre un Paseo Onírico en Fleur d'AmOurs 🌸",
+    "dreamscapeShareError": "No se pudo obtener el enlace público de compartir."
   },
 
   "dreamscapeCanvas": {

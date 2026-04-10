@@ -8,9 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { dreamscapeApi } from '@/api/dreamscape'
 import { aiApi } from '@/api/ai'
 import { t } from '@/i18n'
-import { getShareBaseUrl, buildSocialCardImage } from '@/utils/dreamscapeShare'
-import { canUseNativeShare } from '@/utils/share-social'
-import { ShareSocialButtons } from '@/components/ShareSocialButtons'
+import { ShareDreamscapeButton } from '@/components/ShareDreamscapeButton'
 import { proxyImageUrl } from '@/lib/api-client'
 import { toast } from '@/hooks/useToast'
 import { FlowerSVG } from '@/components/FlowerSVG'
@@ -69,9 +67,6 @@ export default function DreamscapeHistoriquePage() {
   const [expandedId, setExpandedId] = useState(null)
   const [summaries, setSummaries] = useState({}) // id -> summary
   const [loadingSummary, setLoadingSummary] = useState({}) // id -> true
-  const [shareLoadingId, setShareLoadingId] = useState(null)
-  /** Même payload pour partage natif et menu réseaux (aligné tirages / fin de promenade). */
-  const [shareMenu, setShareMenu] = useState(null)
   /** Régénération PNG : file d’attente { id, slots, petals } */
   const [regenQueue, setRegenQueue] = useState([])
   const snapshotBoxRef = useRef(null)
@@ -288,10 +283,7 @@ export default function DreamscapeHistoriquePage() {
                 >
                   <button
                     type="button"
-                    onClick={() => {
-                      setExpandedId(isExpanded ? null : item.id)
-                      if (isExpanded) setShareMenu((m) => (m?.itemId === item.id ? null : m))
-                    }}
+                    onClick={() => setExpandedId(isExpanded ? null : item.id)}
                     className="w-full text-left p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors flex flex-col gap-2"
                   >
                     <p className="text-sm text-slate-700 dark:text-slate-200 italic line-clamp-2 leading-relaxed">
@@ -490,74 +482,14 @@ export default function DreamscapeHistoriquePage() {
                                 {t('dreamscapeHistorique.resumeBtn')}
                               </button>
                             )}
-                            <div className="flex gap-2 flex-wrap relative">
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  setShareLoadingId(item.id)
-                                  try {
-                                    const res = await dreamscapeApi.share(item.id)
-                                    const base = getShareBaseUrl()
-                                    const fullUrl = `${base}${res.shareUrl || `/dreamscape/partage/${res.shareToken}`}`
-                                    const poeticSnippet = item.poeticReflection
-                                      ? ` « ${item.poeticReflection.slice(0, 80)}${item.poeticReflection.length > 80 ? '…' : ''} »`
-                                      : ''
-                                    const sharePayload = {
-                                      url: fullUrl,
-                                      title: 'Ma Promenade Onirique — Fleur d\'AmOurs',
-                                      text: `J'ai traversé les cartes oniriques de Fleur d'AmOurs.${poeticSnippet} 🌸`,
-                                    }
-                                    if (canUseNativeShare()) {
-                                      try {
-                                        const files = []
-                                        if (item.snapshot) {
-                                          try {
-                                            const socialImg = await buildSocialCardImage(item.snapshot, item.poeticReflection)
-                                            if (socialImg) {
-                                              const imgRes = await fetch(socialImg)
-                                              const blob = await imgRes.blob()
-                                              files.push(new File([blob], `promenade-${item.id}.png`, { type: 'image/png' }))
-                                            }
-                                          } catch { /* ignore */ }
-                                        }
-                                        await navigator.share({
-                                          ...sharePayload,
-                                          ...(files.length ? { files } : {}),
-                                        })
-                                        toast(t('share.shareSuccess'), 'success')
-                                      } catch (e) {
-                                        if ((e as Error).name !== 'AbortError') {
-                                          setShareMenu({ itemId: item.id, payload: sharePayload })
-                                        }
-                                      }
-                                    } else {
-                                      setShareMenu({ itemId: item.id, payload: sharePayload })
-                                    }
-                                  } catch (e) {
-                                    toast(e?.message || 'Impossible de partager', 'error')
-                                  } finally {
-                                    setShareLoadingId(null)
-                                  }
-                                }}
-                                disabled={shareLoadingId === item.id}
-                                className="flex-1 min-w-[140px] px-4 py-2.5 rounded-xl bg-violet-500/20 border border-violet-400/40 text-violet-100 font-semibold hover:bg-violet-500/30 hover:border-violet-400/60 transition-colors disabled:opacity-50"
-                              >
-                                {shareLoadingId === item.id ? '…' : '📤 ' + t('common.share')}
-                              </button>
-                              {shareMenu?.itemId === item.id && shareMenu.payload && (
-                                <>
-                                  <div className="fixed inset-0 z-40" onClick={() => setShareMenu(null)} aria-hidden="true" />
-                                  <div className="absolute left-0 top-full mt-1 z-50 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-3 min-w-[200px]">
-                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{t('common.share')}</p>
-                                    <ShareSocialButtons
-                                      payload={shareMenu.payload}
-                                      onCopyLink={() => setShareMenu(null)}
-                                      variant="labels"
-                                      encourageLine={t('share.encourageDreamscapeMenu')}
-                                    />
-                                  </div>
-                                </>
-                              )}
+                            <div className="flex gap-2 flex-wrap relative items-start flex-1 min-w-[140px]">
+                              <ShareDreamscapeButton
+                                savedId={item.id}
+                                poeticReflection={item.poeticReflection}
+                                menuAlign="left"
+                                showEncouragement
+                                className="w-full items-stretch [&_button]:w-full"
+                              />
                             </div>
                           </div>
                         </div>

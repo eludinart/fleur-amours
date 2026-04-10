@@ -16,8 +16,7 @@ import { DreamscapeRosace } from '@/components/DreamscapeRosace'
 import { FLOWER_OFFSET } from '@/config/dreamscapeLayout'
 import { buildSlotsFromSaved, initSlots } from '@/lib/dreamscape-slots'
 import { captureDreamscapeDomToDataUrl } from '@/lib/dreamscape-snapshot-capture'
-import { getShareBaseUrl } from '@/utils/dreamscapeShare'
-import { ShareSocialButtons } from '@/components/ShareSocialButtons'
+import { ShareDreamscapeButton } from '@/components/ShareDreamscapeButton'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 
@@ -68,7 +67,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
   const [closeModalSynthesis, setCloseModalSynthesis] = useState<string>('')
   const [closeModalSections, setCloseModalSections] = useState<any>(null)
   const [closeModalSavedId, setCloseModalSavedId] = useState<number | null>(null)
-  const [closeModalShareUrl, setCloseModalShareUrl] = useState<string | null>(null)
+  const [closeModalShareToken, setCloseModalShareToken] = useState<string | null>(null)
   const [hardCloseMessage, setHardCloseMessage] = useState<string>('')
   const [dreamscapeConfig, setDreamscapeConfig] = useState(() => ({
     close_mode: 'model', // 'model'|'manual'|'auto' (auto kept for backward behavior)
@@ -197,7 +196,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
     setCloseModalSynthesis('')
     setCloseModalSections(null)
     setCloseModalSavedId(null)
-    setCloseModalShareUrl(null)
+    setCloseModalShareToken(null)
     revealOrderRef.current = 0
     autoEndFormTriggeredRef.current = false
     allRevealedRef.current = false
@@ -610,12 +609,10 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
 
       if (savedId) {
         try {
-          const shareRes = await dreamscapeApi.share(String(savedId)) as any
-          const base = getShareBaseUrl()
-          const fullUrl = `${base}${shareRes?.shareUrl || `/dreamscape/partage/${shareRes?.shareToken}`}`
-          setCloseModalShareUrl(fullUrl)
+          const shareRes = (await dreamscapeApi.share(String(savedId))) as { shareToken?: string }
+          setCloseModalShareToken(shareRes?.shareToken ?? null)
         } catch {
-          setCloseModalShareUrl(null)
+          setCloseModalShareToken(null)
         }
       }
 
@@ -1067,7 +1064,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
                 />
               </div>
             )}
-            {closeModalStage === 'saved' && closeModalShareUrl && (
+            {closeModalStage === 'saved' && closeModalSavedId != null && (
               <div className="rounded-xl bg-slate-900/60 border border-white/10 p-3">
                 <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
                   {t('share.dreamscapeShareTitle')}
@@ -1087,18 +1084,20 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
                     ? closeModalSections.actions_a_oeuvrer.filter(Boolean).slice(0, 2)
                     : []
                   const actionsTxt = actions.length ? ` Actions: ${actions.join(' / ')}` : ''
-                  const text = (snippet ? `« ${snippet} »` : 'Ma promenade onirique.') + actionsTxt
+                  const override =
+                    (snippet ? `« ${snippet} »` : 'Ma promenade onirique.') + actionsTxt
                   return (
-                <ShareSocialButtons
-                  payload={{
-                    url: closeModalShareUrl,
-                    title: 'Ma Promenade Onirique — Fleur d\'AmOurs',
-                    text,
-                  }}
-                  variant="labels"
-                  encourageLine={t('share.encourageDreamscapeMenu')}
-                  encourageOnDark
-                />
+                    <div className="flex flex-col items-stretch gap-2">
+                      <ShareDreamscapeButton
+                        savedId={closeModalSavedId}
+                        initialShareToken={closeModalShareToken}
+                        poeticReflection={poeticReflection?.trim() || null}
+                        shareTextOverride={override}
+                        appearance="onDark"
+                        menuAlign="left"
+                        showEncouragement={false}
+                      />
+                    </div>
                   )
                 })()}
                 <p className="mt-2 text-[11px] text-white/50 leading-relaxed">

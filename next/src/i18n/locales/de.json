@@ -472,7 +472,10 @@
     "exportError": "Exportfehler",
     "imageDownloaded": "Bild heruntergeladen",
     "pdfDownloaded": "PDF heruntergeladen",
-    "tirageShareText": "Entdecke Fleur d'AmOurs — Intuitive Lesungen"
+    "tirageShareText": "Entdecke Fleur d'AmOurs — Intuitive Lesungen",
+    "encourageDreamscapeTitle": "Diesen Traumwandel teilen (Link + Social-Vorschau)",
+    "dreamscapeShareText": "Entdecke einen Traumwandel auf Fleur d'AmOurs 🌸",
+    "dreamscapeShareError": "Öffentlicher Freigabelink konnte nicht abgerufen werden."
   },
 
   "dreamscapeCanvas": {

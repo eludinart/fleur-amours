@@ -472,7 +472,10 @@
     "exportError": "Errore durante l'esportazione",
     "imageDownloaded": "Immagine scaricata",
     "pdfDownloaded": "PDF scaricato",
-    "tirageShareText": "Scopri Fleur d'AmOurs — Letture intuitive"
+    "tirageShareText": "Scopri Fleur d'AmOurs — Letture intuitive",
+    "encourageDreamscapeTitle": "Condividi questa passeggiata onirica (link + anteprima social)",
+    "dreamscapeShareText": "Scopri una Passeggiata Onirica su Fleur d'AmOurs 🌸",
+    "dreamscapeShareError": "Impossibile ottenere il link di condivisione pubblico."
   },
 
   "dreamscapeCanvas": {

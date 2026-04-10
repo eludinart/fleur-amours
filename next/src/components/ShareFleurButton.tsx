@@ -5,7 +5,7 @@ import { toast } from '@/hooks/useToast'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { useResolvedShareUrl } from '@/hooks/useResolvedShareUrl'
-import { canUseNativeShare } from '@/utils/share-social'
+import { canUseNativeShare, sharePayloadForNativeWithFiles } from '@/utils/share-social'
 import { ShareSocialButtons } from './ShareSocialButtons'
 import { ogMetaDescriptionFleur, ogMetaTitleFleur } from '@/lib/og-share-copy'
 
@@ -128,10 +128,13 @@ export function ShareFleurButton({
         const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'))
         if (blob) {
           const file = new File([blob], filename, { type: 'image/png' })
-          await navigator.share({
+          const nativePayload = sharePayloadForNativeWithFiles({
+            url: fullUrl,
             title: sharePayload.title,
             text: sharePayload.text,
-            url: fullUrl,
+          })
+          await navigator.share({
+            ...nativePayload,
             files: [file],
           })
           toast(t('share.shareSuccess'), 'success')

@@ -13,6 +13,18 @@ export type SharePayload = {
 }
 
 /**
+ * Partage natif avec `files` : beaucoup de cibles (WhatsApp, etc.) n’affichent pas le champ `url`.
+ * On recopie le lien public dans `text` pour rester aligné avec le menu ShareSocialButtons.
+ */
+export function sharePayloadForNativeWithFiles(payload: SharePayload): SharePayload {
+  const url = (payload.url || '').trim()
+  if (!url) return payload
+  const text = (payload.text || '').trim()
+  if (text.includes(url)) return payload
+  return { ...payload, text: text ? `${text}\n\n${url}` : url }
+}
+
+/**
  * Twitter/X — intent tweet
  */
 export function getTwitterShareUrl(payload: SharePayload): string {
