@@ -60,9 +60,15 @@ type ShareTirageButtonProps = {
     synthesis?: string
   }
   showLabel?: boolean
+  /** Texte d’accroche sous le bouton (écran résultat), pas dans la liste */
+  showEncouragement?: boolean
 }
 
-export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButtonProps) {
+export function ShareTirageButton({
+  reading,
+  showLabel = true,
+  showEncouragement = false,
+}: ShareTirageButtonProps) {
   useStore((s) => s.locale)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -132,14 +138,17 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
     }
   }, [publicPageUrl, text])
 
+  const shareTitle = showEncouragement ? t('share.encourageTirageTitle') : t('common.share')
+
   return (
-    <div className="relative">
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative">
       <button
         type="button"
         onClick={handleShare}
         className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200/60 dark:border-violet-800/60 hover:bg-violet-100 dark:hover:bg-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700 transition-colors`}
-        title={t('common.share')}
-        aria-label={t('common.share')}
+        title={shareTitle}
+        aria-label={shareTitle}
       >
         <span>📤</span>
         {showLabel && <span>{t('common.share')}</span>}
@@ -150,7 +159,12 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
           <div className="absolute right-0 top-full mt-1 z-50 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-3 min-w-[200px]">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{t('common.share')}</p>
             {publicPageUrl ? (
-              <ShareSocialButtons payload={sharePayload} onCopyLink={() => setMenuOpen(false)} variant="labels" />
+              <ShareSocialButtons
+                payload={sharePayload}
+                onCopyLink={() => setMenuOpen(false)}
+                variant="labels"
+                encourageLine={t('share.encourageTirageMenu')}
+              />
             ) : reading && !shareId ? (
               <p className="text-sm text-amber-800 dark:text-amber-200 py-2 leading-snug">
                 {t('share.tirageNeedsServerId')}
@@ -161,6 +175,12 @@ export function ShareTirageButton({ reading, showLabel = true }: ShareTirageButt
           </div>
         </>
       )}
+      </div>
+      {showEncouragement && shareId && publicPageUrl ? (
+        <p className="text-[11px] text-center text-slate-500 dark:text-slate-400 max-w-[20rem] leading-snug px-1">
+          {t('share.encourageTirage')}
+        </p>
+      ) : null}
     </div>
   )
 }

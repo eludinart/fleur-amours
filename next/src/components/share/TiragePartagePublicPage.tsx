@@ -13,7 +13,7 @@ const fallback = (
 export function TiragePartagePublicPage() {
   return (
     <Suspense fallback={fallback}>
-      <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-900">
+      <div className="flex min-h-[100dvh] min-h-screen flex-1 flex-col overflow-hidden">
         <LocaleSync />
         <TiragePartagePage />
       </div>

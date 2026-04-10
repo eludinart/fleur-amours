@@ -125,13 +125,14 @@ function ResultView({ result, answers: answersProp, onReset }) {
 
       <FleurInterpretation scores={scores} answers={answersForAi} resultId={result.id || result.result_id} interpretation={result.interpretation} />
 
-      <div className="flex justify-center gap-2 flex-wrap">
+      <div className="flex justify-center gap-2 flex-wrap items-start">
         <ExportPlan14j pdfRef={fleurPdfRef} imageRef={flowerRef} />
         <ShareFleurButton
           targetRef={flowerRef}
           shareUrl={result.id ? `/fleur?result=${result.id}` : result.result_id ? `/fleur?result=${result.result_id}` : '/fleur'}
           filename="ma-fleur.png"
           label={t('fleur.shareFleur')}
+          showEncouragement
         />
       </div>
 

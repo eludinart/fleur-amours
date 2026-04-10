@@ -24,63 +24,13 @@ import {
   OgKicker,
   OgSubhook,
 } from '@/lib/og-share-chrome'
+import { OgFlowerGraphic } from '@/lib/og-flower-graphic'
 import { PETAL_DEFS, PETAL_COLOR_UNKNOWN_DOMINANT } from '@/lib/petal-theme'
 
 export const dynamic = 'force-dynamic'
 
 const W = 1200
 const H = 627
-
-function petalPath(halfLen: number, width: number): string {
-  const tip = halfLen * 2
-  return [
-    `M 0 0`,
-    `C ${-width * 1.1} ${-halfLen * 0.4}  ${-width * 0.8} ${-tip * 0.7}  0 ${-tip}`,
-    `C ${width * 0.8}  ${-tip * 0.7}   ${width * 1.1}  ${-halfLen * 0.4}  0 0`,
-    `Z`,
-  ].join(' ')
-}
-
-function FlowerOG({ scores, dominant }: { scores: Record<string, number>; dominant: string | null }) {
-  const CENTER = 120
-  const SIZE = 260
-  const MIN_LEN = 22
-  const MAX_LEN = 88
-  const PETAL_W = 24
-
-  const vals = Object.values(scores).filter((v) => typeof v === 'number')
-  const dataMax = vals.length ? Math.max(...vals) : 1
-  const scale = dataMax > 0 ? dataMax : 1
-
-  return (
-    <svg
-      width={SIZE}
-      height={SIZE}
-      viewBox={`-${CENTER} -${CENTER} ${SIZE * 2} ${SIZE * 2}`}
-    >
-      {PETAL_DEFS.map((p) => {
-        const normalized = Math.min(1, Math.max(0, (scores[p.id] ?? 0) / scale))
-        const halfLen = MIN_LEN + normalized * (MAX_LEN - MIN_LEN)
-        const path = petalPath(halfLen, PETAL_W)
-        const isHigh = p.id === dominant
-        return (
-          <g key={p.id} transform={`rotate(${p.angle}, 0, 0)`}>
-            <path
-              d={path}
-              fill={p.color}
-              opacity={isHigh ? 0.97 : 0.68}
-              stroke={p.color}
-              strokeWidth={isHigh ? 2 : 0.6}
-              strokeOpacity={0.35}
-            />
-          </g>
-        )
-      })}
-      <circle cx={0} cy={0} r={16} fill="white" opacity={0.95} />
-      <circle cx={0} cy={0} r={9} fill="#faf6f0" />
-    </svg>
-  )
-}
 
 function truncate(s: string | null | undefined, max: number): string {
   if (!s) return ''
@@ -184,7 +134,7 @@ export async function GET(req: NextRequest) {
                 boxShadow: `0 0 80px ${dominantColor}25, 0 16px 48px rgba(45,28,14,0.08)`,
               }}
             >
-              <FlowerOG scores={scores} dominant={dominant} />
+              <OgFlowerGraphic scores={scores} dominant={dominant} size={260} center={120} minLen={22} maxLen={88} petalWidth={24} />
             </div>
           </div>
 

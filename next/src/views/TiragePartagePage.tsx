@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -7,8 +6,34 @@ import { usePathname } from 'next/navigation'
 import { t } from '@/i18n'
 import { ogMetaDescriptionTirage, ogMetaTitleTirage } from '@/lib/og-share-copy'
 import { BACK_IMG } from '@/data/tarotCards'
+import { FlowerSVG } from '@/components/FlowerSVG'
+import { ShareLandingShell, ShareLandingChipRow } from '@/components/share/ShareLandingShell'
+import { buildShareLandingPaths, tirageLandingCopy } from '@/lib/share-landing-presets'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
+
+type PublicCard = { name?: string; img?: string; synth?: string; desc?: string }
+
+type PublicReading = {
+  type?: string
+  card?: PublicCard
+  cards?: PublicCard[]
+  synthesis?: string
+  interpretation?: string
+  createdAt?: string
+  created_at?: string
+  /** Rosace Fleur d’AmOurs au moment du tirage (partage public). */
+  shareFlower?: {
+    petals: Record<string, number>
+    capturedAt?: string
+    drawPetalIds?: string[]
+  }
+}
+
+function truncate(s: string | null | undefined, max: number): string {
+  if (!s) return ''
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s
+}
 
 function formatDate(s?: string): string {
   if (!s) return '—'
@@ -16,37 +41,35 @@ function formatDate(s?: string): string {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-function proxyImg(url: string): string {
-  if (!url) return BACK_IMG
-  return url
-}
-
-function CardDisplay({ card, showName = true }: { card: { name?: string; img?: string; synth?: string }; showName?: boolean }) {
+function HeroCard({ c }: { c: PublicCard }) {
   const [imgErr, setImgErr] = useState(false)
+  const src = imgErr ? BACK_IMG : c.img || BACK_IMG
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="relative">
-        <img
-          src={imgErr ? BACK_IMG : proxyImg(card.img || '')}
-          alt={card.name || ''}
-          className="w-32 h-48 object-contain rounded-xl border border-white/10 shadow-[0_0_30px_rgba(139,92,246,0.3)]"
-          onError={() => setImgErr(true)}
-        />
-      </div>
-      {showName && card.name && (
-        <span className="px-3 py-1 rounded-full bg-violet-900/40 border border-violet-500/30 text-violet-200 text-sm font-medium">
-          {card.name}
-        </span>
-      )}
-    </div>
+    <img
+      src={src}
+      alt={c.name || ''}
+      className="max-h-[min(420px,55vh)] w-auto max-w-[min(260px,85vw)] rounded-[1.25rem] border border-violet-400/40 object-contain shadow-[0_0_72px_rgba(139,92,246,0.55),0_16px_48px_rgba(0,0,0,0.45)]"
+      onError={() => setImgErr(true)}
+    />
   )
 }
 
-function SynthPanel({ synth }: { synth: string }) {
+function DoorCard({ c }: { c: PublicCard }) {
+  const [imgErr, setImgErr] = useState(false)
+  const src = imgErr ? BACK_IMG : c.img || BACK_IMG
   return (
-    <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-      <p className="text-sm font-semibold text-violet-400 uppercase tracking-wider mb-2">Synthèse</p>
-      <p className="text-white/85 leading-relaxed italic">{synth}</p>
+    <div className="flex flex-col items-center gap-2">
+      <img
+        src={src}
+        alt={c.name || ''}
+        className="h-[min(198px,26vh)] w-auto max-w-[min(132px,24vw)] rounded-xl border border-violet-400/25 object-contain shadow-[0_0_28px_rgba(139,92,246,0.45)]"
+        onError={() => setImgErr(true)}
+      />
+      {c.name ? (
+        <span className="max-w-[8.5rem] text-center text-[11px] font-semibold leading-tight text-slate-200/90 sm:text-xs">
+          {truncate(c.name, 22)}
+        </span>
+      ) : null}
     </div>
   )
 }
@@ -55,30 +78,32 @@ export default function TiragePartagePage() {
   const pathname = usePathname()
   const id = pathname?.match(/\/tirage\/partage\/(\d+)/)?.[1] ?? null
 
-  const [reading, setReading] = useState(null)
+  const [reading, setReading] = useState<PublicReading | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) {
-      setError('Lien invalide')
+      setError(t('share.landingInvalidLink'))
       setLoading(false)
       return
     }
 
     fetch(`${basePath}/api/tarot_readings/${id}/public`)
       .then(async (res) => {
-        if (!res.ok) throw new Error('Tirage introuvable')
-        return res.json()
+        if (!res.ok) throw new Error(t('share.landingNotFound'))
+        return res.json() as Promise<PublicReading>
       })
       .then((data) => {
         setReading(data)
-        // Inject OG meta tags for social previews (client-side fallback)
         const ogImgUrl = `${window.location.origin}${basePath}/api/og/tirage?id=${id}`
         const shareUrl = window.location.href
-        const cardName = data.type === 'simple' ? (data.card?.name || '') : (data.cards?.map(c => c.name).join(' · ') || '')
+        const cardName =
+          data.type === 'simple'
+            ? data.card?.name || ''
+            : data.cards?.map((c) => c.name).join(' · ') || ''
         const synthSnippet =
-          data.type === 'simple' ? (data.card?.synth || null) : (data.synthesis || null)
+          data.type === 'simple' ? data.card?.synth || null : data.synthesis || null
         const title = ogMetaTitleTirage(cardName)
         const desc = ogMetaDescriptionTirage(cardName || 'tarot', synthSnippet)
         const metas = [
@@ -99,37 +124,53 @@ export default function TiragePartagePage() {
           let el = document.querySelector(`meta[${attr}="${key}"]`)
           if (!el) {
             el = document.createElement('meta')
-            el.setAttribute(attr, key)
+            el.setAttribute(attr, key || '')
             document.head.appendChild(el)
           }
           el.setAttribute('content', content || '')
         })
       })
-      .catch((e) => setError(e?.message || 'Tirage introuvable'))
+      .catch((e: Error) => setError(e?.message || t('share.landingNotFound')))
       .finally(() => setLoading(false))
 
-    return () => { document.title = "Fleur d'AmOurs" }
+    return () => {
+      document.title = "Fleur d'AmOurs"
+    }
   }, [id])
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6">
-        <span className="w-12 h-12 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
-        <p className="mt-4 text-white/60 text-sm">Chargement du tirage…</p>
+      <div
+        className="flex min-h-[100dvh] flex-col items-center justify-center p-6"
+        style={{
+          background: 'linear-gradient(148deg, #020617 0%, #1e1b4b 48%, #0f172a 100%)',
+        }}
+      >
+        <span className="h-12 w-12 animate-spin rounded-full border-2 border-violet-200 border-t-violet-500" />
+        <p className="mt-4 text-sm text-white/60">{t('share.landingLoadingTirage')}</p>
       </div>
     )
   }
 
   if (error || !reading) {
+    const paths = buildShareLandingPaths(basePath)
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 gap-6">
+      <div
+        className="flex min-h-[100dvh] flex-col items-center justify-center gap-6 p-6"
+        style={{
+          background: 'linear-gradient(148deg, #020617 0%, #1e1b4b 48%, #0f172a 100%)',
+        }}
+      >
         <div className="text-4xl">🃏</div>
-        <p className="text-amber-400 text-center">{error || 'Tirage introuvable'}</p>
+        <p className="text-center text-amber-400">{error || t('share.landingNotFound')}</p>
         <Link
           href={`${basePath}/tirage`}
-          className="px-6 py-3 rounded-full bg-gradient-to-r from-violet-600 to-purple-700 text-white font-medium hover:opacity-90 transition-opacity"
+          className="rounded-full bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-3 font-medium text-white transition-opacity hover:opacity-90"
         >
-          Faire mon propre tirage
+          {t('share.landingTryOwn')}
+        </Link>
+        <Link href={paths.loginHref} className="text-sm text-violet-300 underline underline-offset-2">
+          {t('share.landingLogin')}
         </Link>
       </div>
     )
@@ -138,85 +179,120 @@ export default function TiragePartagePage() {
   const isSimple = reading.type !== 'four'
   const card = reading.card
   const cards = reading.cards || []
+  const hasServerReading = true
+  const copy = tirageLandingCopy(isSimple, hasServerReading)
+  const paths = buildShareLandingPaths(basePath)
+
+  const cardName = isSimple
+    ? card?.name || t('share.landingFallbackCard')
+    : cards.map((c) => c.name).filter(Boolean).join(' · ') || t('share.landingFourTitle')
+
+  const synthText = isSimple
+    ? card?.synth || card?.desc || ''
+    : reading.synthesis || reading.interpretation || ''
+
+  const sharePetals = reading.shareFlower?.petals
+  const hasShareFlower =
+    !!sharePetals && typeof sharePetals === 'object' && Object.keys(sharePetals).length > 0
+  const shareFlowerPulseId = reading.shareFlower?.drawPetalIds?.[0] ?? null
+
+  const primaryHref = paths.primaryHref
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      {/* Ambient background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-violet-600/8 blur-[100px]" />
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-rose-600/6 blur-[100px]" />
-      </div>
+    <ShareLandingShell
+      brandName={copy.brandName}
+      brandLine={copy.brandLine}
+      freeLabel={copy.freeLabel}
+      footerMicro={copy.footerMicro}
+      primaryCta={{ href: primaryHref, label: copy.ctaLabel }}
+      secondaryCta={{ href: paths.loginHref, label: t('share.landingLogin') }}
+      variant="dark"
+    >
+      <p className="mb-6 text-center text-[11px] text-slate-500 sm:text-left">
+        <span className="text-slate-500">{formatDate(reading.createdAt || reading.created_at)}</span>
+        <span className="mx-2 text-slate-600">·</span>
+        <Link href={`${basePath}/tirage`} className="text-violet-400 hover:text-violet-300">
+          {t('share.landingBackTirage')}
+        </Link>
+      </p>
 
-      <div className="relative max-w-2xl mx-auto px-4 py-10 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Link
-            href={`${basePath}/tirage`}
-            className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
-          >
-            ← Retour
-          </Link>
-          <span className="text-xs text-white/40">{formatDate(reading.createdAt || reading.created_at)}</span>
-        </div>
-
-        {/* Title */}
-        <div className="text-center space-y-2">
-          <p className="text-xs font-semibold text-violet-400 uppercase tracking-[3px]">
-            {isSimple ? 'Tirage Simple' : 'Tirage 4 Portes'}
-          </p>
-          <h1 className="text-2xl font-bold text-white/90">
-            {isSimple ? (card?.name || 'Tirage') : cards.map(c => c.name).join(' · ')}
-          </h1>
-        </div>
-
-        {/* Cards display */}
-        {isSimple && card && (
-          <div className="flex justify-center">
-            <CardDisplay card={card} showName={false} />
+      {isSimple && card ? (
+        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center gap-8 lg:flex-row lg:items-center lg:justify-center lg:gap-6">
+          <div className="flex shrink-0 flex-col items-center justify-center gap-5 lg:w-[min(340px,38%)]">
+            {hasShareFlower ? (
+              <div className="flex flex-col items-center rounded-2xl bg-white/[0.06] p-4 ring-1 ring-violet-400/25 shadow-[0_0_48px_rgba(139,92,246,0.2)]">
+                <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200/90">
+                  {t('share.landingYourFlower')}
+                </p>
+                <FlowerSVG
+                  petals={sharePetals!}
+                  size={200}
+                  animate={false}
+                  showLabels
+                  showScores={false}
+                  pulsePetalId={shareFlowerPulseId}
+                />
+              </div>
+            ) : null}
+            <HeroCard c={card} />
           </div>
-        )}
-
-        {!isSimple && cards.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-4">
-            {cards.map((c, i) => (
-              <CardDisplay key={i} card={c} showName />
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 lg:pr-4">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-200/90">{copy.kicker}</p>
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-50 sm:text-5xl lg:leading-[1.06]">
+              {truncate(cardName, 40)}
+            </h1>
+            {synthText ? (
+              <blockquote className="border-l-4 border-violet-400/85 pl-4 font-serif text-lg italic leading-relaxed text-slate-100/95 sm:text-xl">
+                {truncate(synthText, isSimple ? 220 : 400)}
+              </blockquote>
+            ) : null}
+            <p className="text-xl font-extrabold leading-tight tracking-tight text-slate-50 sm:text-2xl">{copy.hook}</p>
+            <p className="text-base font-medium leading-snug text-slate-300/85">{copy.sub}</p>
+            <div className="flex flex-col gap-2.5 pt-1">
+              <ShareLandingChipRow items={copy.chipsPrimary} />
+              <ShareLandingChipRow items={copy.chipsTrust} />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-5">
+          {hasShareFlower ? (
+            <div className="mx-auto flex flex-col items-center rounded-2xl bg-white/[0.06] p-4 ring-1 ring-violet-400/25 shadow-[0_0_40px_rgba(139,92,246,0.18)] sm:mx-0">
+              <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200/90">
+                {t('share.landingYourFlower')}
+              </p>
+              <FlowerSVG
+                petals={sharePetals!}
+                size={176}
+                animate={false}
+                showLabels
+                showScores={false}
+                pulsePetalId={shareFlowerPulseId}
+              />
+            </div>
+          ) : null}
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-200/90">{copy.kicker}</p>
+          <p className="text-2xl font-extrabold leading-tight text-slate-50 sm:text-3xl">{copy.hook}</p>
+          <p className="text-base font-medium text-slate-300/85">{copy.sub}</p>
+          <div className="flex flex-wrap items-end justify-center gap-3 sm:justify-start sm:gap-4">
+            {cards.slice(0, 4).map((c, i) => (
+              <DoorCard key={i} c={c} />
             ))}
           </div>
-        )}
-
-        {/* Synth / description (pas d’intention / réflexion sur la page publique) */}
-        {isSimple && (card?.synth || card?.desc) && (
-          <SynthPanel synth={card.synth || card.desc} />
-        )}
-        {!isSimple && (reading.synthesis || reading.interpretation) && (
-          <SynthPanel synth={reading.synthesis || reading.interpretation} />
-        )}
-
-        {/* CTA section */}
-        <div className="text-center pt-6 space-y-4">
-          <p className="text-white/50 text-sm">Cette carte résonne en vous ?</p>
-          <Link
-            href={`${basePath}/register`}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-violet-600 to-rose-500 text-white font-semibold text-lg hover:opacity-90 transition-opacity shadow-lg shadow-violet-900/40"
-          >
-            🌸 Faire mon propre tirage
-          </Link>
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <span className="text-xs text-white/30">Déjà jardinier ?</span>
-            <Link
-              href={`${basePath}/login`}
-              className="text-xs text-violet-400 hover:text-violet-300 underline underline-offset-2"
-            >
-              Se connecter
-            </Link>
+          {cardName ? (
+            <p className="text-lg font-bold text-slate-100/95 sm:text-xl">{truncate(cardName, 80)}</p>
+          ) : null}
+          {synthText ? (
+            <blockquote className="border-l-[3px] border-violet-400/70 pl-3.5 font-serif text-base italic leading-relaxed text-slate-200/90 sm:text-lg">
+              {truncate(synthText, 360)}
+            </blockquote>
+          ) : null}
+          <div className="flex flex-col gap-2.5 pt-1">
+            <ShareLandingChipRow items={copy.chipsPrimary} />
+            <ShareLandingChipRow items={copy.chipsTrust} />
           </div>
         </div>
-
-        {/* Brand footer */}
-        <div className="text-center pt-4 pb-6">
-          <p className="text-xs text-white/20">🌸 Fleur d'AmOurs — Explorez vos cartes d'amour</p>
-        </div>
-      </div>
-    </div>
+      )}
+    </ShareLandingShell>
   )
 }

@@ -19,6 +19,10 @@ type ShareSocialButtonsProps = {
   /** Style compact (icônes seules) ou étendu (avec labels) */
   variant?: 'compact' | 'labels'
   className?: string
+  /** Ligne d’accroche au-dessus du champ lien (conversion), ex. tirage / fleur */
+  encourageLine?: string
+  /** Sur fond sombre (ex. modale Dreamscape) */
+  encourageOnDark?: boolean
 }
 
 const ICONS = {
@@ -78,6 +82,8 @@ export function ShareSocialButtons({
   exclude = [],
   variant = 'compact',
   className = '',
+  encourageLine,
+  encourageOnDark = false,
 }: ShareSocialButtonsProps) {
   const urlOk = useMemo(() => isAbsoluteHttpUrl(payload.url), [payload.url])
   const localhostShare = useMemo(() => (payload.url ? isLocalDevUrl(payload.url) : false), [payload.url])
@@ -109,6 +115,15 @@ export function ShareSocialButtons({
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
       <div className="space-y-1">
+        {encourageLine && urlOk ? (
+          <p
+            className={`text-[11px] leading-snug mb-1 ${
+              encourageOnDark ? 'text-violet-200/95' : 'text-violet-700 dark:text-violet-300/90'
+            }`}
+          >
+            {encourageLine}
+          </p>
+        ) : null}
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {t('share.publicLinkLabel')}
         </p>

@@ -1070,7 +1070,10 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
             {closeModalStage === 'saved' && closeModalShareUrl && (
               <div className="rounded-xl bg-slate-900/60 border border-white/10 p-3">
                 <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
-                  Partage
+                  {t('share.dreamscapeShareTitle')}
+                </p>
+                <p className="text-[11px] text-violet-200/95 leading-snug mb-3">
+                  {t('share.encourageDreamscape')}
                 </p>
                 {(() => {
                   const raw =
@@ -1093,11 +1096,13 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
                     text,
                   }}
                   variant="labels"
+                  encourageLine={t('share.encourageDreamscapeMenu')}
+                  encourageOnDark
                 />
                   )
                 })()}
                 <p className="mt-2 text-[11px] text-white/50 leading-relaxed">
-                  Twitter/WhatsApp reprennent le texte ci-dessus. Facebook/LinkedIn utilisent surtout le titre, l&apos;image et la description de la page partagée.
+                  {t('share.socialPlatformsHint')}
                 </p>
               </div>
             )}

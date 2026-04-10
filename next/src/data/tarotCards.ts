@@ -144,6 +144,17 @@ export const ALL_CARDS: Card[] = [
   ...LIFE.filter((c) => !LOVE.find((l) => l.name === c.name) && !VEGETAL.find((v) => v.name === c.name) && !ELEMENTS.find((e) => e.name === c.name)),
 ]
 
+/** Sous-jeu d’une carte (nom canonique FR). Utilisé pour accentuer la fleur de partage selon le tirage. */
+export function tarotCardSubdeck(cardName: string): 'love' | 'vegetal' | 'elements' | 'life' | null {
+  const n = cardName.trim()
+  if (!n) return null
+  if (LOVE.some((c) => c.name === n)) return 'love'
+  if (VEGETAL.some((c) => c.name === n)) return 'vegetal'
+  if (ELEMENTS.some((c) => c.name === n)) return 'elements'
+  if (LIFE.some((c) => c.name === n)) return 'life'
+  return null
+}
+
 export type LandingCardText = { desc: string; synth: string }
 
 /** Paires [nom canonique, textes] pour la landing publique — aligné sur la locale UI (fr = données TS). */

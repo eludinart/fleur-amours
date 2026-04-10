@@ -1,6 +1,13 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  type MutableRefObject,
+} from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { t } from '@/i18n'
@@ -20,7 +27,14 @@ import { billingApi } from '@/api/billing'
 import { toast } from '@/hooks/useToast'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { ShareTirageButton } from '@/components/ShareTirageButton'
+import { FlowerSVG } from '@/components/FlowerSVG'
 import { PETAL_ORDER } from '@/lib/petal-tarot'
+import {
+  buildSharePetalsWithTirageInfluence,
+  enrichTarotPayloadWithShareFlower,
+} from '@/lib/tirage-flower-influence'
+import { pickDominantPetalId } from '@/share-engine/petals'
+import { useLatestFleurPetalsForShare } from '@/hooks/useLatestFleurPetalsForShare'
 
 const STATE = {
   IDLE: 'idle',
@@ -30,7 +44,7 @@ const STATE = {
   REVEALED: 'revealed',
 }
 
-function useReadings() {
+function useReadings(shareFlowerPetalsRef?: MutableRefObject<Record<string, number> | null>) {
   const { user } = useAuth()
   const storageKey = 'tarot_readings_' + (user?.id ?? 'anon')
   const [readings, setReadings] = useState<Record<string, unknown>[]>([])
@@ -58,13 +72,17 @@ function useReadings() {
 
   const addReading = useCallback(
     async (r: Record<string, unknown>) => {
+      const withFlower = enrichTarotPayloadWithShareFlower(
+        r,
+        shareFlowerPetalsRef?.current ?? null
+      )
       if (user?.id) {
         try {
           const saved = (await tarotReadingsApi.save({
             type: (r.type as string) ?? 'simple',
-            payload: r,
+            payload: withFlower,
           })) as { id?: number }
-          const item = { ...r, ...saved, id: String(saved.id) }
+          const item = { ...withFlower, ...saved, id: String(saved.id) }
           setReadings((prev) => [item, ...prev])
           return String(saved.id)
         } catch (err: unknown) {
@@ -78,7 +96,7 @@ function useReadings() {
       const id =
         (typeof crypto !== 'undefined' && crypto.randomUUID?.()) ||
         `t-${Date.now()}-${Math.random().toString(36).slice(2)}`
-      const item = { ...r, id, createdAt: new Date().toISOString() }
+      const item = { ...withFlower, id, createdAt: new Date().toISOString() }
       setReadings((prev) => {
         const next = [item, ...prev]
         try {
@@ -88,7 +106,7 @@ function useReadings() {
       })
       return id
     },
-    [storageKey, user?.id]
+    [storageKey, user?.id, shareFlowerPetalsRef]
   )
 
   const updateReading = useCallback(
@@ -443,6 +461,7 @@ function SimpleDraw({
   landingCard,
   initialIntention,
   petalFlow = false,
+  fleurBasePetals = null,
 }: {
   onReadingComplete?: (data: Record<string, unknown>) => void | Promise<unknown>
   currentReadingId: string | null
@@ -453,6 +472,8 @@ function SimpleDraw({
   initialIntention?: string
   /** Flux fleur : pas de carte imposée ; compte à rebours doux optionnel */
   petalFlow?: boolean
+  /** Dernière Fleur du compte (scores normalisés), pour rosace influencée par le tirage */
+  fleurBasePetals?: Record<string, number> | null
 }) {
   const locale = useStore((s) => s.locale)
   const { user } = useAuth()
@@ -510,6 +531,17 @@ function SimpleDraw({
     }
     setContentReady(false)
   }, [drawState, drawnCard])
+
+  const tirageFlower = useMemo(() => {
+    if (!drawnCard || drawState !== STATE.REVEALED || !contentReady) return null
+    return buildSharePetalsWithTirageInfluence(fleurBasePetals ?? null, {
+      mode: 'simple',
+      cardNameFr: drawnCard.name ?? '',
+    })
+  }, [drawnCard, drawState, contentReady, fleurBasePetals])
+
+  const flowerPulseId =
+    tirageFlower?.drawPetalIds[0] ?? (tirageFlower ? pickDominantPetalId(tirageFlower.petals) : null)
 
   useEffect(() => {
     if (
@@ -770,6 +802,23 @@ function SimpleDraw({
             </p>
           )}
         </div>
+
+        {tirageFlower && (
+          <div
+            className="flex flex-col items-center gap-2 pt-2"
+            style={{ animation: 'content-rise 0.65s cubic-bezier(.23,1.12,.32,1)' }}
+          >
+            <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest text-center">
+              {t('tarot.flowerAfterDraw')}
+            </p>
+            <FlowerSVG
+              petals={tirageFlower.petals}
+              size={200}
+              animate
+              pulsePetalId={flowerPulseId}
+            />
+          </div>
+        )}
       </div>
 
       {drawState === STATE.REVEALED && (
@@ -830,6 +879,7 @@ function SimpleDraw({
               createdAt: new Date().toISOString(),
             }}
             showLabel
+            showEncouragement
           />
         </div>
       )}
@@ -865,11 +915,13 @@ function FourDoorsDraw({
   currentReadingId,
   onSaveReflection,
   quotaExceeded,
+  fleurBasePetals = null,
 }: {
   onReadingComplete?: (data: Record<string, unknown>) => void | Promise<unknown>
   currentReadingId: string | null
   onSaveReflection?: (id: string, updates: Record<string, unknown>) => void
   quotaExceeded: boolean
+  fleurBasePetals?: Record<string, number> | null
 }) {
   const locale = useStore((s) => s.locale)
   const { user } = useAuth()
@@ -886,6 +938,27 @@ function FourDoorsDraw({
   const [synthesis, setSynthesis] = useState('')
   const [interpretLoading, setInterpretLoading] = useState(false)
   const [interpretation, setInterpretation] = useState('')
+  const [flowerReady, setFlowerReady] = useState(false)
+
+  useEffect(() => {
+    if (drawState === STATE.REVEALED && drawnCards.every(Boolean)) {
+      const tid = setTimeout(() => setFlowerReady(true), 1600)
+      return () => clearTimeout(tid)
+    }
+    setFlowerReady(false)
+  }, [drawState, drawnCards])
+
+  const tirageFlower = useMemo(() => {
+    if (drawState !== STATE.REVEALED || !drawnCards.every(Boolean) || !flowerReady) return null
+    const names = drawnCards.filter((c): c is CardType => Boolean(c)).map((c) => c.name)
+    return buildSharePetalsWithTirageInfluence(fleurBasePetals ?? null, {
+      mode: 'four',
+      cardNamesFr: names,
+    })
+  }, [drawState, drawnCards, fleurBasePetals, flowerReady])
+
+  const flowerPulseId =
+    tirageFlower?.drawPetalIds[0] ?? (tirageFlower ? pickDominantPetalId(tirageFlower.petals) : null)
 
   function draw() {
     setFrozenIntention(intention.trim())
@@ -1117,6 +1190,23 @@ function FourDoorsDraw({
         })}
       </div>
 
+      {tirageFlower && (
+        <div
+          className="flex flex-col items-center gap-2 py-2"
+          style={{ animation: 'content-rise 0.65s cubic-bezier(.23,1.12,.32,1)' }}
+        >
+          <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest text-center">
+            {t('tarot.flowerAfterDraw')}
+          </p>
+          <FlowerSVG
+            petals={tirageFlower.petals}
+            size={200}
+            animate
+            pulsePetalId={flowerPulseId}
+          />
+        </div>
+      )}
+
       {drawState === STATE.REVEALED && (
         <div className="flex justify-center">
           <button
@@ -1179,6 +1269,7 @@ function FourDoorsDraw({
               createdAt: new Date().toISOString(),
             }}
             showLabel
+            showEncouragement
           />
         </div>
       )}
@@ -1710,13 +1801,20 @@ export default function TarotPage() {
   useEffect(() => {
     if (resolvedLandingName || isPetalFlow) setTab('simple')
   }, [resolvedLandingName, isPetalFlow])
+
+  const shareFlowerPetalsRef = useRef<Record<string, number> | null>(null)
+  const fleurBasePetals = useLatestFleurPetalsForShare(
+    Boolean(user?.id && (tab === 'simple' || tab === 'four')),
+    shareFlowerPetalsRef
+  )
+
   const {
     readings,
     loading: readingsLoading,
     addReading,
     updateReading,
     deleteReading,
-  } = useReadings()
+  } = useReadings(shareFlowerPetalsRef)
   const [currentSimpleReadingId, setCurrentSimpleReadingId] = useState<
     string | null
   >(null)
@@ -1925,6 +2023,7 @@ export default function TarotPage() {
             isPetalFlow && !landingCardObj ? petalSuggestedIntention : undefined
           }
           petalFlow={isPetalFlow && !landingCardObj}
+          fleurBasePetals={fleurBasePetals}
         />
       )}
       {tab === 'four' && (
@@ -1933,6 +2032,7 @@ export default function TarotPage() {
           currentReadingId={currentFourReadingId}
           onSaveReflection={updateReading}
           quotaExceeded={!!quotaError}
+          fleurBasePetals={fleurBasePetals}
         />
       )}
       {tab === 'list' && (

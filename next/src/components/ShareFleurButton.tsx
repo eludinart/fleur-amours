@@ -16,6 +16,8 @@ type ShareFleurButtonProps = {
   shareUrl?: string
   filename?: string
   label?: string
+  /** Texte sous le bouton (écran résultat fleur / synthèse) */
+  showEncouragement?: boolean
 }
 
 export function ShareFleurButton({
@@ -23,6 +25,7 @@ export function ShareFleurButton({
   shareUrl,
   filename = 'ma-fleur.png',
   label,
+  showEncouragement = false,
 }: ShareFleurButtonProps) {
   useStore((s) => s.locale)
   const [loading, setLoading] = useState(false)
@@ -146,12 +149,18 @@ export function ShareFleurButton({
     }
   }, [targetRef, filename, fullUrl])
 
+  const urlReady = /^https?:\/\//i.test((fullUrl || '').trim())
+  const fleurTitle = showEncouragement ? t('share.encourageFleurTitle') : label ?? t('common.share')
+
   return (
-    <div className="relative">
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative">
       <button
         type="button"
         onClick={handleShare}
         disabled={loading}
+        title={fleurTitle}
+        aria-label={fleurTitle}
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200/60 dark:border-violet-800/60 hover:bg-violet-100 dark:hover:bg-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700 transition-colors disabled:opacity-60"
       >
         <span>{loading ? '…' : '📤'}</span>
@@ -167,7 +176,12 @@ export function ShareFleurButton({
           <div className="absolute right-0 top-full mt-1 z-50 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-3 min-w-[200px] space-y-2">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{t('common.share')}</p>
             {fullUrl ? (
-              <ShareSocialButtons payload={sharePayload} onCopyLink={() => setMenuOpen(false)} variant="labels" />
+              <ShareSocialButtons
+                payload={sharePayload}
+                onCopyLink={() => setMenuOpen(false)}
+                variant="labels"
+                encourageLine={urlReady ? t('share.encourageFleurMenu') : undefined}
+              />
             ) : (
               <p className="text-sm text-slate-600 dark:text-slate-300 py-2">{t('share.linkPreparing')}</p>
             )}
@@ -184,6 +198,12 @@ export function ShareFleurButton({
           </div>
         </>
       )}
+      </div>
+      {showEncouragement && urlReady ? (
+        <p className="text-[11px] text-center text-slate-500 dark:text-slate-400 max-w-[20rem] leading-snug px-1">
+          {t('share.encourageFleur')}
+        </p>
+      ) : null}
     </div>
   )
 }

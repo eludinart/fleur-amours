@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { getById } from '@/lib/db-tarot'
+import { parseShareFlowerFromPayload } from '@/share-engine/petals'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +29,7 @@ export async function GET(
     const r = reading as Record<string, unknown>
     const type = r.type === 'four' ? 'four' : 'simple'
     const created = r.createdAt ?? r.created_at
+    const shareFlower = parseShareFlowerFromPayload(r.shareFlower)
     // Partage public : carte(s) + sens générique uniquement — pas d’intention, réflexion ni interprétation IA (contexte perso).
     if (type === 'four') {
       const cards = Array.isArray(r.cards) ? r.cards : []
@@ -39,6 +41,7 @@ export async function GET(
           created_at: created,
           cards,
           synthesis: r.synthesis ?? null,
+          ...(shareFlower ? { shareFlower } : {}),
         },
         {
           headers: { 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400' },
@@ -58,6 +61,7 @@ export async function GET(
           desc: card.desc,
           synth: card.synth,
         },
+        ...(shareFlower ? { shareFlower } : {}),
       },
       {
         headers: { 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400' },

@@ -29,6 +29,8 @@ import {
   OgKicker,
   OgSubhook,
 } from '@/lib/og-share-chrome'
+import { OgFlowerGraphic } from '@/lib/og-flower-graphic'
+import { parseShareFlowerFromPayload, pickDominantPetalId } from '@/share-engine/petals'
 
 export const dynamic = 'force-dynamic'
 
@@ -83,6 +85,8 @@ export async function GET(req: NextRequest) {
   const hook = isSimple ? OG_TAROT_HOOK_SIMPLE : OG_TAROT_HOOK_4
   const chips = isSimple ? OG_TAROT_CHIPS_SIMPLE : OG_TAROT_CHIPS_4
   const trustChips = [OG_CHIP_FREE, OG_CHIP_PRIVATE, OG_CHIP_FAST] as const
+  const shareFlowerSnap = parseShareFlowerFromPayload(reading?.shareFlower)
+  const flowerDominant = shareFlowerSnap ? pickDominantPetalId(shareFlowerSnap.petals) : null
 
   return new ImageResponse(
     (
@@ -154,19 +158,34 @@ export async function GET(req: NextRequest) {
             <div
               style={{
                 display: 'flex',
+                flexDirection: 'column',
                 width: 348,
                 alignItems: 'center',
                 justifyContent: 'center',
+                gap: 14,
                 paddingLeft: 48,
                 paddingRight: 20,
               }}
             >
+              {shareFlowerSnap ? (
+                <div style={{ display: 'flex', filter: 'drop-shadow(0 8px 28px rgba(139,92,246,0.35))' }}>
+                  <OgFlowerGraphic
+                    scores={shareFlowerSnap.petals}
+                    dominant={flowerDominant}
+                    size={168}
+                    center={84}
+                    minLen={16}
+                    maxLen={62}
+                    petalWidth={19}
+                  />
+                </div>
+              ) : null}
               {cardImg ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={cardImg}
-                  width={236}
-                  height={378}
+                  width={shareFlowerSnap ? 200 : 236}
+                  height={shareFlowerSnap ? 320 : 378}
                   style={{
                     borderRadius: 20,
                     objectFit: 'contain',
@@ -179,8 +198,8 @@ export async function GET(req: NextRequest) {
               ) : (
                 <div
                   style={{
-                    width: 236,
-                    height: 378,
+                    width: shareFlowerSnap ? 200 : 236,
+                    height: shareFlowerSnap ? 320 : 378,
                     borderRadius: 20,
                     background: 'linear-gradient(160deg, rgba(76,29,149,0.5) 0%, rgba(30,27,75,0.85) 100%)',
                     border: '1px solid rgba(139,92,246,0.45)',
@@ -264,6 +283,19 @@ export async function GET(req: NextRequest) {
               gap: 18,
             }}
           >
+            {shareFlowerSnap ? (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
+                <OgFlowerGraphic
+                  scores={shareFlowerSnap.petals}
+                  dominant={flowerDominant}
+                  size={152}
+                  center={76}
+                  minLen={15}
+                  maxLen={56}
+                  petalWidth={18}
+                />
+              </div>
+            ) : null}
             <OgKicker variant="dark">{kicker}</OgKicker>
             <OgHook variant="dark" size="md">
               {hook}

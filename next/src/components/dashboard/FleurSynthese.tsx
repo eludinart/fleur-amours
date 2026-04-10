@@ -42,7 +42,17 @@ export function FleurSynthese({
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('fleurSynthese.title')}</h3>
           <InfoBubble title={t('fleurSynthese.infoTitle')} content={t('fleurSynthese.infoDesc')} />
         </div>
-        {hasData && <ShareFleurButton targetRef={flowerRef} shareUrl="/" filename="fleur-synthese.png" label={t('fleurSynthese.share')} />}
+        {hasData && (
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <ShareFleurButton
+              targetRef={flowerRef}
+              shareUrl="/"
+              filename="fleur-synthese.png"
+              label={t('fleurSynthese.share')}
+              showEncouragement
+            />
+          </div>
+        )}
       </div>
       <p className="text-center text-xs text-slate-500 dark:text-slate-400 mb-4">{t('fleurSynthese.subtitle')}</p>
       <div ref={flowerRef} className="flex justify-center flex-1 items-center py-4">
