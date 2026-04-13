@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { coachNotesApi, type CoachPatientNotesPayload } from '@/api/coachNotes'
 import { sessionsApi } from '@/api/sessions'
 import { aiApi } from '@/api/ai'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -51,6 +52,84 @@ function formatDuration(s?: number): string {
   if (!s) return '—'
   const m = Math.floor(s / 60)
   return m > 0 ? `${m} min` : `${s} s`
+}
+
+type CoachNoteSection = keyof Pick<
+  CoachPatientNotesPayload,
+  'ensemble' | 'fleur' | 'ombres' | 'patient_tab' | 'sessions_tab'
+>
+
+function CoachPatientNoteEditor({
+  patientEmail,
+  section,
+  title,
+  hint,
+  value,
+  onSaved,
+}: {
+  patientEmail: string
+  section: CoachNoteSection
+  title: string
+  hint?: string
+  value: string
+  onSaved: (notes: CoachPatientNotesPayload) => void
+}) {
+  const [draft, setDraft] = useState(value)
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [okFlash, setOkFlash] = useState(false)
+
+  useEffect(() => {
+    setDraft(value)
+  }, [value, patientEmail, section])
+
+  async function save() {
+    setSaving(true)
+    setErr(null)
+    setOkFlash(false)
+    try {
+      const res = await coachNotesApi.patchPatient({
+        patient_email: patientEmail,
+        notes: { [section]: draft },
+      })
+      onSaved(res.coach_patient_notes)
+      setOkFlash(true)
+      window.setTimeout(() => setOkFlash(false), 2200)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erreur enregistrement'
+      setErr(msg)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-emerald-200/80 dark:border-emerald-800/80 bg-emerald-50/40 dark:bg-emerald-950/20 p-4">
+      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">
+        {title}
+      </p>
+      {hint ? <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">{hint}</p> : null}
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={5}
+        className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-100 px-3 py-2 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none resize-y min-h-[100px]"
+        placeholder="Vos annotations (visibles uniquement côté coach / admin)…"
+      />
+      <div className="flex flex-wrap items-center gap-3 mt-2">
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={saving || !patientEmail}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {saving ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
+        {okFlash && <span className="text-xs text-emerald-600 dark:text-emerald-400">Enregistré.</span>}
+        {err && <span className="text-xs text-red-500">{err}</span>}
+      </div>
+    </div>
+  )
 }
 
 function shadowPalette(level: number): {
@@ -194,7 +273,9 @@ type SuiviDetailData = {
     coach_analysis?: string
     coach_suggestions?: string[]
     coach_next_steps?: string[]
+    coach_private_note?: string
   }>
+  coach_patient_notes?: CoachPatientNotesPayload
   coach_patient_snapshot?: {
     coach_summary?: string
     coach_analysis?: string
@@ -655,13 +736,25 @@ function UserDetailPanel({
               Impossible de charger les données.
             </p>
           ) : tab === 'ensemble' ? (
-            data.patient_overview ? (
-              <PatientEnsembleTab overview={data.patient_overview} email={email} />
-            ) : (
-              <p className="text-sm text-slate-500">
-                Synthèse patient indisponible (API à jour requise).
-              </p>
-            )
+            <div className="space-y-4">
+              {data.patient_overview ? (
+                <PatientEnsembleTab overview={data.patient_overview} email={email} />
+              ) : (
+                <p className="text-sm text-slate-500">
+                  Synthèse patient indisponible (API à jour requise).
+                </p>
+              )}
+              <CoachPatientNoteEditor
+                patientEmail={email}
+                section="ensemble"
+                title="Mes notes — vue d’ensemble"
+                hint="Compte, questionnaires, science, usage… Vos mémos liés à cette vue."
+                value={data.coach_patient_notes?.ensemble ?? ''}
+                onSaved={(notes) =>
+                  setData((prev) => (prev ? { ...prev, coach_patient_notes: notes } : prev))
+                }
+              />
+            </div>
           ) : tab === 'fleur' ? (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row gap-6 items-start">
@@ -768,6 +861,16 @@ function UserDetailPanel({
                   </div>
                 </div>
               )}
+              <CoachPatientNoteEditor
+                patientEmail={email}
+                section="fleur"
+                title="Mes notes — Fleur (moyennes & évolution)"
+                hint="Interprétation des parts de lumière / déficits, dynamique dans le temps."
+                value={data.coach_patient_notes?.fleur ?? ''}
+                onSaved={(notes) =>
+                  setData((prev) => (prev ? { ...prev, coach_patient_notes: notes } : prev))
+                }
+              />
             </div>
           ) : tab === 'ombres' ? (
             <div className="space-y-4">
@@ -889,6 +992,16 @@ function UserDetailPanel({
                   </p>
                 </div>
               )}
+              <CoachPatientNoteEditor
+                patientEmail={email}
+                section="ombres"
+                title="Mes notes — Ombres & signaux"
+                hint="Votre lecture des tensions, priorités d’accompagnement, rappels de contact."
+                value={data.coach_patient_notes?.ombres ?? ''}
+                onSaved={(notes) =>
+                  setData((prev) => (prev ? { ...prev, coach_patient_notes: notes } : prev))
+                }
+              />
             </div>
           ) : tab === 'patient' ? (
             <div className="space-y-4">
@@ -989,9 +1102,29 @@ function UserDetailPanel({
                   </div>
                 </div>
               )}
+              <CoachPatientNoteEditor
+                patientEmail={email}
+                section="patient_tab"
+                title="Mes notes — Fiche patient (IA)"
+                hint="Compléments à côté du résumé / analyse générés : entretiens, cadre, objectifs."
+                value={data.coach_patient_notes?.patient_tab ?? ''}
+                onSaved={(notes) =>
+                  setData((prev) => (prev ? { ...prev, coach_patient_notes: notes } : prev))
+                }
+              />
             </div>
           ) : (
             <div className="space-y-3">
+              <CoachPatientNoteEditor
+                patientEmail={email}
+                section="sessions_tab"
+                title="Mes notes — Liste des sessions"
+                hint="Vue transversale sur les séances ; détail et note par séance dans la fenêtre d’une session."
+                value={data.coach_patient_notes?.sessions_tab ?? ''}
+                onSaved={(notes) =>
+                  setData((prev) => (prev ? { ...prev, coach_patient_notes: notes } : prev))
+                }
+              />
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 {data.session_count} session
                 {data.session_count > 1 ? 's' : ''}
@@ -1079,7 +1212,12 @@ function UserDetailPanel({
                               d&apos;ombre
                             </span>
                           )}
-                          <span className="ml-auto text-slate-300 dark:text-slate-600">
+                          <span className="ml-auto text-slate-300 dark:text-slate-600 flex items-center gap-1">
+                            {s.coach_private_note?.trim() ? (
+                              <span className="text-emerald-500" title="Note coach enregistrée">
+                                📝
+                              </span>
+                            ) : null}
                             Voir le détail →
                           </span>
                         </div>
@@ -1102,6 +1240,25 @@ function UserDetailPanel({
           session={selectedSession}
           onClose={() => setSelectedSession(null)}
           onRefresh={refreshSessionDetail}
+          enableCoachPrivateNote
+          onCoachPrivateNoteSaved={(sessionId, note) => {
+            setData((prev) => {
+              if (!prev) return prev
+              return {
+                ...prev,
+                sessions: prev.sessions.map((row) =>
+                  String(row.id) === String(sessionId)
+                    ? { ...row, coach_private_note: note ?? undefined }
+                    : row
+                ),
+              }
+            })
+            setSelectedSession((sess) =>
+              sess && String(sess.id) === String(sessionId)
+                ? { ...sess, coach_private_note: note ?? undefined }
+                : sess
+            )
+          }}
         />
       )}
     </div>

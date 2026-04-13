@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { aiApi } from '@/api/ai'
+import { coachNotesApi } from '@/api/coachNotes'
 import { parseLever } from '@/utils/levers'
 import { FlowerSVG } from '@/components/FlowerSVG'
 import { FOUR_DOORS } from '@/data/tarotCards'
@@ -84,6 +85,8 @@ function ConversationViewer({ history }: { history: ChatMsg[] }) {
 
 export type SessionForDetail = {
   id: string
+  /** Note libre coach (hors IA), si chargée par l’API staff. */
+  coach_private_note?: string
   email?: string
   created_at?: string
   duration_seconds?: number
@@ -149,13 +152,24 @@ export function SessionDetailModal({
   session,
   onClose,
   onRefresh,
+  enableCoachPrivateNote = false,
+  onCoachPrivateNoteSaved,
 }: {
   session: SessionForDetail
   onClose: () => void
   onRefresh?: (id: string) => Promise<void>
+  enableCoachPrivateNote?: boolean
+  onCoachPrivateNoteSaved?: (sessionId: string, note: string | null) => void
 }) {
   const [tab, setTab] = useState('conversation')
   const [coachLoading, setCoachLoading] = useState(false)
+  const [privateNoteDraft, setPrivateNoteDraft] = useState(session.coach_private_note ?? '')
+  const [privateNoteSaving, setPrivateNoteSaving] = useState(false)
+  const [privateNoteErr, setPrivateNoteErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    setPrivateNoteDraft(session.coach_private_note ?? '')
+  }, [session.id, session.coach_private_note])
 
   if (!session) return null
 
@@ -184,10 +198,27 @@ export function SessionDetailModal({
     { id: 'anchors', label: 'Ancres' },
     { id: 'plan', label: 'Plan 14j' },
     { id: 'coach', label: 'Coach (session)' },
+    ...(enableCoachPrivateNote ? [{ id: 'coach_private' as const, label: '📝 Mes notes' }] : []),
     ...(hasShadow
       ? [{ id: 'shadows' as const, label: `🌑 Ombres (${shadowEvents.length})` }]
       : []),
   ]
+
+  async function savePrivateNote() {
+    const sid = parseInt(String(session.id), 10)
+    if (!Number.isFinite(sid) || sid <= 0) return
+    setPrivateNoteSaving(true)
+    setPrivateNoteErr(null)
+    try {
+      const res = await coachNotesApi.patchSession({ session_id: sid, note: privateNoteDraft })
+      const next = res.coach_private_note ?? null
+      onCoachPrivateNoteSaved?.(String(session.id), next)
+    } catch (e: unknown) {
+      setPrivateNoteErr(e instanceof Error ? e.message : 'Erreur')
+    } finally {
+      setPrivateNoteSaving(false)
+    }
+  }
 
   return (
     <div
@@ -639,6 +670,33 @@ export function SessionDetailModal({
                     Enregistré le {formatDate(String(coachSnapshot.cached_at))}
                   </span>
                 )}
+              </div>
+            </div>
+          )}
+
+          {tab === 'coach_private' && enableCoachPrivateNote && (
+            <div className="space-y-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Mémo sur cette séance (entretien, décisions, suite à donner). Visible uniquement pour vous et les
+                administrateurs — pas pour le patient.
+              </p>
+              <textarea
+                value={privateNoteDraft}
+                onChange={(e) => setPrivateNoteDraft(e.target.value)}
+                rows={10}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-100 px-3 py-2.5 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none resize-y min-h-[160px]"
+                placeholder="Vos annotations sur cette session…"
+              />
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => void savePrivateNote()}
+                  disabled={privateNoteSaving}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {privateNoteSaving ? 'Enregistrement…' : 'Enregistrer la note'}
+                </button>
+                {privateNoteErr && <span className="text-xs text-red-500">{privateNoteErr}</span>}
               </div>
             </div>
           )}

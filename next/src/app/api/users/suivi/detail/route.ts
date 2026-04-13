@@ -5,7 +5,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminOrCoach } from '@/lib/api-auth'
 import { getPool, isDbConfigured, table } from '@/lib/db'
 import type { RowDataPacket } from 'mysql2'
-import { getCoachPatientSnapshot } from '@/lib/db-coach-patient-fiches'
+import {
+  getCoachPatientNotes,
+  getCoachPatientSnapshot,
+} from '@/lib/db-coach-patient-fiches'
+import { listCoachPatientEmailsNormalized } from '@/lib/db-coach-patients'
+import { getCoachSessionNotesMap } from '@/lib/db-coach-session-notes'
 import { fetchPatientStaffOverview } from '@/lib/db-patient-staff-detail'
 
 export const dynamic = 'force-dynamic'
@@ -30,6 +35,10 @@ export async function GET(req: NextRequest) {
       Number.isFinite(viewerId) && viewerId > 0 && emailNorm
         ? getCoachPatientSnapshot({ coachUserId: viewerId, patientEmail: emailNorm })
         : Promise.resolve(null)
+    const coachPatientNotesPromise =
+      Number.isFinite(viewerId) && viewerId > 0 && emailNorm
+        ? getCoachPatientNotes({ coachUserId: viewerId, patientEmail: emailNorm })
+        : Promise.resolve({})
 
     const petalKeys = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
     const DEFICIT_OMBRE_MIN = 0.02
@@ -59,31 +68,10 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    async function getCoachPatientEmails(coachUserId: number): Promise<string[]> {
-      const tSeeds = table('fleur_social_seeds')
-      const tUsers = table('users')
-      const [rows] = await pool.execute<RowDataPacket[]>(
-        `
-          SELECT DISTINCT u.user_email
-          FROM ${tSeeds} s
-          JOIN ${tUsers} u ON u.ID = s.to_user_id
-          WHERE s.from_user_id = ? AND s.status = 'accepted'
-        `,
-        [coachUserId]
-      )
-      return Array.from(
-        new Set(
-          (rows ?? [])
-            .map((r) => normalizeEmail(String((r as any)?.user_email ?? '')))
-            .filter(Boolean)
-        )
-      )
-    }
-
     // Si coach (pas admin), vérifier que l'email appartient à sa patientèle
     if (!isAdmin) {
       const coachUserId = parseInt(userId, 10)
-      const patientEmails = await getCoachPatientEmails(coachUserId)
+      const patientEmails = await listCoachPatientEmailsNormalized(coachUserId)
       if (!patientEmails.includes(emailNorm)) {
         return NextResponse.json({ error: 'Accès interdit (patient non lié à ce coach)' }, { status: 403 })
       }
@@ -124,6 +112,7 @@ export async function GET(req: NextRequest) {
         shadow_events: [],
         sessions: [],
         coach_patient_snapshot: await coachPatientSnapshotPromise,
+        coach_patient_notes: await coachPatientNotesPromise,
         patient_overview,
       })
     }
@@ -149,7 +138,7 @@ export async function GET(req: NextRequest) {
     }> = []
 
     const sessions: Array<{
-      id: number
+      id: string
       created_at?: string
       door_suggested?: string
       status?: string
@@ -243,7 +232,7 @@ export async function GET(req: NextRequest) {
           : null
 
       sessions.push({
-        id: Number((r as any)?.id ?? 0),
+        id: String((r as any)?.id ?? ''),
         created_at: createdAt,
         door_suggested: (r as any)?.door_suggested ?? undefined,
         status: (r as any)?.status ?? undefined,
@@ -286,6 +275,19 @@ export async function GET(req: NextRequest) {
     // Les sessions listées en UI suivent généralement l'ordre créé_at DESC (comme notre SQL).
     // On garde l'ordre de sessionsRows, c'est-à-dire DESC.
 
+    const sessionIds = sessions
+      .map((s) => parseInt(String(s.id), 10))
+      .filter((n) => Number.isFinite(n) && n > 0)
+    const sessionNotesMap =
+      Number.isFinite(viewerId) && viewerId > 0 && sessionIds.length > 0
+        ? await getCoachSessionNotesMap({ coachUserId: viewerId, sessionIds })
+        : new Map<number, string>()
+    for (const s of sessions) {
+      const sid = parseInt(String(s.id), 10)
+      const note = sessionNotesMap.get(sid)
+      if (note) (s as { coach_private_note?: string }).coach_private_note = note
+    }
+
     return NextResponse.json({
       session_count,
       max_shadow_level,
@@ -298,6 +300,7 @@ export async function GET(req: NextRequest) {
       // Champs supplémentaires possibles côté UI (non requis mais pratiques)
       shadow_urgent,
       coach_patient_snapshot: await coachPatientSnapshotPromise,
+      coach_patient_notes: await coachPatientNotesPromise,
       patient_overview,
     })
   } catch (err: unknown) {

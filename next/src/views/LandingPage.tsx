@@ -302,6 +302,54 @@ export function LandingPage() {
   const primaryBtn =
     'inline-flex items-center justify-center rounded-full bg-gradient-to-r from-violet-600 via-violet-500 to-rose-500 px-8 py-3.5 text-base font-semibold tracking-wide text-white shadow-[0_10px_28px_-8px_rgba(225,29,72,0.42)] transition hover:shadow-[0_14px_36px_-8px_rgba(225,29,72,0.48)] sm:px-9 sm:py-4'
 
+  const secondaryBtn =
+    'inline-flex items-center justify-center rounded-full border-2 border-stone-300/90 bg-white/90 px-7 py-3 text-base font-semibold tracking-wide text-stone-800 shadow-sm transition hover:border-violet-400/80 hover:bg-white hover:text-violet-900 sm:px-8 sm:py-3.5'
+
+  const benefitItems = [
+    {
+      icon: '🧭',
+      titleKey: 'landing.benefitClarityTitle',
+      descKey: 'landing.benefitClarityDesc',
+      tint: 'from-rose-50/90 to-white border-rose-100/80',
+    },
+    {
+      icon: '🔮',
+      titleKey: 'landing.benefitReadingsTitle',
+      descKey: 'landing.benefitReadingsDesc',
+      tint: 'from-violet-50/90 to-white border-violet-100/80',
+    },
+    {
+      icon: '✨',
+      titleKey: 'landing.benefitMirrorTitle',
+      descKey: 'landing.benefitMirrorDesc',
+      tint: 'from-amber-50/80 to-white border-amber-100/80',
+    },
+    {
+      icon: '🌿',
+      titleKey: 'landing.benefitJourneyTitle',
+      descKey: 'landing.benefitJourneyDesc',
+      tint: 'from-emerald-50/70 to-white border-emerald-100/70',
+    },
+    {
+      icon: '🌸',
+      titleKey: 'landing.benefitSpaceTitle',
+      descKey: 'landing.benefitSpaceDesc',
+      tint: 'from-pink-50/80 to-white border-pink-100/70',
+    },
+    {
+      icon: '💬',
+      titleKey: 'landing.benefitHumanTitle',
+      descKey: 'landing.benefitHumanDesc',
+      tint: 'from-sky-50/80 to-white border-sky-100/70',
+    },
+  ] as const
+
+  const socialProofItems = [
+    { quoteKey: 'landing.socialQuote1', authorKey: 'landing.socialQuote1Author', tint: 'from-rose-50/95 to-white border-rose-100/90' },
+    { quoteKey: 'landing.socialQuote2', authorKey: 'landing.socialQuote2Author', tint: 'from-violet-50/95 to-white border-violet-100/90' },
+    { quoteKey: 'landing.socialQuote3', authorKey: 'landing.socialQuote3Author', tint: 'from-amber-50/90 to-white border-amber-100/85' },
+  ] as const
+
   return (
     <div className="relative flex min-h-[100dvh] flex-col">
       <LandingBackdrop />
@@ -363,6 +411,7 @@ export function LandingPage() {
             <button
               type="button"
               onClick={goRegisterPlain}
+              title={t('landing.registerButtonTitle')}
               className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-violet-600 via-violet-500 to-rose-500 px-5 py-2.5 text-base font-semibold tracking-wide text-white shadow-[0_10px_28px_-8px_rgba(225,29,72,0.42)] transition hover:shadow-[0_14px_36px_-8px_rgba(225,29,72,0.48)] sm:px-6 sm:py-3 sm:text-lg"
             >
               {t('landing.ctaRegister')}
@@ -411,6 +460,38 @@ export function LandingPage() {
                 >
                   {t('landing.heroSubtitle')}
                 </motion.p>
+                <motion.p
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                  className="mx-auto mt-5 max-w-lg text-center font-sans text-[0.95rem] font-medium leading-relaxed text-stone-700 sm:text-base lg:mx-0 lg:max-w-xl lg:text-left"
+                >
+                  {t('landing.heroAccountHook')}
+                </motion.p>
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 8 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                  className="mx-auto mt-6 flex w-full max-w-lg flex-col gap-3 sm:flex-row sm:justify-center lg:mx-0 lg:max-w-xl lg:justify-start"
+                >
+                  <button type="button" onClick={goRegisterPlain} className={`${secondaryBtn} w-full sm:w-auto`}>
+                    {t('landing.ctaOpenGarden')}
+                  </button>
+                </motion.div>
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 8 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                  className="mx-auto mt-6 max-w-lg rounded-2xl border border-violet-200/70 bg-gradient-to-br from-violet-50/90 to-white/80 p-5 text-center shadow-sm backdrop-blur-sm sm:p-6 lg:mx-0 lg:max-w-xl lg:text-left"
+                >
+                  <p className="font-sans text-sm font-semibold text-violet-900 sm:text-base">{t('landing.accountVsTitle')}</p>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-stone-600 sm:text-[0.95rem]">
+                    {t('landing.accountVsBody')}
+                  </p>
+                </motion.div>
                 <motion.div
                   variants={{
                     hidden: { opacity: 0 },
@@ -496,17 +577,6 @@ export function LandingPage() {
                 </div>
               </div>
 
-              <motion.blockquote
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.5 }}
-                className="mt-8 w-full max-w-2xl text-center lg:text-left"
-              >
-                <p className="font-serif text-lg italic leading-snug text-stone-700 sm:text-xl">
-                  {t('landing.testimonial')}
-                </p>
-              </motion.blockquote>
-
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -520,31 +590,73 @@ export function LandingPage() {
                 </span>
                 <span>{t('landing.trustLine')}</span>
               </motion.p>
-
-              <motion.ul
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="mt-10 grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 lg:max-w-none"
-              >
-                {[
-                  { icon: '🌸', label: t('landing.featureFleur'), tint: 'from-rose-50 to-rose-100/50 border-rose-100' },
-                  { icon: '🔮', label: t('landing.featureTarot'), tint: 'from-violet-50 to-violet-100/40 border-violet-100' },
-                  { icon: '✨', label: t('landing.featureIA'), tint: 'from-amber-50 to-amber-100/50 border-amber-100' },
-                ].map(({ icon, label, tint }) => (
-                  <li
-                    key={label}
-                    className={`flex items-center gap-4 rounded-2xl border bg-gradient-to-br px-5 py-4 shadow-sm sm:px-6 sm:py-5 ${tint}`}
-                  >
-                    <span className="text-3xl sm:text-4xl" aria-hidden>
-                      {icon}
-                    </span>
-                    <span className="font-sans text-base font-medium leading-snug text-stone-700 sm:text-lg">{label}</span>
-                  </li>
-                ))}
-              </motion.ul>
             </div>
           </div>
+
+          <section
+            className="mt-14 border-t border-amber-200/50 pt-12 sm:mt-16 sm:pt-14"
+            aria-labelledby="landing-benefits-heading"
+          >
+            <h2
+              id="landing-benefits-heading"
+              className="text-center font-serif text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl"
+            >
+              {t('landing.benefitsTitle')}
+            </h2>
+            <ul className="mt-8 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+              {benefitItems.map(({ icon, titleKey, descKey, tint }) => (
+                <li
+                  key={titleKey}
+                  className={`flex flex-col gap-2 rounded-2xl border bg-gradient-to-br p-5 shadow-sm sm:p-6 ${tint}`}
+                >
+                  <span className="text-2xl sm:text-3xl" aria-hidden>
+                    {icon}
+                  </span>
+                  <span className="font-sans text-base font-semibold text-stone-900 sm:text-lg">{t(titleKey)}</span>
+                  <span className="font-sans text-sm leading-relaxed text-stone-600 sm:text-[0.95rem]">{t(descKey)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section
+            className="mt-14 border-t border-amber-200/50 pt-12 sm:mt-16 sm:pt-14"
+            aria-labelledby="landing-social-proof-heading"
+          >
+            <div className="mx-auto max-w-3xl text-center">
+              <h2
+                id="landing-social-proof-heading"
+                className="font-serif text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl"
+              >
+                {t('landing.socialProofTitle')}
+              </h2>
+              <p className="mt-3 font-sans text-sm leading-relaxed text-stone-600 sm:text-base">
+                {t('landing.socialProofIntro')}
+              </p>
+            </div>
+            <ul className="mx-auto mt-8 grid max-w-6xl list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+              {socialProofItems.map(({ quoteKey, authorKey, tint }, i) => (
+                <motion.li
+                  key={quoteKey}
+                  initial={{ opacity: 0, y: 14 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <figure
+                    className={`flex h-full flex-col rounded-2xl border bg-gradient-to-br p-5 shadow-sm sm:p-6 ${tint}`}
+                  >
+                    <blockquote className="flex-1 font-serif text-base italic leading-snug text-stone-800 sm:text-lg">
+                      {t(quoteKey)}
+                    </blockquote>
+                    <figcaption className="mt-4 border-t border-stone-200/80 pt-3 font-sans text-sm font-semibold text-stone-600">
+                      — {t(authorKey)}
+                    </figcaption>
+                  </figure>
+                </motion.li>
+              ))}
+            </ul>
+          </section>
         </div>
       </main>
 

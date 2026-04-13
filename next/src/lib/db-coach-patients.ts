@@ -224,6 +224,34 @@ export async function assertCoachHasAcceptedPatient(params: {
   return { intentionIds }
 }
 
+/** E-mails patients (seeds acceptées, coach → patient) normalisés en minuscules. */
+export async function listCoachPatientEmailsNormalized(coachUserId: number): Promise<string[]> {
+  if (!isDbConfigured() || !coachUserId) return []
+  const pool = getPool()
+  const tSeeds = table('fleur_social_seeds')
+  const tUsers = table('users')
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `
+          SELECT DISTINCT u.user_email
+          FROM ${tSeeds} s
+          JOIN ${tUsers} u ON u.ID = s.to_user_id
+          WHERE s.from_user_id = ? AND s.status = 'accepted'
+        `,
+      [coachUserId]
+    )
+    return Array.from(
+      new Set(
+        (rows ?? [])
+          .map((r) => normalizeEmail(String((r as { user_email?: string })?.user_email ?? '')))
+          .filter(Boolean)
+      )
+    )
+  } catch {
+    return []
+  }
+}
+
 export async function createCoachInvitation(params: {
   coachUserId: number
   inviteEmail: string

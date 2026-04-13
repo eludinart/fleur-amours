@@ -4,6 +4,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
+import { listCoachPatientEmailsNormalized } from '@/lib/db-coach-patients'
+import { getCoachSessionNote } from '@/lib/db-coach-session-notes'
 import { getById, deleteById } from '@/lib/db-sessions'
 import { getAuthHeader } from '@/lib/api-auth'
 import { jwtDecode } from '@/lib/jwt'
@@ -49,16 +51,37 @@ export async function GET(
       return NextResponse.json({ error: 'Token invalide' }, { status: 401 })
     }
 
-    const isStaff =
-      payload.role === 'admin' ||
-      payload.role === 'administrator' ||
-      payload.role === 'coach'
+    const isAdmin = payload.role === 'admin' || payload.role === 'administrator'
+    const isCoach = payload.role === 'coach'
+    const isStaff = isAdmin || isCoach
 
     const email = isStaff ? null : await getEmailFromToken(req)
     const session = await getById(sessionId, email ?? undefined)
 
     if (!session) {
       return NextResponse.json({ error: 'Session introuvable' }, { status: 404 })
+    }
+
+    const viewerId = parseInt(String(payload.sub), 10)
+    if (isStaff && Number.isFinite(viewerId) && viewerId > 0) {
+      const sessionEmail = String(session.email ?? '')
+        .trim()
+        .toLowerCase()
+      let canNote = isAdmin
+      if (!canNote && sessionEmail) {
+        const allowed = await listCoachPatientEmailsNormalized(viewerId)
+        canNote = allowed.includes(sessionEmail)
+      }
+      if (canNote) {
+        const coach_private_note = await getCoachSessionNote({
+          coachUserId: viewerId,
+          sessionId,
+        })
+        return NextResponse.json({
+          ...session,
+          coach_private_note: coach_private_note ?? undefined,
+        })
+      }
     }
 
     return NextResponse.json(session)
