@@ -10,6 +10,7 @@ import { useStore } from '@/store/useStore'
 import { Layout } from '@/components/layout/Layout'
 import { LoginPage } from '@/views/LoginPage'
 import { LandingPage } from '@/views/LandingPage'
+import { CoachLandingPage } from '@/views/CoachLandingPage'
 import { HomePage } from '@/views/HomePage'
 import { PresentationPage } from '@/views/PresentationPage'
 import { AccountPage } from '@/views/AccountPage'
@@ -169,6 +170,18 @@ function AppRoutes() {
       <Suspense fallback={null}>
         <LocaleSync />
         <HomeAuthLoadingShell />
+      </Suspense>
+    )
+  }
+
+  // Page publique : pas d’attente du spinner auth sombre
+  if (loading && route === 'accompagnants') {
+    return (
+      <Suspense fallback={null}>
+        <LocaleSync />
+        <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
+          <CoachLandingPage />
+        </div>
       </Suspense>
     )
   }
@@ -592,6 +605,18 @@ function AppRoutes() {
               <ManuelOnlinePage chapterSlug={subRoute} />
             </Layout>
           </ProtectedLayout>
+        </div>
+      </Suspense>
+    )
+  }
+
+  // Page publique accompagnants (coachs, thérapeutes, facilitateurs)
+  if (route === 'accompagnants') {
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <LocaleSync />
+        <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
+          <CoachLandingPage />
         </div>
       </Suspense>
     )

@@ -25,5 +25,7 @@ export const authApi = {
   deleteMyAccount: () => api.post('/api/auth/account/delete'),
   getMyProfile: () => api.get('/api/account/profile'),
   updateMyProfile: (data: Record<string, unknown>) => api.post('/api/account/profile', data),
+  submitCoachRequest: (body: { message?: string }) =>
+    api.post('/api/account/coach-request', body) as Promise<{ ok: boolean; user: Record<string, unknown> }>,
   impersonate: (userId: string) => api.post('/api/auth/admin/impersonate', { user_id: userId }),
 }

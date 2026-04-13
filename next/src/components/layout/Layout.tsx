@@ -17,6 +17,7 @@ import NotificationCenter from '../NotificationCenter'
 import { LanguageSelector } from './LanguageSelector'
 import { FormBackBar } from './FormBackBar'
 import { OnboardingTour } from '../OnboardingTour'
+import { CoachRequestModal } from '../CoachRequestModal'
 import { t } from '@/i18n'
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -192,6 +193,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       <ToastContainer />
+      <CoachRequestModal />
       {user ? <OnboardingTour /> : null}
     </div>
   )

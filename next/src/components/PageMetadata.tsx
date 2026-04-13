@@ -28,6 +28,7 @@ const routeMeta: Record<
   cartes: { titleKey: 'manuel.pageTitle', descKey: 'manuel.pageDesc' },
   boutique: { titleKey: 'prairie.boutique', descKey: 'prairie.boutique' },
   login: { title: 'Connexion', descKey: 'login.subtitleLogin' },
+  accompagnants: { titleKey: 'coachLanding.metaTitle', descKey: 'coachLanding.metaDesc' },
 }
 
 function getMeta(route: string) {

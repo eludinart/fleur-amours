@@ -32,6 +32,9 @@ export type UserRecord = {
   coach_years_experience?: number | null
   coach_reviews_label?: string | null
   coach_verified?: boolean
+  coach_request_status?: string | null
+  coach_request_at?: string | null
+  coach_request_message?: string | null
 }
 
 async function getWpRole(userId: number): Promise<string> {
@@ -106,6 +109,9 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
     'fleur_coach_years_experience',
     'fleur_coach_reviews_label',
     'fleur_coach_verified',
+    'fleur_coach_request_status',
+    'fleur_coach_request_at',
+    'fleur_coach_request_message',
   ]
   const placeholders = keys.map(() => '?').join(', ')
   const [rows] = await pool.execute<RowDataPacket[]>(
@@ -150,6 +156,9 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
     : null
   ;(out as Record<string, unknown>).coach_reviews_label = meta.fleur_coach_reviews_label || null
   ;(out as Record<string, unknown>).coach_verified = (meta.fleur_coach_verified ?? '0') === '1'
+  ;(out as Record<string, unknown>).coach_request_status = meta.fleur_coach_request_status || null
+  ;(out as Record<string, unknown>).coach_request_at = meta.fleur_coach_request_at || null
+  ;(out as Record<string, unknown>).coach_request_message = meta.fleur_coach_request_message || null
 }
 
 export async function authLogin(login: string, password: string): Promise<UserRecord> {

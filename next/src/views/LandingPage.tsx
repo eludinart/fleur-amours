@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/store/useStore'
 import { t, setLocale as syncI18nLocale, SUPPORTED_LOCALES } from '@/i18n'
@@ -494,6 +495,39 @@ export function LandingPage() {
                 </motion.div>
                 <motion.div
                   variants={{
+                    hidden: { opacity: 0, y: 8 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                  className="mx-auto mt-6 max-w-lg rounded-2xl border border-teal-200/80 bg-gradient-to-br from-teal-50/90 to-white/90 p-5 text-center shadow-sm backdrop-blur-sm sm:p-6 lg:mx-0 lg:max-w-xl lg:text-left"
+                >
+                  <span className="inline-flex rounded-full border border-teal-200/90 bg-white/80 px-3 py-1 font-sans text-[0.65rem] font-bold uppercase tracking-[0.18em] text-teal-800 sm:text-xs">
+                    {t('landing.proTeaserBadge')}
+                  </span>
+                  <p className="mt-3 font-sans text-base font-semibold text-stone-900 sm:text-lg">{t('landing.proTeaserTitle')}</p>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-stone-600 sm:text-[0.95rem]">{t('landing.proTeaserLead')}</p>
+                  <ul className="mt-4 space-y-2 text-left font-sans text-sm text-stone-600 sm:text-[0.95rem]">
+                    <li className="flex gap-2">
+                      <span className="text-teal-600" aria-hidden>
+                        ✓
+                      </span>
+                      <span>{t('landing.proTeaserBulletA')}</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-teal-600" aria-hidden>
+                        ✓
+                      </span>
+                      <span>{t('landing.proTeaserBulletB')}</span>
+                    </li>
+                  </ul>
+                  <Link
+                    href="/accompagnants"
+                    className="mt-5 inline-flex items-center font-sans text-sm font-semibold text-teal-800 underline decoration-teal-300 decoration-2 underline-offset-4 transition hover:text-teal-950"
+                  >
+                    {t('landing.proTeaserCta')} →
+                  </Link>
+                </motion.div>
+                <motion.div
+                  variants={{
                     hidden: { opacity: 0 },
                     show: { opacity: 1 },
                   }}
@@ -590,6 +624,65 @@ export function LandingPage() {
                 </span>
                 <span>{t('landing.trustLine')}</span>
               </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-8 w-full max-w-lg lg:max-w-none"
+                aria-label={t('landing.visualTeaserAria')}
+              >
+                <div className="overflow-hidden rounded-[1.35rem] border border-violet-200/60 bg-gradient-to-br from-white/90 via-violet-50/40 to-rose-50/50 shadow-[0_20px_50px_-24px_rgba(91,33,182,0.28)] backdrop-blur-sm">
+                  <div className="grid items-stretch gap-0 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.95fr)]">
+                    <div className="relative bg-slate-950 p-3 sm:p-4 md:p-5">
+                      <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-900 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.45)] ring-1 ring-white/5">
+                        <div className="flex items-center gap-1.5 border-b border-white/10 bg-slate-900/95 px-3 py-2">
+                          <span className="h-2 w-2 rounded-full bg-rose-400/80" />
+                          <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                          <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
+                          <span className="ml-2 flex-1 truncate rounded-md bg-slate-800/90 px-2 py-0.5 text-center font-sans text-[0.6rem] font-medium tracking-wide text-slate-400">
+                            Fleur d&apos;AmOurs · jardin
+                          </span>
+                        </div>
+                        <div className="relative bg-slate-950">
+                          <img
+                            src={`${basePath}/landing-fleur-app-preview.png`}
+                            alt={t('landing.visualTeaserAlt')}
+                            width={1200}
+                            height={750}
+                            className="mx-auto h-auto w-full max-h-[min(52vh,22rem)] object-contain object-left sm:max-h-[min(58vh,26rem)] md:max-h-[min(72vh,32rem)] lg:max-h-[min(78vh,36rem)]"
+                            draggable={false}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              const el = e.currentTarget
+                              el.src = `${basePath}/juste-la-fleur.png`
+                              el.alt = ''
+                              el.className = 'mx-auto h-40 w-auto object-contain p-8 opacity-90 sm:h-48'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col justify-center border-t border-violet-100/80 p-6 sm:p-8 md:border-l md:border-t-0">
+                      <p className="font-sans text-[0.65rem] font-bold uppercase tracking-[0.2em] text-violet-600/90">✦ Jardin</p>
+                      <h3 className="mt-2 font-serif text-xl font-semibold leading-snug text-stone-900 sm:text-2xl">
+                        {t('landing.visualTeaserTitle')}
+                      </h3>
+                      <p className="mt-3 font-sans text-sm leading-relaxed text-stone-600 sm:text-[0.95rem]">
+                        {t('landing.visualTeaserBody')}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={goRegisterPlain}
+                        className={`${primaryBtn} mt-6 w-full sm:w-auto self-start`}
+                      >
+                        {t('landing.visualTeaserCta')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
 

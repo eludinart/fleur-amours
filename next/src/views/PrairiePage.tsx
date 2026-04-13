@@ -12,6 +12,7 @@ import { FleurSociale } from '@/components/FleurSociale'
 import { FOUR_DOORS } from '@/data/tarotCards'
 import { t } from '@/i18n'
 import { JardinPhaser } from '@/components/JardinPhaser'
+import { AstrolabeOverlay } from '@/components/AstrolabeOverlay'
 
 const GrandJardinGalaxie = dynamic(
   () => import('@/components/GrandJardinGalaxie').then((m) => ({ default: m.GrandJardinGalaxie })),
@@ -97,6 +98,47 @@ export default function PrairiePage() {
 
     return Array.from(byUserId.values())
   }, [meFleur, fleurs, user?.id])
+  const astrolabeModel = useMemo(() => {
+    const petals = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros']
+    const count = Math.max(1, allFleurs.length)
+    let online = 0
+    const totals = Object.fromEntries(petals.map((p) => [p, 0]))
+
+    allFleurs.forEach((f) => {
+      if (f?.presence?.is_online || f?.is_online) online++
+      petals.forEach((p) => {
+        totals[p] += Number(f?.scores?.[p] ?? 0)
+      })
+    })
+
+    const avgByPetal = Object.fromEntries(
+      petals.map((p) => [p, totals[p] / count])
+    )
+    const dominantPetal =
+      petals.reduce((best, p) => (avgByPetal[p] > avgByPetal[best] ? p : best), petals[0]) || 'agape'
+
+    const meanPetal = petals.reduce((sum, p) => sum + avgByPetal[p], 0) / petals.length
+    const health = Math.min(100, (meanPetal / 3) * 100)
+    const synergy = Math.min(100, links.length > 0 ? (links.length / Math.max(1, count * 1.6)) * 100 : 0)
+    const flows = Math.min(100, (online / count) * 70 + (links.length / Math.max(1, count)) * 30)
+
+    const names = allFleurs
+      .map((f) => String(f?.pseudo ?? '').trim())
+      .filter(Boolean)
+      .slice(0, 6)
+
+    return {
+      ecosystemHealth: health,
+      synergyCore: synergy,
+      permacultureFlows: flows,
+      fleursCount: allFleurs.length,
+      linksCount: links.length,
+      onlineCount: online,
+      pointsDeRosee: Number(pointsDeRosee ?? 0),
+      dominantPetal,
+      names,
+    }
+  }, [allFleurs, links, pointsDeRosee])
 
   const isPublic = user?.profile_public === true
 
@@ -259,7 +301,7 @@ export default function PrairiePage() {
 
       <div
         ref={containerRef}
-        className="flex-1 min-h-[300px] overflow-hidden relative bg-gradient-to-br from-emerald-950/40 via-slate-900/60 to-violet-950/40"
+        className="flex-1 min-h-[300px] overflow-hidden relative bg-gradient-to-br from-[#050b1a] via-[#0a1630] to-[#070d22]"
         style={{ touchAction: 'none' }}
       >
           <div ref={galaxieContainerRef} className="absolute inset-0 w-full h-full">
@@ -268,9 +310,9 @@ export default function PrairiePage() {
               aria-hidden
               style={{
                 backgroundImage: [
-                  'radial-gradient(900px 600px at 20% 15%, rgba(124,58,237,0.20), transparent 60%)',
-                  'radial-gradient(700px 500px at 82% 30%, rgba(16,185,129,0.18), transparent 62%)',
-                  'radial-gradient(800px 600px at 45% 85%, rgba(245,158,11,0.12), transparent 60%)',
+                  'radial-gradient(900px 600px at 20% 15%, rgba(168,85,247,0.18), transparent 62%)',
+                  'radial-gradient(700px 500px at 82% 30%, rgba(34,211,238,0.14), transparent 64%)',
+                  'radial-gradient(800px 620px at 48% 84%, rgba(251,191,36,0.10), transparent 62%)',
                   // Star field (patterned sparkle)
                   'radial-gradient(1.6px 1.6px at 12% 26%, rgba(255,255,255,0.22), transparent 62%)',
                   'radial-gradient(1.2px 1.2px at 22% 68%, rgba(255,255,255,0.18), transparent 62%)',
@@ -290,7 +332,7 @@ export default function PrairiePage() {
               aria-hidden
               style={{
                 background:
-                  'radial-gradient(1200px 800px at 50% 55%, rgba(2,6,23,0.06), rgba(2,6,23,0.42) 70%, rgba(2,6,23,0.70) 100%)',
+                  'radial-gradient(1200px 800px at 50% 55%, rgba(2,6,23,0.04), rgba(2,6,23,0.36) 68%, rgba(2,6,23,0.72) 100%)',
               }}
             />
             {allFleurs.length === 0 ? (
@@ -339,6 +381,7 @@ export default function PrairiePage() {
               )}
             </Suspense>
             )}
+            <AstrolabeOverlay width={containerSize.w} height={containerSize.h} model={astrolabeModel} />
             <AnimatePresence>
             {selectedFleur && (
               <motion.div

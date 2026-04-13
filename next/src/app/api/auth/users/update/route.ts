@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { requireAdmin } from '@/lib/api-auth'
 import { getPool, table } from '@/lib/db'
+import { clearCoachRequestMeta } from '@/lib/db-coach-request'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,10 @@ export async function POST(req: NextRequest) {
          ON DUPLICATE KEY UPDATE app_role = ?`,
         [id, body.app_role, body.app_role]
       )
+      const rid = Number(id)
+      if (!Number.isNaN(rid) && (body.app_role === 'coach' || body.app_role === 'admin')) {
+        await clearCoachRequestMeta(rid)
+      }
     }
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {

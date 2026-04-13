@@ -45,6 +45,10 @@ interface StoreState {
   addToHistory: (slug: string, name?: string) => void
   savedDiagnostics: SavedDiagnostic[]
   saveDiagnostic: (diag: Record<string, unknown>) => void
+  /** Modale « demande profil accompagnant » (accessible partout dans l’app connectée). */
+  coachRequestModalOpen: boolean
+  openCoachRequestModal: () => void
+  closeCoachRequestModal: () => void
 }
 
 export const useStore = create<StoreState>()(
@@ -114,6 +118,9 @@ export const useStore = create<StoreState>()(
             ...s.savedDiagnostics,
           ].slice(0, 10),
         })),
+      coachRequestModalOpen: false,
+      openCoachRequestModal: () => set({ coachRequestModalOpen: true }),
+      closeCoachRequestModal: () => set({ coachRequestModalOpen: false }),
     }),
     {
       name: 'fleur-amours-store',

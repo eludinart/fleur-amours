@@ -11,6 +11,7 @@ import {
   formatCoachLastSeenLabel,
 } from '@/lib/coach-profile'
 import { ContextualHint } from '@/components/ContextualHint'
+import { CoachRequestModalTrigger } from '@/components/CoachRequestModal'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { toast } from '@/hooks/useToast'
@@ -295,6 +296,7 @@ export function CoachesDirectoryPage() {
         <header className="space-y-2">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('coaches.pageTitle')}</h1>
           <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{t('coaches.pageSubtitle')}</p>
+          <CoachRequestModalTrigger className="mt-2 w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-semibold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 border border-violet-200/80 dark:border-violet-800/60 hover:bg-violet-100 dark:hover:bg-violet-950/70 transition-colors text-center sm:text-left" />
           <ContextualHint hintId="ctx_coaches_directory" messageKey="onboarding.contextual.coaches" className="mt-3" />
         </header>
 

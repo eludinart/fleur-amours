@@ -294,6 +294,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
   const router = useRouter()
   const pathname = usePathname() || ''
   useStore((s) => s.locale)
+  const openCoachRequestModal = useStore((s) => s.openCoachRequestModal)
 
   const clairiereUnreadCount = useSocialStore((s) => s.clairiereUnreadCount)
   const fetchClairiereUnread = useSocialStore((s) => s.fetchClairiereUnread)
@@ -396,6 +397,22 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
               />
             ))}
           </nav>
+
+          {user && !isCoach && !isAdmin && (
+            <div className="shrink-0 px-3 py-3 border-b border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => {
+                  openCoachRequestModal()
+                  onClose?.()
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 border border-violet-200/80 dark:border-violet-800/60 hover:bg-violet-100 dark:hover:bg-violet-950/70 transition-colors text-left"
+              >
+                <span className="text-base shrink-0">💬</span>
+                <span className="leading-snug">{t('account.coachRequestTrigger')}</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {user && (

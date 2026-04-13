@@ -240,6 +240,7 @@ export function AccountPage() {
   const searchParams = useSearchParams()
   const fontSizePreference = useStore((s) => s.fontSizePreference)
   const setFontSizePreference = useStore((s) => s.setFontSizePreference)
+  const openCoachRequestModal = useStore((s) => s.openCoachRequestModal)
   const locale = useStore((s) => s.locale)
   const setLocale = useStore((s) => s.setLocale)
   const [access, setAccess] = useState<Access | null>(null)
@@ -741,6 +742,24 @@ export function AccountPage() {
               </button>
             )}
           </div>
+          {profileTab === 'user' && !hasCoachTab && (
+            <div className="rounded-xl border border-violet-200/70 dark:border-violet-800/50 bg-violet-50/50 dark:bg-violet-950/20 p-4 mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{t('account.coachRequestTitle')}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{t('account.coachRequestCompactHint')}</p>
+                {profile?.coach_request_status === 'pending' ? (
+                  <p className="text-xs font-medium text-amber-800 dark:text-amber-200 mt-2">{t('account.coachRequestPending')}</p>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={() => openCoachRequestModal()}
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors"
+              >
+                {t('account.coachRequestOpenModal')}
+              </button>
+            </div>
+          )}
           <form onSubmit={handleProfileSave} className="space-y-4">
             {profileTab === 'user' && (
               <>
