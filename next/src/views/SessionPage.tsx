@@ -473,7 +473,16 @@ function CardDrawPanel({ door, onDrawn, preDrawnCard, onBeforeDraw }) {
 
 const getDoorLabels = () => ({ love: t('session.doorLove'), vegetal: t('session.doorVegetal'), elements: t('session.doorElements'), life: t('session.doorLife') })
 
-function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, access }) {
+function IntroStep({
+  onStart,
+  onResume,
+  userEmail,
+  resumeError,
+  quotaExceeded,
+  access,
+  autoOpenCompletedSessionId = null,
+  onAutoOpenHandled = null,
+}) {
   const locale = useStore((s) => s.locale)
   const hasSeenSessionIntro = useStore((s) => s.hasSeenSessionIntro)
   const setHasSeenSessionIntro = useStore((s) => s.setHasSeenSessionIntro)
@@ -513,6 +522,19 @@ function IntroStep({ onStart, onResume, userEmail, resumeError, quotaExceeded, a
       setCompletedSessionIndex(Math.max(0, completedSessions.length - 1))
     }
   }, [completedSessions, completedSessionIndex])
+
+  useEffect(() => {
+    if (!autoOpenCompletedSessionId || loadingCompleted) return
+    const target = completedSessions.find((s) => String(s.id) === String(autoOpenCompletedSessionId))
+    if (!target) {
+      onAutoOpenHandled?.()
+      return
+    }
+    const idx = completedSessions.findIndex((s) => String(s.id) === String(autoOpenCompletedSessionId))
+    if (idx >= 0) setCompletedSessionIndex(idx)
+    openSessionDetailModal(target)
+    onAutoOpenHandled?.()
+  }, [autoOpenCompletedSessionId, loadingCompleted, completedSessions])
 
   function goToCompletedSession(index) {
     if (index < 0 || index >= completedSessions.length) return
@@ -3636,6 +3658,7 @@ export default function SessionPage() {
   const [resumeError, setResumeError]   = useState('')
   const [quotaExceededForSessions, setQuotaExceededForSessions] = useState(false)
   const [access, setAccess] = useState(null)
+  const [autoOpenCompletedSessionId, setAutoOpenCompletedSessionId] = useState<string | null>(null)
   const startTime                       = useRef(null)
 
   useEffect(() => {
@@ -3676,6 +3699,15 @@ export default function SessionPage() {
     setResumeError('')
     try {
       const session = await sessionsApi.get(sessionId)
+      const status = String(session?.status ?? '').toLowerCase()
+      if (['completed', 'done', 'finished', 'closed', 'terminated'].includes(status)) {
+        setAutoOpenCompletedSessionId(String(session.id))
+        setThresholdData(null)
+        setInitialState(null)
+        setFinalState(null)
+        setStep('intro')
+        return
+      }
       const stepDataResume = session.step_data || {}
       const snap = stepDataResume.threshold_snapshot
       const doorKey = session.door_suggested ?? snap?.door_suggested ?? 'love'
@@ -3767,6 +3799,8 @@ export default function SessionPage() {
             resumeError={resumeError}
             quotaExceeded={quotaExceededForSessions}
             access={access}
+            autoOpenCompletedSessionId={autoOpenCompletedSessionId}
+            onAutoOpenHandled={() => setAutoOpenCompletedSessionId(null)}
           />
         )}
         {step === 'threshold' && (

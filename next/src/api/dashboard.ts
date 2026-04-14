@@ -264,29 +264,25 @@ export async function fetchDashboardData() {
     const createdAt = s.created_at ? new Date(s.created_at as string).getTime() : 0
     if (createdAt < thirtyDaysAgo) continue
     const plan = (s.step_data as Record<string, unknown>)?.plan14j ?? s.plan14j
-    const synthesis = (plan as Record<string, unknown>)?.synthesis || (plan as Record<string, unknown>)?.synthesis_suggestion
-    if (synthesis) {
-      const line = buildSessionChronicleSummary(String(synthesis), s.first_words as string | undefined)
-      chronicle.push({
-        type: 'session',
-        id: s.id,
-        synthesis: line,
-        created_at: s.created_at,
-        tone: inferChronicleTone('session', line),
-      })
-    }
+    const planSynthesis =
+      (plan as Record<string, unknown>)?.synthesis || (plan as Record<string, unknown>)?.synthesis_suggestion
     const anchors = (s.anchors ?? []) as Array<{ synthesis?: string }>
-    anchors.forEach((a) => {
-      if (a?.synthesis) {
-        const line = buildSessionChronicleSummary(String(a.synthesis), null)
-        chronicle.push({
-          type: 'session_anchor',
-          id: s.id,
-          synthesis: line,
-          created_at: s.created_at,
-          tone: inferChronicleTone('session_anchor', line),
-        })
-      }
+    const anchorSynthesis = [...anchors]
+      .reverse()
+      .find((a) => typeof a?.synthesis === 'string' && a.synthesis.trim())?.synthesis
+
+    // Une seule entrée "Session" par session : on préfère la synthèse finale (plan14j),
+    // sinon la dernière synthèse d'ancre disponible.
+    const synthesis = planSynthesis || anchorSynthesis
+    if (!synthesis) continue
+
+    const line = buildSessionChronicleSummary(String(synthesis), s.first_words as string | undefined)
+    chronicle.push({
+      type: 'session',
+      id: s.id,
+      synthesis: line,
+      created_at: s.created_at,
+      tone: inferChronicleTone('session', line),
     })
   }
   for (const r of readings as Record<string, unknown>[]) {
