@@ -157,7 +157,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
       setCloseModalSynthesis('')
       setCloseModalSections(null)
       setCloseModalSavedId(null)
-      setCloseModalShareUrl(null)
+      setCloseModalShareToken(null)
       return
     }
     let alive = true
