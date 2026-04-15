@@ -29,6 +29,8 @@ const routeMeta: Record<
   boutique: { titleKey: 'prairie.boutique', descKey: 'prairie.boutique' },
   login: { title: 'Connexion', descKey: 'login.subtitleLogin' },
   accompagnants: { titleKey: 'coachLanding.metaTitle', descKey: 'coachLanding.metaDesc' },
+  mycelium: { titleKey: 'myceliumLanding.metaTitle', descKey: 'myceliumLanding.metaDesc' },
+  particuliers: { titleKey: 'landing.accessIndividualTitle', descKey: 'landing.individualSectionLead' },
 }
 
 function getMeta(route: string) {

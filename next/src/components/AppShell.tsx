@@ -11,6 +11,7 @@ import { Layout } from '@/components/layout/Layout'
 import { LoginPage } from '@/views/LoginPage'
 import { LandingPage } from '@/views/LandingPage'
 import { CoachLandingPage } from '@/views/CoachLandingPage'
+import { MyceliumLandingPage } from '@/views/MyceliumLandingPage'
 import { HomePage } from '@/views/HomePage'
 import { PresentationPage } from '@/views/PresentationPage'
 import { AccountPage } from '@/views/AccountPage'
@@ -175,12 +176,16 @@ function AppRoutes() {
   }
 
   // Page publique : pas d’attente du spinner auth sombre
-  if (loading && route === 'accompagnants') {
+  if (loading && (route === 'accompagnants' || route === 'mycelium' || route === 'particuliers')) {
     return (
       <Suspense fallback={null}>
         <LocaleSync />
         <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
-          <CoachLandingPage />
+          {route === 'accompagnants'
+            ? <CoachLandingPage />
+            : route === 'mycelium'
+              ? <MyceliumLandingPage />
+              : <LandingPage showAccessSection={false} showIndividualSection />}
         </div>
       </Suspense>
     )
@@ -622,13 +627,37 @@ function AppRoutes() {
     )
   }
 
+  // Page publique entreprise / framework Mycelium
+  if (route === 'mycelium') {
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <LocaleSync />
+        <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
+          <MyceliumLandingPage />
+        </div>
+      </Suspense>
+    )
+  }
+
+  // Page publique parcours individuel (avec tirage)
+  if (route === 'particuliers') {
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <LocaleSync />
+        <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
+          <LandingPage showAccessSection={false} showIndividualSection />
+        </div>
+      </Suspense>
+    )
+  }
+
   // Landing page (guest home) — rendue sans le wrapper dark de l'app
   if (route === 'home' && !user) {
     return (
       <Suspense fallback={<PageFallback />}>
         <LocaleSync />
         <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
-          <LandingPage />
+          <LandingPage showAccessSection showIndividualSection={false} />
         </div>
       </Suspense>
     )

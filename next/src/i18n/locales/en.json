@@ -1279,6 +1279,22 @@
 
   "landing": {
     "ritualSection": "Your reading",
+    "accessTitle": "Choose your access",
+    "accessSubtitle": "Individuals, practitioners, and companies: three entry points for one relational ecosystem.",
+    "accessIndividualBadge": "Individuals",
+    "accessIndividualTitle": "Personal pathway",
+    "accessIndividualBody": "Clarify a relationship situation, draw a card if you wish, then continue with deeper tools and practical guidance.",
+    "accessIndividualCta": "Enter as an individual",
+    "accessCoachBadge": "Practitioners",
+    "accessCoachTitle": "Practice space",
+    "accessCoachBody": "See how the garden supports your accompaniment framework, relationship quality, and between-session follow-up.",
+    "accessCoachCta": "Discover the practitioners space",
+    "accessCompanyBadge": "Companies",
+    "accessCompanyTitle": "Mycelium",
+    "accessCompanyBody": "A relational framework for organizations: connecting people, teams, and interaction quality over time.",
+    "accessCompanyCta": "Discover Mycelium",
+    "individualSectionTitle": "Individual space",
+    "individualSectionLead": "Card drawing remains available here as a clarity entry point inside a broader pathway.",
     "socialProofTitle": "What people say",
     "socialProofIntro": "Voices along the path: clarity, decisions, and possible steps—not only a single card.",
     "socialQuote1": "\"In one card, I finally found words for what I was feeling.\"",
@@ -1295,7 +1311,7 @@
     "visualTeaserAlt": "App preview: Fleur d'AmOurs eight-petal view and journal of shadows and lights with reading history",
     "tagline": "Clarity and relational transformation",
     "heroTitle": "Navigate the complexity of your loves",
-    "heroSubtitle": "A compassionate mirror that invites movement: give shape to what is happening in your relationships, then find support to decide, adjust, and transform what you are going through. Start with a card.",
+    "heroSubtitle": "A compassionate mirror that invites movement: give shape to what is happening in your relationships, then find support to decide, adjust, and transform what you are going through.",
     "heroAccountHook": "Create a free account to open the full garden: guided paths, saved readings, AI insights, and support—from first clarity to the choices and actions that are possible for you.",
     "ctaLogin": "Sign in",
     "ctaRegister": "Sign up",
@@ -1306,8 +1322,8 @@
     "benefitsTitle": "What supports your transformation",
     "benefitClarityTitle": "From fog to a clear frame",
     "benefitClarityDesc": "A path and questions that help you name what matters and make calmer, clearer choices.",
-    "benefitReadingsTitle": "Readings and history",
-    "benefitReadingsDesc": "Several ways to draw cards and revisit readings to notice what is moving—and what still needs care.",
+    "benefitReadingsTitle": "Pathway and history",
+    "benefitReadingsDesc": "Revisit your steps, summaries, and markers to track what changes over time.",
     "benefitMirrorTitle": "From insight to possible actions",
     "benefitMirrorDesc": "Readings grounded in the Fleur d'AmOurs tarot and your situation—to open levers, not only images.",
     "benefitJourneyTitle": "Making change last",
@@ -1334,7 +1350,7 @@
     "proTeaserCta": "See the practitioners' page",
     "alreadyGardener": "Already a gardener?",
     "signIn": "Sign in",
-    "footerNote": "Fleur d'AmOurs — Garden of Love · Clarity and relational transformation"
+    "footerNote": "Fleur d'AmOurs — Clarity and relational transformation"
   },
   "coachLanding": {
     "metaTitle": "Practitioners · Tool and practice",
@@ -1368,5 +1384,25 @@
     "ctaLogin": "Sign in",
     "ctaCoaches": "Browse the practitioners directory",
     "footerNote": "Fleur d'AmOurs — Relational tool and digital space for practitioners"
+  },
+  "myceliumLanding": {
+    "metaTitle": "Mycelium · Company framework",
+    "metaDesc": "Mycelium, the company dimension of Fleur d'AmOurs: a relational framework to support individual, team, and managerial accompaniment.",
+    "tagline": "Company dimension",
+    "badge": "Mycelium",
+    "navHome": "Individual space",
+    "heroTitle": "Mycelium: the relational framework for companies",
+    "heroSubtitle": "Like the underground network that connects living systems, Mycelium links people, accompaniment practices, and organizational stakes to support durable transformation.",
+    "p1Title": "Connect every organizational level",
+    "p1Desc": "A shared language and reference points for people, teams, and managers.",
+    "p2Title": "Turn accompaniment into action",
+    "p2Desc": "From relational diagnosis to concrete plans, Mycelium structures the shift from understanding to daily actions.",
+    "p3Title": "Support a living relational culture",
+    "p3Desc": "A framework to circulate relational quality without relying on isolated initiatives.",
+    "ctaTitle": "Mycelium is coming soon",
+    "ctaLead": "Create an account to follow the company release and access the first features as they become available.",
+    "ctaRegister": "Create an account",
+    "ctaLogin": "Sign in",
+    "footerNote": "Mycelium by Fleur d'AmOurs — Relational framework for companies"
   }
 }

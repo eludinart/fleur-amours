@@ -1275,6 +1275,22 @@
 
   "landing": {
     "ritualSection": "La tua lettura",
+    "accessTitle": "Scegli il tuo accesso",
+    "accessSubtitle": "Persone, accompagnanti e aziende: tre ingressi per un unico ecosistema relazionale.",
+    "accessIndividualBadge": "Persone",
+    "accessIndividualTitle": "Percorso individuale",
+    "accessIndividualBody": "Chiarisci una situazione relazionale, tira una carta se vuoi, poi continua con strumenti di comprensione e azione.",
+    "accessIndividualCta": "Entrare come persona",
+    "accessCoachBadge": "Accompagnanti",
+    "accessCoachTitle": "Spazio di pratica",
+    "accessCoachBody": "Scopri come il giardino sostiene il tuo quadro di accompagnamento, la relazione e il follow-up tra le sedute.",
+    "accessCoachCta": "Scoprire lo spazio accompagnanti",
+    "accessCompanyBadge": "Aziende",
+    "accessCompanyTitle": "Mycelium",
+    "accessCompanyBody": "Il framework relazionale per le organizzazioni: collegare persone, team e qualità delle interazioni nel tempo.",
+    "accessCompanyCta": "Scoprire Mycelium",
+    "individualSectionTitle": "Spazio persone",
+    "individualSectionLead": "La carta resta disponibile qui come punto di ingresso alla chiarezza, dentro un percorso più ampio.",
     "socialProofTitle": "Cosa dicono le persone",
     "socialProofIntro": "Voci lungo il percorso: chiarezza, decisioni e passi possibili — non solo una carta.",
     "socialQuote1": "«In una carta, ho finalmente trovato le parole per ciò che stavo vivendo.»",
@@ -1291,7 +1307,7 @@
     "visualTeaserAlt": "Anteprima app: Fleur d'AmOurs, otto petali e diario di ombre e luci con cronologia delle letture",
     "tagline": "Chiarezza e trasformazione relazionale",
     "heroTitle": "Naviga nella complessità dei tuoi amori",
-    "heroSubtitle": "Uno specchio benevolo che invita al movimento: dare forma a ciò che accade nelle tue relazioni, poi appoggi per decidere, regolare e trasformare ciò che stai attraversando. Inizia con una carta.",
+    "heroSubtitle": "Uno specchio benevolo che invita al movimento: dare forma a ciò che accade nelle tue relazioni, poi appoggi per decidere, regolare e trasformare ciò che stai attraversando.",
     "heroAccountHook": "Crea un account gratuito per aprire tutto il giardino: percorsi, letture salvate, analisi e accompagnamento — dalla prima chiarezza alle scelte e ai gesti possibili.",
     "ctaLogin": "Accesso",
     "ctaRegister": "Registrazione",
@@ -1302,8 +1318,8 @@
     "benefitsTitle": "Ciò che sostiene la tua trasformazione",
     "benefitClarityTitle": "Dalla nebbia a un quadro chiaro",
     "benefitClarityDesc": "Un percorso e domande che aiutano a nominare l'essenziale e fare scelte più lucide.",
-    "benefitReadingsTitle": "Letture e cronologia",
-    "benefitReadingsDesc": "Diversi modi di tirare e rivedere le letture per notare cosa si muove — e cosa merita ancora attenzione.",
+    "benefitReadingsTitle": "Percorso e cronologia",
+    "benefitReadingsDesc": "Ritrova le tue tappe, sintesi e riferimenti per osservare cosa cambia nel tempo.",
     "benefitMirrorTitle": "Dal riscontro alle leve d'azione",
     "benefitMirrorDesc": "Letture ancorate al tarot Fleur d'AmOurs e alla tua situazione — per aprire leve, non solo immagini.",
     "benefitJourneyTitle": "Far durare il cambiamento",
@@ -1330,7 +1346,7 @@
     "proTeaserCta": "Vedi la pagina per accompagnanti",
     "alreadyGardener": "Già giardiniere/a?",
     "signIn": "Accedi",
-    "footerNote": "Fleur d'AmOurs — Giardino d'Amori · Chiarezza e trasformazione relazionale"
+    "footerNote": "Fleur d'AmOurs — Chiarezza e trasformazione relazionale"
   },
   "coachLanding": {
     "metaTitle": "Accompagnanti · Strumento e pratica",
@@ -1364,5 +1380,25 @@
     "ctaLogin": "Accedi",
     "ctaCoaches": "Vedi l'elenco degli accompagnanti",
     "footerNote": "Fleur d'AmOurs — Strumento relazionale e spazio digitale per accompagnanti"
+  },
+  "myceliumLanding": {
+    "metaTitle": "Mycelium · Framework azienda",
+    "metaDesc": "Mycelium, la dimensione azienda di Fleur d'AmOurs: un framework relazionale per sostenere accompagnamento individuale, collettivo e manageriale.",
+    "tagline": "Dimensione azienda",
+    "badge": "Mycelium",
+    "navHome": "Spazio persone",
+    "heroTitle": "Mycelium: il framework relazionale per l'azienda",
+    "heroSubtitle": "Come la rete sotterranea che connette il vivente, Mycelium collega persone, pratiche di accompagnamento e sfide organizzative per sostenere trasformazioni durature.",
+    "p1Title": "Collegare i livelli dell'organizzazione",
+    "p1Desc": "Un linguaggio comune e riferimenti condivisi per persone, team e manager.",
+    "p2Title": "Rendere l'accompagnamento azionabile",
+    "p2Desc": "Dalla diagnosi relazionale ai piani concreti, Mycelium struttura il passaggio dalla comprensione ai gesti quotidiani.",
+    "p3Title": "Sostenere una cultura viva della relazione",
+    "p3Desc": "Un quadro per far circolare la qualità relazionale senza dipendere da iniziative isolate.",
+    "ctaTitle": "Mycelium arriva presto",
+    "ctaLead": "Crea un account per seguire l'apertura della dimensione azienda e accedere alle prime funzioni appena disponibili.",
+    "ctaRegister": "Crea un account",
+    "ctaLogin": "Accedi",
+    "footerNote": "Mycelium by Fleur d'AmOurs — Framework relazionale per le aziende"
   }
 }

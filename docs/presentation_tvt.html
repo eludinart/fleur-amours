@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleur d'AmOurs — TVT Innovation Toulon</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --rose: #f472b6;
+    --violet: #a855f7;
+    --indigo: #6366f1;
+    --amber: #f59e0b;
+    --dark: #0f0a1e;
+    --dark2: #1a1035;
+    --card: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.12);
+    --text: #f1f0ff;
+    --muted: #a09cc0;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* SLIDES CONTAINER */
+  .deck { width: 100vw; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+    background: var(--dark);
+    overflow: hidden;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .slide.prev {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* BACKGROUNDS */
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(168,85,247,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(244,114,182,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 30% at 50% 50%, rgba(99,102,241,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* FLOWER SVG BACKGROUND */
+  .flower-bg {
+    position: absolute;
+    right: -80px;
+    bottom: -80px;
+    width: 400px;
+    height: 400px;
+    opacity: 0.04;
+  }
+
+  /* NAVIGATION */
+  .nav {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+    background: rgba(15,10,30,0.8);
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+  }
+
+  .nav button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav button:hover { background: var(--card); border-color: var(--violet); }
+
+  .progress {
+    font-size: 13px;
+    color: var(--muted);
+    min-width: 60px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .dot.active {
+    background: var(--violet);
+    width: 20px;
+    border-radius: 3px;
+  }
+
+  /* NOTES PANEL */
+  .notes-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(15,10,30,0.8);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s;
+  }
+
+  .notes-btn:hover { color: var(--text); border-color: var(--violet); }
+
+  .notes-panel {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(700px, 90vw);
+    background: rgba(15,10,30,0.95);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+    z-index: 99;
+    backdrop-filter: blur(10px);
+    display: none;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .notes-panel.show { display: block; }
+  .notes-panel strong { color: var(--text); }
+
+  /* SLIDE NUMBER */
+  .slide-num {
+    position: fixed;
+    top: 20px;
+    left: 24px;
+    font-size: 12px;
+    color: var(--muted);
+    z-index: 100;
+  }
+
+  /* ══════════════════════════════ TYPOGRAPHY */
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--violet);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 0%, var(--rose) 50%, var(--violet) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 24px;
+  }
+
+  h2 {
+    font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    background: linear-gradient(135deg, #fff 0%, var(--rose) 60%, var(--violet) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 32px;
+  }
+
+  .subtitle {
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
+    color: var(--muted);
+    max-width: 700px;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  /* ══════════════════════════════ COMPONENTS */
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    backdrop-filter: blur(4px);
+  }
+
+  .card-grid {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--rose), var(--violet));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid;
+  }
+
+  .badge-rose { color: var(--rose); border-color: rgba(244,114,182,0.3); background: rgba(244,114,182,0.1); }
+  .badge-violet { color: var(--violet); border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.1); }
+  .badge-indigo { color: #818cf8; border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.1); }
+  .badge-amber { color: var(--amber); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); }
+  .badge-green { color: #34d399; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.1); }
+
+  .check-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .check-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .check-list li::before {
+    content: '◆';
+    color: var(--violet);
+    font-size: 10px;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  .check-list li strong { color: var(--text); }
+
+  .petal-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+
+  .petal-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+
+  .petal-emoji { font-size: 22px; margin-bottom: 6px; }
+  .petal-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .petal-desc { font-size: 11px; color: var(--muted); line-height: 1.3; }
+
+  .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table th { padding: 10px 16px; text-align: left; color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); }
+  .table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); line-height: 1.4; }
+  .table tr:last-child td { border-bottom: none; }
+  .table td:first-child { color: var(--text); font-weight: 600; }
+  .table td:not(:first-child) { color: var(--muted); }
+
+  .timeline {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    position: relative;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 28px;
+    left: 14%;
+    right: 14%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--violet), var(--rose));
+  }
+
+  .timeline-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .timeline-dot {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--violet), var(--rose));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    z-index: 1;
+    flex-shrink: 0;
+  }
+
+  .timeline-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .timeline-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  .price-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  .price-card.featured {
+    border-color: var(--violet);
+    background: rgba(168,85,247,0.08);
+  }
+
+  .price-card .plan-name { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .price-card .price { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .price-card .price-period { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+  .price-card .price-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+  .featured-badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--violet), var(--rose));
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    width: 100%;
+    align-items: start;
+  }
+
+  .market-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .market-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .market-label { font-size: 12px; color: var(--muted); width: 160px; flex-shrink: 0; text-align: right; }
+  .market-track { flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+  .market-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--violet), var(--rose)); }
+  .market-value { font-size: 12px; font-weight: 700; color: var(--text); width: 80px; }
+
+  .vs-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .vs-label {
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(135deg, var(--violet), var(--rose));
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    margin: 0 auto;
+  }
+
+  .module-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .module-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .module-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .module-content { flex: 1; }
+  .module-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .module-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .pill.done { border-color: rgba(52,211,153,0.4); background: rgba(52,211,153,0.08); color: #34d399; }
+  .pill.wip { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); color: var(--amber); }
+
+  .quote-block {
+    background: var(--card);
+    border-left: 3px solid var(--violet);
+    border-radius: 0 12px 12px 0;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-style: italic;
+    width: 100%;
+  }
+
+  .quote-block strong { color: var(--text); font-style: normal; }
+
+  /* ══════════════════════════════ SLIDE 1 — COVER */
+  .cover-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 24px;
+    z-index: 1;
+  }
+
+  .flower-logo {
+    width: 100px;
+    height: 100px;
+    animation: spin-slow 20s linear infinite;
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* ══════════════════════════════ RESPONSIVE */
+  @media (max-width: 900px) {
+    .slide { padding: 40px 32px; }
+    .card-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+    .card-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+    .petal-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; gap: 20px; }
+    .timeline::before { display: none; }
+    .timeline { flex-direction: column; gap: 12px; }
+    .timeline-step { flex-direction: row; text-align: left; }
+    .timeline-dot { width: 40px; height: 40px; font-size: 16px; flex-shrink: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE NUMBER -->
+<div class="slide-num" id="slideNum">1 / 16</div>
+
+<!-- NOTES BUTTON -->
+<button class="notes-btn" onclick="toggleNotes()">💬 Notes</button>
+
+<!-- NOTES PANEL -->
+<div class="notes-panel" id="notesPanel"></div>
+
+<!-- DECK -->
+<div class="deck" id="deck">
+
+  <!-- ══ SLIDE 1 — COUVERTURE ══ -->
+  <div class="slide active" data-notes="Accrocher immédiatement. TVT accompagne des dizaines de startups — montrez-leur d'emblée que vous posez une vraie question de société, pas juste 'j'ai une app'. Laissez la question résonner 5 secondes avant de continuer.">
+    <svg class="flower-logo" viewBox="0 0 100 100" fill="none">
+      <g opacity="0.9">
+        <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p1)" opacity="0.8"/>
+        <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p1)" opacity="0.8" transform="rotate(45 50 50)"/>
+        <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p2)" opacity="0.8" transform="rotate(90 50 50)"/>
+        <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p2)" opacity="0.8" transform="rotate(135 50 50)"/>
+        <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p1)" opacity="0.8" transform="rotate(180 50 50)"/>
+        <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p1)" opacity="0.8" transform="rotate(225 50 50)"/>
+        <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p2)" opacity="0.8" transform="rotate(270 50 50)"/>
+        <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p2)" opacity="0.8" transform="rotate(315 50 50)"/>
+        <circle cx="50" cy="50" r="12" fill="url(#center)"/>
+      </g>
+      <defs>
+        <linearGradient id="p1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#f472b6"/></linearGradient>
+        <linearGradient id="p2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient>
+        <radialGradient id="center"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f59e0b"/></radialGradient>
+      </defs>
+    </svg>
+    <div class="cover-content">
+      <div class="eyebrow">TVT Innovation Toulon — Avril 2026</div>
+      <h1>Et si l'IA pouvait vous aider<br>à mieux vous connaître<br>— et mieux travailler ensemble ?</h1>
+      <div class="subtitle">Fleur d'AmOurs · Plateforme d'intelligence émotionnelle augmentée par l'IA</div>
+      <div class="pill-row" style="margin-top:8px">
+        <span class="badge badge-rose">B2C · Grand public</span>
+        <span class="badge badge-violet">B2B · Entreprises</span>
+        <span class="badge badge-indigo">B2B2C · Coachs</span>
+        <span class="badge badge-amber">Entrepreneurs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2 — LE PROBLÈME ══ -->
+  <div class="slide" data-notes="Ces chiffres sont officiels (INSEE, INRS, Asso France Burnout 2024). Ne les lisez pas — laissez-les parler. Le point clé : 1€ investi en prévention = 13€ de retour. C'est le ROI que les DRH cherchent désespérément.">
+    <div class="eyebrow">Le problème</div>
+    <h2>Un coût humain et économique<br>massif et documenté</h2>
+    <div class="card-grid cols-3" style="width:100%; max-width:900px">
+      <div class="stat-card">
+        <div class="stat-number">34%</div>
+        <div class="stat-label">des salariés français en burnout ou à risque en 2024</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">59%</div>
+        <div class="stat-label">exposés à des risques psychosociaux au travail (RPS)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">1→13€</div>
+        <div class="stat-label">retour pour chaque euro investi en prévention (INRS)</div>
+      </div>
+    </div>
+    <div style="margin-top:28px; max-width:700px; text-align:center;">
+      <div class="quote-block">
+        Les entreprises dépensent des millions en formations soft skills qui <strong>ne retiennent rien</strong>, parce qu'elles sont génériques. Ce qu'il faut, c'est de la <strong>personnalisation</strong> — et c'est exactement ce que l'IA rend possible aujourd'hui.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3 — LA SOLUTION ══ -->
+  <div class="slide" data-notes="Positionnez bien : ce n'est pas une app de méditation, pas un chatbot de thérapie, pas un test de personnalité classique. C'est un outil de connaissance de soi avec un cadre conceptuel propriétaire et une IA personnalisée.">
+    <div class="eyebrow">La solution</div>
+    <h2>Fleur d'AmOurs</h2>
+    <div class="two-col" style="max-width:960px">
+      <div>
+        <p style="font-size:14px; color:var(--muted); line-height:1.7; margin-bottom:20px">Une plateforme de <strong style="color:var(--text)">cartographie émotionnelle personnalisée</strong>, fondée sur les 8 formes d'amour de la philosophie grecque, visualisée comme une fleur interactive, et interprétée par l'IA.</p>
+        <ul class="check-list">
+          <li><strong>Questionnaire 24 questions</strong> → profil unique à 8 dimensions</li>
+          <li><strong>Fleur SVG interactive</strong> → visualisation immédiate et intuitive</li>
+          <li><strong>19 modules IA</strong> spécialisés pour l'interprétation et le coaching</li>
+          <li><strong>Évolution dans le temps</strong> → le profil grandit avec l'utilisateur</li>
+          <li><strong>Écosystème coach/patient</strong> → le coaching augmenté par l'IA</li>
+          <li><strong>Mode entreprise</strong> → diagnostic d'équipe et prévention RPS</li>
+        </ul>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div class="card" style="text-align:center; padding:24px">
+          <svg viewBox="0 0 120 120" width="120" height="120">
+            <g>
+              <ellipse cx="60" cy="32" rx="12" ry="22" fill="rgba(168,85,247,0.6)" transform="rotate(0 60 60)"/>
+              <ellipse cx="60" cy="32" rx="12" ry="22" fill="rgba(244,114,182,0.6)" transform="rotate(45 60 60)"/>
+              <ellipse cx="60" cy="32" rx="12" ry="22" fill="rgba(99,102,241,0.6)" transform="rotate(90 60 60)"/>
+              <ellipse cx="60" cy="32" rx="12" ry="22" fill="rgba(168,85,247,0.6)" transform="rotate(135 60 60)"/>
+              <ellipse cx="60" cy="32" rx="12" ry="22" fill="rgba(244,114,182,0.6)" transform="rotate(180 60 60)"/>
+              <ellipse cx="60" cy="32" rx="12" ry="22" fill="rgba(99,102,241,0.6)" transform="rotate(225 60 60)"/>
+              <ellipse cx="60" cy="32" rx="12" ry="22" fill="rgba(168,85,247,0.6)" transform="rotate(270 60 60)"/>
+              <ellipse cx="60" cy="32" rx="12" ry="22" fill="rgba(244,114,182,0.6)" transform="rotate(315 60 60)"/>
+              <circle cx="60" cy="60" r="14" fill="#f59e0b"/>
+            </g>
+          </svg>
+          <div style="font-size:12px; color:var(--muted); margin-top:8px">Votre profil émotionnel unique</div>
+        </div>
+        <div class="pill-row">
+          <span class="pill">Web</span>
+          <span class="pill">Android</span>
+          <span class="pill">5 langues</span>
+          <span class="pill">RGPD</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4 — LES 8 PÉTALES ══ -->
+  <div class="slide" data-notes="Insistez sur le fait que ces 8 dimensions ne sont pas inventées : elles viennent de la philosophie grecque antique, formalisées aujourd'hui avec des matrices d'hypothèses et des métriques opérationnelles. Ce n'est pas du spirituel vague — c'est rigoureux.">
+    <div class="eyebrow">Le cadre conceptuel</div>
+    <h2>8 dimensions universelles<br>de notre façon d'être en relation</h2>
+    <div class="petal-grid" style="max-width:900px">
+      <div class="petal-item">
+        <div class="petal-emoji">🔥</div>
+        <div class="petal-name">Éros</div>
+        <div class="petal-desc">Désir, créativité<br><span style="color:var(--violet)">→ Innovation, prise de risque</span></div>
+      </div>
+      <div class="petal-item">
+        <div class="petal-emoji">💜</div>
+        <div class="petal-name">Agapè</div>
+        <div class="petal-desc">Amour inconditionnel<br><span style="color:var(--violet)">→ Leadership bienveillant</span></div>
+      </div>
+      <div class="petal-item">
+        <div class="petal-emoji">🤝</div>
+        <div class="petal-name">Philia</div>
+        <div class="petal-desc">Amitié, confiance<br><span style="color:var(--violet)">→ Cohésion d'équipe</span></div>
+      </div>
+      <div class="petal-item">
+        <div class="petal-emoji">⚖️</div>
+        <div class="petal-name">Pragma</div>
+        <div class="petal-desc">Engagement durable<br><span style="color:var(--violet)">→ Fiabilité, vision long terme</span></div>
+      </div>
+      <div class="petal-item">
+        <div class="petal-emoji">🎲</div>
+        <div class="petal-name">Ludus</div>
+        <div class="petal-desc">Légèreté, jeu<br><span style="color:var(--violet)">→ Créativité, adaptabilité</span></div>
+      </div>
+      <div class="petal-item">
+        <div class="petal-emoji">⚡</div>
+        <div class="petal-name">Mania</div>
+        <div class="petal-desc">Intensité, passion<br><span style="color:var(--violet)">→ Motivation, énergie</span></div>
+      </div>
+      <div class="petal-item">
+        <div class="petal-emoji">🌳</div>
+        <div class="petal-name">Storgè</div>
+        <div class="petal-desc">Attachement, sécurité<br><span style="color:var(--violet)">→ Culture, appartenance</span></div>
+      </div>
+      <div class="petal-item">
+        <div class="petal-emoji">🛡️</div>
+        <div class="petal-name">Philautia</div>
+        <div class="petal-desc">Respect de soi, limites<br><span style="color:var(--violet)">→ Prévention burnout</span></div>
+      </div>
+    </div>
+    <div style="margin-top:16px; font-size:13px; color:var(--muted); text-align:center">
+      Formalisé avec matrices d'hypothèses, métriques opérationnelles et base scientifique propriétaire
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5 — PARCOURS UTILISATEUR ══ -->
+  <div class="slide" data-notes="Le parcours est intentionnellement rapide au début (10 minutes pour la fleur) et profond ensuite (sessions récurrentes, évolution dans le temps). C'est ce qui crée la rétention : l'utilisateur revient parce que son profil grandit avec lui.">
+    <div class="eyebrow">Expérience utilisateur</div>
+    <h2>En 10 minutes, une cartographie<br>que vous n'oublierez pas</h2>
+    <div class="timeline" style="max-width:900px; width:100%; margin-top:16px">
+      <div class="timeline-step">
+        <div class="timeline-dot">📋</div>
+        <div class="timeline-title">Questionnaire</div>
+        <div class="timeline-desc">24 questions sur vos modes relationnels — 10 minutes</div>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-dot">🌸</div>
+        <div class="timeline-title">Votre Fleur</div>
+        <div class="timeline-desc">Profil à 8 pétales visualisé et interprété par l'IA</div>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-dot">🤖</div>
+        <div class="timeline-title">Session IA</div>
+        <div class="timeline-desc">Dialogue maïeutique guidé pour creuser vos insights</div>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-dot">📈</div>
+        <div class="timeline-title">Évolution</div>
+        <div class="timeline-desc">Dashboard, plans d'action, suivi dans le temps</div>
+      </div>
+    </div>
+    <div class="card-grid cols-3" style="max-width:900px; width:100%; margin-top:24px">
+      <div class="card" style="text-align:center">
+        <div style="font-size:24px; margin-bottom:8px">🗺️</div>
+        <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px">Mode Duo</div>
+        <div style="font-size:12px; color:var(--muted)">Comparez votre fleur avec un collègue ou co-fondateur</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:24px; margin-bottom:8px">📅</div>
+        <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px">Plan 14 jours</div>
+        <div style="font-size:12px; color:var(--muted)">L'IA génère un plan d'action personnalisé concret</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:24px; margin-bottom:8px">🎴</div>
+        <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px">Tarot des 4 Portes</div>
+        <div style="font-size:12px; color:var(--muted)">28 cartes propriétaires pour explorer vos angles morts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6 — IA ══ -->
+  <div class="slide" data-notes="Le vrai différenciateur vs MBTI ou DISC : l'IA ne produit pas un texte générique. Elle interprète votre profil exact, vos scores précis, et vous accompagne dans le temps. L'architecture OpenRouter permet de changer de modèle IA sans refactoriser — avantage énorme dans un écosystème qui évolue vite.">
+    <div class="eyebrow">Intelligence artificielle</div>
+    <h2>Une IA qui vous connaît vraiment</h2>
+    <div class="two-col" style="max-width:960px">
+      <div class="module-list">
+        <div class="module-item">
+          <div class="module-icon">🧠</div>
+          <div class="module-content">
+            <div class="module-title">Interprétation personnalisée</div>
+            <div class="module-desc">Analyse de vos 8 pétales — pas un texte préfabriqué, une synthèse unique à vos scores</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon">💬</div>
+          <div class="module-content">
+            <div class="module-title">Dialogue maïeutique</div>
+            <div class="module-desc">Questions socratiques adaptées pour creuser ce que vous avez découvert sur vous-même</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon">⚠️</div>
+          <div class="module-content">
+            <div class="module-title">Détection de signaux faibles</div>
+            <div class="module-desc">Baisse du pétale Philautia = alerte burnout précoce — pour l'utilisateur ou le DRH (anonymisé)</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon">📋</div>
+          <div class="module-content">
+            <div class="module-title">Fiches coach automatiques</div>
+            <div class="module-desc">Synthèse IA des sessions pour que le coach humain gagne du temps et reste focalisé</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px">
+        <div class="card">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em">19 modules IA spécialisés</div>
+          <div class="pill-row">
+            <span class="pill">Interprétation fleur</span>
+            <span class="pill">Plans 14j</span>
+            <span class="pill">Analyse humeur</span>
+            <span class="pill">Haïku personnalisé</span>
+            <span class="pill">Résumé session</span>
+            <span class="pill">Insights dashboard</span>
+            <span class="pill">Tarot IA</span>
+            <span class="pill">Tuteur socratique</span>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:8px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em">Architecture</div>
+          <p style="font-size:13px; color:var(--muted); line-height:1.6">Via <strong style="color:var(--text)">OpenRouter</strong>, l'app peut utiliser Claude, Gemini, GPT-4 selon le contexte — <strong style="color:var(--text)">agnostique au modèle</strong>, résistant aux évolutions de l'écosystème IA.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 7 — 3 MARCHÉS ══ -->
+  <div class="slide" data-notes="Montrez que vous n'êtes pas une niche — vous avez trois marchés distincts avec trois modèles d'acquisition différents. Le B2B2C (coachs) est le canal le plus efficace : un coach apporte 15-20 utilisateurs sans publicité.">
+    <div class="eyebrow">Marché adressable</div>
+    <h2>3 marchés, tous en forte croissance</h2>
+    <div class="card-grid cols-3" style="width:100%; max-width:960px">
+      <div class="card">
+        <div class="badge badge-rose" style="margin-bottom:16px">B2C · Grand public</div>
+        <div style="font-size:22px; font-weight:800; color:var(--text); margin-bottom:4px">40 Md$</div>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:12px">wellness digital mondial</div>
+        <ul class="check-list">
+          <li>Toute personne souhaitant mieux se comprendre</li>
+          <li>72% des 18-35 ans veulent "mieux se comprendre émotionnellement"</li>
+          <li>Marché tarot/spiritualité : +8%/an</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--violet); background:rgba(168,85,247,0.06)">
+        <div class="badge badge-violet" style="margin-bottom:16px">B2B · Entreprises ★</div>
+        <div style="font-size:22px; font-weight:800; color:var(--text); margin-bottom:4px">20→38 Md$</div>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:12px">corporate wellness Europe 2024→2034</div>
+        <ul class="check-list">
+          <li>RH, managers, prévention RPS</li>
+          <li>Coaching IA enterprise : +14%/an</li>
+          <li>Intelligence émotionnelle : 6,8→16,7 Md$</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="badge badge-indigo" style="margin-bottom:16px">B2B2C · Coachs &amp; Entrepreneurs</div>
+        <div style="font-size:22px; font-weight:800; color:var(--text); margin-bottom:4px">7,3 Md$</div>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:12px">marché coaching mondial 2025</div>
+        <ul class="check-list">
+          <li>145 500 coachs actifs dans le monde</li>
+          <li>31% spécialisés entrepreneur/startup</li>
+          <li>+11%/an, IA adoption +39%</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:20px; font-size:13px; color:var(--muted); text-align:center">
+      Architecture multilingue native (FR · EN · ES · IT · DE) — adressabilité internationale dès le lancement
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 8 — CORPORATE ══ -->
+  <div class="slide" data-notes="C'est le slide pivot. Montrez comment l'app grand public devient un outil RH stratégique avec des adaptations ciblées. Le module 'détection RPS' est particulièrement fort pour les DRH : c'est du monitoring continu anonymisé, pas une photo annuelle.">
+    <div class="eyebrow">Usage corporate</div>
+    <h2>De la connaissance de soi<br>à la performance collective</h2>
+    <div class="module-list" style="max-width:900px">
+      <div class="module-item">
+        <div class="module-icon">🗺️</div>
+        <div class="module-content">
+          <div class="module-title">Diagnostic d'équipe</div>
+          <div class="module-desc">Chaque membre crée son profil. Le manager visualise la carte émotionnelle collective : quels pétales dominent ? Quels profils sont en tension ? Quelles complémentarités exploiter ?</div>
+        </div>
+      </div>
+      <div class="module-item">
+        <div class="module-icon">🛡️</div>
+        <div class="module-content">
+          <div class="module-title">Prévention des RPS — Monitoring continu</div>
+          <div class="module-desc">L'IA monitore l'évolution du pétale <strong>Philautia</strong> (limites, respect de soi) comme indicateur précoce de burnout. Alertes confidentielles vers le DRH. Dashboard agrégé anonymisé.</div>
+        </div>
+      </div>
+      <div class="module-item">
+        <div class="module-icon">🚪</div>
+        <div class="module-content">
+          <div class="module-title">Onboarding &amp; culture</div>
+          <div class="module-desc">Nouveau salarié → profil Fleur → matching avec son équipe. Comprendre comment il va interagir avant même de commencer. Réduire le time-to-integrate.</div>
+        </div>
+      </div>
+      <div class="module-item">
+        <div class="module-icon">👔</div>
+        <div class="module-content">
+          <div class="module-title">Coaching de managers augmenté</div>
+          <div class="module-desc">Sessions maïeutiques IA sur le leadership (Agapè), la délégation (Pragma), la gestion des conflits (Mania). Fiches de synthèse automatiques. Le coach humain se concentre sur l'essentiel.</div>
+        </div>
+      </div>
+      <div class="module-item">
+        <div class="module-icon">🎓</div>
+        <div class="module-content">
+          <div class="module-title">Remplace les formations MBTI/DISC</div>
+          <div class="module-desc">Plus immersif, plus personnalisé, mis à jour en continu, évolutif dans le temps. Rapport qualité/prix incomparable vs 2 000€/jour de formation classique.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 9 — ENTREPRENEURS ══ -->
+  <div class="slide" data-notes="Ce slide est parfait pour TVT qui accompagne des startups. 72% des entrepreneurs ont souffert de problèmes de santé mentale (HBR). Le mode Duo co-fondateurs est particulièrement puissant : les conflits entre associés sont la 1ère cause d'échec des startups.">
+    <div class="eyebrow">Usage entrepreneurs</div>
+    <h2>L'entrepreneur qui se connaît mieux<br>prend de meilleures décisions</h2>
+    <div class="card-grid cols-2" style="max-width:900px; width:100%">
+      <div class="card">
+        <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:12px">🧭 Connaissance de soi</div>
+        <ul class="check-list">
+          <li><strong>Quel est mon rapport au risque ?</strong> Éros fort = casse-cou / Pragma fort = trop prudent</li>
+          <li><strong>Comment je gère la pression ?</strong> Mania → j'hyperinvestis / Philautia bas → je m'oublie</li>
+          <li><strong>Quel type de leader suis-je ?</strong> Et comment je veux travailler ?</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:12px">🤝 Dynamique fondatrice</div>
+        <ul class="check-list">
+          <li><strong>Mode Duo :</strong> comparer les profils des co-fondateurs avant que les conflits arrivent</li>
+          <li><strong>Zones de friction identifiées</strong> avant qu'elles deviennent des crises</li>
+          <li><strong>Recrutement</strong> : construire une équipe complémentaire en connaissance de cause</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:12px">💪 Résilience fondateur</div>
+        <ul class="check-list">
+          <li><strong>72% des entrepreneurs</strong> ont souffert de problèmes de santé mentale (HBR)</li>
+          <li>Monitoring Philautia comme <strong>indicateur précoce d'épuisement</strong></li>
+          <li>Plans 14 jours pour remettre en place des <strong>routines saines</strong></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:12px">🎤 Pitch &amp; communication</div>
+        <ul class="check-list">
+          <li><strong>Éros dominant →</strong> pitcher sur la vision et l'impact</li>
+          <li><strong>Pragma dominant →</strong> pitcher sur les chiffres et la méthode</li>
+          <li><strong>Philia dominant →</strong> pitcher sur les relations et la confiance</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 10 — MODÈLE ÉCONOMIQUE ══ -->
+  <div class="slide" data-notes="Le modèle freemium est la norme du secteur. L'important ici est de montrer la diversification : 4 segments avec des ARPU très différents. Le segment corporate est le plus rentable — 290€/mois pour 10-50 personnes = 29€/personne/mois, soit 10x l'abonnement individuel.">
+    <div class="eyebrow">Modèle économique</div>
+    <h2>Freemium SaaS · 4 segments de revenus</h2>
+    <div style="width:100%; max-width:1000px; display:flex; flex-direction:column; gap:16px">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px">
+        <div class="price-card">
+          <div class="plan-name">Graine</div>
+          <div class="price">0€</div>
+          <div class="price-period">gratuit</div>
+          <div class="price-desc">1 fleur · 3 tirages · Prairie</div>
+        </div>
+        <div class="price-card">
+          <div class="plan-name">Floraison</div>
+          <div class="price">9,90€</div>
+          <div class="price-period">par mois</div>
+          <div class="price-desc">Fleurs illimitées · Sessions IA · Chat</div>
+        </div>
+        <div class="price-card featured">
+          <div class="featured-badge">RECOMMANDÉ</div>
+          <div class="plan-name">Jardin</div>
+          <div class="price">24,90€</div>
+          <div class="price-period">par mois</div>
+          <div class="price-desc">Duo · Plans 30j · Historique complet</div>
+        </div>
+        <div class="price-card">
+          <div class="plan-name">Coach Pro</div>
+          <div class="price">39,90€</div>
+          <div class="price-period">par mois</div>
+          <div class="price-desc">Dashboard + 15 patients inclus</div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px">
+        <div class="card" style="text-align:center">
+          <div class="badge badge-violet" style="margin-bottom:10px">Équipe 10-50 pers.</div>
+          <div style="font-size:24px; font-weight:800; color:var(--text)">290€<span style="font-size:14px; color:var(--muted)">/mois</span></div>
+          <div style="font-size:12px; color:var(--muted); margin-top:6px">Profils + dashboard manager + alertes RPS</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="badge badge-rose" style="margin-bottom:10px">Organisation 50-200</div>
+          <div style="font-size:24px; font-weight:800; color:var(--text)">890€<span style="font-size:14px; color:var(--muted)">/mois</span></div>
+          <div style="font-size:12px; color:var(--muted); margin-top:6px">+ Formation, onboarding, reporting DRH</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="badge badge-amber" style="margin-bottom:10px">Entreprise 200+</div>
+          <div style="font-size:24px; font-weight:800; color:var(--text)">Sur devis</div>
+          <div style="font-size:12px; color:var(--muted); margin-top:6px">API · SSO · SIRH · Marque blanche</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 11 — CONCURRENCE ══ -->
+  <div class="slide" data-notes="La carte de positionnement est clé. Ne critiquez pas les concurrents — valorisez l'espace vacant. L'espace 'profond psychologiquement + technologique + accessible' n'est pas occupé. C'est là que vous êtes.">
+    <div class="eyebrow">Positionnement</div>
+    <h2>Un espace concurrentiel vacant</h2>
+    <div class="two-col" style="max-width:960px; align-items:center">
+      <div style="position:relative; width:100%; height:320px; border:1px solid var(--border); border-radius:16px; background:var(--card)">
+        <div style="position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(255,255,255,0.1)"></div>
+        <div style="position:absolute; left:50%; top:0; bottom:0; width:1px; background:rgba(255,255,255,0.1)"></div>
+        <div style="position:absolute; top:6px; left:50%; transform:translateX(-50%); font-size:10px; color:var(--muted); text-align:center">PROFOND PSYCHOLOGIQUEMENT</div>
+        <div style="position:absolute; bottom:6px; left:50%; transform:translateX(-50%); font-size:10px; color:var(--muted); text-align:center">GÉNÉRIQUE</div>
+        <div style="position:absolute; left:6px; top:50%; transform:translateY(-50%) rotate(-90deg); font-size:10px; color:var(--muted)">TECH</div>
+        <div style="position:absolute; right:6px; top:50%; transform:translateY(-50%) rotate(90deg); font-size:10px; color:var(--muted)">HUMAIN</div>
+        <!-- Fleur d'AmOurs -->
+        <div style="position:absolute; top:22%; left:35%; transform:translate(-50%,-50%)">
+          <div style="background:linear-gradient(135deg,var(--violet),var(--rose)); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 0 20px rgba(168,85,247,0.4)">🌸</div>
+          <div style="font-size:10px; font-weight:700; color:var(--text); text-align:center; margin-top:4px">Fleur d'AmOurs</div>
+        </div>
+        <!-- Concurrents -->
+        <div style="position:absolute; bottom:30%; left:25%; transform:translate(-50%,-50%)">
+          <div style="background:var(--card); border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:10px; color:var(--muted)">Headspace</div>
+        </div>
+        <div style="position:absolute; bottom:35%; left:35%; transform:translate(-50%,-50%)">
+          <div style="background:var(--card); border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:10px; color:var(--muted)">Woebot</div>
+        </div>
+        <div style="position:absolute; top:35%; right:20%; transform:translate(50%,-50%)">
+          <div style="background:var(--card); border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:10px; color:var(--muted)">CoachHub</div>
+        </div>
+        <div style="position:absolute; top:45%; right:15%; transform:translate(50%,-50%)">
+          <div style="background:var(--card); border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:10px; color:var(--muted)">BetterHelp</div>
+        </div>
+        <div style="position:absolute; bottom:25%; right:25%; transform:translate(50%,-50%)">
+          <div style="background:var(--card); border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:10px; color:var(--muted)">MBTI/DISC</div>
+        </div>
+      </div>
+      <div>
+        <table class="table">
+          <thead>
+            <tr><th>Concurrent</th><th>Limite</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Headspace for Work</td><td>Générique, pas de profil psychologique</td></tr>
+            <tr><td>CoachHub</td><td>Très cher, dépend d'humains</td></tr>
+            <tr><td>BetterHelp</td><td>Clinique, pas adapté au corporate</td></tr>
+            <tr><td>Wysa / Woebot</td><td>Pas de cadre conceptuel propriétaire</td></tr>
+            <tr><td>MBTI / DISC</td><td>Statiques, sans IA, sans évolution</td></tr>
+          </tbody>
+        </table>
+        <div class="quote-block" style="margin-top:16px">
+          La <strong>barrière à l'entrée</strong> : 2 ans de développement + cadre conceptuel propriétaire + données utilisateurs cumulées. Ça ne se copie pas du jour au lendemain.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 12 — ÉTAT DU PRODUIT ══ -->
+  <div class="slide" data-notes="Soyez totalement transparent : l'application est en beta privée, pas encore déployée publiquement. C'est une force, pas une faiblesse — vous cherchez précisément des partenaires pour structurer le lancement. Les métriques techniques (163 endpoints, 49 vues...) montrent la maturité du code, pas une traction utilisateur.">
+    <div class="eyebrow">État du produit</div>
+    <h2>Beta privée · Technologie mature,<br>lancement en préparation</h2>
+    <div class="two-col" style="max-width:960px">
+      <div>
+        <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px">✅ Fonctionnel — beta testeurs actifs</div>
+        <div class="pill-row" style="justify-content:flex-start">
+          <span class="pill done">Application web</span>
+          <span class="pill done">App Android</span>
+          <span class="pill done">Questionnaire + fleur SVG</span>
+          <span class="pill done">19 modules IA</span>
+          <span class="pill done">Sessions maïeutiques</span>
+          <span class="pill done">Tarot 28+ cartes</span>
+          <span class="pill done">Écosystème coach/patient</span>
+          <span class="pill done">Stripe / Abonnements</span>
+          <span class="pill done">5 langues</span>
+          <span class="pill done">Docker / VPS</span>
+        </div>
+        <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin:16px 0 12px">🔄 En cours avant lancement public</div>
+        <div class="pill-row" style="justify-content:flex-start">
+          <span class="pill wip">Réseau social Prairie</span>
+          <span class="pill wip">Chat persistant</span>
+          <span class="pill wip">Module Corporate v1</span>
+          <span class="pill wip">Analytics &amp; telemetry</span>
+        </div>
+        <div class="quote-block" style="margin-top:16px">
+          Nous sommes en <strong>beta privée</strong> — quelques beta testeurs actifs valident les parcours. Le code est mature. Nous structurons le lancement public avec les bons partenaires.
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div class="card">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:10px; font-weight:600">Stack technologique</div>
+          <div class="pill-row" style="justify-content:flex-start">
+            <span class="pill">Next.js 15</span>
+            <span class="pill">React 18</span>
+            <span class="pill">TypeScript</span>
+            <span class="pill">MariaDB</span>
+            <span class="pill">OpenRouter IA</span>
+            <span class="pill">Stripe</span>
+            <span class="pill">Capacitor</span>
+            <span class="pill">Firebase</span>
+            <span class="pill">Docker</span>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:10px; font-weight:600">Maturité du code</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+            <div style="text-align:center"><div style="font-size:20px; font-weight:800; color:var(--text)">163</div><div style="font-size:11px; color:var(--muted)">endpoints API</div></div>
+            <div style="text-align:center"><div style="font-size:20px; font-weight:800; color:var(--text)">49</div><div style="font-size:11px; color:var(--muted)">pages/vues</div></div>
+            <div style="text-align:center"><div style="font-size:20px; font-weight:800; color:var(--text)">40+</div><div style="font-size:11px; color:var(--muted)">modules DB</div></div>
+            <div style="text-align:center"><div style="font-size:20px; font-weight:800; color:var(--text)">5</div><div style="font-size:11px; color:var(--muted)">langues</div></div>
+          </div>
+          <div style="font-size:11px; color:var(--muted); margin-top:10px; text-align:center; font-style:italic">Métriques techniques — pas des métriques utilisateurs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 13 — POURQUOI MAINTENANT ══ -->
+  <div class="slide" data-notes="Le 'pourquoi maintenant' est souvent la question la plus importante pour un investisseur ou partenaire. Ces 4 convergences sont réelles et documentées. Insistez sur le fait que chaque tendance prise séparément n'est pas nouvelle — c'est leur convergence simultanée qui crée la fenêtre d'opportunité.">
+    <div class="eyebrow">Pourquoi maintenant</div>
+    <h2>La convergence parfaite<br>de 4 tendances majeures</h2>
+    <div class="card-grid cols-2" style="max-width:900px; width:100%">
+      <div class="card">
+        <div style="font-size:28px; margin-bottom:12px">🤖</div>
+        <div style="font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px">L'IA générative = personnalisation de masse</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.6">Ce qui coûtait 200€/h avec un coach humain coûte quelques centimes avec l'IA. La personnalisation n'est plus un luxe — c'est une attente.</div>
+      </div>
+      <div class="card">
+        <div style="font-size:28px; margin-bottom:12px">💔</div>
+        <div style="font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px">La crise du sens au travail s'accélère</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.6">Post-Covid, Grande Démission, quiet quitting, burnout à 34%… Les gens cherchent du sens, de la connexion, de la croissance — pas juste un salaire.</div>
+      </div>
+      <div class="card">
+        <div style="font-size:28px; margin-bottom:12px">⚖️</div>
+        <div style="font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px">Les entreprises cherchent du ROI en prévention RPS</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.6">La loi française crée une obligation de moyens. Les DRH cherchent des outils mesurables. <strong style="color:var(--text)">1€ investi = 13€ de retour</strong> (INRS).</div>
+      </div>
+      <div class="card">
+        <div style="font-size:28px; margin-bottom:12px">📈</div>
+        <div style="font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px">Le marché IE explose</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.6">Intelligence émotionnelle : 6,8 → 16,7 Md$ d'ici 2035 (+8,5%/an). 42% des grands groupes investissent en formation EQ pour leurs leaders.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 14 — TVT PARTNERSHIP ══ -->
+  <div class="slide" data-notes="C'est le slide de demande concrète. Soyez précis sur ce que vous voulez et ce que vous apportez en retour. Le programme pilote proposé est modeste et réaliste — 20 coachs + 100 utilisateurs sur 3 mois. C'est crédible et faisable rapidement.">
+    <div class="eyebrow">Partenariat TVT</div>
+    <h2>Ce que nous construisons<br>ensemble dans le Var</h2>
+    <div class="two-col" style="max-width:960px">
+      <div>
+        <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px">Ce que TVT peut apporter :</div>
+        <ul class="check-list">
+          <li><strong>Réseau de coachs et praticiens</strong> Var/PACA pour un programme pilote B2B2C</li>
+          <li><strong>Accès aux PME locales</strong> pour tester le module Corporate</li>
+          <li><strong>Connexion avec Les Entrepreneuriales</strong> pour le module Entrepreneur</li>
+          <li><strong>Expertise levée de fonds</strong> et structuration pour la prochaine phase</li>
+          <li><strong>Visibilité</strong> dans l'écosystème innovation Sud-Est</li>
+          <li><strong>Accompagnement internationalisation</strong> (déjà ES + IT + EN)</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px">Ce que nous apportons à l'écosystème TVT :</div>
+        <ul class="check-list" style="margin-bottom:16px">
+          <li>Un produit tech <strong>différenciant et exportable</strong> depuis le Var</li>
+          <li>Un <strong>cas d'usage IA éthique</strong> (augmentation, pas remplacement)</li>
+          <li>Une plateforme utile aux <strong>entrepreneurs accompagnés par TVT</strong> eux-mêmes</li>
+          <li>Ancrage méditerranéen exportable (FR, IT, ES natifs)</li>
+        </ul>
+        <div class="card" style="border-color:var(--violet); background:rgba(168,85,247,0.06)">
+          <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:10px">🚀 Prochaines étapes proposées</div>
+          <ul class="check-list">
+            <li><strong>Pilote coachs :</strong> 10-20 coachs de la région · beta ouverte · 3 mois</li>
+            <li><strong>Pilote Corporate :</strong> 2-3 PME partenaires TVT volontaires</li>
+            <li><strong>Module Entrepreneur :</strong> intégration programme accélérateur TVT saison suivante</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 15 — ROADMAP ══ -->
+  <div class="slide" data-notes="Soyez honnête sur le point de départ : beta privée aujourd'hui, lancement en 2025. Les chiffres sont ambitieux mais réalistes si le lancement est structuré avec les bons partenaires. C'est précisément l'objet de cette conversation avec TVT.">
+    <div class="eyebrow">Vision</div>
+    <h2>Du lancement structuré<br>à la référence européenne — 3 ans</h2>
+    <div style="max-width:960px; width:100%; display:flex; flex-direction:column; gap:12px">
+      <div class="card" style="padding:12px 20px; border-color:rgba(255,255,255,0.08); background:rgba(255,255,255,0.03)">
+        <div style="display:flex; align-items:center; gap:12px">
+          <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; white-space:nowrap">2025 — Phase de développement</div>
+          <div style="flex:1; height:1px; background:rgba(255,255,255,0.08)"></div>
+          <div class="badge badge-amber">Accompli ✓</div>
+        </div>
+        <div class="pill-row" style="margin-top:10px; justify-content:flex-start">
+          <span class="pill done">Architecture complète</span>
+          <span class="pill done">19 modules IA</span>
+          <span class="pill done">App web + Android</span>
+          <span class="pill done">5 langues</span>
+          <span class="pill done">Beta testeurs</span>
+          <span class="pill done">Stripe intégré</span>
+        </div>
+      </div>
+      <div class="card-grid cols-3">
+        <div class="card" style="border-color:var(--violet); background:rgba(168,85,247,0.06)">
+          <div class="badge badge-violet" style="margin-bottom:14px">2026 — Lancement &amp; premiers clients ← Nous sommes ici</div>
+          <ul class="check-list">
+            <li>Sortie de beta, <strong>ouverture publique</strong></li>
+            <li>Module Corporate v1 finalisé</li>
+            <li><strong>10-20 coachs pilotes</strong> (Var/PACA)</li>
+            <li><strong>2-3 entreprises</strong> pilotes</li>
+            <li>Partenariat TVT Innovation</li>
+            <li>Premières <strong>revenus récurrents</strong></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="badge badge-indigo" style="margin-bottom:14px">2027 — Croissance</div>
+          <ul class="check-list">
+            <li><strong>1 000 utilisateurs</strong> actifs (FR + ES)</li>
+            <li><strong>50 coachs</strong> certifiés</li>
+            <li><strong>10 entreprises</strong> clientes</li>
+            <li>Levée de fonds amorçage</li>
+            <li>Partenariats ICF / RNCP</li>
+            <li>Expansion ES + IT</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="badge badge-rose" style="margin-bottom:14px">2028 — Accélération EU</div>
+          <ul class="check-list">
+            <li><strong>10 000 utilisateurs</strong></li>
+            <li>Présence dans <strong>5 pays</strong></li>
+            <li>API B2B / intégration SIRH</li>
+            <li>Certification scientifique du cadre</li>
+            <li>Partenariat stratégique RH majeur</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="market-bar" style="max-width:700px; margin-top:24px">
+      <div class="market-row">
+        <div class="market-label">Corporate Wellness EU</div>
+        <div class="market-track"><div class="market-fill" style="width:38%"></div></div>
+        <div class="market-value">38 Md$ 2034</div>
+      </div>
+      <div class="market-row">
+        <div class="market-label">AI Coaching Enterprise</div>
+        <div class="market-track"><div class="market-fill" style="width:65%"></div></div>
+        <div class="market-value">13,8 Md$ 2034</div>
+      </div>
+      <div class="market-row">
+        <div class="market-label">Intelligence Émotionnelle</div>
+        <div class="market-track"><div class="market-fill" style="width:55%"></div></div>
+        <div class="market-value">16,7 Md$ 2035</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 16 — CONCLUSION ══ -->
+  <div class="slide" data-notes="Terminez fort. La question finale est ouverte et positionnante — elle invite TVT à partager leur expérience terrain, ce qui crée un dialogue naturel et vous permet de qualifier leur intérêt concret.">
+    <div class="cover-content" style="gap:28px">
+      <svg viewBox="0 0 100 100" width="80" height="80">
+        <g>
+          <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p1c)" opacity="0.8"/>
+          <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p1c)" opacity="0.8" transform="rotate(45 50 50)"/>
+          <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p2c)" opacity="0.8" transform="rotate(90 50 50)"/>
+          <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p2c)" opacity="0.8" transform="rotate(135 50 50)"/>
+          <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p1c)" opacity="0.8" transform="rotate(180 50 50)"/>
+          <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p1c)" opacity="0.8" transform="rotate(225 50 50)"/>
+          <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p2c)" opacity="0.8" transform="rotate(270 50 50)"/>
+          <ellipse cx="50" cy="28" rx="10" ry="18" fill="url(#p2c)" opacity="0.8" transform="rotate(315 50 50)"/>
+          <circle cx="50" cy="50" r="12" fill="url(#centerc)"/>
+        </g>
+        <defs>
+          <linearGradient id="p1c" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#f472b6"/></linearGradient>
+          <linearGradient id="p2c" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient>
+          <radialGradient id="centerc"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f59e0b"/></radialGradient>
+        </defs>
+      </svg>
+      <div class="eyebrow">En conclusion</div>
+      <h1 style="font-size:clamp(1.8rem,3.5vw,3rem)">"Mieux se connaître.<br>Mieux travailler.<br>Mieux vivre ensemble."</h1>
+      <div class="subtitle" style="max-width:600px">
+        Fleur d'AmOurs est à l'intersection de deux grandes transformations — la révolution de l'IA et la quête de sens dans les relations humaines. Nous construisons l'outil qui accompagne cette transition.
+      </div>
+      <div class="card" style="max-width:680px; width:100%; border-color:var(--violet); background:rgba(168,85,247,0.06)">
+        <div style="font-size:14px; color:var(--muted); line-height:1.7; text-align:center">
+          <strong style="color:var(--text)">Question pour ouvrir le débat :</strong><br>
+          "Dans votre expérience d'accompagnement de startups et d'entreprises, quelle est la principale barrière à l'adoption d'outils de développement émotionnel en milieu professionnel ?"
+        </div>
+      </div>
+      <div class="pill-row">
+        <span class="badge badge-rose">Contact : fleuramours.com</span>
+        <span class="badge badge-violet">FR · EN · ES · IT · DE</span>
+        <span class="badge badge-amber">Var · Méditerranée · Europe</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <button onclick="prevSlide()" title="Précédent (←)">←</button>
+  <div class="dots" id="dots"></div>
+  <div class="progress" id="progress">1 / 16</div>
+  <button onclick="nextSlide()" title="Suivant (→ ou Espace)">→</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+  let notesVisible = false;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    slides[current].classList.add('prev');
+    setTimeout(() => slides[current].classList.remove('prev'), 500);
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    document.getElementById('progress').textContent = (current + 1) + ' / ' + total;
+    document.getElementById('slideNum').textContent = (current + 1) + ' / ' + total;
+    updateNotes();
+  }
+
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  function updateNotes() {
+    const panel = document.getElementById('notesPanel');
+    const note = slides[current].getAttribute('data-notes') || '';
+    panel.innerHTML = note ? '<strong>Note :</strong> ' + note : '<em style="color:var(--border)">Pas de note pour cette slide.</em>';
+  }
+
+  function toggleNotes() {
+    notesVisible = !notesVisible;
+    document.getElementById('notesPanel').classList.toggle('show', notesVisible);
+    document.querySelector('.notes-btn').textContent = notesVisible ? '✕ Fermer notes' : '💬 Notes';
+    if (notesVisible) updateNotes();
+  }
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+    if (e.key === 'n' || e.key === 'N') toggleNotes();
+    if (e.key === 'Escape' && notesVisible) toggleNotes();
+    // Jump to slide number
+    const n = parseInt(e.key);
+    if (n >= 1 && n <= 9 && e.altKey) goTo(n - 1);
+  });
+
+  // Touch / swipe
+  let touchX = 0;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const diff = touchX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) diff > 0 ? nextSlide() : prevSlide();
+  });
+
+  updateNotes();
+</script>
+</body>
+</html>

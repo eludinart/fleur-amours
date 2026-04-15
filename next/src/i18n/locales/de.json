@@ -1275,6 +1275,22 @@
 
   "landing": {
     "ritualSection": "Deine Lesung",
+    "accessTitle": "Wähle deinen Zugang",
+    "accessSubtitle": "Einzelpersonen, Begleitende und Unternehmen: drei Einstiege für ein gemeinsames relationales Ökosystem.",
+    "accessIndividualBadge": "Einzelpersonen",
+    "accessIndividualTitle": "Individueller Weg",
+    "accessIndividualBody": "Kläre eine Beziehungssituation, ziehe bei Wunsch eine Karte und vertiefe dann mit Werkzeugen für Verstehen und Handeln.",
+    "accessIndividualCta": "Als Einzelperson starten",
+    "accessCoachBadge": "Begleitende",
+    "accessCoachTitle": "Praxisraum",
+    "accessCoachBody": "Entdecke, wie der Garten deinen professionellen Rahmen, die Beziehung und das Follow-up zwischen Sitzungen unterstützt.",
+    "accessCoachCta": "Bereich für Begleitende entdecken",
+    "accessCompanyBadge": "Unternehmen",
+    "accessCompanyTitle": "Mycelium",
+    "accessCompanyBody": "Das relationale Framework für Organisationen: Menschen, Teams und Interaktionsqualität nachhaltig verbinden.",
+    "accessCompanyCta": "Mycelium entdecken",
+    "individualSectionTitle": "Bereich für Einzelpersonen",
+    "individualSectionLead": "Die Kartenziehung bleibt hier als Einstieg in Klarheit verfügbar – innerhalb eines breiteren Weges.",
     "socialProofTitle": "Stimmen aus dem Garten",
     "socialProofIntro": "Stimmen entlang des Wegs: Klarheit, Entscheidungen und mögliche Schritte — nicht nur eine Karte.",
     "socialQuote1": "«In einer Karte habe ich endlich Worte für das gefunden, was ich erlebte.»",
@@ -1291,7 +1307,7 @@
     "visualTeaserAlt": "App-Vorschau: Fleur d'AmOurs, acht Blütenblätter und Tagebuch von Schatten und Lichtern mit Legungsverlauf",
     "tagline": "Klarheit und relationale Transformation",
     "heroTitle": "Navigiere in der Komplexität deiner Lieben",
-    "heroSubtitle": "Ein wohlwollender Spiegel, der Bewegung einlädt: Form geben dem, was sich in deinen Beziehungen zeigt, und Halt finden zum Entscheiden, Anpassen und Verändern dessen, was du durchmachst. Beginne mit einer Karte.",
+    "heroSubtitle": "Ein wohlwollender Spiegel, der Bewegung einlädt: Form geben dem, was sich in deinen Beziehungen zeigt, und Halt finden zum Entscheiden, Anpassen und Verändern dessen, was du durchmachst.",
     "heroAccountHook": "Erstelle ein kostenloses Konto für den ganzen Garten: Wege, gespeicherte Legungen, Analysen und Begleitung — von der ersten Klarheit zu möglichen Entscheidungen und Schritten.",
     "ctaLogin": "Anmeldung",
     "ctaRegister": "Registrierung",
@@ -1302,8 +1318,8 @@
     "benefitsTitle": "Was deine Transformation trägt",
     "benefitClarityTitle": "Vom Nebel zum klaren Rahmen",
     "benefitClarityDesc": "Ein Weg und Fragen, die helfen, das Wesentliche zu benennen und ruhigere, klarere Entscheidungen zu treffen.",
-    "benefitReadingsTitle": "Legungen und Verlauf",
-    "benefitReadingsDesc": "Mehrere Arten zu ziehen und Legungen erneut zu lesen — um zu spüren, was sich bewegt und was noch Aufmerksamkeit braucht.",
+    "benefitReadingsTitle": "Weg und Verlauf",
+    "benefitReadingsDesc": "Finde deine Etappen, Zusammenfassungen und Marker wieder, um Veränderungen über die Zeit zu erkennen.",
     "benefitMirrorTitle": "Vom Erkennen zu möglichen Handlungen",
     "benefitMirrorDesc": "Legungen im Fleur-d'AmOurs-Tarot und in deiner Situation verankert — um Hebel zu öffnen, nicht nur Bilder.",
     "benefitJourneyTitle": "Veränderung dauerhaft machen",
@@ -1330,7 +1346,7 @@
     "proTeaserCta": "Zur Seite für Begleitende",
     "alreadyGardener": "Bereits Gärtner/in?",
     "signIn": "Anmelden",
-    "footerNote": "Fleur d'AmOurs — Liebesgarten · Klarheit und relationale Transformation"
+    "footerNote": "Fleur d'AmOurs — Klarheit und relationale Transformation"
   },
   "coachLanding": {
     "metaTitle": "Begleitende · Werkzeug und Praxis",
@@ -1364,5 +1380,25 @@
     "ctaLogin": "Anmeldung",
     "ctaCoaches": "Begleiterverzeichnis ansehen",
     "footerNote": "Fleur d'AmOurs — Relationalwerkzeug und digitaler Raum für Begleitende"
+  },
+  "myceliumLanding": {
+    "metaTitle": "Mycelium · Unternehmens-Framework",
+    "metaDesc": "Mycelium, die Unternehmensdimension von Fleur d'AmOurs: ein relationales Framework für individuelle, kollektive und managerielle Begleitung.",
+    "tagline": "Unternehmensdimension",
+    "badge": "Mycelium",
+    "navHome": "Bereich für Einzelpersonen",
+    "heroTitle": "Mycelium: das relationale Framework für Unternehmen",
+    "heroSubtitle": "Wie das unterirdische Netzwerk, das Lebendiges verbindet, verknüpft Mycelium Menschen, Begleitpraxis und Organisationsfragen für nachhaltige Transformation.",
+    "p1Title": "Ebenen der Organisation verbinden",
+    "p1Desc": "Eine gemeinsame Sprache und Bezugspunkte für Menschen, Teams und Führungskräfte.",
+    "p2Title": "Begleitung wirksam machen",
+    "p2Desc": "Von relationaler Diagnose zu konkreten Plänen: Mycelium strukturiert den Weg vom Verstehen zum täglichen Handeln.",
+    "p3Title": "Eine lebendige Beziehungskultur stärken",
+    "p3Desc": "Ein Rahmen, um relationale Qualität zirkulieren zu lassen, ohne von Einzelinitiativen abzuhängen.",
+    "ctaTitle": "Mycelium kommt bald",
+    "ctaLead": "Erstelle ein Konto, um den Start der Unternehmensdimension zu verfolgen und die ersten Funktionen direkt zu nutzen, sobald sie verfügbar sind.",
+    "ctaRegister": "Konto erstellen",
+    "ctaLogin": "Anmeldung",
+    "footerNote": "Mycelium by Fleur d'AmOurs — Relationales Framework für Unternehmen"
   }
 }

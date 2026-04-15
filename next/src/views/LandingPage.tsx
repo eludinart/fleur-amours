@@ -251,7 +251,13 @@ function CardFlipRitual({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export function LandingPage() {
+export function LandingPage({
+  showAccessSection = true,
+  showIndividualSection = false,
+}: {
+  showAccessSection?: boolean
+  showIndividualSection?: boolean
+}) {
   const locale = useStore((s) => s.locale)
   const setStoreLocale = useStore((s) => s.setLocale)
   const router = useRouter()
@@ -305,44 +311,21 @@ export function LandingPage() {
 
   const secondaryBtn =
     'inline-flex items-center justify-center rounded-full border-2 border-stone-300/90 bg-white/90 px-7 py-3 text-base font-semibold tracking-wide text-stone-800 shadow-sm transition hover:border-violet-400/80 hover:bg-white hover:text-violet-900 sm:px-8 sm:py-3.5'
+  const accessBtnBase =
+    'mt-6 inline-flex h-14 w-full items-center justify-center rounded-[999px] border px-5 font-sans text-sm font-semibold tracking-[0.01em] whitespace-nowrap shadow-[0_10px_24px_-14px_rgba(39,39,42,0.45)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-14px_rgba(39,39,42,0.42)] sm:px-6 sm:text-base'
+  const accessBtnIndividual =
+    'border-rose-200/70 bg-gradient-to-r from-rose-100 via-fuchsia-100 to-violet-100 text-rose-900 hover:border-rose-300'
+  const accessBtnCoach =
+    'border-violet-200/70 bg-gradient-to-r from-violet-100 via-indigo-100 to-sky-100 text-violet-900 hover:border-violet-300'
+  const accessBtnCompany =
+    'border-emerald-200/70 bg-gradient-to-r from-emerald-100 via-teal-100 to-lime-100 text-emerald-900 hover:border-emerald-300'
 
   const benefitItems = [
-    {
-      icon: '🧭',
-      titleKey: 'landing.benefitClarityTitle',
-      descKey: 'landing.benefitClarityDesc',
-      tint: 'from-rose-50/90 to-white border-rose-100/80',
-    },
-    {
-      icon: '🔮',
-      titleKey: 'landing.benefitReadingsTitle',
-      descKey: 'landing.benefitReadingsDesc',
-      tint: 'from-violet-50/90 to-white border-violet-100/80',
-    },
-    {
-      icon: '✨',
-      titleKey: 'landing.benefitMirrorTitle',
-      descKey: 'landing.benefitMirrorDesc',
-      tint: 'from-amber-50/80 to-white border-amber-100/80',
-    },
-    {
-      icon: '🌿',
-      titleKey: 'landing.benefitJourneyTitle',
-      descKey: 'landing.benefitJourneyDesc',
-      tint: 'from-emerald-50/70 to-white border-emerald-100/70',
-    },
-    {
-      icon: '🌸',
-      titleKey: 'landing.benefitSpaceTitle',
-      descKey: 'landing.benefitSpaceDesc',
-      tint: 'from-pink-50/80 to-white border-pink-100/70',
-    },
-    {
-      icon: '💬',
-      titleKey: 'landing.benefitHumanTitle',
-      descKey: 'landing.benefitHumanDesc',
-      tint: 'from-sky-50/80 to-white border-sky-100/70',
-    },
+    { icon: '🧭', titleKey: 'landing.benefitClarityTitle', descKey: 'landing.benefitClarityDesc', tint: 'from-rose-50/90 to-white border-rose-100/80' },
+    { icon: '🗂️', titleKey: 'landing.benefitReadingsTitle', descKey: 'landing.benefitReadingsDesc', tint: 'from-violet-50/90 to-white border-violet-100/80' },
+    { icon: '✨', titleKey: 'landing.benefitMirrorTitle', descKey: 'landing.benefitMirrorDesc', tint: 'from-amber-50/80 to-white border-amber-100/80' },
+    { icon: '🌿', titleKey: 'landing.benefitJourneyTitle', descKey: 'landing.benefitJourneyDesc', tint: 'from-emerald-50/70 to-white border-emerald-100/70' },
+    { icon: '🤝', titleKey: 'landing.benefitHumanTitle', descKey: 'landing.benefitHumanDesc', tint: 'from-sky-50/80 to-white border-sky-100/70' },
   ] as const
 
   const socialProofItems = [
@@ -422,269 +405,114 @@ export function LandingPage() {
       </header>
 
       <main className="relative flex-1">
-        <div className="mx-auto max-w-6xl px-4 pb-6 pt-5 sm:px-6 sm:pb-10 sm:pt-7">
-          <div className="grid gap-6 lg:grid-cols-12 lg:gap-10 lg:items-start">
-            {/* Colonne message */}
-            <div className="text-center lg:col-span-5 lg:pt-4 lg:text-left">
-              <motion.div
-                initial="hidden"
-                animate="show"
-                variants={{
-                  hidden: {},
-                  show: { transition: { staggerChildren: 0.1 } },
-                }}
-              >
-                <motion.span
-                  variants={{
-                    hidden: { opacity: 0, y: 8 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                  className="inline-flex items-center rounded-full border border-rose-200/90 bg-white/70 px-5 py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 shadow-sm backdrop-blur-sm sm:px-6 sm:py-3 sm:text-sm"
-                >
-                  {t('landing.tagline')}
-                </motion.span>
-                <motion.h1
-                  variants={{
-                    hidden: { opacity: 0, y: 12 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                  className="mt-6 font-serif text-[2.125rem] font-semibold leading-[1.12] tracking-tight text-stone-900 sm:text-4xl sm:leading-[1.1] md:text-5xl lg:text-[2.75rem] lg:leading-[1.08]"
-                >
-                  {t('landing.heroTitle')}
-                </motion.h1>
-                <motion.p
-                  variants={{
-                    hidden: { opacity: 0, y: 12 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                  className="mx-auto mt-5 max-w-lg font-serif text-lg italic leading-relaxed text-stone-600 sm:text-xl lg:mx-0 lg:max-w-xl lg:text-2xl"
-                >
-                  {t('landing.heroSubtitle')}
-                </motion.p>
-                <motion.p
-                  variants={{
-                    hidden: { opacity: 0, y: 10 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                  className="mx-auto mt-5 max-w-lg text-center font-sans text-[0.95rem] font-medium leading-relaxed text-stone-700 sm:text-base lg:mx-0 lg:max-w-xl lg:text-left"
-                >
-                  {t('landing.heroAccountHook')}
-                </motion.p>
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0, y: 8 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                  className="mx-auto mt-6 flex w-full max-w-lg flex-col gap-3 sm:flex-row sm:justify-center lg:mx-0 lg:max-w-xl lg:justify-start"
-                >
-                  <button type="button" onClick={goRegisterPlain} className={`${secondaryBtn} w-full sm:w-auto`}>
-                    {t('landing.ctaOpenGarden')}
-                  </button>
-                </motion.div>
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0, y: 8 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                  className="mx-auto mt-6 max-w-lg rounded-2xl border border-violet-200/70 bg-gradient-to-br from-violet-50/90 to-white/80 p-5 text-center shadow-sm backdrop-blur-sm sm:p-6 lg:mx-0 lg:max-w-xl lg:text-left"
-                >
-                  <p className="font-sans text-sm font-semibold text-violet-900 sm:text-base">{t('landing.accountVsTitle')}</p>
-                  <p className="mt-2 font-sans text-sm leading-relaxed text-stone-600 sm:text-[0.95rem]">
-                    {t('landing.accountVsBody')}
-                  </p>
-                </motion.div>
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0, y: 8 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                  className="mx-auto mt-6 max-w-lg rounded-2xl border border-teal-200/80 bg-gradient-to-br from-teal-50/90 to-white/90 p-5 text-center shadow-sm backdrop-blur-sm sm:p-6 lg:mx-0 lg:max-w-xl lg:text-left"
-                >
-                  <span className="inline-flex rounded-full border border-teal-200/90 bg-white/80 px-3 py-1 font-sans text-[0.65rem] font-bold uppercase tracking-[0.18em] text-teal-800 sm:text-xs">
-                    {t('landing.proTeaserBadge')}
-                  </span>
-                  <p className="mt-3 font-sans text-base font-semibold text-stone-900 sm:text-lg">{t('landing.proTeaserTitle')}</p>
-                  <p className="mt-2 font-sans text-sm leading-relaxed text-stone-600 sm:text-[0.95rem]">{t('landing.proTeaserLead')}</p>
-                  <ul className="mt-4 space-y-2 text-left font-sans text-sm text-stone-600 sm:text-[0.95rem]">
-                    <li className="flex gap-2">
-                      <span className="text-teal-600" aria-hidden>
-                        ✓
-                      </span>
-                      <span>{t('landing.proTeaserBulletA')}</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-teal-600" aria-hidden>
-                        ✓
-                      </span>
-                      <span>{t('landing.proTeaserBulletB')}</span>
-                    </li>
-                  </ul>
-                  <Link
-                    href="/accompagnants"
-                    className="mt-5 inline-flex items-center font-sans text-sm font-semibold text-teal-800 underline decoration-teal-300 decoration-2 underline-offset-4 transition hover:text-teal-950"
-                  >
-                    {t('landing.proTeaserCta')} →
-                  </Link>
-                </motion.div>
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0 },
-                    show: { opacity: 1 },
-                  }}
-                  className="mt-6 flex justify-center gap-1 sm:hidden"
-                  role="group"
-                  aria-label="Langue"
-                >
-                  {SUPPORTED_LOCALES.map(({ code }) => (
-                    <button
-                      key={code}
-                      type="button"
-                      onClick={() => setStoreLocale(code)}
-                      className={`rounded-full px-3 py-2 font-sans text-xs font-bold uppercase tracking-wider sm:text-sm ${
-                        (locale || 'fr') === code
-                          ? 'bg-stone-800 text-white'
-                          : 'border border-stone-200 bg-white/80 text-stone-500'
-                      }`}
-                    >
-                      {code}
-                    </button>
-                  ))}
-                </motion.div>
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0 },
-                    show: { opacity: 1 },
-                  }}
-                  className="mx-auto mt-8 hidden h-px w-24 bg-gradient-to-r from-transparent via-rose-300/80 to-transparent lg:mx-0 lg:block"
-                />
-              </motion.div>
-            </div>
+        <div className="mx-auto max-w-6xl px-4 pb-8 pt-5 sm:px-6 sm:pb-12 sm:pt-7">
+          <div className="text-center">
+            <motion.span
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center rounded-full border border-rose-200/90 bg-white/70 px-5 py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 shadow-sm backdrop-blur-sm sm:px-6 sm:py-3 sm:text-sm"
+            >
+              {t('landing.tagline')}
+            </motion.span>
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-auto mt-6 max-w-4xl font-serif text-[2.125rem] font-semibold leading-[1.12] tracking-tight text-stone-900 sm:text-4xl sm:leading-[1.1] md:text-5xl"
+            >
+              {t('landing.heroTitle')}
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-auto mt-5 max-w-3xl font-sans text-base leading-relaxed text-stone-700 sm:text-lg"
+            >
+              {t('landing.heroSubtitle')}
+            </motion.p>
+          </div>
 
-            {/* Colonne rituel */}
-            <div className="flex flex-col items-center lg:col-span-7 lg:items-stretch">
-              <p className="mb-5 font-sans text-sm font-semibold uppercase tracking-[0.28em] text-stone-500 sm:text-base">
-                {t('landing.ritualSection')}
+          {showAccessSection ? (
+            <section className="mt-10" aria-labelledby="landing-access-heading">
+              <h2 id="landing-access-heading" className="text-center font-serif text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
+                {t('landing.accessTitle')}
+              </h2>
+              <p className="mx-auto mt-3 max-w-3xl text-center font-sans text-sm leading-relaxed text-stone-600 sm:text-base">
+                {t('landing.accessSubtitle')}
               </p>
 
-              <div className="w-full max-w-lg lg:max-w-none">
-                <div className="rounded-[1.75rem] border border-white/80 bg-gradient-to-b from-white/50 to-amber-50/25 p-6 shadow-[0_24px_60px_-20px_rgba(120,60,80,0.18)] backdrop-blur-md sm:p-10">
-                  <div className="flex flex-col items-center gap-6 sm:gap-7">
-                    <CardFlipRitual
-                      revealed={revealed}
-                      card={card}
-                      mounted={mounted}
-                      onBackClick={drawCard}
-                    />
+              <div className="mt-7 grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-5">
+                <article className="flex h-full flex-col rounded-2xl border border-rose-100/80 bg-gradient-to-br from-rose-50/70 to-white p-6 shadow-sm">
+                  <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-rose-700">{t('landing.accessIndividualBadge')}</p>
+                  <h3 className="mt-2 font-serif text-2xl font-semibold text-stone-900">{t('landing.accessIndividualTitle')}</h3>
+                  <p className="mt-3 font-sans text-sm leading-relaxed text-stone-600">{t('landing.accessIndividualBody')}</p>
+                  <Link href="/particuliers" className={`${accessBtnBase} ${accessBtnIndividual} mt-auto`}>
+                    {t('landing.accessIndividualCta')}
+                  </Link>
+                </article>
 
-                    <div className="flex w-full flex-col items-stretch gap-3 sm:mx-auto sm:max-w-lg">
-                      {!revealed ? (
-                        <motion.button
-                          type="button"
-                          onClick={drawCard}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className={primaryBtn + ' w-full'}
-                        >
-                          <span className="mr-2 opacity-90">✦</span>
-                          {t('landing.ctaDraw')}
-                        </motion.button>
-                      ) : (
-                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
-                          <button
-                            type="button"
-                            onClick={redraw}
-                            className="rounded-full border border-stone-200/90 bg-white/80 px-6 py-3 font-sans text-base font-medium text-stone-600 shadow-sm transition hover:border-stone-300 hover:bg-white sm:text-lg"
-                          >
-                            ↺ {t('landing.redraw')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => goRegister(card?.id)}
-                            className={`${primaryBtn} w-full sm:w-auto`}
-                          >
-                            {t('landing.fullAnalysis')} →
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <article className="flex h-full flex-col rounded-2xl border border-violet-100/85 bg-gradient-to-br from-violet-50/75 to-white p-6 shadow-sm">
+                  <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-violet-700">{t('landing.accessCoachBadge')}</p>
+                  <h3 className="mt-2 font-serif text-2xl font-semibold text-stone-900">{t('landing.accessCoachTitle')}</h3>
+                  <p className="mt-3 font-sans text-sm leading-relaxed text-stone-600">{t('landing.accessCoachBody')}</p>
+                  <Link href="/accompagnants" className={`${accessBtnBase} ${accessBtnCoach} mt-auto`}>
+                    {t('landing.accessCoachCta')}
+                  </Link>
+                </article>
+
+                <article className="flex h-full flex-col rounded-2xl border border-emerald-100/85 bg-gradient-to-br from-emerald-50/75 to-white p-6 shadow-sm">
+                  <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-emerald-700">{t('landing.accessCompanyBadge')}</p>
+                  <h3 className="mt-2 font-serif text-2xl font-semibold text-stone-900">{t('landing.accessCompanyTitle')}</h3>
+                  <p className="mt-3 font-sans text-sm leading-relaxed text-stone-600">{t('landing.accessCompanyBody')}</p>
+                  <Link href="/mycelium" className={`${accessBtnBase} ${accessBtnCompany} mt-auto`}>
+                    {t('landing.accessCompanyCta')}
+                  </Link>
+                </article>
               </div>
+            </section>
+          ) : null}
 
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.35, duration: 0.45 }}
-                className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-sans text-xs text-stone-400 sm:text-sm lg:justify-start"
-              >
-                <span className="inline-flex items-center gap-1.5" aria-hidden>
-                  <svg className="h-3.5 w-3.5 shrink-0 text-emerald-600/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </span>
-                <span>{t('landing.trustLine')}</span>
-              </motion.p>
+          {showIndividualSection ? (
+            <section className="mt-14 border-t border-amber-200/50 pt-12 sm:mt-16 sm:pt-14" aria-labelledby="landing-individual-heading">
+            <h2 id="landing-individual-heading" className="text-center font-serif text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
+              {t('landing.individualSectionTitle')}
+            </h2>
+            <p className="mx-auto mt-3 max-w-3xl text-center font-sans text-sm leading-relaxed text-stone-600 sm:text-base">
+              {t('landing.individualSectionLead')}
+            </p>
 
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="mt-8 w-full max-w-lg lg:max-w-none"
-                aria-label={t('landing.visualTeaserAria')}
-              >
-                <div className="overflow-hidden rounded-[1.35rem] border border-violet-200/60 bg-gradient-to-br from-white/90 via-violet-50/40 to-rose-50/50 shadow-[0_20px_50px_-24px_rgba(91,33,182,0.28)] backdrop-blur-sm">
-                  <div className="grid items-stretch gap-0 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.95fr)]">
-                    <div className="relative bg-slate-950 p-3 sm:p-4 md:p-5">
-                      <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-900 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.45)] ring-1 ring-white/5">
-                        <div className="flex items-center gap-1.5 border-b border-white/10 bg-slate-900/95 px-3 py-2">
-                          <span className="h-2 w-2 rounded-full bg-rose-400/80" />
-                          <span className="h-2 w-2 rounded-full bg-amber-300/80" />
-                          <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
-                          <span className="ml-2 flex-1 truncate rounded-md bg-slate-800/90 px-2 py-0.5 text-center font-sans text-[0.6rem] font-medium tracking-wide text-slate-400">
-                            Fleur d&apos;AmOurs · jardin
-                          </span>
-                        </div>
-                        <div className="relative bg-slate-950">
-                          <img
-                            src={`${basePath}/landing-fleur-app-preview.png`}
-                            alt={t('landing.visualTeaserAlt')}
-                            width={1200}
-                            height={750}
-                            className="mx-auto h-auto w-full max-h-[min(52vh,22rem)] object-contain object-left sm:max-h-[min(58vh,26rem)] md:max-h-[min(72vh,32rem)] lg:max-h-[min(78vh,36rem)]"
-                            draggable={false}
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => {
-                              const el = e.currentTarget
-                              el.src = `${basePath}/juste-la-fleur.png`
-                              el.alt = ''
-                              el.className = 'mx-auto h-40 w-auto object-contain p-8 opacity-90 sm:h-48'
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col justify-center border-t border-violet-100/80 p-6 sm:p-8 md:border-l md:border-t-0">
-                      <p className="font-sans text-[0.65rem] font-bold uppercase tracking-[0.2em] text-violet-600/90">✦ Jardin</p>
-                      <h3 className="mt-2 font-serif text-xl font-semibold leading-snug text-stone-900 sm:text-2xl">
-                        {t('landing.visualTeaserTitle')}
-                      </h3>
-                      <p className="mt-3 font-sans text-sm leading-relaxed text-stone-600 sm:text-[0.95rem]">
-                        {t('landing.visualTeaserBody')}
-                      </p>
+            <div className="mx-auto mt-8 max-w-4xl rounded-[1.75rem] border border-white/80 bg-gradient-to-b from-white/50 to-amber-50/25 p-6 shadow-[0_24px_60px_-20px_rgba(120,60,80,0.18)] backdrop-blur-md sm:p-10">
+              <div className="flex flex-col items-center gap-6 sm:gap-7">
+                <CardFlipRitual
+                  revealed={revealed}
+                  card={card}
+                  mounted={mounted}
+                  onBackClick={drawCard}
+                />
+                <div className="flex w-full flex-col items-stretch gap-3 sm:mx-auto sm:max-w-lg">
+                  {!revealed ? (
+                    <motion.button type="button" onClick={drawCard} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={primaryBtn + ' w-full'}>
+                      <span className="mr-2 opacity-90">✦</span>
+                      {t('landing.ctaDraw')}
+                    </motion.button>
+                  ) : (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
                       <button
                         type="button"
-                        onClick={goRegisterPlain}
-                        className={`${primaryBtn} mt-6 w-full sm:w-auto self-start`}
+                        onClick={redraw}
+                        className="rounded-full border border-stone-200/90 bg-white/80 px-6 py-3 font-sans text-base font-medium text-stone-600 shadow-sm transition hover:border-stone-300 hover:bg-white sm:text-lg"
                       >
-                        {t('landing.visualTeaserCta')}
+                        ↺ {t('landing.redraw')}
+                      </button>
+                      <button type="button" onClick={() => goRegister(card?.id)} className={`${primaryBtn} w-full sm:w-auto`}>
+                        {t('landing.fullAnalysis')} →
                       </button>
                     </div>
-                  </div>
+                  )}
                 </div>
-              </motion.div>
+              </div>
             </div>
-          </div>
+            <p className="mt-4 text-center font-sans text-xs text-stone-500 sm:text-sm">{t('landing.trustLine')}</p>
+          </section>
+          ) : null}
 
           <section
             className="mt-14 border-t border-amber-200/50 pt-12 sm:mt-16 sm:pt-14"
