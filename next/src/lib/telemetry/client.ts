@@ -91,6 +91,38 @@ type QueueItem = Required<Pick<TelemetryEvent, 'name'>> &
     env?: string
   }
 
+function getClientConnectionMeta(): {
+  connection_type?: string
+  network?: {
+    effective_type?: string
+    rtt_ms?: number
+    downlink_mbps?: number
+    save_data?: boolean
+  }
+} {
+  if (typeof window === 'undefined') return {}
+  const nav = navigator as Navigator & {
+    connection?: {
+      effectiveType?: string
+      rtt?: number
+      downlink?: number
+      saveData?: boolean
+      type?: string
+    }
+  }
+  const conn = nav.connection
+  if (!conn) return {}
+  return {
+    connection_type: conn.type,
+    network: {
+      effective_type: conn.effectiveType,
+      rtt_ms: typeof conn.rtt === 'number' ? conn.rtt : undefined,
+      downlink_mbps: typeof conn.downlink === 'number' ? conn.downlink : undefined,
+      save_data: typeof conn.saveData === 'boolean' ? conn.saveData : undefined,
+    },
+  }
+}
+
 const queue: QueueItem[] = []
 let flushTimer: ReturnType<typeof setTimeout> | null = null
 let isFlushing = false
@@ -111,6 +143,7 @@ function scheduleFlush(ms = 1500) {
 
 export function track(ev: TelemetryEvent) {
   if (typeof window === 'undefined') return
+  const conn = getClientConnectionMeta()
   const item: QueueItem = {
     ...ev,
     name: ev.name,
@@ -121,7 +154,10 @@ export function track(ev: TelemetryEvent) {
     referrer: ev.referrer ?? document.referrer ?? '',
     app_host: window.location.host,
     env: getClientTelemetryEnv(),
-    properties: ev.properties ?? {},
+    properties: {
+      ...(ev.properties ?? {}),
+      ...conn,
+    },
   }
   queue.push(item)
   if (queue.length >= 20) {

@@ -175,6 +175,8 @@ Write {"haiku":"line1\\nline2\\nline3"} in the user language. Echo the emotional
   const result = await openrouterCall(sys, [{ role: 'user', content: user }], {
     maxTokens: 220,
     responseFormatJson: true,
+    timeoutMs: 20_000,
+    maxAttempts: 1,
   })
   if (!result || typeof result !== 'object') return null
   const o = result as Record<string, unknown>

@@ -127,7 +127,7 @@ ${params.previousResume ? params.previousResume : '(aucun)'}
   const result = await openrouterCall(
     sys,
     [{ role: 'user', content: user.content }],
-    { maxTokens: 260, responseFormatJson: true }
+    { maxTokens: 260, responseFormatJson: true, timeoutMs: 20_000, maxAttempts: 1 }
   )
 
   if (!result || typeof result !== 'object') return null
@@ -349,6 +349,8 @@ ${getLangInstruction(locale)}`
   const result = await openrouterCall(sys, [{ role: 'user', content: user }], {
     maxTokens: 280,
     responseFormatJson: true,
+    timeoutMs: 20_000,
+    maxAttempts: 1,
   })
   if (!result || typeof result !== 'object') return null
   const o = result as Record<string, unknown>

@@ -14,6 +14,8 @@ export interface OpenRouterOptions {
   maxTokens?: number
   rawText?: boolean
   responseFormatJson?: boolean
+  timeoutMs?: number
+  maxAttempts?: number
 }
 
 /**
@@ -29,6 +31,8 @@ export async function openrouterCall(
     maxTokens = 1200,
     rawText = false,
     responseFormatJson = false,
+    timeoutMs = 90000,
+    maxAttempts = 2,
   } = options
 
   const apiKey = process.env.OPENROUTER_API_KEY
@@ -46,7 +50,6 @@ export async function openrouterCall(
     ...(responseFormatJson && { response_format: { type: 'json_object' as const } }),
   }
 
-  const maxAttempts = 2
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     if (attempt > 1) await new Promise((r) => setTimeout(r, 2000))
 
@@ -61,7 +64,7 @@ export async function openrouterCall(
           'X-Title': "Fleur d'AmOurs",
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(90000),
+        signal: AbortSignal.timeout(timeoutMs),
       })
     } catch (err) {
       if (attempt < maxAttempts) continue

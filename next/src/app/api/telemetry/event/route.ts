@@ -25,6 +25,27 @@ type IncomingEvent = {
   env?: string
 }
 
+type ConnectionContext = {
+  ip?: string | null
+  ip_chain?: string[] | null
+  ip_hash?: string | null
+  country?: string | null
+  region?: string | null
+  city?: string | null
+  asn?: string | null
+  colo?: string | null
+  protocol?: string | null
+  host?: string | null
+  user_agent?: string | null
+  connection_type?: string | null
+  network?: {
+    effective_type?: string | null
+    rtt_ms?: number | null
+    downlink_mbps?: number | null
+    save_data?: boolean | null
+  } | null
+}
+
 function sha256Hex(s: string): string {
   return crypto.createHash('sha256').update(s).digest('hex')
 }
@@ -38,6 +59,67 @@ function safeString(v: unknown, max = 255): string | null {
 
 function isValidEventName(name: string): boolean {
   return /^[a-z0-9_]{2,80}$/.test(name)
+}
+
+function parseForwardedFor(raw: string | null): string[] {
+  if (!raw) return []
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 5)
+}
+
+function getCountryFromHeaders(req: NextRequest): string | null {
+  return (
+    safeString(req.headers.get('cf-ipcountry'), 16) ??
+    safeString(req.headers.get('x-vercel-ip-country'), 16) ??
+    safeString(req.headers.get('x-country-code'), 16)
+  )
+}
+
+function buildConnectionContext(args: {
+  req: NextRequest
+  ip: string | null
+  ipHash: string | null
+  appHost: string | null
+  ua: string | null
+  evProps: Record<string, unknown> | null
+}): ConnectionContext {
+  const { req, ip, ipHash, appHost, ua, evProps } = args
+  const ipChain = parseForwardedFor(req.headers.get('x-forwarded-for'))
+
+  const p = evProps ?? {}
+  const netObj =
+    p && typeof p.network === 'object' && p.network !== null
+      ? (p.network as Record<string, unknown>)
+      : null
+  const connectionType = safeString(p.connection_type, 40)
+  const effectiveType = safeString(netObj?.effective_type, 40)
+  const rttRaw = netObj?.rtt_ms
+  const downlinkRaw = netObj?.downlink_mbps
+  const saveDataRaw = netObj?.save_data
+
+  return {
+    ip,
+    ip_chain: ipChain.length ? ipChain : null,
+    ip_hash: ipHash,
+    country: getCountryFromHeaders(req),
+    region: safeString(req.headers.get('x-vercel-ip-country-region'), 64),
+    city: safeString(req.headers.get('x-vercel-ip-city'), 80),
+    asn: safeString(req.headers.get('x-vercel-ip-as-number'), 32),
+    colo: safeString(req.headers.get('x-vercel-id'), 80),
+    protocol: safeString(req.headers.get('x-forwarded-proto'), 16),
+    host: appHost,
+    user_agent: ua,
+    connection_type: connectionType,
+    network: {
+      effective_type: effectiveType,
+      rtt_ms: typeof rttRaw === 'number' && Number.isFinite(rttRaw) ? Math.round(rttRaw) : null,
+      downlink_mbps: typeof downlinkRaw === 'number' && Number.isFinite(downlinkRaw) ? downlinkRaw : null,
+      save_data: typeof saveDataRaw === 'boolean' ? saveDataRaw : null,
+    },
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -95,6 +177,19 @@ export async function POST(req: NextRequest) {
       )
       const env = safeString(envMerged, 24)
 
+      const props =
+        ev?.properties && typeof ev.properties === 'object'
+          ? (ev.properties as Record<string, unknown>)
+          : {}
+      const connection = buildConnectionContext({
+        req,
+        ip,
+        ipHash: ip_hash,
+        appHost: app_host,
+        ua,
+        evProps: props,
+      })
+
       rows.push({
         ts,
         event_name: name,
@@ -110,7 +205,10 @@ export async function POST(req: NextRequest) {
         feature,
         env,
         app_host,
-        properties: ev?.properties && typeof ev.properties === 'object' ? ev.properties : {},
+        properties: {
+          ...props,
+          ingest_context: connection,
+        },
       })
     }
 

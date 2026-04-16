@@ -29,6 +29,34 @@ function safeJson(v: unknown): string {
   }
 }
 
+type IngestConnectionContext = {
+  ip?: string | null
+  ip_chain?: string[] | null
+  ip_hash?: string | null
+  country?: string | null
+  region?: string | null
+  city?: string | null
+  asn?: string | null
+  colo?: string | null
+  protocol?: string | null
+  host?: string | null
+  user_agent?: string | null
+  connection_type?: string | null
+  network?: {
+    effective_type?: string | null
+    rtt_ms?: number | null
+    downlink_mbps?: number | null
+    save_data?: boolean | null
+  } | null
+}
+
+function getIngestConnectionContext(it: TelemetryEventItem): IngestConnectionContext | null {
+  const p = it.properties || {}
+  const raw = (p as Record<string, unknown>)?.ingest_context
+  if (!raw || typeof raw !== 'object') return null
+  return raw as IngestConnectionContext
+}
+
 const SLOW_API_MS = 1500
 const VERY_SLOW_API_MS = 3500
 const LONG_PAGE_MS = 2 * 60 * 1000
@@ -789,6 +817,26 @@ export default function AdminTelemetryPage() {
               </button>
             </div>
             <div className="p-5 space-y-4">
+              {(() => {
+                const p = selected.properties || {}
+                const status = (p as any)?.status
+                const duration = (p as any)?.duration_ms
+                const code = (p as any)?.code
+                const detail = (p as any)?.detail ?? (p as any)?.message
+                return (
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Diagnostic API</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                      <p><span className="text-slate-400">status</span> {typeof status === 'number' ? status : '—'}</p>
+                      <p><span className="text-slate-400">duration_ms</span> {typeof duration === 'number' ? Math.round(duration) : '—'}</p>
+                      <p><span className="text-slate-400">code</span> {typeof code === 'string' ? code : '—'}</p>
+                      <p className="sm:col-span-2 break-words">
+                        <span className="text-slate-400">detail</span> {typeof detail === 'string' && detail.trim() ? detail : '—'}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })()}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                   <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Contexte</p>
@@ -810,6 +858,33 @@ export default function AdminTelemetryPage() {
                   </ul>
                 </div>
               </div>
+              {(() => {
+                const cx = getIngestConnectionContext(selected)
+                if (!cx) return null
+                return (
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Connexion utilisateur</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                      <p><span className="text-slate-400">ip</span> {cx.ip || '—'}</p>
+                      <p><span className="text-slate-400">ip_hash</span> {cx.ip_hash || '—'}</p>
+                      <p><span className="text-slate-400">pays</span> {cx.country || '—'}</p>
+                      <p><span className="text-slate-400">région</span> {cx.region || '—'}</p>
+                      <p><span className="text-slate-400">ville</span> {cx.city || '—'}</p>
+                      <p><span className="text-slate-400">proto</span> {cx.protocol || '—'}</p>
+                      <p><span className="text-slate-400">asn</span> {cx.asn || '—'}</p>
+                      <p><span className="text-slate-400">colo/edge</span> {cx.colo || '—'}</p>
+                      <p><span className="text-slate-400">type connexion</span> {cx.connection_type || '—'}</p>
+                      <p><span className="text-slate-400">effective_type</span> {cx.network?.effective_type || '—'}</p>
+                      <p><span className="text-slate-400">rtt</span> {typeof cx.network?.rtt_ms === 'number' ? `${cx.network.rtt_ms} ms` : '—'}</p>
+                      <p><span className="text-slate-400">downlink</span> {typeof cx.network?.downlink_mbps === 'number' ? `${cx.network.downlink_mbps} Mbps` : '—'}</p>
+                    </div>
+                    <p className="mt-2 text-[10px] text-slate-400 break-all">
+                      <span className="font-semibold">chaîne IP</span>{' '}
+                      {Array.isArray(cx.ip_chain) && cx.ip_chain.length ? cx.ip_chain.join(' -> ') : '—'}
+                    </p>
+                  </div>
+                )
+              })()}
               <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                 <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-2">Properties</p>
                 <pre className="text-[11px] leading-relaxed whitespace-pre-wrap break-words text-slate-700 dark:text-slate-200 font-mono">
