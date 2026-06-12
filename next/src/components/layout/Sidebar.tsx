@@ -29,8 +29,6 @@ type NavGroup = {
 function buildNavGroups(
   isAdmin: boolean,
   isCoach: boolean,
-  isManager: boolean,
-  isRh: boolean,
   translate: (k: string) => string
 ): NavGroup[] {
   const accueilItems: NavItem[] = [
@@ -79,12 +77,6 @@ function buildNavGroups(
     { label: "Fleur d'AmOurs", items: accueilItems },
     { label: translate('decouvrir'), items: decouvrirItems },
     {
-      label: translate('nav.eclosionSection'),
-      collapsible: true,
-      defaultOpen: true,
-      items: eclosionItems,
-    },
-    {
       label: translate('nav.pratique'),
       collapsible: true,
       defaultOpen: true,
@@ -94,7 +86,13 @@ function buildNavGroups(
     { label: translate('compte'), items: compteItems },
   ]
 
-  if (isManager || isRh || isAdmin) {
+  if (isAdmin) {
+    groups.splice(2, 0, {
+      label: translate('nav.eclosionSection'),
+      collapsible: true,
+      defaultOpen: true,
+      items: eclosionItems,
+    })
     groups.push({
       label: translate('nav.myceliumSection'),
       collapsible: true,
@@ -319,7 +317,7 @@ function NavGroup({
 }
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { user, logout, isAdmin, isCoach, isManager, isRh } = useAuth()
+  const { user, logout, isAdmin, isCoach } = useAuth()
   const router = useRouter()
   const pathname = usePathname() || ''
   useStore((s) => s.locale)
@@ -344,7 +342,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
   }, [fetchClairiereUnread])
 
   const pathWithoutBase = (pathname.replace(basePath, '').replace(/^\/+|\/+$/g, '') || '') as string
-  const navGroups = buildNavGroups(isAdmin, isCoach, isManager, isRh, t)
+  const navGroups = buildNavGroups(isAdmin, isCoach, t)
 
   function handleLogout() {
     logout()

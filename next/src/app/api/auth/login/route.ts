@@ -7,6 +7,29 @@ import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
+function loginErrorResponse(err: unknown): { status: number; message: string } {
+  const e = err as Error & { code?: string; status?: number }
+  const msg = e.message || ''
+  const code = e.code || ''
+  if (
+    code === 'ECONNREFUSED' ||
+    code === 'ETIMEDOUT' ||
+    code === 'ENOTFOUND' ||
+    msg.includes('ECONNREFUSED') ||
+    msg.includes('Connection lost')
+  ) {
+    return {
+      status: 503,
+      message:
+        'Base de données inaccessible en local. Lancez `npm run dev.vps` (tunnel SSH + Next.js).',
+    }
+  }
+  if (e.status && e.status >= 400 && e.status < 600) {
+    return { status: e.status, message: msg || 'Erreur' }
+  }
+  return { status: 401, message: msg || 'Identifiant ou mot de passe incorrect' }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const limited = rateLimit('login', clientIp(req), { limit: 10, windowMs: 60_000 })
@@ -36,11 +59,7 @@ export async function POST(req: NextRequest) {
     setAuthCookie(res, token)
     return res
   } catch (err: unknown) {
-    const e = err as Error
-    const status = (e as Error & { status?: number }).status || 401
-    return NextResponse.json(
-      { error: e.message || 'Identifiant ou mot de passe incorrect' },
-      { status }
-    )
+    const { status, message } = loginErrorResponse(err)
+    return NextResponse.json({ error: message }, { status })
   }
 }

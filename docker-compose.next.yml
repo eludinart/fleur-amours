@@ -15,13 +15,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.next
+      # Coolify : forme liste = build-time.env injecté par Coolify (voir issue coolify #7120).
+      # Ne pas utiliser « Build Variable? » dans l'UI pour ces clés.
       args:
-        # VPS autonome : API et app sur app-fleurdamours (aucun lien avec www.eludein.art)
-        NEXT_PUBLIC_API_TARGET: ${NEXT_PUBLIC_API_TARGET:-https://app-fleurdamours.eludein.art}
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://app-fleurdamours.eludein.art/jardin}
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
-        GIT_COMMIT: ${GIT_COMMIT:-unknown}
-        SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
+        - NEXT_PUBLIC_API_TARGET
+        - NEXT_PUBLIC_APP_URL
+        - NEXT_PUBLIC_API_URL
+        - SOURCE_COMMIT
+        - GIT_COMMIT
     image: fleur-next:latest
     restart: unless-stopped
     networks:
@@ -46,8 +47,8 @@ services:
       STRIPE_PRICE_MONTHLY: ${STRIPE_PRICE_MONTHLY:-}
       STRIPE_PRICE_YEARLY: ${STRIPE_PRICE_YEARLY:-}
       STRIPE_PRICE_CREDITS_100: ${STRIPE_PRICE_CREDITS_100:-}
-      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-https://app-fleurdamours.eludein.art/jardin}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://app-fleurdamours.eludein.art/jardin}
       NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-/jardin}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}

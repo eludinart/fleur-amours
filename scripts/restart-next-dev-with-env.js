@@ -1,7 +1,9 @@
 /**
  * Redémarre Next.js dev en chargeant docker-compose.env (SMTP, etc.).
+ * Ne démarre pas le tunnel SSH : si sync-config.env est présent, préférez `npm run dev.vps`.
  */
 import { readFileSync, existsSync } from 'fs'
+import net from 'net'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { spawn } from 'child_process'
@@ -49,11 +51,48 @@ function buildNextEnv() {
   return env
 }
 
-const child = spawn('npm', ['run', 'dev', '--prefix', 'next'], {
-  cwd: ROOT,
-  env: buildNextEnv(),
-  stdio: 'inherit',
-  shell: true,
-})
+function isPortListening(host, port, timeoutMs = 2000) {
+  return new Promise((resolve) => {
+    const socket = net.connect({ host, port }, () => {
+      socket.destroy()
+      resolve(true)
+    })
+    socket.setTimeout(timeoutMs)
+    socket.on('timeout', () => {
+      socket.destroy()
+      resolve(false)
+    })
+    socket.on('error', () => resolve(false))
+  })
+}
 
-child.on('close', (code) => process.exit(code ?? 0))
+async function main() {
+  const env = buildNextEnv()
+  const needsTunnel = !!(env.TUNNEL_LOCAL_PORT || env.SSH_VPS_HOST)
+  if (needsTunnel) {
+    const port = Number(env.TUNNEL_LOCAL_PORT || 3307)
+    const open = await isPortListening('127.0.0.1', port)
+    if (!open) {
+      console.error('')
+      console.error(`❌ Tunnel MariaDB absent sur 127.0.0.1:${port}`)
+      console.error('   Ce script charge docker-compose.env mais ne démarre pas le tunnel SSH.')
+      console.error('   Utilisez plutôt : npm run dev.vps')
+      console.error('')
+      process.exit(1)
+    }
+  }
+
+  const child = spawn('npm', ['run', 'dev', '--prefix', 'next'], {
+    cwd: ROOT,
+    env,
+    stdio: 'inherit',
+    shell: true,
+  })
+
+  child.on('close', (code) => process.exit(code ?? 0))
+}
+
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
