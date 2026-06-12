@@ -310,3 +310,315 @@ export async function getFleurs(
   await presencePromise
   return { fleurs, me_fleur, links }
 }
+
+// ── Interactions sociales (arroser, pollen) ───────────────────────────────────
+
+let _ensurePrairieTablesPromise: Promise<void> | null = null
+
+async function ensurePrairieInteractionTables(pool: Awaited<ReturnType<typeof getPool>>): Promise<void> {
+  if (_ensurePrairieTablesPromise) return _ensurePrairieTablesPromise
+  _ensurePrairieTablesPromise = (async () => {
+    const tRosee = table('fleur_rosee_events')
+    const tPollen = table('fleur_pollen')
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS ${tRosee} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        from_user_id INT NOT NULL,
+        to_user_id INT NOT NULL,
+        amount INT NOT NULL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_to_user (to_user_id, created_at),
+        INDEX idx_from_user (from_user_id, created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS ${tPollen} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        from_user_id INT NOT NULL,
+        to_user_id INT NOT NULL,
+        card_slug VARCHAR(80) NOT NULL DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_to_user (to_user_id, created_at),
+        INDEX idx_from_user (from_user_id, created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+  })().catch((err) => {
+    _ensurePrairieTablesPromise = null
+    throw err
+  })
+  return _ensurePrairieTablesPromise
+}
+
+async function isProfilePublic(pool: Awaited<ReturnType<typeof getPool>>, userId: number): Promise<boolean> {
+  const tMeta = table('usermeta')
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_profile_public' LIMIT 1`,
+    [userId]
+  )
+  return String(rows?.[0]?.meta_value ?? '') === '1'
+}
+
+async function getUserPseudo(pool: Awaited<ReturnType<typeof getPool>>, userId: number): Promise<string> {
+  const tUsers = table('users')
+  const tMeta = table('usermeta')
+  const [senderRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT display_name FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+    [userId]
+  )
+  let pseudo = senderRows?.[0]?.display_name ? String(senderRows[0].display_name).trim() : ''
+  if (!pseudo) {
+    const [metaRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_pseudo' LIMIT 1`,
+      [userId]
+    )
+    pseudo = metaRows?.[0]?.meta_value ? String(metaRows[0].meta_value).trim() : ''
+  }
+  if (!pseudo) pseudo = `jardinier_${Buffer.from(String(userId)).toString('hex').slice(0, 6)}`
+  return pseudo
+}
+
+async function getUserEmail(pool: Awaited<ReturnType<typeof getPool>>, userId: number): Promise<string | null> {
+  const tUsers = table('users')
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT user_email FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+    [userId]
+  )
+  const email = rows?.[0]?.user_email ? String(rows[0].user_email).trim() : ''
+  return email || null
+}
+
+async function getPointsDeRosee(pool: Awaited<ReturnType<typeof getPool>>, userId: number): Promise<number> {
+  const tMeta = table('usermeta')
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_points_de_rosee' LIMIT 1`,
+    [userId]
+  )
+  const raw = rows?.[0]?.meta_value
+  const n = parseInt(String(raw ?? '5'), 10)
+  return Number.isFinite(n) ? Math.max(0, n) : 5
+}
+
+async function setPointsDeRosee(
+  pool: Awaited<ReturnType<typeof getPool>>,
+  userId: number,
+  points: number
+): Promise<void> {
+  const tMeta = table('usermeta')
+  const value = String(Math.max(0, points))
+  const [existing] = await pool.execute<RowDataPacket[]>(
+    `SELECT umeta_id FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_points_de_rosee'`,
+    [userId]
+  )
+  if (existing.length > 0) {
+    await pool.execute(`UPDATE ${tMeta} SET meta_value = ? WHERE user_id = ? AND meta_key = 'fleur_points_de_rosee'`, [
+      value,
+      userId,
+    ])
+  } else {
+    await pool.execute(
+      `INSERT INTO ${tMeta} (user_id, meta_key, meta_value) VALUES (?, 'fleur_points_de_rosee', ?)`,
+      [userId, value]
+    )
+  }
+}
+
+function slugToLabel(slug: string): string {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
+/** Notification in-app + push FCM pour une interaction Grand Jardin */
+export async function notifyPrairieInteraction(params: {
+  type: 'prairie_rosee' | 'prairie_pollen' | 'prairie_seed'
+  recipientId: number
+  recipientEmail: string | null
+  senderId: number
+  senderPseudo: string
+  body: string
+  actionUrl: string
+}): Promise<void> {
+  try {
+    const titles: Record<typeof params.type, string> = {
+      prairie_rosee: 'Goutte de rosée reçue',
+      prairie_pollen: 'Pollen reçu',
+      prairie_seed: 'Une graine pour vous',
+    }
+    const title = titles[params.type]
+    const { createNotification } = await import('./db-notifications')
+    const { sendFcmPush } = await import('./fcm')
+    await createNotification({
+      type: params.type,
+      title,
+      body: params.body,
+      action_url: params.actionUrl,
+      recipient_type: 'user',
+      recipient_id: params.recipientId,
+      recipient_email: params.recipientEmail,
+      created_by: params.senderId,
+      source_type: 'prairie',
+      source_id: params.senderId,
+    })
+    await sendFcmPush(params.recipientId, params.recipientEmail, title, params.body, params.actionUrl)
+  } catch {
+    /* notification optionnelle */
+  }
+}
+
+/** Arrose la fleur d'un autre jardinier (coûte 1 goutte de rosée) */
+export async function arroseFleur(
+  fromUserId: number,
+  toUserId: number
+): Promise<{ ok: true; points_de_rosee: number }> {
+  const pool = getPool()
+  if (!fromUserId || !toUserId) throw new Error('Utilisateurs invalides')
+  if (fromUserId === toUserId) throw new Error('Impossible de s\'arroser soi-même')
+
+  await ensurePrairieInteractionTables(pool)
+  await touchSocialPresence(pool, fromUserId)
+
+  if (!(await isProfilePublic(pool, toUserId))) {
+    throw new Error('Ce jardinier n\'a pas de profil public')
+  }
+
+  const points = await getPointsDeRosee(pool, fromUserId)
+  if (points < 1) throw new Error('Plus de gouttes de rosée disponibles')
+
+  const tRosee = table('fleur_rosee_events')
+  await pool.execute(
+    `INSERT INTO ${tRosee} (from_user_id, to_user_id, amount) VALUES (?, ?, 1)`,
+    [fromUserId, toUserId]
+  )
+
+  const newPoints = points - 1
+  await setPointsDeRosee(pool, fromUserId, newPoints)
+
+  const pseudo = await getUserPseudo(pool, fromUserId)
+  const recipientEmail = await getUserEmail(pool, toUserId)
+  void notifyPrairieInteraction({
+    type: 'prairie_rosee',
+    recipientId: toUserId,
+    recipientEmail,
+    senderId: fromUserId,
+    senderPseudo: pseudo,
+    body: `${pseudo} vous a offert une goutte de rosée 💧`,
+    actionUrl: `/prairie?profile=${fromUserId}`,
+  })
+
+  return { ok: true, points_de_rosee: newPoints }
+}
+
+/** Envoie une carte (pollen) à un autre jardinier */
+export async function sendPollen(
+  fromUserId: number,
+  toUserId: number,
+  cardSlug: string
+): Promise<{ ok: true }> {
+  const pool = getPool()
+  const slug = String(cardSlug ?? '').trim().toLowerCase().slice(0, 80)
+  if (!fromUserId || !toUserId) throw new Error('Utilisateurs invalides')
+  if (!slug) throw new Error('card_slug requis')
+  if (fromUserId === toUserId) throw new Error('Impossible de s\'envoyer du pollen à soi-même')
+
+  await ensurePrairieInteractionTables(pool)
+  await touchSocialPresence(pool, fromUserId)
+
+  if (!(await isProfilePublic(pool, toUserId))) {
+    throw new Error('Ce jardinier n\'a pas de profil public')
+  }
+
+  const tPollen = table('fleur_pollen')
+  await pool.execute(
+    `INSERT INTO ${tPollen} (from_user_id, to_user_id, card_slug) VALUES (?, ?, ?)`,
+    [fromUserId, toUserId, slug]
+  )
+
+  const pseudo = await getUserPseudo(pool, fromUserId)
+  const recipientEmail = await getUserEmail(pool, toUserId)
+  const cardLabel = slugToLabel(slug)
+  void notifyPrairieInteraction({
+    type: 'prairie_pollen',
+    recipientId: toUserId,
+    recipientEmail,
+    senderId: fromUserId,
+    senderPseudo: pseudo,
+    body: `${pseudo} vous a envoyé du pollen : ${cardLabel} 🌸`,
+    actionUrl: `/prairie?profile=${fromUserId}`,
+  })
+
+  return { ok: true }
+}
+
+/** Vérifie si le profil de l'utilisateur est visible dans le Grand Jardin */
+export async function checkPrairieVisibility(userId: number): Promise<{ visible: boolean; reason?: string }> {
+  const pool = getPool()
+  if (!userId) return { visible: false, reason: 'invalid_user' }
+  if (!(await isProfilePublic(pool, userId))) {
+    return { visible: false, reason: 'profile_not_public' }
+  }
+  return { visible: true }
+}
+
+/** Crée un lien manuel entre deux jardiniers */
+export async function addPrairieLink(fromUserId: number, toUserId: number): Promise<{ ok: true }> {
+  const pool = getPool()
+  if (!fromUserId || !toUserId) throw new Error('Utilisateurs invalides')
+  if (fromUserId === toUserId) throw new Error('Impossible de lier sa propre fleur')
+
+  await ensurePrairieInteractionTables(pool)
+  if (!(await isProfilePublic(pool, toUserId))) {
+    throw new Error('Ce jardinier n\'a pas de profil public')
+  }
+
+  const ua = Math.min(fromUserId, toUserId)
+  const ub = Math.max(fromUserId, toUserId)
+  const tLinks = table('fleur_prairie_links')
+  await pool.execute(`INSERT IGNORE INTO ${tLinks} (user_a, user_b) VALUES (?, ?)`, [ua, ub])
+  return { ok: true }
+}
+
+/** Supprime un lien manuel entre deux jardiniers */
+export async function removePrairieLink(fromUserId: number, toUserId: number): Promise<{ ok: true }> {
+  const pool = getPool()
+  if (!fromUserId || !toUserId) throw new Error('Utilisateurs invalides')
+  const ua = Math.min(fromUserId, toUserId)
+  const ub = Math.max(fromUserId, toUserId)
+  const tLinks = table('fleur_prairie_links')
+  await pool.execute(`DELETE FROM ${tLinks} WHERE user_a = ? AND user_b = ?`, [ua, ub])
+  return { ok: true }
+}
+
+/** Admin : force la visibilité Prairie d'un utilisateur par email */
+export async function forcePrairieVisibleByEmail(email: string): Promise<{ ok: true; user_id: number }> {
+  const pool = getPool()
+  const normalized = String(email ?? '').trim().toLowerCase()
+  if (!normalized) throw new Error('email requis')
+
+  const tUsers = table('users')
+  const tMeta = table('usermeta')
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT ID FROM ${tUsers} WHERE LOWER(user_email) = ? LIMIT 1`,
+    [normalized]
+  )
+  const userId = Number(rows[0]?.ID ?? 0)
+  if (!userId) throw new Error('Utilisateur introuvable')
+
+  const [existing] = await pool.execute<RowDataPacket[]>(
+    `SELECT umeta_id FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_profile_public'`,
+    [userId]
+  )
+  if (existing.length > 0) {
+    await pool.execute(
+      `UPDATE ${tMeta} SET meta_value = '1' WHERE user_id = ? AND meta_key = 'fleur_profile_public'`,
+      [userId]
+    )
+  } else {
+    await pool.execute(
+      `INSERT INTO ${tMeta} (user_id, meta_key, meta_value) VALUES (?, 'fleur_profile_public', '1')`,
+      [userId]
+    )
+  }
+  return { ok: true, user_id: userId }
+}

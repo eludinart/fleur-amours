@@ -518,3 +518,58 @@ export async function updateProfile(
   }
   return authMe(userId)
 }
+
+/** Supprime les données utilisateur dans les tables Fleur connues, puis le compte WP. */
+export async function deleteUserAccount(userId: number): Promise<void> {
+  if (!userId) throw new Error('Utilisateur invalide')
+  const pool = getPool()
+  const tUsers = table('users')
+  const [urows] = await pool.execute<RowDataPacket[]>(
+    `SELECT ID, user_email FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+    [userId]
+  )
+  if (!urows.length) throw new Error('Utilisateur introuvable')
+  const email = String(urows[0].user_email ?? '').trim().toLowerCase()
+
+  const deletes: Array<{ sql: string; params: Array<string | number> }> = [
+    { sql: `DELETE FROM ${table('usermeta')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_app_roles')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_notification_deliveries')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_notification_preferences')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_amour_results')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_tarot_readings')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_rosee_events')} WHERE from_user_id = ? OR to_user_id = ?`, params: [userId, userId] },
+    { sql: `DELETE FROM ${table('fleur_pollen')} WHERE from_user_id = ? OR to_user_id = ?`, params: [userId, userId] },
+    { sql: `DELETE FROM ${table('fleur_social_seeds')} WHERE from_user_id = ? OR to_user_id = ?`, params: [userId, userId] },
+    { sql: `DELETE FROM ${table('fleur_prairie_links')} WHERE user_a = ? OR user_b = ?`, params: [userId, userId] },
+    { sql: `DELETE FROM ${table('fleur_chat_channels')} WHERE user_a = ? OR user_b = ?`, params: [userId, userId] },
+    { sql: `DELETE FROM ${table('fleur_timeline_events')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_checkins')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_dreamscape_entries')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_sap_wallet')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_sap_ledger')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_usage_monthly')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_promo_redemptions')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_promo_access')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_organisations')} WHERE owner_user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_org_members')} WHERE user_id = ?`, params: [userId] },
+    { sql: `DELETE FROM ${table('fleur_dyads')} WHERE user_a = ? OR user_b = ?`, params: [userId, userId] },
+    { sql: `DELETE FROM ${table('fleur_sessions')} WHERE user_id = ?`, params: [userId] },
+  ]
+  if (email) {
+    deletes.push({ sql: `DELETE FROM ${table('fleur_sessions')} WHERE LOWER(email) = ?`, params: [email] })
+    deletes.push({ sql: `DELETE FROM ${table('fleur_amour_results')} WHERE LOWER(email) = ?`, params: [email] })
+  }
+
+  for (const d of deletes) {
+    await pool.execute(d.sql, d.params).catch(() => {/* table absente */})
+  }
+
+  await pool.execute(`DELETE FROM ${tUsers} WHERE ID = ?`, [userId])
+}
+
+export async function deleteUserByAdmin(targetUserId: number, actorUserId: number): Promise<void> {
+  if (!targetUserId) throw new Error('id requis')
+  if (targetUserId === actorUserId) throw new Error('Impossible de supprimer votre propre compte via l\'admin')
+  await deleteUserAccount(targetUserId)
+}

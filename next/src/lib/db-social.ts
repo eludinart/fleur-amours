@@ -646,6 +646,44 @@ export async function sendSeed(
   )
   const seedId = Number(inserted.insertId ?? 0)
   if (!seedId) throw new Error('Impossible de récupérer l\'id de la graine')
+
+  void (async () => {
+    try {
+      const { notifyPrairieInteraction } = await import('./db-prairie')
+      const tUsers = table('users')
+      const tMeta = table('usermeta')
+      const [senderRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT display_name FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+        [fromUserId]
+      )
+      let pseudo = senderRows?.[0]?.display_name ? String(senderRows[0].display_name).trim() : ''
+      if (!pseudo) {
+        const [metaRows] = await pool.execute<RowDataPacket[]>(
+          `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_pseudo' LIMIT 1`,
+          [fromUserId]
+        )
+        pseudo = metaRows?.[0]?.meta_value ? String(metaRows[0].meta_value).trim() : ''
+      }
+      if (!pseudo) pseudo = 'Un jardinier'
+      const [userRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT user_email FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+        [toUserId]
+      )
+      const recipientEmail = userRows?.[0]?.user_email ? String(userRows[0].user_email).trim() : null
+      await notifyPrairieInteraction({
+        type: 'prairie_seed',
+        recipientId: toUserId,
+        recipientEmail,
+        senderId: fromUserId,
+        senderPseudo: pseudo,
+        body: `${pseudo} a déposé une graine dans votre jardin 🌱`,
+        actionUrl: `/lisiere/${fromUserId}`,
+      })
+    } catch {
+      /* notification optionnelle */
+    }
+  })()
+
   return { seedId }
 }
 

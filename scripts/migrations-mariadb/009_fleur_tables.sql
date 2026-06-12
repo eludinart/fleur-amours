@@ -28,3 +28,14 @@ CREATE TABLE IF NOT EXISTS wp_fleur_rosee_events (
     INDEX idx_to_user (to_user_id, created_at),
     INDEX idx_from_user (from_user_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Pollen (carte envoyée entre jardiniers)
+CREATE TABLE IF NOT EXISTS wp_fleur_pollen (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    from_user_id INT NOT NULL,
+    to_user_id INT NOT NULL,
+    card_slug VARCHAR(80) NOT NULL DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_to_user (to_user_id, created_at),
+    INDEX idx_from_user (from_user_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -14,12 +14,7 @@ export function stubRequireAuth(req: { headers: { get: (k: string) => string | n
 
 export const stubResponses = {
   prairie: {
-    checkVisibility: () => NextResponse.json({ visible: false, reason: 'stub' }),
     fleurs: () => NextResponse.json({ fleurs: [], links: [] }),
-    arroser: () => NextResponse.json({ ok: true }),
-    pollen: () => NextResponse.json({ ok: true }),
-    addLink: () => NextResponse.json({ ok: true }),
-    removeLink: () => NextResponse.json({ ok: true }),
   },
   social: {
     visitLisiere: () =>
