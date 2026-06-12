@@ -11,6 +11,7 @@
  */
 import type { RowDataPacket, ResultSetHeader } from 'mysql2'
 import { exec, getPool, isDbConfigured, table } from './db'
+import { htmlToPlainText } from './email-html-utils'
 
 const T_BROADCAST = () => table('fleur_broadcasts')
 const T_DELIV = () => table('fleur_broadcast_deliveries')
@@ -26,8 +27,15 @@ export type BroadcastStatus =
 
 export type BroadcastChannel = 'email' | 'inapp'
 
-/** `single` = une personne (ID et/ou email) ; `users` = sans rôle coach/admin ; `coaches` = rôle coach uniquement ; `all` = tous les comptes avec email */
-export type AudienceType = 'single' | 'users' | 'coaches' | 'all'
+/**
+ * `single` = une personne (ID et/ou email)
+ * `selected` = liste d'IDs utilisateurs
+ * `users` = sans rôle coach/admin
+ * `coaches` = rôle coach uniquement
+ * `admins` = rôle admin uniquement
+ * `all` = tous les comptes avec email
+ */
+export type AudienceType = 'single' | 'selected' | 'users' | 'coaches' | 'admins' | 'all'
 
 export type ActivitySegment =
   | 'any'
@@ -50,6 +58,8 @@ export type BroadcastAudience = {
   /** Si audience_type === 'single' */
   single_user_id?: number | null
   single_user_email?: string | null
+  /** Si audience_type === 'selected' */
+  selected_user_ids?: number[]
 }
 
 export type BroadcastContent = {
@@ -327,6 +337,37 @@ async function selectAudienceRecipients(audience: BroadcastAudience): Promise<Ar
       .filter((r) => r.user_id > 0 && r.email && !excludeEmails.has(r.email))
   }
 
+  if (audience.audience_type === 'selected') {
+    const ids = [...new Set((audience.selected_user_ids ?? []).map((x) => Number(x)).filter((x) => x > 0))]
+    if (ids.length === 0) return []
+    const ph = ids.map(() => '?').join(', ')
+    const sqlSel = `
+      SELECT
+        u.ID as user_id,
+        u.user_email as email,
+        um_last.meta_value as last_login,
+        um_listed.meta_value as coach_is_listed,
+        ar.app_role as app_role
+      FROM ${tUsers} u
+      LEFT JOIN ${tMeta} um_last ON um_last.user_id = u.ID AND um_last.meta_key = 'fleur_last_login'
+      LEFT JOIN ${tMeta} um_listed ON um_listed.user_id = u.ID AND um_listed.meta_key = 'fleur_coach_is_listed'
+      LEFT JOIN ${tRoles} ar ON ar.user_id = u.ID
+      WHERE u.ID IN (${ph})
+        AND u.user_email IS NOT NULL AND u.user_email != ''
+    `
+    const resSel = await exec(pool, sqlSel, ids)
+    const rowsSel = (resSel[0] ?? []) as RowDataPacket[]
+    return rowsSel
+      .map((r) => ({
+        user_id: Number(r.user_id),
+        email: normalizeEmail(r.email),
+        last_login: r.last_login != null ? String(r.last_login) : null,
+        coach_is_listed: r.coach_is_listed != null ? String(r.coach_is_listed) : null,
+        app_role: r.app_role != null ? String(r.app_role) : null,
+      }))
+      .filter((r) => r.user_id > 0 && r.email && !excludeEmails.has(r.email))
+  }
+
   // Activity thresholds (days)
   const days =
     audience.activity === 'active_7d' ? 7 :
@@ -349,9 +390,11 @@ async function selectAudienceRecipients(audience: BroadcastAudience): Promise<Ar
     whereParts.push(`COALESCE(ar.app_role, 'user') NOT IN ('coach', 'admin')`)
   } else if (audience.audience_type === 'coaches') {
     whereParts.push(`COALESCE(ar.app_role, '') = 'coach'`)
+  } else if (audience.audience_type === 'admins') {
+    whereParts.push(`COALESCE(ar.app_role, '') = 'admin'`)
   }
 
-  if (audience.exclude_admins) {
+  if (audience.exclude_admins && audience.audience_type !== 'admins') {
     whereParts.push(`COALESCE(ar.app_role, '') NOT IN ('admin')`)
   }
 
@@ -464,7 +507,7 @@ export async function enqueueDeliveries(params: { broadcastId: number }): Promis
     throw new Error('Aucun destinataire ne correspond à cette cible (vérifiez l’ID, l’e-mail ou les filtres).')
   }
   const wantsEmail = !!channels.email?.subject
-  const wantsInapp = !!channels.inapp?.title
+  const wantsInapp = !!channels.inapp?.title || wantsEmail
   if (!wantsEmail && !wantsInapp) throw new Error('Aucun canal activé')
 
   let queued = 0
@@ -567,5 +610,77 @@ export async function finalizeBroadcastIfDone(broadcastId: number): Promise<void
     `UPDATE ${tB} SET status = ?, completed_at = NOW() WHERE id = ? AND status = 'sending'`,
     [status, broadcastId]
   )
+}
+
+/** Notification in-app accompagnant une campagne e-mail (aperçu + lien vers le HTML complet). */
+export function resolveInappForBroadcast(
+  broadcastId: number,
+  channels: BroadcastContent
+): BroadcastContent['inapp'] | null {
+  if (channels.inapp?.title) {
+    return {
+      ...channels.inapp,
+      action_url:
+        channels.inapp.action_url ||
+        `/notifications/campagne/${broadcastId}`,
+      action_label: channels.inapp.action_label || 'Voir le message',
+    }
+  }
+  if (!channels.email?.subject) return null
+  const html = channels.email.html ? String(channels.email.html) : ''
+  const preview = htmlToPlainText(html, 320)
+  return {
+    type: 'email_campaign',
+    title: String(channels.email.subject).trim(),
+    body: preview || undefined,
+    action_url: `/notifications/campagne/${broadcastId}`,
+    action_label: 'Voir le message',
+    priority: 'normal',
+  }
+}
+
+/** HTML de campagne pour un destinataire (vérifie qu'il fait partie de la diffusion). */
+export async function getCampaignEmailForUser(params: {
+  broadcastId: number
+  userId: number
+}): Promise<{ subject: string; html: string; preheader?: string | null } | null> {
+  if (!isDbConfigured()) return null
+  await ensureBroadcastTables()
+  const pool = getPool()
+  const tD = T_DELIV()
+  const tNotif = table('fleur_notifications')
+  const tNotifDel = table('fleur_notification_deliveries')
+
+  const [delRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id FROM ${tD}
+     WHERE broadcast_id = ? AND user_id = ? AND channel IN ('email', 'inapp')
+     LIMIT 1`,
+    [params.broadcastId, params.userId]
+  )
+
+  let authorized = !!delRows[0]
+  if (!authorized) {
+    const [nRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT d.id
+       FROM ${tNotifDel} d
+       JOIN ${tNotif} n ON n.id = d.notification_id
+       WHERE d.user_id = ? AND n.source_type = 'broadcast' AND n.source_id = ?
+       LIMIT 1`,
+      [params.userId, params.broadcastId]
+    )
+    authorized = !!nRows[0]
+  }
+  if (!authorized) return null
+
+  const broadcast = await getById(params.broadcastId)
+  if (!broadcast) return null
+  const channels = (broadcast.channels ?? {}) as BroadcastContent
+  const html = channels.email?.html ? String(channels.email.html) : ''
+  if (!html.trim()) return null
+  return {
+    subject: String(channels.email?.subject ?? '').trim(),
+    html,
+    preheader: channels.email?.preheader ?? null,
+  }
 }
 

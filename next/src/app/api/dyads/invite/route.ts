@@ -8,6 +8,7 @@ import { createDyadInvite } from '@/lib/db-dyads'
 import { authMe } from '@/lib/db-auth'
 import { createNotification } from '@/lib/db-notifications'
 import { absolutePublicAppUrl } from '@/lib/app-public-url'
+import { sendInviteEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +45,14 @@ export async function POST(req: NextRequest) {
       created_by: uid,
       source_type: 'dyad',
       source_id: dyad.id,
+    }).catch(() => {})
+
+    void sendInviteEmail({
+      to: email,
+      subject: `${inviterName} vous invite au Jardin du couple`,
+      intro: `${inviterName} vous invite à rejoindre un jardin commun sur Fleur d'AmOurs.`,
+      inviteUrl,
+      ctaLabel: 'Accepter l\'invitation',
     }).catch(() => {})
 
     return NextResponse.json({ dyad, token, inviteUrl }, { status: 201 })

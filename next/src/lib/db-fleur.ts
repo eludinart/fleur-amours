@@ -563,3 +563,95 @@ export async function notifyDuoPartnerSubmitted(partnerToken: string, submitting
     /* optionnel */
   }
 }
+
+async function ensureInvitedEmailColumn(): Promise<void> {
+  const pool = getPool()
+  const tRes = table('fleur_amour_results')
+  await pool
+    .execute(`ALTER TABLE ${tRes} ADD COLUMN IF NOT EXISTS invited_email VARCHAR(255) DEFAULT NULL`)
+    .catch(() => {})
+}
+
+/** Invite un partenaire au questionnaire Duo (e-mail + enregistrement invited_email). */
+export async function inviteDuoPartner(params: {
+  token: string
+  fromUserId: number
+  partnerEmail: string
+  inviteUrl: string
+  inviterName?: string
+}): Promise<{ sent: boolean; error?: string }> {
+  const pool = getPool()
+  const tRes = table('fleur_amour_results')
+  const token = String(params.token ?? '').trim()
+  const partnerEmail = String(params.partnerEmail ?? '').trim().toLowerCase()
+  if (!token) throw new Error('Token requis')
+  if (!partnerEmail || !partnerEmail.includes('@')) throw new Error('Email partenaire invalide')
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id, user_id, token FROM ${tRes} WHERE token = ? AND (parent_id IS NULL OR parent_id = 0) LIMIT 1`,
+    [token]
+  )
+  const root = rows[0]
+  if (!root) throw new Error('Token invalide')
+  const ownerId = root.user_id != null ? Number(root.user_id) : 0
+  if (ownerId && ownerId !== params.fromUserId) throw new Error('Non autorisé')
+
+  const [childRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id FROM ${tRes} WHERE parent_id = ? LIMIT 1`,
+    [Number(root.id)]
+  )
+  if (childRows[0]) throw new Error('Ce Duo est déjà complété')
+
+  await ensureInvitedEmailColumn()
+  await pool.execute(`UPDATE ${tRes} SET invited_email = ? WHERE id = ?`, [partnerEmail, Number(root.id)])
+
+  const inviter = params.inviterName?.trim() || "Quelqu'un"
+  const { sendInviteEmail } = await import('./email')
+  const result = await sendInviteEmail({
+    to: partnerEmail,
+    subject: `${inviter} vous invite à un questionnaire Duo`,
+    intro: `${inviter} vous invite à compléter votre partie du questionnaire Fleur d'AmOurs en duo. Cliquez ci-dessous pour rejoindre.`,
+    inviteUrl: params.inviteUrl,
+    ctaLabel: 'Rejoindre le Duo',
+  })
+
+  if (result.sent) {
+    const { createNotification } = await import('./db-notifications')
+    void createNotification({
+      type: 'duo_invite',
+      title: 'Invitation Duo',
+      body: `${inviter} vous invite à compléter un questionnaire en duo.`,
+      action_url: `/duo?token=${encodeURIComponent(token)}`,
+      recipient_type: 'user',
+      recipient_email: partnerEmail,
+      created_by: params.fromUserId,
+    }).catch(() => {})
+  }
+
+  return { sent: result.sent, error: result.error }
+}
+
+/** Invite un utilisateur inscrit par son ID. */
+export async function inviteDuoPartnerByUserId(params: {
+  token: string
+  fromUserId: number
+  toUserId: number
+  inviteUrl: string
+  inviterName?: string
+}): Promise<{ sent: boolean; error?: string }> {
+  const pool = getPool()
+  const tUsers = table('users')
+  const [urows] = await pool.execute<RowDataPacket[]>(
+    `SELECT user_email FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+    [params.toUserId]
+  )
+  const email = urows[0]?.user_email ? String(urows[0].user_email).trim() : ''
+  if (!email) throw new Error('Utilisateur introuvable')
+  return inviteDuoPartner({
+    token: params.token,
+    fromUserId: params.fromUserId,
+    partnerEmail: email,
+    inviteUrl: params.inviteUrl,
+    inviterName: params.inviterName,
+  })
+}

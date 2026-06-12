@@ -49,6 +49,14 @@ export function getSmtpTransport() {
   })
 }
 
+export function isSmtpConfigured(): boolean {
+  const host = process.env.SMTP_HOST?.trim() || ''
+  const user = process.env.SMTP_USER?.trim() || ''
+  const pass = process.env.SMTP_PASS ?? ''
+  const from = process.env.SMTP_FROM?.trim() || ''
+  return !!(host && user && pass && from)
+}
+
 export async function sendSmtpMail(msg: SmtpMessage): Promise<{ messageId: string }> {
   const transport = getSmtpTransport()
   const from = msg.from ?? process.env.SMTP_FROM ?? ''
@@ -67,5 +75,20 @@ export async function sendSmtpMail(msg: SmtpMessage): Promise<{ messageId: strin
     headers: msg.headers,
   })
   return { messageId: String(info.messageId ?? '') }
+}
+
+/** Envoi SMTP sans lever d'exception (logs silencieux côté appelant). */
+export async function trySendSmtpMail(
+  msg: SmtpMessage
+): Promise<{ ok: true; messageId: string } | { ok: false; error: string }> {
+  if (!isSmtpConfigured()) {
+    return { ok: false, error: 'SMTP non configuré (SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM)' }
+  }
+  try {
+    const { messageId } = await sendSmtpMail(msg)
+    return { ok: true, messageId }
+  } catch (err: unknown) {
+    return { ok: false, error: (err as Error)?.message ?? 'Erreur SMTP' }
+  }
 }
 

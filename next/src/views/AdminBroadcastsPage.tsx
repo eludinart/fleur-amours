@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
+import type { EditorRef } from 'react-email-editor'
 import { toast } from '@/hooks/useToast'
 import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/lib/api-client'
@@ -11,9 +12,7 @@ import {
   ADMIN_NOTIFICATION_DESTINATIONS,
 } from '@/lib/admin-notification-destinations'
 
-const EmailEditor = dynamic(() => import('react-email-editor').then((m) => m.EmailEditor as unknown as React.ComponentType<Record<string, unknown>>), {
-  ssr: false,
-})
+const EmailEditor = dynamic(() => import('react-email-editor'), { ssr: false })
 
 type AudienceSegment = {
   audience_type: 'single' | 'users' | 'coaches' | 'all'
@@ -102,9 +101,7 @@ export default function AdminBroadcastsPage() {
   const [preview, setPreview] = useState<{ count: number; sample: Array<{ user_id: number; email_masked: string }> } | null>(null)
   const [sending, setSending] = useState(false)
 
-  const [editorRef, setEditorRef] = useState<{
-    editor?: { exportHtml: (cb: (data: { design?: unknown; html?: string }) => void) => void }
-  } | null>(null)
+  const emailEditorRef = useRef<EditorRef>(null)
 
   const resolvedAction = useMemo(() => {
     if (destinationId === ADMIN_NOTIFICATION_DEST_CUSTOM) {
@@ -163,8 +160,7 @@ export default function AdminBroadcastsPage() {
   }
 
   async function exportEmailHtml(): Promise<{ design: unknown | null; html: string | null }> {
-    if (!editorRef) return { design: null, html: null }
-    const editor = editorRef.editor
+    const editor = emailEditorRef.current?.editor
     if (!editor?.exportHtml) return { design: null, html: null }
     return await new Promise((resolve) => {
       editor.exportHtml((data: { design?: unknown; html?: string }) => {
@@ -209,9 +205,7 @@ export default function AdminBroadcastsPage() {
       const id = Number(created.id ?? 0)
       if (!id) throw new Error('Création impossible')
 
-      await api.post('/api/admin/broadcasts/enqueue', { id })
-      await api.post('/api/admin/broadcasts/worker', { id, limit: 80 })
-      await api.post('/api/admin/broadcasts/worker', { id, limit: 80 })
+      await api.post('/api/admin/broadcasts/send', { id, batchSize: 100 })
 
       toast('Notifications envoyées', 'success')
       setTab('list')
@@ -544,11 +538,7 @@ export default function AdminBroadcastsPage() {
                     Éditeur blocs — HTML envoyé via SMTP.
                   </div>
                   <div className="h-[420px] bg-white">
-                    <EmailEditor
-                      onLoad={(editor: { editor?: { exportHtml: (cb: (data: { design?: unknown; html?: string }) => void) => void } }) =>
-                        setEditorRef(editor)}
-                      minHeight="420px"
-                    />
+                    <EmailEditor ref={emailEditorRef} minHeight="420px" />
                   </div>
                 </div>
               </div>

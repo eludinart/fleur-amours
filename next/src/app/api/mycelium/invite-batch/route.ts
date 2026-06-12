@@ -8,6 +8,8 @@ import { requireAuth } from '@/lib/api-auth'
 import { isDbConfigured } from '@/lib/db'
 import { absolutePublicAppUrl } from '@/lib/app-public-url'
 import { createBatchInvites, getManagedOrg, type OrgRole } from '@/lib/db-organisations'
+import { sendInviteEmail } from '@/lib/email'
+import { authMe } from '@/lib/db-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,11 +50,27 @@ export async function POST(req: NextRequest) {
       role,
     })
 
-    const invites = created.map((inv) => ({
-      email: inv.email,
-      role: inv.role,
-      inviteLink: absolutePublicAppUrl(`/login?from=/mycelium/join&org_invite=${encodeURIComponent(inv.token)}`, req),
-    }))
+    const inviter = await authMe(parseInt(userId, 10)).catch(() => null)
+    const inviterName = inviter?.name?.trim() || inviter?.email || 'Votre organisation'
+
+    const invites = created.map((inv) => {
+      const inviteLink = absolutePublicAppUrl(
+        `/login?from=/mycelium/join&org_invite=${encodeURIComponent(inv.token)}`,
+        req
+      )
+      void sendInviteEmail({
+        to: inv.email,
+        subject: `${inviterName} vous invite sur Mycélium`,
+        intro: `${inviterName} vous invite à rejoindre l'espace Mycélium (${managed.org.name ?? 'organisation'}).`,
+        inviteUrl: inviteLink,
+        ctaLabel: 'Rejoindre Mycélium',
+      }).catch(() => {})
+      return {
+        email: inv.email,
+        role: inv.role,
+        inviteLink,
+      }
+    })
 
     return NextResponse.json({ created: invites, createdCount: created.length, skipped }, { status: 201 })
   } catch (err: unknown) {

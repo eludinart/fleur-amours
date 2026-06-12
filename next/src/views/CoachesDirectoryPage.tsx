@@ -213,7 +213,7 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
           </div>
 
           <Link
-            href={`/chat?coach=${c.id}`}
+            href="/contact"
             className="flex w-full justify-center items-center py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition-colors shadow-lg shadow-violet-600/25 text-sm"
           >
             {t('coaches.contactByMessage')}

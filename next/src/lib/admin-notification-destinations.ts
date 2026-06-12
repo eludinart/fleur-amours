@@ -32,6 +32,7 @@ export const ADMIN_NOTIFICATION_DESTINATIONS: AdminNotificationDestination[] = [
   { id: 'boutique', label: 'Boutique', path: '/boutique' },
   { id: 'coaches', label: 'Annuaire des coachs', path: '/coaches' },
   { id: 'admin', label: 'Admin — tableau de bord', path: '/admin' },
+  { id: 'admin_emails', label: 'Admin — campagnes e-mail', path: '/admin/emails' },
   { id: 'admin_broadcasts', label: 'Admin — diffusions', path: '/admin/broadcasts' },
   { id: 'admin_suivi', label: 'Admin — suivi', path: '/admin/suivi' },
   { id: 'admin_patientele', label: 'Admin — patientèle', path: '/admin/patientele' },

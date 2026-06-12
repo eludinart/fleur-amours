@@ -11,6 +11,11 @@ export type SystemStatus = {
   cpu: { cores: number; loadAvg1m: string; loadAvg5m: string; loadAvg15m: string }
   publicIp: string | null
   nodeEnv: string
+  smtp?: {
+    configured: boolean
+    host: string | null
+    from: string | null
+  }
   coolify: {
     configured: boolean
     servers: Array<{ name: string; ip: string; uuid: string; unreachable?: boolean }>

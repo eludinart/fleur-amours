@@ -12,6 +12,7 @@ const ICONS: Record<string, string> = {
   chat_message: '💬',
   chat_new_message: '💬',
   admin_announcement: '📢',
+  email_campaign: '✉️',
   targeted: '🎯',
   contact_reply: '✉️',
   system: '⚙️',

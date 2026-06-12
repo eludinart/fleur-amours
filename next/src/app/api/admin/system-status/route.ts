@@ -4,6 +4,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/api-auth'
+import { isSmtpConfigured } from '@/lib/smtp'
 import os from 'os'
 
 export const dynamic = 'force-dynamic'
@@ -112,6 +113,11 @@ export async function GET(req: NextRequest) {
       },
       publicIp: publicIp ?? null,
       nodeEnv: process.env.NODE_ENV ?? 'development',
+      smtp: {
+        configured: isSmtpConfigured(),
+        host: process.env.SMTP_HOST?.trim() || null,
+        from: process.env.SMTP_FROM?.trim() || null,
+      },
       coolify: coolifyServers
         ? {
             configured: true,

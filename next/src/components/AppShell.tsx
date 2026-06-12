@@ -19,8 +19,10 @@ import { HomePage } from '@/views/HomePage'
 import { PresentationPage } from '@/views/PresentationPage'
 import { AccountPage } from '@/views/AccountPage'
 import { CoachesDirectoryPage } from '@/views/CoachesDirectoryPage'
+import ContactPage from '@/views/ContactPage'
 import { ChatPage } from '@/views/ChatPage'
 import NotificationsPage from '@/views/NotificationsPage'
+import NotificationCampaignPage from '@/views/NotificationCampaignPage'
 import NotificationPreferencesPage from '@/views/NotificationPreferencesPage'
 import StatsPage from '@/views/StatsPage'
 import CampaignsPage from '@/views/CampaignsPage'
@@ -56,6 +58,7 @@ import AdminUsersPage from '@/views/AdminUsersPage'
 import AdminSessionsPage from '@/views/AdminSessionsPage'
 import AdminSciencePage from '@/views/AdminSciencePage'
 import AdminBroadcastsPage from '@/views/AdminBroadcastsPage'
+import AdminEmailsPage from '@/views/AdminEmailsPage'
 import AdminTelemetryPage from '@/views/AdminTelemetryPage'
 import CoachSuiviPage from '@/views/CoachSuiviPage'
 import CoachPatientelePage from '@/views/CoachPatientelePage'
@@ -379,6 +382,13 @@ function AppRoutes() {
         </Layout>
       </ProtectedLayout>
     ),
+    contact: (
+      <ProtectedLayout>
+        <Layout>
+          <ContactPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
     chat: (
       <ProtectedLayout>
         <Layout>
@@ -406,6 +416,12 @@ function AppRoutes() {
         <ProtectedLayout>
           <Layout>
             <NotificationPreferencesPage />
+          </Layout>
+        </ProtectedLayout>
+      ) : subRoute === 'campagne' && subRoute2 ? (
+        <ProtectedLayout>
+          <Layout>
+            <NotificationCampaignPage campaignId={subRoute2} />
           </Layout>
         </ProtectedLayout>
       ) : (
@@ -516,6 +532,13 @@ function AppRoutes() {
         <ProtectedLayout adminOnly>
           <Layout>
             <AdminBroadcastsPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+      emails: (
+        <ProtectedLayout adminOnly>
+          <Layout>
+            <AdminEmailsPage />
           </Layout>
         </ProtectedLayout>
       ),

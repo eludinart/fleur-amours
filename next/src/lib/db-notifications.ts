@@ -122,6 +122,8 @@ export type NotificationCreateInput = {
   source_type?: string | null
   source_id?: number | null
   channel_id?: number | null
+  /** Ne pas envoyer l'e-mail transactionnel (ex. campagne SMTP déjà envoyée). */
+  skip_email?: boolean
 }
 
 async function resolveRecipients(input: NotificationCreateInput): Promise<Array<{ user_id: number; email: string }>> {
@@ -223,6 +225,22 @@ export async function createNotification(input: NotificationCreateInput): Promis
     )
     deliveries++
   }
+
+  void import('./email')
+    .then(({ dispatchNotificationEmails }) => {
+      if (input.skip_email) return
+      return dispatchNotificationEmails({
+        notificationId,
+        type,
+        title,
+        body,
+        actionUrl,
+        actionLabel,
+        recipients,
+      })
+    })
+    .catch(() => {})
+
   return { notification_id: notificationId, deliveries }
 }
 
