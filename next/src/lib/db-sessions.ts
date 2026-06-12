@@ -1,7 +1,7 @@
 /**
  * Sessions — MariaDB
  */
-import type { RowDataPacket } from 'mysql2'
+import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { exec, getPool, table } from './db'
 
 const tbl = () => table('fleur_sessions')
@@ -70,9 +70,8 @@ export async function save(body: Record<string, unknown>): Promise<{ id: number 
     body.status ?? 'completed',
     parseInt(String(body.duration_seconds ?? 0), 10),
   ]
-  await exec(pool, sql, values)
-  const [rows] = await pool.execute<RowDataPacket[]>('SELECT LAST_INSERT_ID() as id')
-  return { id: Number(rows[0]?.id) }
+  const [res] = await exec(pool, sql, values)
+  return { id: Number((res as ResultSetHeader).insertId) }
 }
 
 export async function update(body: Record<string, unknown>): Promise<{ updated: boolean }> {
@@ -116,6 +115,16 @@ export async function update(body: Record<string, unknown>): Promise<{ updated: 
   return { updated: affected > 0 }
 }
 
+/** JSON.parse tolérant : une ligne corrompue ne doit pas casser toute la liste. */
+function safeJson<T>(raw: unknown, fallback: T): T {
+  if (raw == null || raw === '') return fallback
+  try {
+    return JSON.parse(String(raw)) as T
+  } catch {
+    return fallback
+  }
+}
+
 export async function my(email: string, status?: string): Promise<{ items: Record<string, unknown>[] }> {
   const pool = getPool()
   await ensureTable()
@@ -130,21 +139,51 @@ export async function my(email: string, status?: string): Promise<{ items: Recor
   sql += ' ORDER BY created_at DESC LIMIT 10'
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params)
   const items = rows.map((r) => {
-    const cardsRaw = JSON.parse(r.cards_json || '[]')
+    const cardsRaw = safeJson<unknown>(r.cards_json, [])
     const cards = Array.isArray(cardsRaw) ? cardsRaw : []
     return {
       id: Number(r.id),
       first_words: (r.first_words || '').slice(0, 120),
       door_suggested: r.door_suggested,
-      petals: JSON.parse(r.petals_json || '{}'),
-      history: JSON.parse(r.history_json || '[]'),
+      petals: safeJson<Record<string, unknown>>(r.petals_json, {}),
+      history: safeJson<unknown[]>(r.history_json, []),
       cards_drawn: cards,
-      anchors: JSON.parse(r.anchors_json || '[]'),
-      step_data: JSON.parse(r.step_data_json || 'null'),
+      anchors: safeJson<unknown[]>(r.anchors_json, []),
+      step_data: safeJson<unknown>(r.step_data_json, null),
       doors_locked: r.doors_locked ? r.doors_locked.split(',') : [],
       turn_count: Number(r.turn_count),
       status: r.status,
       duration_seconds: Number(r.duration_seconds),
+      created_at: r.created_at,
+    }
+  })
+  return { items }
+}
+
+/** Toutes les sessions d'un email (timeline Éclosion — limite élevée). */
+export async function listByEmailForTimeline(
+  email: string,
+  limit = 200
+): Promise<{ items: Record<string, unknown>[] }> {
+  const pool = getPool()
+  await ensureTable()
+  const t = tbl()
+  const safeLimit = Math.min(Math.max(parseInt(String(limit), 10) || 200, 1), 200)
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id, email, first_words, door_suggested, petals_json, anchors_json, step_data_json, plan14j_json, status, created_at
+     FROM ${t} WHERE email = ? ORDER BY created_at DESC LIMIT ${safeLimit}`,
+    [email]
+  )
+  const items = rows.map((r) => {
+    return {
+      id: Number(r.id),
+      first_words: r.first_words,
+      door_suggested: r.door_suggested,
+      petals: safeJson<Record<string, unknown>>(r.petals_json, {}),
+      anchors: safeJson<unknown[]>(r.anchors_json, []),
+      step_data: safeJson<unknown>(r.step_data_json, null),
+      plan14j: safeJson<unknown>(r.plan14j_json, null),
+      status: r.status,
       created_at: r.created_at,
     }
   })
@@ -273,19 +312,19 @@ export async function getById(id: number, email?: string): Promise<Record<string
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params)
   const r = rows[0]
   if (!r) return null
-  const cardsRaw = JSON.parse(r.cards_json || '[]')
+  const cardsRaw = safeJson<unknown>(r.cards_json, [])
   const cards = Array.isArray(cardsRaw) ? cardsRaw : []
   return {
     id: Number(r.id),
     email: r.email,
     first_words: r.first_words,
     door_suggested: r.door_suggested,
-    petals: JSON.parse(r.petals_json || '{}'),
-    history: JSON.parse(r.history_json || '[]'),
+    petals: safeJson<Record<string, unknown>>(r.petals_json, {}),
+    history: safeJson<unknown[]>(r.history_json, []),
     cards_drawn: cards,
-    anchors: JSON.parse(r.anchors_json || '[]'),
-    plan14j: JSON.parse(r.plan14j_json || 'null'),
-    step_data: JSON.parse(r.step_data_json || 'null'),
+    anchors: safeJson<unknown[]>(r.anchors_json, []),
+    plan14j: safeJson<unknown>(r.plan14j_json, null),
+    step_data: safeJson<unknown>(r.step_data_json, null),
     doors_locked: r.doors_locked ? r.doors_locked.split(',') : [],
     turn_count: Number(r.turn_count),
     status: r.status,

@@ -1,7 +1,7 @@
 /**
  * La Clairière (social / canaux chat) — MariaDB.
  */
-import type { RowDataPacket } from 'mysql2'
+import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { exec, getPool, table } from './db'
 
 const PRESENCE_ONLINE_SECONDS = 300
@@ -640,12 +640,11 @@ export async function sendSeed(
   )
   if (existing.length > 0) throw new Error('Une graine est déjà en attente pour ce jardinier')
 
-  await pool.execute(
+  const [inserted] = await pool.execute<ResultSetHeader>(
     `INSERT INTO ${tSeeds} (from_user_id, to_user_id, intention_id, status, sap_spent) VALUES (?, ?, ?, 'pending', 0)`,
     [fromUserId, toUserId, intentionId.trim()]
   )
-  const [inserted] = await pool.execute<RowDataPacket[]>(`SELECT LAST_INSERT_ID() as id`)
-  const seedId = Number(inserted?.[0]?.id ?? 0)
+  const seedId = Number(inserted.insertId ?? 0)
   if (!seedId) throw new Error('Impossible de récupérer l\'id de la graine')
   return { seedId }
 }

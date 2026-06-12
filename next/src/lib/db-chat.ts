@@ -37,7 +37,20 @@ export async function ensureChatSchema(): Promise<void> {
   await ensureTables(getPool())
 }
 
-async function ensureTables(pool: ReturnType<typeof getPool>): Promise<void> {
+// Singleton : le DDL chat n'est exécuté qu'une fois par process (pas à chaque requête).
+let _ensureChatPromise: Promise<void> | null = null
+
+function ensureTables(pool: ReturnType<typeof getPool>): Promise<void> {
+  if (!_ensureChatPromise) {
+    _ensureChatPromise = _doEnsureChatTables(pool).catch((err) => {
+      _ensureChatPromise = null
+      throw err
+    })
+  }
+  return _ensureChatPromise
+}
+
+async function _doEnsureChatTables(pool: ReturnType<typeof getPool>): Promise<void> {
   const tConv = table(TBL_CONV)
   const tMsg = table(TBL_MSG)
   await pool.execute(`
@@ -485,6 +498,25 @@ export async function getMyConversations(userId: number, userEmail: string): Pro
         : null,
     created_at: r.created_at ? String(r.created_at) : null,
   }))
+}
+
+/** Nombre de messages staff (coach/admin) non lus par l'utilisateur, toutes conversations confondues. */
+export async function unreadCountForChatUser(userId: number): Promise<number> {
+  const pool = getPool()
+  await ensureTables(pool)
+  const tConv = table(TBL_CONV)
+  const tMsg = table(TBL_MSG)
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT COUNT(*) AS c
+     FROM ${tMsg} m
+     JOIN ${tConv} c ON c.id = m.conversation_id
+     WHERE c.user_id = ?
+       AND c.status != 'deleted'
+       AND m.sender_role != 'user'
+       AND (c.user_last_read_at IS NULL OR m.created_at > c.user_last_read_at)`,
+    [userId]
+  )
+  return Number(rows?.[0]?.c ?? 0)
 }
 
 /** Liste des conversations (coach/admin). Coach : seulement ses patients. Admin : toutes. */

@@ -3,11 +3,14 @@ import { isDbConfigured } from '@/lib/db'
 import { authLogin } from '@/lib/db-auth'
 import { jwtEncode } from '@/lib/jwt'
 import { setAuthCookie } from '@/lib/auth-cookie'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = rateLimit('login', clientIp(req), { limit: 10, windowMs: 60_000 })
+    if (limited) return limited
     if (!isDbConfigured()) {
       return NextResponse.json(
         { error: 'Backend non configuré (MARIADB_*)' },

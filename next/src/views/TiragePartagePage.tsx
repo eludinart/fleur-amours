@@ -164,7 +164,7 @@ export default function TiragePartagePage() {
         <div className="text-4xl">🃏</div>
         <p className="text-center text-amber-400">{error || t('share.landingNotFound')}</p>
         <Link
-          href={`${basePath}/tirage`}
+          href="/tirage"
           className="rounded-full bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-3 font-medium text-white transition-opacity hover:opacity-90"
         >
           {t('share.landingTryOwn')}
@@ -211,7 +211,7 @@ export default function TiragePartagePage() {
       <p className="mb-6 text-center text-[11px] text-slate-500 sm:text-left">
         <span className="text-slate-500">{formatDate(reading.createdAt || reading.created_at)}</span>
         <span className="mx-2 text-slate-600">·</span>
-        <Link href={`${basePath}/tirage`} className="text-violet-400 hover:text-violet-300">
+        <Link href="/tirage" className="text-violet-400 hover:text-violet-300">
           {t('share.landingBackTirage')}
         </Link>
       </p>

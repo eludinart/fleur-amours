@@ -1,12 +1,14 @@
 /**
- * Codes promo — MariaDB
+ * Codes promo (crédit SAP) — MariaDB
  *
- * Tables (créées par migration_v0.7.sql) :
+ * Tables partagées avec db-promo-access.ts (schéma unifié, créé/migré par
+ * `ensurePromoTables`) :
  *   wp_fleur_promo_codes        — définition des codes
  *   wp_fleur_promo_redemptions  — historique des utilisations (1 par user/code max)
  */
 import type { RowDataPacket, ResultSetHeader } from 'mysql2/promise'
 import { getPool, table } from './db'
+import { ensurePromoTables } from './db-promo-access'
 
 const TBL_CODES = () => table('fleur_promo_codes')
 const TBL_REDEMPTIONS = () => table('fleur_promo_redemptions')
@@ -45,13 +47,14 @@ export async function redeemPromoCode(
   userId: number
 ): Promise<{ sapCredited: number; codeId: number }> {
   const pool = getPool()
+  await ensurePromoTables(pool)
   const conn = await pool.getConnection()
   try {
     await conn.beginTransaction()
 
     // Verrou en lecture pour éviter la race condition (SELECT ... FOR UPDATE)
     const [codeRows] = await conn.execute<RowDataPacket[]>(
-      `SELECT id, code, description, sap_amount, max_uses, use_count,
+      `SELECT id, code, description, sap_amount, max_uses, uses_count,
               expires_at, is_active
        FROM ${TBL_CODES()}
        WHERE code = ?
@@ -74,7 +77,7 @@ export async function redeemPromoCode(
       throw new PromoError('Ce code promotionnel a expiré.', 'EXPIRED')
     }
 
-    if (row.max_uses !== null && row.use_count >= row.max_uses) {
+    if (row.max_uses !== null && Number(row.uses_count ?? 0) >= Number(row.max_uses)) {
       throw new PromoError('Ce code a atteint son nombre maximum d\'utilisations.', 'MAX_USES_REACHED')
     }
 
@@ -91,13 +94,13 @@ export async function redeemPromoCode(
 
     // Enregistrer l'utilisation
     await conn.execute<ResultSetHeader>(
-      `INSERT INTO ${TBL_REDEMPTIONS()} (code_id, user_id, sap_credited) VALUES (?, ?, ?)`,
-      [row.id, userId, sapAmount]
+      `INSERT INTO ${TBL_REDEMPTIONS()} (code_id, user_id, promo_code, sap_credited) VALUES (?, ?, ?, ?)`,
+      [row.id, userId, String(row.code), sapAmount]
     )
 
     // Incrémenter le compteur du code
     await conn.execute(
-      `UPDATE ${TBL_CODES()} SET use_count = use_count + 1 WHERE id = ?`,
+      `UPDATE ${TBL_CODES()} SET uses_count = uses_count + 1 WHERE id = ?`,
       [row.id]
     )
 
@@ -114,8 +117,9 @@ export async function redeemPromoCode(
 /** Liste les codes promo (admin). */
 export async function listPromoCodes(): Promise<PromoCode[]> {
   const pool = getPool()
+  await ensurePromoTables(pool)
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, code, description, sap_amount, max_uses, use_count, expires_at, is_active
+    `SELECT id, code, description, sap_amount, max_uses, uses_count, expires_at, is_active
      FROM ${TBL_CODES()}
      ORDER BY id DESC`
   )
@@ -125,7 +129,7 @@ export async function listPromoCodes(): Promise<PromoCode[]> {
     description: r.description ?? null,
     sap_amount: Number(r.sap_amount),
     max_uses: r.max_uses !== null ? Number(r.max_uses) : null,
-    use_count: Number(r.use_count),
+    use_count: Number(r.uses_count ?? 0),
     expires_at: r.expires_at ? new Date(r.expires_at) : null,
     is_active: Boolean(r.is_active),
   }))
@@ -134,6 +138,7 @@ export async function listPromoCodes(): Promise<PromoCode[]> {
 /** Historique des utilisations d'un code (admin). */
 export async function listRedemptions(codeId?: number): Promise<RowDataPacket[]> {
   const pool = getPool()
+  await ensurePromoTables(pool)
   const where = codeId ? 'WHERE r.code_id = ?' : ''
   const params = codeId ? [codeId] : []
   const [rows] = await pool.execute<RowDataPacket[]>(

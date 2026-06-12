@@ -98,14 +98,11 @@ export async function listPrompts(type?: 'tuteur' | 'threshold' | 'coach') {
 export async function createPrompt(type: string, name: string, content: string) {
   await ensureTables()
   const pool = getPool()
-  await pool.execute(
+  const [res] = await pool.execute(
     `INSERT INTO ${TBL()} (type, name, content) VALUES (?, ?, ?)`,
     [type, name, content]
   )
-  return pool.execute('SELECT LAST_INSERT_ID() as id').then(([r]) => {
-    const rows = r as { id: number }[]
-    return rows[0]?.id ?? 0
-  })
+  return Number((res as { insertId?: number }).insertId ?? 0)
 }
 
 export async function updatePrompt(id: number, name: string, content: string) {

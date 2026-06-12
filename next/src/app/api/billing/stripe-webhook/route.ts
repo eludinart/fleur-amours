@@ -15,6 +15,7 @@ import {
   sapDebitUpTo,
 } from '@/lib/db-sap'
 import { fetchChargeAmounts, fetchPaymentIntentMetadata } from '@/lib/stripe'
+import { setSeats } from '@/lib/db-organisations'
 import { isDbConfigured } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -40,6 +41,19 @@ function metaFromObject(metaRaw: unknown): Record<string, string> {
 
 async function handleCheckoutSessionCompleted(session: Record<string, unknown>): Promise<void> {
   const meta = metaFromObject(session.metadata)
+
+  // Sièges B2B Mycelium : accordés uniquement ici, après paiement confirmé.
+  if (meta.plan_id === 'seats_b2b') {
+    const orgId = parseInt(meta.org_id ?? '', 10)
+    const seats = parseInt(meta.seats ?? '', 10)
+    if (orgId > 0 && seats > 0) {
+      const subRaw = session.subscription
+      const subId = typeof subRaw === 'string' ? subRaw : String((subRaw as { id?: string })?.id ?? '') || null
+      await setSeats(orgId, seats, subId)
+    }
+    return
+  }
+
   const userId = parseInt(meta.user_id ?? String(session.client_reference_id ?? ''), 10)
   const units = parseSapUnitsFromMetadata(meta)
 

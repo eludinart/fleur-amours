@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { requireAuth } from '@/lib/api-auth'
 import { submitFleurBeta } from '@/lib/db-fleur-beta'
+import { recordTimelineEvent } from '@/lib/db-timeline'
 import { isFleurBetaDoorKey, type FleurBetaAnswerInput } from '@/lib/fleur-beta-data'
 
 export const dynamic = 'force-dynamic'
@@ -29,8 +30,9 @@ export async function POST(req: NextRequest) {
     }
 
     const answers = Array.isArray(body.answers) ? body.answers : []
+    const uid = parseInt(userId, 10)
     const data = await submitFleurBeta({
-      userId: parseInt(userId, 10),
+      userId: uid,
       porte,
       answers: answers.map((a) => ({
         questionId: String(a?.questionId ?? ''),
@@ -38,6 +40,24 @@ export async function POST(req: NextRequest) {
       })),
       questionnaireVersion: typeof body.questionnaire_version === 'string' ? body.questionnaire_version : undefined,
     })
+
+    const porteLabel =
+      porte === 'love'
+        ? 'Amour'
+        : porte === 'vegetal'
+          ? 'Végétal'
+          : porte === 'elements'
+            ? 'Éléments'
+            : porte === 'life'
+              ? 'Vie'
+              : porte
+    void recordTimelineEvent({
+      userId: uid,
+      source: 'diagnostic',
+      refId: data.id,
+      title: `Questionnaire — ${porteLabel}`,
+      summary: body.questionnaire_version ? `Version ${body.questionnaire_version}` : null,
+    }).catch(() => {})
 
     return NextResponse.json(
       {

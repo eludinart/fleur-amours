@@ -1,7 +1,7 @@
 /**
  * Opérations auth/account sur MariaDB (tables WordPress).
  */
-import type { RowDataPacket } from 'mysql2'
+import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getPool, table } from './db'
 import { verifyWordPressPassword } from './auth-wordpress'
 import { hash } from 'bcryptjs'
@@ -326,31 +326,42 @@ export async function authRegister(
   const nicename = (name || userLogin).replace(/[^a-z0-9\s\-_]/gi, '').slice(0, 50) || userLogin
   const displayName = name || userLogin
 
-  await pool.execute(
-    `INSERT INTO ${tbl} (user_login, user_pass, user_nicename, user_email, user_registered, user_status, display_name)
-     VALUES (?, ?, ?, ?, ?, 0, ?)`,
-    [userLogin, userPass, nicename, email, now, displayName]
-  )
-  const [ins] = await pool.execute<RowDataPacket[]>('SELECT LAST_INSERT_ID() as id')
-  const userId = Number(ins[0]?.id)
+  // User + usermeta dans une même transaction : pas de compte sans rôle.
+  const conn = await pool.getConnection()
+  let userId = 0
+  try {
+    await conn.beginTransaction()
+    const [ins] = await conn.execute<ResultSetHeader>(
+      `INSERT INTO ${tbl} (user_login, user_pass, user_nicename, user_email, user_registered, user_status, display_name)
+       VALUES (?, ?, ?, ?, ?, 0, ?)`,
+      [userLogin, userPass, nicename, email, now, displayName]
+    )
+    userId = Number(ins.insertId)
+
+    await conn.execute(
+      `INSERT INTO ${prefix}usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)`,
+      [userId, `${prefix}capabilities`, `a:1:{s:10:"subscriber";i:1;}`]
+    )
+    await conn.execute(
+      `INSERT INTO ${prefix}usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)`,
+      [userId, `${prefix}user_level`, '0']
+    )
+    // Par défaut, tout nouvel utilisateur est visible dans le Grand Jardin.
+    // (Comportement inversable dans "Mon compte".)
+    await conn.execute(
+      `INSERT INTO ${prefix}usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)`,
+      [userId, 'fleur_profile_public', '1']
+    )
+    await conn.commit()
+  } catch (err) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
+  }
 
   // Première connexion: l'inscription connecte immédiatement, donc on fixe aussi le last_login.
   await updateLastLogin(userId)
-
-  await pool.execute(
-    `INSERT INTO ${prefix}usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)`,
-    [userId, `${prefix}capabilities`, `a:1:{s:10:"subscriber";i:1;}`]
-  )
-  await pool.execute(
-    `INSERT INTO ${prefix}usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)`,
-    [userId, `${prefix}user_level`, '0']
-  )
-  // Par défaut, tout nouvel utilisateur est visible dans le Grand Jardin.
-  // (Comportement inversable dans "Mon compte".)
-  await pool.execute(
-    `INSERT INTO ${prefix}usermeta (user_id, meta_key, meta_value) VALUES (?, ?, ?)`,
-    [userId, 'fleur_profile_public', '1']
-  )
 
   const wpRole = await getWpRole(userId)
   const appRole = await getAppRole(userId, wpRole)

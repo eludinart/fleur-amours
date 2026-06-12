@@ -2,7 +2,7 @@
  * Dreamscape (Promenades oniriques) — MariaDB
  */
 import { randomBytes } from 'crypto'
-import type { RowDataPacket } from 'mysql2'
+import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { exec, getPool, table } from './db'
 
 const tbl = () => table('fleur_dreamscape')
@@ -46,9 +46,8 @@ export async function save(userId: string, body: Record<string, unknown>): Promi
     JSON.stringify(body.petals ?? {}),
     (body.snapshot as string) ?? null,
   ]
-  await exec(pool, sql, values)
-  const [rows] = await pool.execute<RowDataPacket[]>('SELECT LAST_INSERT_ID() as id')
-  return { id: Number(rows[0]?.id) }
+  const [res] = await exec(pool, sql, values)
+  return { id: Number((res as ResultSetHeader).insertId) }
 }
 
 export async function update(

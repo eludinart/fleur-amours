@@ -15,6 +15,14 @@
       "amount_monthly_cents": 790,
       "amount_cents": 9000,
       "unit": "an"
+    },
+    "seats_b2b": {
+      "price_id_env": "STRIPE_PRICE_SEATS_B2B",
+      "plan_id": "seats_b2b",
+      "label": "Mycelium — par siège",
+      "amount_monthly_cents": 690,
+      "amount_cents": 690,
+      "unit": "siège/mois"
     }
   },
   "packs": {

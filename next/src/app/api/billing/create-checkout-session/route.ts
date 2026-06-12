@@ -1,20 +1,19 @@
 /**
  * POST /api/billing/create-checkout-session
  * Crée une session Stripe Checkout pour achat/abonnement.
- * Création session Stripe Checkout.
+ *
+ * Sécurité : le client n'envoie qu'un `product_id` connu du catalogue serveur
+ * (`billing-catalog.ts`). Le price Stripe, le mode et les unités SAP sont
+ * résolus côté serveur — un `price_id` client est ignoré. Les URLs de retour
+ * sont ré-ancrées sur le domaine de l'app (anti open-redirect).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/api-auth'
+import { getAuthHeader, requireAuth } from '@/lib/api-auth'
 import { jwtDecode } from '@/lib/jwt'
+import { resolveBillingProduct, safeReturnUrl } from '@/lib/billing-catalog'
 import { createCheckoutSession, getStripeSecretKey } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
-
-function getAuthHeader(req: NextRequest): string | null {
-  const auth = req.headers.get('authorization')
-  if (!auth?.startsWith('Bearer ')) return null
-  return auth.slice(7)
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,45 +27,48 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}))
-    const priceId = String(body.price_id ?? '').trim()
     const productId = String(body.product_id ?? '').trim()
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_PUBLIC_URL || ''
-    const base = appUrl || (typeof req.nextUrl !== 'undefined' ? `${req.nextUrl.origin}${basePath}` : '')
-    const successUrl = String(body.success_url ?? `${base}/account?checkout=success`).trim()
-    const cancelUrl = String(body.cancel_url ?? `${base}/account?checkout=canceled`).trim()
+    if (!productId) {
+      return NextResponse.json({ error: 'product_id requis' }, { status: 422 })
+    }
 
-    if (!successUrl || !cancelUrl) {
+    const product = resolveBillingProduct(productId)
+    if (!product) {
       return NextResponse.json(
-        { error: 'success_url et cancel_url requis (ou définir APP_PUBLIC_URL)' },
+        { error: `Produit inconnu ou non configuré : ${productId}` },
         { status: 422 }
       )
     }
-    if (!priceId) {
-      return NextResponse.json({ error: 'price_id requis' }, { status: 422 })
+
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_PUBLIC_URL || ''
+    const base = appUrl || (typeof req.nextUrl !== 'undefined' ? `${req.nextUrl.origin}${basePath}` : '')
+    if (!base) {
+      return NextResponse.json(
+        { error: 'URL publique non configurée (APP_PUBLIC_URL)' },
+        { status: 503 }
+      )
     }
+    const successUrl = safeReturnUrl(base, body.success_url, '/account?checkout=success')
+    const cancelUrl = safeReturnUrl(base, body.cancel_url, '/account?checkout=canceled')
 
     const token = getAuthHeader(req)
     const payload = token ? jwtDecode(token) : null
     const customerEmail = payload?.email?.trim() || undefined
 
-    const isSapPack = /^sap_(10|50|100)$/.test(productId)
-    const sapUnits = isSapPack ? parseInt(productId.replace('sap_', ''), 10) : 0
-    const mode =
-      ['monthly', 'yearly'].includes(productId) ? 'subscription' : 'payment'
     const metadata: Record<string, string> = {
       user_id: userId,
-      ...(mode === 'subscription'
-        ? { plan_id: productId || 'monthly' }
+      ...(product.mode === 'subscription'
+        ? { plan_id: product.planId ?? product.productId }
         : {
-            product_id: productId || 'credits_100',
-            ...(isSapPack && sapUnits > 0 ? { sap_units: String(sapUnits) } : {}),
+            product_id: product.productId,
+            ...(product.sapUnits > 0 ? { sap_units: String(product.sapUnits) } : {}),
           }),
     }
 
     const result = await createCheckoutSession({
-      priceId,
-      mode,
+      priceId: product.priceId,
+      mode: product.mode,
       successUrl,
       cancelUrl,
       clientReferenceId: userId,

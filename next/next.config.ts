@@ -16,6 +16,22 @@ const nextConfig: NextConfig = {
   transpilePackages: ['recharts', 'react-force-graph-2d', 'd3-array', 'd3-scale', 'd3-shape', 'd3-force-3d'],
   outputFileTracingRoot: path.resolve(process.cwd()),
   reactStrictMode: true,
+  async headers() {
+    if (isCapacitorBuild) return []
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          // HSTS : appliqué seulement derrière HTTPS (prod Coolify/Hostinger)
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+        ],
+      },
+    ]
+  },
   async redirects() {
     return [
       // Évite le double /jardin/jardin (page blanche)

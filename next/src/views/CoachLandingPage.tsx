@@ -35,8 +35,8 @@ export function CoachLandingPage() {
     syncI18nLocale(locale || 'fr')
   }
 
-  const goLogin = () => router.push(`${basePath}/login`)
-  const goRegister = () => router.push(`${basePath}/login?mode=register`)
+  const goLogin = () => router.push('/login')
+  const goRegister = () => router.push('/login?mode=register')
 
   const primaryBtn =
     'inline-flex items-center justify-center rounded-full bg-gradient-to-r from-violet-600 via-violet-500 to-rose-500 px-7 py-3 text-base font-semibold tracking-wide text-white shadow-[0_10px_28px_-8px_rgba(91,33,182,0.35)] transition hover:shadow-[0_14px_36px_-8px_rgba(91,33,182,0.42)] sm:px-8 sm:py-3.5'

@@ -16,6 +16,7 @@ const ENV_MAP: Record<string, string> = {
   STRIPE_PRICE_SAP_10: process.env.STRIPE_PRICE_SAP_10 || '',
   STRIPE_PRICE_SAP_50: process.env.STRIPE_PRICE_SAP_50 || '',
   STRIPE_PRICE_SAP_100: process.env.STRIPE_PRICE_SAP_100 || '',
+  STRIPE_PRICE_SEATS_B2B: process.env.STRIPE_PRICE_SEATS_B2B || '',
 }
 
 type ProductItem = {

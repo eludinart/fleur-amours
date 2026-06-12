@@ -4,6 +4,7 @@ import { isDbConfigured } from '@/lib/db'
 import { authMe } from '@/lib/db-auth'
 import { save } from '@/lib/db-sessions'
 import { incrementMonthlyUsage } from '@/lib/db-usage'
+import { recordTimelineEvent } from '@/lib/db-timeline'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +23,20 @@ export async function POST(req: NextRequest) {
     // Lie la session à l'utilisateur authentifié, ignore tout email envoyé par le client.
     const result = await save({ ...body, email: user.email })
     void incrementMonthlyUsage(uid, { sessions: 1 })
+
+    // Timeline (Éclosion) : journaliser l'événement pour le suivi longitudinal.
+    const petals = Array.isArray(body?.petals)
+      ? (body.petals as unknown[]).map((n) => Number(n) || 0)
+      : null
+    void recordTimelineEvent({
+      userId: uid,
+      source: 'session',
+      refId: result?.id ?? null,
+      title: String(body?.door_suggested ?? 'Session guidée'),
+      summary: typeof body?.first_words === 'string' ? body.first_words.slice(0, 280) : null,
+      petals,
+    }).catch(() => {})
+
     return NextResponse.json({ ...result, saved: true }, { status: 201 })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

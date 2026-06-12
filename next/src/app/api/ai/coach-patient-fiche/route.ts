@@ -67,22 +67,21 @@ export async function POST(req: NextRequest) {
     }
 
     const pool = getPool()
-    const allowedEmails = isCoach
-      ? await getCoachPatientEmails(pool, targetCoachUserId)
-      : await getCoachPatientEmails(pool, targetCoachUserId)
+    const allowedEmails = await getCoachPatientEmails(pool, targetCoachUserId)
 
-    const isAllowed = allowedEmails.includes(patientEmail)
+    // Admin : accès complet. Coach : uniquement ses patients rattachés (bloquant).
+    const isAllowed = isAdmin || allowedEmails.includes(patientEmail)
     if (!isAllowed) {
       console.warn('[coach-patient-fiche] access-denied', {
         coachUserId: targetCoachUserId,
-        patientEmail,
         allowedCount: allowedEmails.length,
-        allowedSample: allowedEmails.slice(0, 5),
         isAdmin,
         isCoach,
       })
-      // Best-effort : éviter de bloquer la génération si les seeds ne reflètent pas exactement la réalité UI.
-      // La fiche est régénérée uniquement à partir des données sessions existantes.
+      return NextResponse.json(
+        { error: 'Patient non rattaché à ce coach' },
+        { status: 403 }
+      )
     }
 
     const cached = await getCoachPatientSnapshot({ coachUserId: targetCoachUserId, patientEmail })

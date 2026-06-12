@@ -23,6 +23,7 @@ import { FOUR_DOORS, BACK_IMG, getCardTranslated, getDoorTranslated } from '@/da
 import { BuyTarotCTA } from '@/components/BuyTarotCTA'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { ExportPlan14j } from '@/components/ExportPlan14j'
+import Plan14jTracker from '@/components/sessions/Plan14jTracker'
 import { SessionPreviewPrintable } from '@/components/SessionPreviewPrintable'
 import { TranslatableContent } from '@/components/TranslatableContent'
 import { NoteCard } from '@/components/NoteCard'
@@ -989,6 +990,14 @@ function IntroStep({
                                     </div>
                                   ))}
                                 </div>
+                              )}
+                              {expandedDetail.plan14j.plan_14j?.length > 0 && expandedSessionId && (
+                                <Plan14jTracker
+                                  sessionId={expandedSessionId}
+                                  days={expandedDetail.plan14j.plan_14j}
+                                  initialCompleted={expandedDetail.step_data?.plan14j_progress?.completed || []}
+                                  initialBilan={expandedDetail.step_data?.plan14j_progress?.bilan || ''}
+                                />
                               )}
                               {(!expandedDetail.plan14j.levers?.length && !expandedDetail.plan14j.plan_14j?.length && !expandedDetail.plan14j.synthesis) && (
                                 <p className="text-xs text-slate-400 italic">{t('session.planNotGenerated')}</p>

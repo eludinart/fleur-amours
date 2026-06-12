@@ -44,16 +44,25 @@ function addDaysSql(days: number): string {
   return d.toISOString().slice(0, 19).replace('T', ' ')
 }
 
+/**
+ * Schéma UNIFIÉ des tables promo — superset des besoins des deux flux :
+ *   - accès gratuit (duration_days, free_until, unlimited, active, note)
+ *   - crédit SAP (sap_amount, sap_credited, is_active, description) — cf. db-promo.ts
+ * Un seul compteur d'utilisation : `uses_count`.
+ */
 export async function ensurePromoTables(exec: SqlExecutor): Promise<void> {
   const prefix = process.env.DB_PREFIX || 'wp_'
   await exec.execute(`
     CREATE TABLE IF NOT EXISTS ${prefix}fleur_promo_codes (
       id INT AUTO_INCREMENT PRIMARY KEY,
       code VARCHAR(60) NOT NULL UNIQUE,
+      description TEXT NULL DEFAULT NULL,
+      sap_amount INT NOT NULL DEFAULT 0,
       duration_days INT NULL DEFAULT NULL,
       max_uses INT NULL DEFAULT NULL,
       uses_count INT NOT NULL DEFAULT 0,
       expires_at DATETIME NULL DEFAULT NULL,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
       note TEXT NULL DEFAULT NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -67,6 +76,7 @@ export async function ensurePromoTables(exec: SqlExecutor): Promise<void> {
       user_id INT NOT NULL,
       code_id INT NULL DEFAULT NULL,
       promo_code VARCHAR(60) NOT NULL,
+      sap_credited INT NOT NULL DEFAULT 0,
       redeemed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       free_until DATETIME NULL DEFAULT NULL,
       unlimited TINYINT(1) NOT NULL DEFAULT 0,
@@ -83,16 +93,23 @@ export async function ensurePromoTables(exec: SqlExecutor): Promise<void> {
   // MariaDB supporte ADD COLUMN IF NOT EXISTS.
   const migrations = [
     `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS promo_code VARCHAR(60) NOT NULL DEFAULT '—'`,
+    `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS sap_credited INT NOT NULL DEFAULT 0`,
     `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS promo_note TEXT NULL DEFAULT NULL`,
     `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS free_until DATETIME NULL DEFAULT NULL`,
     `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS unlimited TINYINT(1) NOT NULL DEFAULT 0`,
     `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS active TINYINT(1) NOT NULL DEFAULT 1`,
     `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS redeemed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    `ALTER TABLE ${prefix}fleur_promo_redemptions ADD COLUMN IF NOT EXISTS code_id INT NULL DEFAULT NULL`,
+    `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS description TEXT NULL DEFAULT NULL`,
+    `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS sap_amount INT NOT NULL DEFAULT 0`,
     `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS duration_days INT NULL DEFAULT NULL`,
     `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS max_uses INT NULL DEFAULT NULL`,
     `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS uses_count INT NOT NULL DEFAULT 0`,
     `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS expires_at DATETIME NULL DEFAULT NULL`,
+    `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1`,
     `ALTER TABLE ${prefix}fleur_promo_codes ADD COLUMN IF NOT EXISTS note TEXT NULL DEFAULT NULL`,
+    // Reprise de l'ancien compteur `use_count` (schéma migration_v0.7) vers `uses_count`
+    `UPDATE ${prefix}fleur_promo_codes SET uses_count = GREATEST(uses_count, use_count) WHERE use_count IS NOT NULL`,
   ]
   for (const sql of migrations) {
     await exec.execute(sql).catch(() => {
@@ -226,12 +243,13 @@ export async function assignAccessByCode(userId: number, code: string): Promise<
 
   const c = code.trim().toUpperCase()
   const [codeRows] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, duration_days, max_uses, uses_count, expires_at, note
+    `SELECT id, duration_days, max_uses, uses_count, expires_at, is_active, note
      FROM ${TBL_CODES()} WHERE code = ? LIMIT 1`,
     [c]
   )
   const row = codeRows?.[0]
   if (!row) throw new Error('Code introuvable')
+  if (row.is_active != null && !row.is_active) throw new Error('Code inactif')
   if (row.expires_at && new Date(row.expires_at) < new Date()) throw new Error('Code expiré')
   if (row.max_uses != null && Number(row.uses_count ?? 0) >= Number(row.max_uses)) throw new Error('Code épuisé')
 

@@ -58,18 +58,20 @@ export async function createCheckoutSession(params: {
   cancelUrl: string
   clientReferenceId: string
   customerEmail?: string
+  quantity?: number
   metadata: Record<string, string>
 }): Promise<{ url?: string; id?: string } | null> {
   const key = getStripeSecretKey()
   if (!key) return null
 
+  const quantity = Math.max(1, parseInt(String(params.quantity ?? 1), 10) || 1)
   const form: Record<string, string> = {
     mode: params.mode,
     'success_url': params.successUrl,
     'cancel_url': params.cancelUrl,
     'client_reference_id': params.clientReferenceId,
     'line_items[0][price]': params.priceId,
-    'line_items[0][quantity]': '1',
+    'line_items[0][quantity]': String(quantity),
     'payment_method_types[0]': 'card',
   }
   if (params.customerEmail) form['customer_email'] = params.customerEmail

@@ -1,7 +1,7 @@
 /**
  * Opérations Fleur / DUO sur MariaDB.
  */
-import type { RowDataPacket } from 'mysql2'
+import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getPool, table, exec } from './db'
 
 const PETALS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
@@ -179,28 +179,6 @@ export async function submitFleur(payload: {
   }
 
   const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
-  await pool.execute(
-    `INSERT INTO ${tRes} (email, token, parent_id, user_id, intended_duo, agape, philautia, mania, storge, pragma, philia, ludus, eros, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      payload.email ?? '',
-      token,
-      parentId,
-      payload.user_id ?? null,
-      payload.intended_duo ? 1 : 0,
-      scores.agape,
-      scores.philautia,
-      scores.mania,
-      scores.storge,
-      scores.pragma,
-      scores.philia,
-      scores.ludus,
-      scores.eros,
-      now,
-    ]
-  )
-  const [idRows] = await pool.execute<RowDataPacket[]>('SELECT LAST_INSERT_ID() as id')
-  const rid = Number((idRows[0] as { id: number }).id)
 
   const qids = payload.answers.map((a) => a.question_id)
   const placeholders = qids.map(() => '?').join(',')
@@ -210,12 +188,46 @@ export async function submitFleur(payload: {
   )
   const posMap = new Map(qRows.map((r) => [Number(r.id), Number(r.position)]))
 
-  for (const a of payload.answers) {
-    await pool.execute(
-      `INSERT INTO ${tAns} (result_id, definition_id, question_id, question_position, dimension_chosen, choice_label, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [rid, defId, a.question_id, posMap.get(a.question_id) ?? 0, a.dimension_chosen ?? '', a.choice_label ?? null, now]
+  // Résultat + réponses dans une même transaction : pas de résultat orphelin.
+  const conn = await pool.getConnection()
+  let rid = 0
+  try {
+    await conn.beginTransaction()
+    const [insRes] = await conn.execute<ResultSetHeader>(
+      `INSERT INTO ${tRes} (email, token, parent_id, user_id, intended_duo, agape, philautia, mania, storge, pragma, philia, ludus, eros, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        payload.email ?? '',
+        token,
+        parentId,
+        payload.user_id ?? null,
+        payload.intended_duo ? 1 : 0,
+        scores.agape,
+        scores.philautia,
+        scores.mania,
+        scores.storge,
+        scores.pragma,
+        scores.philia,
+        scores.ludus,
+        scores.eros,
+        now,
+      ]
     )
+    rid = Number(insRes.insertId)
+
+    for (const a of payload.answers) {
+      await conn.execute(
+        `INSERT INTO ${tAns} (result_id, definition_id, question_id, question_position, dimension_chosen, choice_label, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [rid, defId, a.question_id, posMap.get(a.question_id) ?? 0, a.dimension_chosen ?? '', a.choice_label ?? null, now]
+      )
+    }
+    await conn.commit()
+  } catch (err) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
   }
 
   return { result_id: rid, token, scores }
@@ -310,6 +322,70 @@ export async function getAnswers(
       position: Number(r.position ?? 0),
       question: String(r.question ?? ''),
     })),
+  }
+}
+
+/**
+ * Supprime un résultat Fleur appartenant à l'utilisateur.
+ * - `{ id }`   : résultat solo (et ses réponses).
+ * - `{ token }`: groupe DUO complet (parent + enfants + réponses), si l'utilisateur
+ *   possède au moins une ligne du groupe.
+ */
+export async function deleteMyResult(
+  userId: string,
+  params: { id?: number | null; token?: string | null }
+): Promise<{ deleted: number }> {
+  const pool = getPool()
+  const tRes = table('fleur_amour_results')
+  const tAns = table('fleur_amour_answers')
+  const uid = Number(userId)
+
+  let ids: number[] = []
+  if (params.token) {
+    const token = String(params.token).trim()
+    const [rootRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT id, user_id FROM ${tRes} WHERE token = ?`,
+      [token]
+    )
+    if (!rootRows.length) return { deleted: 0 }
+    const rootIds = rootRows.map((r) => Number(r.id))
+    const ph = rootIds.map(() => '?').join(', ')
+    const [childRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT id, user_id FROM ${tRes} WHERE parent_id IN (${ph})`,
+      rootIds
+    )
+    const group = [...rootRows, ...childRows]
+    const owned = group.some((r) => r.user_id != null && Number(r.user_id) === uid)
+    if (!owned) throw new Error('Accès non autorisé à ce résultat')
+    ids = group.map((r) => Number(r.id))
+  } else if (params.id) {
+    const rid = Number(params.id)
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT id, user_id FROM ${tRes} WHERE id = ? LIMIT 1`,
+      [rid]
+    )
+    if (!rows.length) return { deleted: 0 }
+    if (rows[0].user_id == null || Number(rows[0].user_id) !== uid) {
+      throw new Error('Accès non autorisé à ce résultat')
+    }
+    ids = [rid]
+  } else {
+    throw new Error('id ou token requis')
+  }
+
+  const ph = ids.map(() => '?').join(', ')
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+    await conn.execute(`DELETE FROM ${tAns} WHERE result_id IN (${ph})`, ids)
+    const [res] = await conn.execute<ResultSetHeader>(`DELETE FROM ${tRes} WHERE id IN (${ph})`, ids)
+    await conn.commit()
+    return { deleted: Number(res.affectedRows ?? 0) }
+  } catch (err) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
   }
 }
 

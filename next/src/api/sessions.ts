@@ -3,6 +3,8 @@ import { api } from '@/lib/api-client'
 export const sessionsApi = {
   save: (data: Record<string, unknown>) => api.post('/api/sessions/save', data),
   update: (data: Record<string, unknown>) => api.post('/api/sessions/update', data),
+  planProgress: (data: { id: number | string; completed: number[]; bilan?: string }) =>
+    api.post('/api/sessions/plan-progress', data),
   my: (status?: string) => {
     const p = new URLSearchParams()
     if (status) p.set('status', status)

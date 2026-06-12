@@ -126,7 +126,7 @@ export async function submitFleurBeta(params: {
   const version = params.questionnaireVersion ?? '2-beta'
   const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
 
-  await pool.execute(
+  const [insRes] = await pool.execute<ResultSetHeader>(
     `INSERT INTO ${TBL()} (
       user_id, porte, questionnaire_version,
       agape, philautia, mania, storge, pragma, philia, ludus, eros,
@@ -148,8 +148,7 @@ export async function submitFleurBeta(params: {
       now,
     ]
   )
-  const [idRows] = await pool.execute<RowDataPacket[]>('SELECT LAST_INSERT_ID() AS id')
-  const id = Number((idRows[0] as { id: number }).id)
+  const id = Number(insRes.insertId)
   return { id, scores }
 }
 

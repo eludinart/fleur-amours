@@ -15,6 +15,8 @@ type AuthContextValue = {
   refreshUser: () => Promise<void>
   isAdmin: boolean
   isCoach: boolean
+  isManager: boolean
+  isRh: boolean
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -46,6 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
     }
+    // Efface aussi le cookie httpOnly côté serveur : sinon un cookie `auth_token`
+    // invalide (ex. signé avec un ancien secret, ou résiduel à `/`) persiste et
+    // continue de renvoyer 401 → boucle de déconnexion sans possibilité de se reconnecter.
+    authApi.logout().catch(() => {/* non bloquant */})
     setUser(null)
     if (refreshTimer.current) clearInterval(refreshTimer.current)
     refreshTimer.current = null
@@ -169,9 +175,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     jwtRole === 'admin' ||
     false
   const isCoach = appRole === 'coach' || jwtRole === 'coach'
+  const isManager = isAdmin || appRole === 'manager' || jwtRole === 'manager'
+  const isRh = isAdmin || appRole === 'rh' || jwtRole === 'rh'
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, isAdmin, isCoach }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, isAdmin, isCoach, isManager, isRh }}>
       {children}
     </AuthContext.Provider>
   )

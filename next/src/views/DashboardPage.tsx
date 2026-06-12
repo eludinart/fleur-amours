@@ -345,7 +345,7 @@ export function DashboardPage() {
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('quickLinks.maFleur')}</span>
           </Link>
           <Link
-            href={`${basePath}/mes-fleurs`}
+            href="/mes-fleurs"
             className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 hover:border-accent/40 hover:bg-accent/5 transition-colors"
           >
             <span className="text-2xl">📄</span>

@@ -7,6 +7,8 @@ import { isDbConfigured } from '@/lib/db'
 import { notifyDuoPartnerSubmitted, submitFleur } from '@/lib/db-fleur'
 import { requireAuth } from '@/lib/api-auth'
 import { incrementMonthlyUsage } from '@/lib/db-usage'
+import { recordTimelineEvent } from '@/lib/db-timeline'
+import { PETAL_ORDER_IDS } from '@/lib/petal-theme'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +35,19 @@ export async function POST(req: NextRequest) {
     }
 
     void incrementMonthlyUsage(uid, { fleur_submits: 1 })
+
+    const isDuo = Boolean(partnerToken)
+    const scores = (data.scores ?? {}) as Record<string, number>
+    const petalsArr = PETAL_ORDER_IDS.map((id) =>
+      Math.min(1, Math.max(0, (Number(scores[id]) || 0) / 5))
+    )
+    void recordTimelineEvent({
+      userId: uid,
+      source: 'fleur',
+      refId: data.result_id ?? null,
+      title: isDuo ? 'Exploration Fleur DUO' : 'Exploration Ma Fleur',
+      petals: petalsArr,
+    }).catch(() => {})
 
     const result = {
       id: data.result_id,

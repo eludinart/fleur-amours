@@ -74,7 +74,10 @@ function loadEnv() {
     resolve(ROOT, '.env'),
   ]) {
     if (existsSync(p)) {
-      for (const line of readFileSync(p, 'utf8').split('\n')) {
+      // split sur /\r?\n/ : les fichiers .env en CRLF (Windows) laissaient sinon un \r
+      // en fin de valeur, et la regex `(.*)$` échouait → variables silencieusement ignorées
+      // (ex. JWT_SECRET non injecté → Next retombe sur le secret de dev → tokens invalides).
+      for (const line of readFileSync(p, 'utf8').split(/\r?\n/)) {
         const m = line.match(/^([^#=]+)=(.*)$/)
         if (m) env[m[1].trim()] = m[2].trim().replace(/^["']|["']$/g, '')
       }

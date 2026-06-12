@@ -18,11 +18,9 @@ const STUB_RESPONSES: Record<string, unknown> = {
   'notifications/mark_read': { ok: true },
   'notifications/mark_all_read': { ok: true },
   'notifications/delete_read': { ok: true },
-  'notifications/preferences': { preferences: {} },
   'notifications/stats': { total: 0 },
   'notifications/ensure_tables': { ok: true },
   'notifications/create': { ok: true },
-  'notifications/test': { ok: true },
   'notifications/register_push_token': { ok: true },
   'notifications/admin_list': { items: [], total: 0 },
   'notifications/admin_delete': { ok: true },
@@ -36,7 +34,6 @@ const STUB_RESPONSES: Record<string, unknown> = {
   'chat/messages': { items: [], assigned_coach_id: null, status: 'open', closed_by_role: null },
   'chat/send': null, // traité spécialement en POST avec le body
   'chat/mark_read': { ok: true },
-  'chat/unread': { count: 0 },
   'chat/stats': { total: 0 },
   'campaigns': { campaigns: [], total: 0 },
   'campaigns/definitions': { definitions: [] },
@@ -90,7 +87,6 @@ function getStubResponse(path: string): unknown {
     if (normalized.includes('stats/')) return { count: 0, by_dimension: {} }
     if (normalized.includes('submit') || normalized.includes('duo-explanation')) return { id: 0, scores: {}, analysis: '', composite: { coherence_index: 0, vitality_index: 0, stability_index: 0 }, interpretation: null }
     if (normalized.includes('duo/invite')) return { ok: true }
-    if (normalized.includes('fleur/delete')) return { ok: true }
     return {}
   }
   for (const [key, value] of Object.entries(STUB_RESPONSES)) {

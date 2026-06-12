@@ -12,6 +12,9 @@ import { LoginPage } from '@/views/LoginPage'
 import { LandingPage } from '@/views/LandingPage'
 import { CoachLandingPage } from '@/views/CoachLandingPage'
 import { MyceliumLandingPage } from '@/views/MyceliumLandingPage'
+import MyceliumAdminPage from '@/views/MyceliumAdminPage'
+import MyceliumClimatePage from '@/views/MyceliumClimatePage'
+import MyceliumJoinPage from '@/views/MyceliumJoinPage'
 import { HomePage } from '@/views/HomePage'
 import { PresentationPage } from '@/views/PresentationPage'
 import { AccountPage } from '@/views/AccountPage'
@@ -30,6 +33,10 @@ import SessionPage from '@/views/SessionPage'
 import { SessionErrorBoundary } from '@/components/SessionErrorBoundary'
 import FleurPage from '@/views/FleurPage'
 import FleurBetaPage from '@/views/FleurBetaPage'
+import EclosionTimelinePage from '@/views/EclosionTimelinePage'
+import CheckinPage from '@/views/CheckinPage'
+import OnboardingDiagnosticPage from '@/views/OnboardingDiagnosticPage'
+import DyadePage from '@/views/DyadePage'
 import DuoPage from '@/views/DuoPage'
 import MesFleursPage from '@/views/MesFleursPage'
 import ManuelOnlinePage from '@/views/ManuelOnlinePage'
@@ -99,12 +106,14 @@ function ProtectedLayout({
   children,
   adminOnly = false,
   adminOrCoach = false,
+  managerOrRh = false,
 }: {
   children: React.ReactNode
   adminOnly?: boolean
   adminOrCoach?: boolean
+  managerOrRh?: boolean
 }) {
-  const { user, loading, isAdmin, isCoach } = useAuth()
+  const { user, loading, isAdmin, isCoach, isManager, isRh } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -116,7 +125,8 @@ function ProtectedLayout({
     }
     if (adminOnly && !isAdmin) router.replace('/')
     if (adminOrCoach && !isAdmin && !isCoach) router.replace('/')
-  }, [user, loading, isAdmin, isCoach, adminOnly, adminOrCoach, router, pathname])
+    if (managerOrRh && !isAdmin && !isManager && !isRh) router.replace('/')
+  }, [user, loading, isAdmin, isCoach, isManager, isRh, adminOnly, adminOrCoach, managerOrRh, router, pathname])
 
   if (loading) {
     return (
@@ -128,6 +138,7 @@ function ProtectedLayout({
   if (!user) return null
   if (adminOnly && !isAdmin) return null
   if (adminOrCoach && !isAdmin && !isCoach) return null
+  if (managerOrRh && !isAdmin && !isManager && !isRh) return null
 
   return <>{children}</>
 }
@@ -305,6 +316,45 @@ function AppRoutes() {
       <ProtectedLayout>
         <Layout>
           <FleurBetaPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
+    eclosion: (
+      <ProtectedLayout>
+        <Layout>
+          <EclosionTimelinePage />
+        </Layout>
+      </ProtectedLayout>
+    ),
+    checkin: (
+      <ProtectedLayout>
+        <Layout>
+          <CheckinPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
+    'onboarding-diagnostic': (
+      <ProtectedLayout>
+        <Layout>
+          <OnboardingDiagnosticPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
+    couple: (
+      <ProtectedLayout>
+        <Layout>
+          <Suspense fallback={null}>
+            <DyadePage />
+          </Suspense>
+        </Layout>
+      </ProtectedLayout>
+    ),
+    relation: (
+      <ProtectedLayout>
+        <Layout>
+          <Suspense fallback={null}>
+            <DyadePage />
+          </Suspense>
         </Layout>
       </ProtectedLayout>
     ),
@@ -562,7 +612,7 @@ function AppRoutes() {
       <Suspense fallback={<PageFallback />}>
         <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
           <LocaleSync />
-          <ProtectedLayout>
+          <ProtectedLayout adminOnly>
             <Layout>
               <StatsPage />
             </Layout>
@@ -623,6 +673,28 @@ function AppRoutes() {
         <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
           <CoachLandingPage />
         </div>
+      </Suspense>
+    )
+  }
+
+  // Espaces entreprise protégés (admin / climat / acceptation d'invitation)
+  if (route === 'mycelium' && (subRoute === 'admin' || subRoute === 'climat' || subRoute === 'join')) {
+    // admin/climat : réservés aux rôles manager, RH ou admin ; join reste ouvert (invitation).
+    const needsManagerRole = subRoute === 'admin' || subRoute === 'climat'
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <LocaleSync />
+        <ProtectedLayout managerOrRh={needsManagerRole}>
+          <Layout>
+            {subRoute === 'admin' ? (
+              <MyceliumAdminPage />
+            ) : subRoute === 'climat' ? (
+              <MyceliumClimatePage />
+            ) : (
+              <MyceliumJoinPage />
+            )}
+          </Layout>
+        </ProtectedLayout>
       </Suspense>
     )
   }

@@ -7,6 +7,7 @@ import { authMe } from '@/lib/db-auth'
 import { save } from '@/lib/db-tarot'
 import { isDbConfigured } from '@/lib/db'
 import { incrementMonthlyUsage } from '@/lib/db-usage'
+import { recordTimelineEvent } from '@/lib/db-timeline'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,6 +40,17 @@ export async function POST(req: NextRequest) {
     })
 
     void incrementMonthlyUsage(uid, { tirages: 1 })
+
+    // Timeline (Éclosion) : journaliser le tirage.
+    const savedId = Number((saved as { id?: unknown })?.id) || null
+    void recordTimelineEvent({
+      userId: uid,
+      source: 'tirage',
+      refId: savedId,
+      title: type === 'four' ? 'Tirage des 4 Portes' : 'Tirage de carte',
+      summary: null,
+    }).catch(() => {})
+
     return NextResponse.json(saved, { status: 201 })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

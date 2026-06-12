@@ -5,11 +5,37 @@
  */
 import mysql from 'mysql2/promise'
 
-const DB_HOST = process.env.MARIADB_HOST ?? 'localhost'
-const DB_PORT = parseInt(process.env.MARIADB_PORT ?? '3306', 10)
-const DB_NAME = process.env.MARIADB_DATABASE ?? 'default'
-const DB_USER = process.env.MARIADB_USER ?? 'mariadb'
-const DB_PASSWORD = process.env.MARIADB_PASSWORD ?? process.env.MARIADB_PASS ?? ''
+/**
+ * Tunnel VPS : uniquement si dev-vps a posé MARIADB_VIA_TUNNEL / MARIADB_HOST.
+ * Ne pas basculer sur 127.0.0.1 rien que parce que TUNNEL_LOCAL_PORT est dans .env.
+ */
+const viaTunnel =
+  process.env.MARIADB_VIA_TUNNEL === 'true' ||
+  process.env.MARIADB_HOST === '127.0.0.1' ||
+  !!process.env.MARIADB_HOST
+
+const DB_HOST =
+  process.env.MARIADB_HOST || (viaTunnel ? '127.0.0.1' : process.env.DB_HOST) || 'localhost'
+const DB_PORT = parseInt(
+  process.env.MARIADB_PORT ||
+    (viaTunnel ? process.env.TUNNEL_LOCAL_PORT : null) ||
+    process.env.DB_PORT ||
+    '3306',
+  10
+)
+const DB_NAME =
+  process.env.MARIADB_DATABASE || process.env.DB_NAME || process.env.LOCAL_DB || 'default'
+const DB_USER =
+  process.env.MARIADB_USER ||
+  (viaTunnel ? process.env.LOCAL_USER : null) ||
+  process.env.DB_USER ||
+  'mariadb'
+const DB_PASSWORD =
+  process.env.MARIADB_PASSWORD ||
+  process.env.MARIADB_PASS ||
+  (viaTunnel ? process.env.LOCAL_PASS : null) ||
+  process.env.DB_PASSWORD ||
+  ''
 const DB_PREFIX = process.env.DB_PREFIX ?? 'wp_'
 
 const POOL_CONNECTION_LIMIT = (() => {

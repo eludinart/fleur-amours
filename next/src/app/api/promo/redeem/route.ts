@@ -14,6 +14,7 @@ import { requireAuth, ApiError } from '@/lib/api-auth'
 import { isDbConfigured } from '@/lib/db'
 import { redeemPromoCode, PromoError } from '@/lib/db-promo'
 import { transactionalSapUpdate } from '@/lib/db-sap'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +25,12 @@ export async function POST(req: NextRequest) {
     if (!uid) {
       return NextResponse.json({ error: 'Utilisateur invalide.' }, { status: 400 })
     }
+
+    // Anti brute-force sur les codes : par utilisateur ET par IP.
+    const limited =
+      rateLimit('promo-redeem', `u${uid}`, { limit: 10, windowMs: 600_000 }) ??
+      rateLimit('promo-redeem-ip', clientIp(req), { limit: 30, windowMs: 600_000 })
+    if (limited) return limited
 
     if (!isDbConfigured()) {
       return NextResponse.json({ error: 'Backend non configuré.' }, { status: 503 })

@@ -294,13 +294,13 @@ export function LandingPage({
     (cardId?: string) => {
       const params = new URLSearchParams({ mode: 'register', intent: 'card_analysis' })
       if (cardId) params.set('cardId', encodeURIComponent(cardId))
-      router.push(`${basePath}/login?${params.toString()}`)
+      router.push(`/login?${params.toString()}`)
     },
     [router]
   )
 
-  const goLogin = useCallback(() => router.push(`${basePath}/login`), [router])
-  const goRegisterPlain = useCallback(() => router.push(`${basePath}/login?mode=register`), [router])
+  const goLogin = useCallback(() => router.push('/login'), [router])
+  const goRegisterPlain = useCallback(() => router.push('/login?mode=register'), [router])
 
   if (typeof window !== 'undefined') {
     syncI18nLocale(locale || 'fr')

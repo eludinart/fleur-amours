@@ -6,7 +6,7 @@
  *   2. Header `Authorization: Bearer` (Capacitor / Android standalone)
  */
 import { NextRequest } from 'next/server'
-import { jwtDecode, jwtDecodeForRefresh } from './jwt'
+import { jwtDecode } from './jwt'
 import { authMe } from './db-auth'
 import { getTokenFromCookie } from './auth-cookie'
 
@@ -20,8 +20,12 @@ export function getAuthHeader(req: NextRequest): string | null {
   return auth.slice(7)
 }
 
+/**
+ * Décodage strict : un token expiré est rejeté (401).
+ * Le décodage tolérant (`jwtDecodeForRefresh`) est réservé à /api/auth/refresh.
+ */
 function decodeToken(token: string) {
-  return jwtDecode(token) ?? jwtDecodeForRefresh(token)
+  return jwtDecode(token)
 }
 
 export function getUserIdFromRequest(req: NextRequest): string | null {
@@ -95,6 +99,42 @@ export async function requireAdminOrCoach(req: NextRequest): Promise<{ userId: s
   }
 
   throw new ApiError(403, 'Accès coach ou administrateur requis')
+}
+
+/**
+ * Accès Mycelium (entreprise) : rôles `manager` ou `rh` (ou admin, qui couvre tout).
+ * La source de vérité de l'appartenance organisation/équipe reste la table
+ * `fleur_memberships` ; ce helper ne contrôle que le rôle global.
+ */
+export async function requireManagerOrRh(
+  req: NextRequest
+): Promise<{ userId: string; isAdmin: boolean; isManager: boolean; isRh: boolean }> {
+  const token = getAuthHeader(req)
+  if (!token) throw new ApiError(401, 'Authentification requise')
+  const payload = decodeToken(token)
+  if (!payload?.sub) throw new ApiError(401, 'Token invalide')
+  const userId = String(payload.sub)
+
+  const role = (payload.role as string) ?? ''
+  if (role === 'admin' || role === 'administrator') {
+    return { userId, isAdmin: true, isManager: true, isRh: true }
+  }
+  if (role === 'manager') return { userId, isAdmin: false, isManager: true, isRh: false }
+  if (role === 'rh') return { userId, isAdmin: false, isManager: false, isRh: true }
+
+  try {
+    const user = await authMe(parseInt(userId, 10))
+    const dbRole = user.app_role || user.wp_role || ''
+    if (dbRole === 'admin' || dbRole === 'administrator') {
+      return { userId, isAdmin: true, isManager: true, isRh: true }
+    }
+    if (dbRole === 'manager') return { userId, isAdmin: false, isManager: true, isRh: false }
+    if (dbRole === 'rh') return { userId, isAdmin: false, isManager: false, isRh: true }
+  } catch {
+    // authMe échoue (DB non dispo, user inexistant) → on garde le rejet
+  }
+
+  throw new ApiError(403, 'Accès manager ou RH requis')
 }
 
 export class ApiError extends Error {

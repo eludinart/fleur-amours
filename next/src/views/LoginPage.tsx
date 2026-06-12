@@ -68,7 +68,7 @@ export function LoginPage() {
       // directement sur TarotPage avec la carte pré-sélectionnée.
       if (intentParam === 'card_analysis' && cardIdParam) {
         const decodedCardId = decodeURIComponent(cardIdParam)
-        router.replace(`${basePath}/tirage?landing_card=${encodeURIComponent(decodedCardId)}`)
+        router.replace(`/tirage?landing_card=${encodeURIComponent(decodedCardId)}`)
         return
       }
 

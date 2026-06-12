@@ -29,6 +29,8 @@ type NavGroup = {
 function buildNavGroups(
   isAdmin: boolean,
   isCoach: boolean,
+  isManager: boolean,
+  isRh: boolean,
   translate: (k: string) => string
 ): NavGroup[] {
   const accueilItems: NavItem[] = [
@@ -50,6 +52,14 @@ function buildNavGroups(
     { to: '/mes-fleurs', label: translate('nav.mesFleurs'), icon: '📄', title: translate('nav.mesFleursTooltip') },
   ]
 
+  // Éclosion : suivi longitudinal individuel
+  const eclosionItems: NavItem[] = [
+    { to: '/eclosion', label: translate('nav.eclosion'), icon: '🌱', end: false, title: translate('nav.eclosionTooltip') },
+    { to: '/checkin', label: translate('nav.checkin'), icon: '📝', end: false, title: translate('nav.checkinTooltip') },
+    { to: '/onboarding-diagnostic', label: translate('nav.baseline'), icon: '🌼', end: false, title: translate('nav.baselineTooltip') },
+    { to: '/couple', label: translate('nav.couple'), icon: '💞', end: false, title: translate('nav.coupleTooltip') },
+  ]
+
   const pratiqueItems: NavItem[] = [
     { to: '/tirage', label: translate('nav.tirages'), icon: '🎴', end: false, title: translate('nav.tiragesFullTooltip') },
     { to: '/cartes', label: translate('nav.cartes'), icon: '🃏', end: false, title: translate('nav.cartesTooltip') },
@@ -69,6 +79,12 @@ function buildNavGroups(
     { label: "Fleur d'AmOurs", items: accueilItems },
     { label: translate('decouvrir'), items: decouvrirItems },
     {
+      label: translate('nav.eclosionSection'),
+      collapsible: true,
+      defaultOpen: true,
+      items: eclosionItems,
+    },
+    {
       label: translate('nav.pratique'),
       collapsible: true,
       defaultOpen: true,
@@ -77,6 +93,18 @@ function buildNavGroups(
     { label: translate('accompagnement'), items: accompagnerItems },
     { label: translate('compte'), items: compteItems },
   ]
+
+  if (isManager || isRh || isAdmin) {
+    groups.push({
+      label: translate('nav.myceliumSection'),
+      collapsible: true,
+      defaultOpen: false,
+      items: [
+        { to: '/mycelium/admin', label: translate('nav.myceliumAdmin'), icon: '🍄', title: translate('nav.myceliumAdminTooltip') },
+        { to: '/mycelium/climat', label: translate('nav.myceliumClimate'), icon: '🌡️', title: translate('nav.myceliumClimateTooltip') },
+      ],
+    })
+  }
 
   if (isAdmin) {
     groups.push({
@@ -290,7 +318,7 @@ function NavGroup({
 }
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { user, logout, isAdmin, isCoach } = useAuth()
+  const { user, logout, isAdmin, isCoach, isManager, isRh } = useAuth()
   const router = useRouter()
   const pathname = usePathname() || ''
   useStore((s) => s.locale)
@@ -315,7 +343,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
   }, [fetchClairiereUnread])
 
   const pathWithoutBase = (pathname.replace(basePath, '').replace(/^\/+|\/+$/g, '') || '') as string
-  const navGroups = buildNavGroups(isAdmin, isCoach, t)
+  const navGroups = buildNavGroups(isAdmin, isCoach, isManager, isRh, t)
 
   function handleLogout() {
     logout()

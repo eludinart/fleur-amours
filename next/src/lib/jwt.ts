@@ -1,5 +1,15 @@
 import jwt from 'jsonwebtoken'
 
+/**
+ * Rôles applicatifs reconnus dans le payload JWT (`role`).
+ * - `admin` : accès total.
+ * - `coach` : espace accompagnant (Floraison).
+ * - `manager` / `rh` : espace entreprise (Mycelium) — l'appartenance fine
+ *   organisation/équipe vit dans `fleur_memberships`, pas dans le token.
+ * - autres (`subscriber`, …) : utilisateur standard (Éclosion).
+ */
+export type AppRole = 'admin' | 'administrator' | 'coach' | 'manager' | 'rh' | 'subscriber' | string
+
 const DEV_FALLBACK = 'dev-secret-change-in-production'
 
 function getSecret(): string {
@@ -35,13 +45,24 @@ export function jwtDecode(token: string): { sub: string; role?: string; email?: 
   }
 }
 
-/** Vérifie la signature sans rejeter les tokens expirés (pour le refresh). */
+/** Fenêtre de grâce du refresh : un token expiré depuis plus longtemps est rejeté. */
+const REFRESH_GRACE_SECONDS = 7 * 24 * 3600
+
+/**
+ * Vérifie la signature sans rejeter immédiatement les tokens expirés
+ * (réservé à /api/auth/refresh). Au-delà de la fenêtre de grâce, le token
+ * est définitivement invalide et l'utilisateur doit se reconnecter.
+ */
 export function jwtDecodeForRefresh(token: string): { sub: string; role?: string; email?: string } | null {
   try {
     const decoded = jwt.verify(token, getSecret(), { ignoreExpiration: true }) as {
       sub: string
       role?: string
       email?: string
+      exp?: number
+    }
+    if (decoded.exp && Date.now() / 1000 > decoded.exp + REFRESH_GRACE_SECONDS) {
+      return null
     }
     return decoded
   } catch {

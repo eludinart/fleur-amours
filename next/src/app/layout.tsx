@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 import './globals.css'
 import { TelemetryClient } from '@/components/telemetry/TelemetryClient'
+import InstallPwaBanner from '@/components/InstallPwaBanner'
 import { getAppPublicOrigin } from '@/lib/app-public-url'
 
 const basePathSeg = (process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin').replace(/\/$/, '')
@@ -11,10 +12,26 @@ const metadataBase =
     ? new URL(`${publicOrigin.replace(/\/+$/, '')}${basePathSeg}/`)
     : undefined
 
+const iconPath = `${basePathSeg}/juste-la-fleur.png`
+
 export const metadata: Metadata = {
   metadataBase,
   title: "Fleur d'AmOurs",
   description: "Jardin Fleur d'AmOurs",
+  applicationName: "Fleur d'AmOurs",
+  appleWebApp: {
+    capable: true,
+    title: "Fleur d'AmOurs",
+    statusBarStyle: 'black-translucent',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  manifest: `${basePathSeg}/manifest.webmanifest`,
+  icons: {
+    icon: iconPath,
+    apple: iconPath,
+  },
 }
 
 export const viewport: Viewport = {
@@ -40,6 +57,7 @@ export default function RootLayout({
       <body className="min-h-screen min-h-[100svh] min-h-[100dvh] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans antialiased">
         <Suspense fallback={null}>
           <TelemetryClient />
+          <InstallPwaBanner />
         </Suspense>
         {children}
       </body>
