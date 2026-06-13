@@ -95,6 +95,9 @@ export function ChronicleList({
   whisper = null,
   whisperSubhint = null,
   journalTitle = false,
+  journalTitleKey,
+  journalDescKey,
+  whisperLabelKey,
   variant = 'default',
   compact = false,
 }: {
@@ -106,14 +109,26 @@ export function ChronicleList({
   whisperSubhint?: string | null
   /** Libellé « Journal des Ombres et Lumières » au lieu de Chronique */
   journalTitle?: boolean
+  journalTitleKey?: string
+  journalDescKey?: string
+  whisperLabelKey?: string
   /** Thème sombre (vue Fleur zen) */
   variant?: 'default' | 'zen'
   /** Masque la longue description sous le titre */
   compact?: boolean
 }) {
   const locale = useStore((s) => s.locale)
-  const title = journalTitle ? t('chronicle.journalTitle') : t('chronicle.title')
-  const desc = journalTitle ? t('chronicle.journalDesc') : t('chronicle.desc')
+  const title = journalTitleKey
+    ? t(journalTitleKey)
+    : journalTitle
+      ? t('chronicle.journalTitle')
+      : t('chronicle.title')
+  const desc = journalDescKey
+    ? t(journalDescKey)
+    : journalTitle
+      ? t('chronicle.journalDesc')
+      : t('chronicle.desc')
+  const whisperLabel = whisperLabelKey ? t(whisperLabelKey) : t('chronicle.tutorWhisperLabel')
   const zen = variant === 'zen'
   const shell = zen
     ? 'rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm'
@@ -282,7 +297,7 @@ export function ChronicleList({
               zen ? 'text-violet-200/70' : 'text-violet-600/80 dark:text-violet-300/80'
             }`}
           >
-            {t('chronicle.tutorWhisperLabel')}
+            {whisperLabel}
           </p>
           {zen && whisperSubhint ? (
             <p className="text-[9px] uppercase tracking-wider text-violet-300/55 mb-2">{whisperSubhint}</p>

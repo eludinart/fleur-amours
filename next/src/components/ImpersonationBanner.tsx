@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { t } from '@/i18n'
-import { api, isCapacitor } from '@/lib/api-client'
+import { api, getResolvedApiBase, isCapacitor } from '@/lib/api-client'
 
 const BASE = (process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin').replace(/\/+$/, '').trim() || ''
 const AUTH_BEARER_KEY = 'auth_bearer'
@@ -34,11 +34,6 @@ export function ImpersonationBanner() {
     const restore = sessionStorage.getItem('impersonate_restore')
     if (!restore) return
 
-    if (restore === 'cookie') {
-      setError(t('admin.impersonationRestoreFailed'))
-      return
-    }
-
     setRestoring(true)
     setError(null)
 
@@ -46,6 +41,11 @@ export function ImpersonationBanner() {
 
     if (isCapacitor()) {
       try {
+        if (restore === 'cookie') {
+          setError(t('admin.impersonationRestoreFailed'))
+          setRestoring(false)
+          return
+        }
         localStorage.setItem('auth_token', restore)
         if (cachedAdmin) {
           localStorage.setItem('auth_user', cachedAdmin)
@@ -63,23 +63,28 @@ export function ImpersonationBanner() {
       return
     }
 
-    // Web : Bearer admin prioritaire sur le cookie impersonné (sessionStorage survit au reload)
-    sessionStorage.setItem(AUTH_BEARER_KEY, restore)
+    // Web : Bearer admin en secours + POST formulaire (Set-Cookie fiable, pas d’annulation XHR au redirect)
+    if (restore !== 'cookie') {
+      sessionStorage.setItem(AUTH_BEARER_KEY, restore)
+    }
     if (cachedAdmin) {
       localStorage.setItem('auth_user', cachedAdmin)
-    } else {
-      localStorage.removeItem('auth_user')
-    }
-    clearImpersonationMarkers()
-    setState({ active: false, name: null })
-
-    try {
-      await api.post('/api/auth/admin/impersonate-restore', { backup_token: restore })
-    } catch (err) {
-      console.warn('Impersonation cookie restore failed (Bearer fallback actif):', err)
     }
 
-    window.location.href = `${BASE}/admin`
+    const apiBase = getResolvedApiBase()
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = `${apiBase}/api/auth/admin/impersonate-restore?redirect=1`
+    form.style.display = 'none'
+
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = 'backup_token'
+    input.value = restore
+    form.appendChild(input)
+
+    document.body.appendChild(form)
+    form.submit()
   }
 
   const displayName = state.name ?? t('admin.impersonatingUnknown')

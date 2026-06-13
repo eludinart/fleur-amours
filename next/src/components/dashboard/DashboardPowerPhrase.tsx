@@ -35,10 +35,16 @@ export function DashboardPowerPhrase({
   petals,
   variant = 'default',
   className = '',
+  labelKey,
+  hintKey,
 }: {
   petals: Record<string, number>
   variant?: 'zen' | 'default'
   className?: string
+  /** Clé i18n du titre (ex. fleurZen.personalReadingLabel). */
+  labelKey?: string
+  /** Clé i18n du sous-titre zen. */
+  hintKey?: string
 }) {
   const locale = useStore((s) => s.locale)
   const [phrase, setPhrase] = useState('')
@@ -70,6 +76,10 @@ export function DashboardPowerPhrase({
   }, [hasPetals, locale, petalsKey, variant])
 
   if (!hasPetals) return null
+
+  const titleLabel = labelKey ? t(labelKey) : t('dashboard.powerPhraseLabel')
+  const hintLabel =
+    variant === 'zen' ? t(hintKey ?? 'fleurZen.readingLevel2Hint') : null
 
   const zen =
     variant === 'zen'
@@ -107,11 +117,13 @@ export function DashboardPowerPhrase({
       return (
         <aside className={`${zen} ${className}`} aria-labelledby="dashboard-power-phrase-label">
           <p id="dashboard-power-phrase-label" className={labelCls}>
-            {t('dashboard.powerPhraseLabel')}
+            {titleLabel}
           </p>
-          <p className="text-[10px] text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left">
-            {t('fleurZen.readingLevel2Hint')}
-          </p>
+          {hintLabel ? (
+            <p className="text-[10px] text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left">
+              {hintLabel}
+            </p>
+          ) : null}
           <p className="text-xs text-violet-200/70 leading-relaxed text-center xl:text-left">
             {t('fleurZen.powerPhraseZenEmpty')}
           </p>
@@ -124,11 +136,11 @@ export function DashboardPowerPhrase({
   return (
     <aside className={`${zen} ${className}`} aria-labelledby="dashboard-power-phrase-label">
       <p id="dashboard-power-phrase-label" className={labelCls}>
-        {t('dashboard.powerPhraseLabel')}
+        {titleLabel}
       </p>
-      {variant === 'zen' ? (
+      {hintLabel ? (
         <p className="text-[10px] text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left">
-          {t('fleurZen.readingLevel2Hint')}
+          {hintLabel}
         </p>
       ) : null}
       <p className={bodyCls}>{phrase}</p>

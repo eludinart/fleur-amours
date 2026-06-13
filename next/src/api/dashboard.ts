@@ -12,11 +12,73 @@ import {
   buildReadingChronicleSummary,
   buildSessionChronicleSummary,
 } from '@/lib/chronicle-summary'
+import {
+  aggregateSessionDeficits,
+  chronicleShadowPetals,
+  detectShadowZones,
+} from '@/lib/petal-shadow'
+
+const PETAL_IDS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
+
+const CARD_TO_PETAL: Record<string, string> = {
+  Agapè: 'agape',
+  Philautia: 'philautia',
+  Mania: 'mania',
+  Storgè: 'storge',
+  Pragma: 'pragma',
+  Philia: 'philia',
+  Ludus: 'ludus',
+  'Éros': 'eros',
+}
 
 function formatShortDate(s: string | undefined): string {
   if (!s) return ''
   const d = new Date(s)
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
+/** Libellé court pour le curseur temps (pas l’instantané détaillé). */
+function shortTimelineLabel(text: string, fallback: string, max = 56): string {
+  const s = text.trim()
+  if (!s) return fallback
+  if (s.length <= max) return s
+  const cut = s.slice(0, max - 1)
+  const sp = cut.lastIndexOf(' ')
+  return `${(sp > 24 ? cut.slice(0, sp) : cut).trim()}…`
+}
+
+function sessionTimelineSummary(s: Record<string, unknown>): string {
+  const plan = (s.step_data as Record<string, unknown> | undefined)?.plan14j ?? s.plan14j
+  const planSynthesis =
+    (plan as Record<string, unknown> | null)?.synthesis ||
+    (plan as Record<string, unknown> | null)?.synthesis_suggestion
+  const anchors = (s.anchors ?? []) as Array<{ synthesis?: string }>
+  const anchorSynthesis = [...anchors]
+    .reverse()
+    .find((a) => typeof a?.synthesis === 'string' && a.synthesis.trim())?.synthesis
+  const synthesis = planSynthesis || anchorSynthesis
+  if (synthesis) {
+    return buildSessionChronicleSummary(String(synthesis), s.first_words as string | undefined, 520)
+  }
+  const fw = String(s.first_words ?? '').trim()
+  if (fw && !isSessionMantraEcho(fw)) return fw
+  return ''
+}
+
+function readingPetals01(r: Record<string, unknown>): Record<string, number> | null {
+  const normalized: Record<string, number> = Object.fromEntries(PETAL_IDS.map((id) => [id, 0]))
+  const type = String(r.type ?? 'simple')
+  if (type === 'four' && Array.isArray(r.cards)) {
+    for (const c of r.cards as Array<{ name?: string }>) {
+      const name = c?.name
+      if (name && CARD_TO_PETAL[name]) normalized[CARD_TO_PETAL[name]] += 0.25
+    }
+  } else {
+    const card = (r.card || (r.cards as unknown[])?.[0]) as { name?: string } | undefined
+    const name = card?.name
+    if (name && CARD_TO_PETAL[name]) normalized[CARD_TO_PETAL[name]] = 0.55
+  }
+  return Object.values(normalized).some((v) => v > 0) ? normalized : null
 }
 
 function inferChronicleTone(
@@ -239,18 +301,6 @@ export async function fetchDashboardData() {
 
   const chronicle: Array<Record<string, unknown>> = []
 
-  const PETAL_IDS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros']
-  const CARD_TO_PETAL: Record<string, string> = {
-    Agapè: 'agape',
-    Philautia: 'philautia',
-    Mania: 'mania',
-    Storgè: 'storge',
-    Pragma: 'pragma',
-    Philia: 'philia',
-    Ludus: 'ludus',
-    'Éros': 'eros',
-  }
-
   function scoresTo01(scores: Record<string, number> | undefined, maxScale = 5) {
     if (!scores) return {} as Record<string, number>
     const out: Record<string, number> = {}
@@ -391,28 +441,48 @@ export async function fetchDashboardData() {
   const timeline: Array<Record<string, unknown>> = []
   for (const s of sessions as Record<string, unknown>[]) {
     const p = s.petals as Record<string, number> | undefined
-    if (p && typeof p === 'object') {
-      const normalized: Record<string, number> = {}
-      PETAL_IDS.forEach((id) => {
-        normalized[id] = Math.min(1, Math.max(0, p[id] ?? 0))
-      })
-      timeline.push({
-        id: s.id,
-        date: s.created_at,
-        label: (s.first_words as string) ? `${(s.first_words as string).slice(0, 30)}…` : formatShortDate(s.created_at as string),
-        petals: normalized,
-        type: 'session',
-      })
-    }
+    if (!p || typeof p !== 'object') continue
+    const normalized: Record<string, number> = {}
+    PETAL_IDS.forEach((id) => {
+      normalized[id] = Math.min(1, Math.max(0, p[id] ?? 0))
+    })
+    const summary = sessionTimelineSummary(s)
+    timeline.push({
+      id: s.id,
+      date: s.created_at,
+      label: shortTimelineLabel(summary, 'Session', 56),
+      summary: summary || undefined,
+      petals: normalized,
+      type: 'session',
+    })
+  }
+  for (const r of readings as Record<string, unknown>[]) {
+    const petals = readingPetals01(r)
+    if (!petals) continue
+    const summary = buildReadingChronicleSummary(r)
+    if (!summary) continue
+    timeline.push({
+      id: r.id,
+      date: r.createdAt ?? r.created_at,
+      label: shortTimelineLabel(summary, 'Tirage', 56),
+      summary,
+      petals,
+      type: 'tirage',
+    })
   }
   for (const fr of fleurResultsWithScores) {
     const scores = fr.scores as Record<string, number> | undefined
     if (scores) {
       const p01 = scoresTo01(scores)
+      const summary =
+        fr.type === 'duo'
+          ? 'Exploration Fleur DUO — profil relationnel à deux'
+          : 'Exploration Ma Fleur — questionnaire des huit pétales'
       timeline.push({
         id: fr.id,
         date: fr.created_at,
         label: fr.type === 'duo' ? 'Fleur DUO' : 'Ma Fleur',
+        summary,
         petals: p01,
         type: 'fleur',
       })
@@ -420,27 +490,33 @@ export async function fetchDashboardData() {
   }
   for (const d of dreamscapeItems as Record<string, unknown>[]) {
     const p = d.petals as Record<string, number> | undefined
-    if (p && typeof p === 'object') {
-      const normalized: Record<string, number> = {}
-      PETAL_IDS.forEach((id) => {
-        normalized[id] = Math.min(1, Math.max(0, p[id] ?? 0))
-      })
-      timeline.push({
-        id: d.id,
-        date: d.savedAt,
-        label:
-          ((d.poeticReflection as string)?.slice(0, 40) ?? '') +
-          ((d.poeticReflection as string)?.length > 40 ? '…' : '') ||
-          'Conversation intérieure',
-        petals: normalized,
-        type: 'dreamscape',
-      })
-    }
+    if (!p || typeof p !== 'object') continue
+    const normalized: Record<string, number> = {}
+    PETAL_IDS.forEach((id) => {
+      normalized[id] = Math.min(1, Math.max(0, p[id] ?? 0))
+    })
+    const summary = buildDreamscapeChronicleSummary(d, 520)
+    timeline.push({
+      id: d.id,
+      date: d.savedAt,
+      label: shortTimelineLabel(summary, 'Conversation intérieure', 56),
+      summary,
+      petals: normalized,
+      type: 'dreamscape',
+    })
   }
   timeline.sort((a, b) => new Date((b.date as string) || 0).getTime() - new Date((a.date as string) || 0).getTime())
 
   const last5Snapshots = timeline.slice(0, 5)
   const sessionMantra = extractSessionMantra((sessions as Record<string, unknown>[])[0])
+
+  const petals_deficit_aggregate = aggregateSessionDeficits(sessions as Record<string, unknown>[])
+  const shadowZones = detectShadowZones({
+    petals: petals_aggregate,
+    deficits: petals_deficit_aggregate,
+    chronicleShadowPetals: chronicleShadowPetals(chronicle),
+  })
+  const hasChronicleShadow = chronicle.slice(0, 6).some((c) => c.tone === 'shadow')
 
   return {
     stats,
@@ -452,6 +528,9 @@ export async function fetchDashboardData() {
     access,
     petals_aggregate,
     petals_avg_30d,
+    petals_deficit_aggregate,
+    shadowZones,
+    hasChronicleShadow,
     currentSession: (sessions as Record<string, unknown>[])[0] || null,
     timeline,
     last5Snapshots,
@@ -472,6 +551,9 @@ export async function fetchDashboardData() {
       access: null,
       petals_aggregate: {} as Record<string, number>,
       petals_avg_30d: {} as Record<string, number>,
+      petals_deficit_aggregate: {} as Record<string, number>,
+      shadowZones: [],
+      hasChronicleShadow: false,
       currentSession: null,
       timeline: [],
       last5Snapshots: [],
@@ -483,8 +565,26 @@ export async function fetchDashboardData() {
   }
 }
 
+export type ZenBrief = {
+  headline: string
+  profile: string
+  aspirations: string
+  movement: string
+}
+
+/** @deprecated champs legacy portrait seul */
+export type ZenBriefLegacy = {
+  headline: string
+  portrait?: string
+  profile?: string
+  aspirations?: string
+  movement: string
+}
+
 export const dashboardApi = {
   fetchData: fetchDashboardData,
+  getZenBrief: (locale = 'fr') =>
+    api.post('/api/ai/zen-brief', { locale }) as Promise<{ brief: ZenBrief; cached: boolean }>,
   getInsight: (petals: Record<string, number>, locale = 'fr') =>
     api.post('/api/ai/dashboard-insight', { petals, locale }),
   getTrend: (snapshots: unknown[]) => api.post('/api/ai/dashboard-trend', { snapshots }),

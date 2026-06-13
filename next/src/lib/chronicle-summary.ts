@@ -120,23 +120,27 @@ export function buildReadingChronicleSummary(r: Record<string, unknown>): string
 
 export function buildSessionChronicleSummary(
   synthesis: string,
-  firstWords?: string | null
+  firstWords?: string | null,
+  maxBody = 300
 ): string {
   const syn = String(synthesis ?? '').trim()
   if (!syn) return ''
   const fw =
     firstWords && !isSessionMantraEcho(String(firstWords)) ? String(firstWords).trim() : ''
-  const body = firstReadableChunk(syn, 300)
+  const body = firstReadableChunk(syn, maxBody)
   if (fw) {
     return t('chronicle.sessionWithEntry', {
-      entry: truncate(fw, 110),
+      entry: truncate(fw, 160),
       body,
     })
   }
   return t('chronicle.sessionSynthesis', { body })
 }
 
-export function buildDreamscapeChronicleSummary(d: Record<string, unknown>): string {
+export function buildDreamscapeChronicleSummary(
+  d: Record<string, unknown>,
+  maxText = 280
+): string {
   const poetic = String(d.poeticReflection ?? '').trim()
   const history = d.history as Array<{ role: string; content: string }> | undefined
   const assistant = history?.find((m) => m.role === 'assistant')?.content
@@ -146,5 +150,5 @@ export function buildDreamscapeChronicleSummary(d: Record<string, unknown>): str
     .replace(/^promenade onirique\.?\s*/i, '')
     .replace(/^conversation intérieure\.?\s*/i, '')
     .trim() || raw
-  return t('chronicle.dreamscapeLine', { text: firstReadableChunk(cleaned, 280) })
+  return t('chronicle.dreamscapeLine', { text: firstReadableChunk(cleaned, maxText) })
 }

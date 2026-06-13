@@ -870,7 +870,7 @@ export default function AdminUsersPage() {
       const { token, user: target, admin_backup_token: adminBackup, admin_user: adminUser } = res
       const backupToken =
         (typeof adminBackup === 'string' && adminBackup.trim()) ||
-        (isCapacitor() ? localStorage.getItem('auth_token') || '' : '')
+        (isCapacitor() ? localStorage.getItem('auth_token') || '' : 'cookie')
       if (!backupToken) {
         throw new Error('Session admin introuvable pour la restauration.')
       }

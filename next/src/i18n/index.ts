@@ -33,7 +33,7 @@ export function t(key: string, vars: Record<string, string | number> = {}): stri
   if (value == null) return key
   let str = String(value)
   for (const [k, v] of Object.entries(vars)) {
-    str = str.replace(new RegExp(`{${k}}`, 'g'), String(v))
+    str = str.replace(new RegExp(`\\{\\{?${k}\\}?\\}`, 'g'), String(v))
   }
   return str
 }

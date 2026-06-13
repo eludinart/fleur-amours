@@ -10,7 +10,7 @@ import { SapGauge } from '../SapGauge'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
 import { useStore } from '@/store/useStore'
-import { setLocale as setI18nLocale } from '@/i18n'
+import { setLocale as setI18nLocale, t } from '@/i18n'
 import { billingApi } from '@/api/billing'
 import { socialApi } from '@/api/social'
 import NotificationCenter from '../NotificationCenter'
@@ -18,7 +18,7 @@ import { LanguageSelector } from './LanguageSelector'
 import { FormBackBar } from './FormBackBar'
 import { OnboardingTour } from '../OnboardingTour'
 import { CoachRequestModal } from '../CoachRequestModal'
-import { t } from '@/i18n'
+import { clearAuthBearer } from '@/lib/api-client'
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -27,7 +27,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     eternal_sap?: number
     total_accumulated_eternal?: number
   } | null>(null)
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, refreshUser } = useAuth()
   const { theme, toggle } = useTheme()
   const fontSizePreference = useStore((s) => s.fontSizePreference)
   const locale = useStore((s) => s.locale)
@@ -43,6 +43,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.fontSize = fontSizePreference === 'large' ? 'large' : ''
   }, [fontSizePreference])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('impersonation_restored') !== '1') return
+    sessionStorage.removeItem('impersonate_restore')
+    sessionStorage.removeItem('impersonating')
+    sessionStorage.removeItem('impersonate_admin_user')
+    clearAuthBearer()
+    void refreshUser()
+    params.delete('impersonation_restored')
+    const qs = params.toString()
+    const path = window.location.pathname
+    window.history.replaceState(null, '', qs ? `${path}?${qs}` : path)
+  }, [refreshUser])
 
   useEffect(() => {
     if (!user?.id) {

@@ -1,18 +1,24 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { useReducedMotion } from 'framer-motion'
 import { FlowerSVG, PETAL_DEFS } from '@/components/FlowerSVG'
 import { FleurTimeScroll, formatZenSnapshotDate } from '@/components/fleur/FleurTimeScroll'
-import { ChronicleList } from '@/components/dashboard/ChronicleList'
-import { DashboardPowerPhrase } from '@/components/dashboard/DashboardPowerPhrase'
+import {
+  ChronicleList,
+  DashboardPowerPhrase,
+  ZenHomeBrief,
+  ZenHomeNextStep,
+  ZenHomeMiniStats,
+  ZenPetalLegend,
+  ZenHomeShadowFocus,
+} from '@/components/dashboard'
 import { DashboardTuteurFab } from '@/components/dashboard/DashboardTuteurFab'
 import { fetchDashboardData, dashboardApi } from '@/api/dashboard'
 import { dominantPetalId, weakPetalsClickFilter, topPetalIds } from '@/lib/petal-tarot'
-import { isSessionMantraEcho } from '@/lib/session-mantra-echo'
-import { zenReadingLevel1Line } from '@/lib/flower-header-line'
+import type { ShadowZone } from '@/lib/petal-shadow'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -21,39 +27,11 @@ import { Breadcrumbs } from '@/components/Breadcrumbs'
 const PETAL_KEYS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
 
 const ZEN_TIME_AUTO_MS = 8000
-const ZEN_HAIKU_SS_PREFIX = 'jardin.zenHaiku.v1'
-const ZEN_HAIKU_TTL_MS = 1000 * 60 * 60 * 48
 
-function petalsFingerprint(p: Record<string, number>): string {
-  return PETAL_KEYS.map((k) => `${k}=${Number(p[k] ?? 0).toFixed(3)}`).join('&')
-}
-
-function readZenHaikuStorage(cacheKey: string): string | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = sessionStorage.getItem(`${ZEN_HAIKU_SS_PREFIX}:${cacheKey}`)
-    if (!raw) return null
-    const j = JSON.parse(raw) as { h?: string; t?: number }
-    if (!j?.h || typeof j.t !== 'number') return null
-    if (Date.now() - j.t > ZEN_HAIKU_TTL_MS) return null
-    return j.h
-  } catch {
-    return null
-  }
-}
-
-function writeZenHaikuStorage(cacheKey: string, h: string) {
-  try {
-    sessionStorage.setItem(`${ZEN_HAIKU_SS_PREFIX}:${cacheKey}`, JSON.stringify({ h, t: Date.now() }))
-  } catch {
-    /* quota */
-  }
-}
-
-function petalZenLabel(petalId: string | null, tr: typeof t): string {
+function petalZenLabel(petalId: string | null): string {
   if (!petalId) return ''
   const k = `fleurZen.petalLabels.${petalId}`
-  const s = tr(k)
+  const s = t(k)
   return s !== k ? s : PETAL_DEFS.find((p) => p.id === petalId)?.name ?? petalId
 }
 
@@ -78,10 +56,7 @@ export function UserFleurZenHome() {
   const [error, setError] = useState<string | null>(null)
   const [timeIndex, setTimeIndex] = useState(-1)
   const [autoTimePlay, setAutoTimePlay] = useState(true)
-  const [whisper, setWhisper] = useState<string>('')
-  const [flowerHaiku, setFlowerHaiku] = useState<string | null>(null)
-  const [haikuLoading, setHaikuLoading] = useState(false)
-  const zenHaikuMemRef = useRef<Map<string, string>>(new Map())
+  const [whisper, setWhisper] = useState('')
 
   useEffect(() => {
     setLoading(true)
@@ -95,7 +70,10 @@ export function UserFleurZenHome() {
   const aggregate = data?.petals_aggregate ?? {}
   const last5 = data?.last5Snapshots ?? []
   const chronicle = data?.chronicle ?? []
-  const sessionMantra = (data as { sessionMantra?: string | null } | null)?.sessionMantra ?? null
+  const stats = data?.stats ?? {}
+  const shadowZones = (data?.shadowZones ?? []) as ShadowZone[]
+  const hasChronicleShadow = Boolean(data?.hasChronicleShadow)
+  const currentSession = data?.currentSession ?? null
 
   const displayPetals = useMemo(() => {
     if (timeIndex < 0 || !last5[timeIndex]) {
@@ -108,124 +86,41 @@ export function UserFleurZenHome() {
   }, [timeIndex, last5, aggregate])
 
   const pulseId = useMemo(() => dominantPetalId(displayPetals), [displayPetals])
-
   const labelAnchorIds = useMemo(() => topPetalIds(displayPetals, 3, 0.04), [displayPetals])
-
-  const accentPetalName = useMemo(() => (pulseId ? petalZenLabel(pulseId, t) : ''), [pulseId, locale])
-
+  const accentPetalName = useMemo(() => (pulseId ? petalZenLabel(pulseId) : ''), [pulseId, locale])
   const accentPetalColor = useMemo(() => {
     if (!pulseId) return null
     return PETAL_DEFS.find((p) => p.id === pulseId)?.color ?? null
   }, [pulseId])
 
+  const hasPetals = useMemo(
+    () => Object.values(displayPetals).some((v) => (v ?? 0) > 0.05),
+    [displayPetals]
+  )
+
   const timeStateCaption = useMemo(() => {
     if (timeIndex < 0) {
-      return t('fleurZen.timeCaptionPresent')
+      return { mode: 'present' as const, text: t('fleurZen.timeCaptionPresent') }
     }
     const snap = last5[timeIndex] as Record<string, unknown> | undefined
-    if (!snap) return t('fleurZen.timeCaptionPresent')
+    if (!snap) {
+      return { mode: 'present' as const, text: t('fleurZen.timeCaptionPresent') }
+    }
     const petals = normalizePetals(snap.petals as Record<string, unknown> | undefined)
     const did = dominantPetalId(petals)
-    const petalName = petalZenLabel(did, t)
+    const petalName = petalZenLabel(did)
     const dateStr = formatZenSnapshotDate(snap.date as string | undefined, locale)
-    const rawLabel = String(snap.label || snap.type || '').trim()
-    const short = rawLabel.length > 88 ? `${rawLabel.slice(0, 85)}…` : rawLabel
-    if (short) {
-      return t('fleurZen.timeCaptionSnapshot', { date: dateStr, detail: short })
+    const detail = String(snap.summary ?? snap.label ?? '').trim()
+    if (detail) {
+      return { mode: 'snapshot' as const, date: dateStr, detail, petalName }
     }
     if (petalName) {
-      return t('fleurZen.timeCaptionSnapshotPetal', { date: dateStr, petal: petalName })
+      return { mode: 'petalOnly' as const, date: dateStr, petalName }
     }
-    return t('fleurZen.timeCaptionSnapshotDate', { date: dateStr })
-  }, [timeIndex, last5, locale, t])
-
-  const haikuCacheKey = useMemo(() => {
-    if (timeIndex < 0) {
-      return `${locale}|blend|${petalsFingerprint(displayPetals)}`
-    }
-    const s = last5[timeIndex] as Record<string, unknown> | undefined
-    const sid = s ? String(s.id ?? timeIndex) : String(timeIndex)
-    return `${locale}|snap|${sid}|${petalsFingerprint(displayPetals)}`
-  }, [timeIndex, last5, displayPetals, locale])
-
-  const haikuKeyRef = useRef(haikuCacheKey)
-  haikuKeyRef.current = haikuCacheKey
-
-  useEffect(() => {
-    if (!data) return
-    const key = haikuCacheKey
-    const mem = zenHaikuMemRef.current.get(key)
-    if (mem) {
-      setFlowerHaiku(mem)
-      setHaikuLoading(false)
-      return
-    }
-    const fromSs = readZenHaikuStorage(key)
-    if (fromSs) {
-      zenHaikuMemRef.current.set(key, fromSs)
-      setFlowerHaiku(fromSs)
-      setHaikuLoading(false)
-      return
-    }
-    let cancelled = false
-    setHaikuLoading(true)
-    const mode = timeIndex < 0 ? 'blend' : 'snapshot'
-    const snap = timeIndex >= 0 ? (last5[timeIndex] as Record<string, unknown> | undefined) : undefined
-    const labelParts = [snap?.label, snap?.type].filter(Boolean).map(String)
-    let snapshotLabel = labelParts.join(' — ')
-    if (snap && chronicle.length > 0) {
-      const chMatch = chronicle.find((c) => String(c.id) === String(snap.id))
-      const syn = chMatch?.synthesis ? String(chMatch.synthesis).trim() : ''
-      if (syn.length > snapshotLabel.length) snapshotLabel = syn
-    }
-    dashboardApi
-      .getFlowerStateHaiku({
-        mode,
-        petals: displayPetals,
-        locale,
-        cacheKey: key,
-        snapshotMeta:
-          mode === 'snapshot' && snap
-            ? {
-                dateIso: snap.date ? String(snap.date) : undefined,
-                type: snap.type ? String(snap.type) : undefined,
-                label: snapshotLabel.slice(0, 800) || undefined,
-              }
-            : undefined,
-      })
-      .then((r) => {
-        if (cancelled || haikuKeyRef.current !== key) return
-        const h = String((r as { haiku?: string })?.haiku ?? '').trim()
-        if (h) {
-          zenHaikuMemRef.current.set(key, h)
-          writeZenHaikuStorage(key, h)
-          setFlowerHaiku(h)
-        } else {
-          setFlowerHaiku(null)
-        }
-      })
-      .catch(() => {
-        if (!cancelled && haikuKeyRef.current === key) setFlowerHaiku(null)
-      })
-      .finally(() => {
-        if (!cancelled && haikuKeyRef.current === key) setHaikuLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [data, haikuCacheKey, timeIndex, last5, displayPetals, locale, chronicle])
+    return { mode: 'dateOnly' as const, date: dateStr }
+  }, [timeIndex, last5, locale])
 
   const clickablePetalsFilter = useMemo(() => weakPetalsClickFilter(displayPetals), [displayPetals])
-
-  const headerEpigraph = useMemo(() => {
-    if (sessionMantra && !isSessionMantraEcho(sessionMantra)) return sessionMantra.trim()
-    return zenReadingLevel1Line(displayPetals, t)
-  }, [sessionMantra, displayPetals, locale])
-
-  const epigraphIsLevel1Shape = useMemo(
-    () => !(sessionMantra && !isSessionMantraEcho(sessionMantra)),
-    [sessionMantra],
-  )
 
   const chronicleWhisperSubhint = useMemo(() => {
     if (last5.length >= 2) return t('fleurZen.readingLevel3HintTrend')
@@ -322,27 +217,37 @@ export function UserFleurZenHome() {
 
       <div className="relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-contain">
         <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-6 sm:py-8 pb-28 sm:pb-32">
-          <header className="text-center xl:text-left space-y-2 mb-6 sm:mb-8">
+          <header className="text-center xl:text-left space-y-2 mb-4 sm:mb-5">
             <Breadcrumbs />
             <h1 className="text-xl sm:text-2xl font-light tracking-[0.2em] uppercase text-white/90">{t('fleurZen.title')}</h1>
             <p className="text-xs sm:text-[13px] text-white/50 font-light tracking-wide max-w-2xl mx-auto xl:mx-0">
               {t('fleurZen.subtitle')}
             </p>
-            {headerEpigraph ? (
-              <div className="pt-3 max-w-3xl mx-auto xl:mx-0 text-center xl:text-left space-y-1.5">
-                {epigraphIsLevel1Shape ? (
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-teal-300/65">{t('fleurZen.readingLevel1Label')}</p>
-                ) : null}
-                <p className="text-base sm:text-lg md:text-xl font-medium leading-snug text-violet-100/95 italic">
-                  « {headerEpigraph} »
-                </p>
-              </div>
-            ) : null}
           </header>
 
+          <ZenHomeBrief
+            petals={normalizePetals(aggregate as Record<string, unknown>)}
+            chronicle={chronicle as Array<Record<string, unknown>>}
+          />
+
+          <ZenHomeShadowFocus zones={shadowZones} hasChronicleShadow={hasChronicleShadow} />
+
+          <ZenHomeNextStep
+            currentSession={currentSession as { status?: string } | null}
+            hasPetals={hasPetals}
+            chronicleCount={chronicle.length}
+          />
+
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10 xl:items-start">
-            <section className="xl:col-span-5 flex flex-col items-center xl:items-center space-y-4 sm:space-y-5 min-w-0">
-              <DashboardPowerPhrase petals={displayPetals} variant="zen" className="max-w-md xl:max-w-none" />
+            <section className="xl:col-span-5 flex flex-col items-center xl:items-stretch space-y-4 sm:space-y-5 min-w-0">
+              <DashboardPowerPhrase
+                petals={displayPetals}
+                variant="zen"
+                className="max-w-md xl:max-w-none w-full"
+                labelKey="fleurZen.personalReadingLabel"
+                hintKey="fleurZen.personalReadingHint"
+              />
+
               <div className="relative flex justify-center w-full isolate [&_.flower-svg]:max-w-[min(100%,320px)]">
                 <div
                   className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100%,300px)] aspect-square rounded-full bg-gradient-to-tr from-violet-600/30 via-teal-500/18 to-fuchsia-600/22 blur-3xl ${
@@ -355,7 +260,7 @@ export function UserFleurZenHome() {
                   size={300}
                   animate
                   showLabels
-                  showScores={false}
+                  showScores
                   labelsOnHoverOnly
                   pinnedLabelIds={labelAnchorIds}
                   labelTheme="dark"
@@ -366,36 +271,37 @@ export function UserFleurZenHome() {
                   disablePulse={!!reduceMotion}
                   onPetalClick={handlePetalClick}
                   clickablePetals={clickablePetalsFilter}
-                  svgClassName="relative z-[1]"
+                  svgClassName="relative z-[1] mx-auto"
                 />
               </div>
 
-              <div className="w-full max-w-md mx-auto mt-1 space-y-3">
-                <div className="rounded-2xl border border-white/12 bg-white/[0.05] backdrop-blur-sm px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                  <div className="space-y-2.5 text-center w-full max-w-lg mx-auto">
+              <div className="w-full max-w-md xl:max-w-none mx-auto space-y-3">
+                <ZenPetalLegend petals={displayPetals} />
+
+                <div className="rounded-2xl border border-white/12 bg-white/[0.05] backdrop-blur-sm px-4 py-4">
+                  <div className="space-y-2 text-center xl:text-left">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-violet-300/75">
-                      {t('fleurZen.flowerStateLabel')}
+                      {t('fleurZen.snapshotLabel')}
                     </p>
-                    <p
-                      className="whitespace-pre-line text-sm sm:text-base text-violet-50/95 leading-[1.7] text-balance px-0.5"
-                      aria-live="polite"
-                    >
-                      {flowerHaiku ?? timeStateCaption}
-                    </p>
-                    {haikuLoading && !flowerHaiku ? (
-                      <p className="text-[10px] text-violet-300/55 motion-safe:animate-pulse">{t('fleurZen.haikuLoading')}</p>
-                    ) : null}
+                    <div className="text-sm sm:text-base text-violet-50/95 leading-relaxed space-y-1.5" aria-live="polite">
+                      {timeStateCaption.mode === 'present' ? (
+                        <p>{timeStateCaption.text}</p>
+                      ) : timeStateCaption.mode === 'snapshot' ? (
+                        <>
+                          <p className="text-xs text-white/45 tracking-wide">{timeStateCaption.date}</p>
+                          <p>{timeStateCaption.detail}</p>
+                        </>
+                      ) : timeStateCaption.mode === 'petalOnly' ? (
+                        <p>{t('fleurZen.timeCaptionSnapshotPetal', { date: timeStateCaption.date, petal: timeStateCaption.petalName })}</p>
+                      ) : (
+                        <p>{t('fleurZen.timeCaptionSnapshotDate', { date: timeStateCaption.date })}</p>
+                      )}
+                    </div>
                   </div>
                   {accentPetalName ? (
-                    <div className="mt-4 pt-4 border-t border-white/10 space-y-1.5 text-center">
+                    <div className="mt-3 pt-3 border-t border-white/10 text-center xl:text-left">
                       <p
-                        className="text-[10px] uppercase tracking-[0.2em] opacity-80"
-                        style={accentPetalColor ? { color: accentPetalColor } : undefined}
-                      >
-                        {t('fleurZen.flowerAccentLabel')}
-                      </p>
-                      <p
-                        className="text-base sm:text-[17px] font-semibold tracking-wide"
+                        className="text-sm font-semibold"
                         style={accentPetalColor ? { color: accentPetalColor } : undefined}
                       >
                         {t('fleurZen.accentOnView', { petal: accentPetalName })}
@@ -416,32 +322,22 @@ export function UserFleurZenHome() {
                   />
                 ) : null}
 
-                <div className="rounded-xl border border-white/[0.07] bg-slate-950/35 px-3.5 py-3 space-y-2.5 text-center">
-                  <p className="text-[11px] sm:text-xs leading-relaxed text-teal-200/80">
-                    {t('fleurZen.zenHelpPetal')}
-                  </p>
-                  <p className="text-[11px] sm:text-xs leading-relaxed text-white/42 border-t border-white/[0.06] pt-2.5">
+                <div className="rounded-xl border border-white/[0.07] bg-slate-950/35 px-3.5 py-3 space-y-2 text-center xl:text-left text-[11px] sm:text-xs leading-relaxed text-white/50">
+                  <p>{t('fleurZen.zenHelpPetal')}</p>
+                  <p className="border-t border-white/[0.06] pt-2">
                     {timeSnapshots.length > 0 ? t('fleurZen.zenHelpTime') : t('fleurZen.zenHelpTimeEmpty')}
                   </p>
                 </div>
+
+                <ZenHomeMiniStats stats={stats as Record<string, unknown>} />
               </div>
 
-              {chronicle.length === 0 && whisper ? (
-                <div className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 xl:hidden space-y-2">
-                  <p className="text-[10px] uppercase tracking-widest text-violet-300/70">
-                    {t('chronicle.tutorWhisperLabel')}
-                  </p>
-                  <p className="text-[9px] uppercase tracking-wider text-violet-300/55">{chronicleWhisperSubhint}</p>
-                  <p className="text-sm text-violet-100/90 italic leading-relaxed line-clamp-5">{whisper}</p>
-                </div>
-              ) : null}
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full">
+              <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 pt-1 w-full">
                 <Link
                   href={statsHref}
-                  className="text-[11px] tracking-[0.18em] uppercase text-white/55 hover:text-white/85 border border-white/18 hover:border-white/35 px-6 py-2.5 rounded-full transition-colors whitespace-nowrap"
+                  className="text-xs sm:text-[13px] font-medium text-teal-300/90 hover:text-teal-200 border border-teal-500/35 hover:border-teal-400/55 bg-teal-950/30 px-5 py-2.5 rounded-full transition-colors whitespace-nowrap"
                 >
-                  {t('fleurZen.detailsStats')}
+                  {t('fleurZen.detailsStatsLong')}
                 </Link>
               </div>
             </section>
@@ -452,18 +348,19 @@ export function UserFleurZenHome() {
                   chronicle={chronicle.slice(0, 12)}
                   layout="grid"
                   journalTitle
+                  journalTitleKey="fleurZen.journalTitleZen"
+                  journalDescKey="fleurZen.journalDescZen"
+                  whisperLabelKey="fleurZen.trendLabel"
                   variant="zen"
                   compact
                   whisper={whisper || null}
                   whisperSubhint={chronicleWhisperSubhint}
                 />
               ) : whisper ? (
-                <div className="hidden xl:block rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 backdrop-blur-sm space-y-2">
-                  <p className="text-[10px] uppercase tracking-widest text-violet-300/70">
-                    {t('chronicle.tutorWhisperLabel')}
-                  </p>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 backdrop-blur-sm space-y-2">
+                  <p className="text-[10px] uppercase tracking-widest text-violet-300/70">{t('fleurZen.trendLabel')}</p>
                   <p className="text-[9px] uppercase tracking-wider text-violet-300/55">{chronicleWhisperSubhint}</p>
-                  <p className="text-sm sm:text-base text-violet-100/90 italic leading-relaxed">{whisper}</p>
+                  <p className="text-sm sm:text-base text-violet-100/90 leading-relaxed">{whisper}</p>
                 </div>
               ) : null}
             </section>

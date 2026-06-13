@@ -17,8 +17,18 @@ export interface LisiereData {
   userId: string
   pseudo?: string
   avatarEmoji?: string
+  bio?: string | null
+  scores?: Record<string, number>
+  dominantPetal?: string
+  dominantPetalName?: string
+  topPetals?: Array<{ id: string; name: string; value: number; color: string }>
+  echoInflorescence?: string
+  resonanceWithVisitor?: number
   fleurMoyenne?: { petals: number[]; lastUpdated?: string }
   relationStatusWithVisitor?: 'none' | 'pending_out' | 'pending_in' | 'accepted'
+  hasDuoLink?: boolean
+  presence?: { is_online: boolean; last_seen_at: string | null }
+  lastActivityAt?: string | null
   social?: Record<string, number>
 }
 

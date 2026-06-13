@@ -3,6 +3,8 @@
  */
 import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { exec, getPool, table } from './db'
+import { resonanceBetween } from './grand-jardin-view'
+import { buildLisierePublicProfile } from './lisiere-profile'
 
 const PRESENCE_ONLINE_SECONDS = 300
 
@@ -800,8 +802,18 @@ export async function visitLisiere(
   userId: string
   pseudo: string
   avatarEmoji: string
+  bio: string | null
+  scores: Record<string, number>
+  dominantPetal: string
+  dominantPetalName: string
+  topPetals: Array<{ id: string; name: string; value: number; color: string }>
+  echoInflorescence: string
+  resonanceWithVisitor: number
   fleurMoyenne: { petals: number[]; lastUpdated?: string }
   relationStatusWithVisitor: 'none' | 'pending_out' | 'pending_in' | 'accepted'
+  hasDuoLink: boolean
+  presence?: { is_online: boolean; last_seen_at: string | null }
+  lastActivityAt?: string | null
   social?: { rosee_received_total: number; rosee_received_today: number; pollen_received_total: number; pollen_received_today: number }
 }> {
   const pool = getPool()
@@ -815,15 +827,19 @@ export async function visitLisiere(
   const tRes = table('fleur_amour_results')
   const tLinks = table('fleur_prairie_links')
   const tSeeds = table('fleur_social_seeds')
+  const tRosee = table('fleur_rosee_events')
+  const tPollen = table('fleur_pollen')
 
   const [userRows] = await pool.execute<RowDataPacket[]>(
     `SELECT u.ID, u.display_name,
       COALESCE(um_pseudo.meta_value, '') AS pseudo,
-      COALESCE(um_emoji.meta_value, '🌸') AS avatar_emoji
+      COALESCE(um_emoji.meta_value, '🌸') AS avatar_emoji,
+      COALESCE(um_bio.meta_value, '') AS bio
     FROM ${tUsers} u
     INNER JOIN ${tMeta} um_pub ON um_pub.user_id = u.ID AND um_pub.meta_key = 'fleur_profile_public' AND um_pub.meta_value = '1'
     LEFT JOIN ${tMeta} um_pseudo ON um_pseudo.user_id = u.ID AND um_pseudo.meta_key = 'fleur_pseudo'
     LEFT JOIN ${tMeta} um_emoji ON um_emoji.user_id = u.ID AND um_emoji.meta_key = 'fleur_avatar_emoji'
+    LEFT JOIN ${tMeta} um_bio ON um_bio.user_id = u.ID AND um_bio.meta_key = 'fleur_bio'
     WHERE u.ID = ?`,
     [targetUserId]
   )
@@ -834,10 +850,15 @@ export async function visitLisiere(
     String(target.display_name ?? '').trim() ||
     `jardinier_${Buffer.from(String(targetUserId)).toString('hex').slice(0, 6)}`
   const avatarEmoji = String(target.avatar_emoji ?? '🌸').trim() || '🌸'
+  const bioRaw = String(target.bio ?? '').trim()
+  const bio = bioRaw ? bioRaw.slice(0, 320) : null
 
   const petals = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
+  const scores: Record<string, number> = Object.fromEntries(petals.map((p) => [p, 0]))
   let petalsNorm: number[] = [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
   let lastUpdated: string | undefined
+  let lastActivityAt: string | null = null
+
   try {
     const [resRows] = await pool.execute<RowDataPacket[]>(
       `SELECT agape, philautia, mania, storge, pragma, philia, ludus, eros, created_at FROM ${tRes} WHERE user_id = ? AND (parent_id IS NULL OR parent_id = 0) ORDER BY created_at DESC LIMIT 1`,
@@ -845,11 +866,62 @@ export async function visitLisiere(
     )
     const row = resRows?.[0]
     if (row) {
-      const scores = petals.map((p) => Number(row[p] ?? 0))
-      const maxVal = Math.max(1, ...scores)
-      petalsNorm = scores.map((v) => (maxVal > 0 ? Math.min(1, v / maxVal) : 0.3))
+      const rawScores = petals.map((p) => Number(row[p] ?? 0))
+      petals.forEach((p, i) => { scores[p] = rawScores[i] })
+      const maxVal = Math.max(1, ...rawScores)
+      petalsNorm = rawScores.map((v) => (maxVal > 0 ? Math.min(1, v / maxVal) : 0.3))
       lastUpdated = row.created_at ? String(row.created_at) : undefined
+      lastActivityAt = lastUpdated ?? null
     }
+  } catch {
+    /* ignore */
+  }
+
+  let visitorScores: Record<string, number> | undefined
+  try {
+    const [visitorRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT agape, philautia, mania, storge, pragma, philia, ludus, eros FROM ${tRes} WHERE user_id = ? AND (parent_id IS NULL OR parent_id = 0) ORDER BY created_at DESC LIMIT 1`,
+      [visitorUserId]
+    )
+    const vRow = visitorRows?.[0]
+    if (vRow) {
+      visitorScores = Object.fromEntries(petals.map((p) => [p, Number(vRow[p] ?? 0)]))
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const profile = buildLisierePublicProfile(scores, bio)
+  const resonanceWithVisitor = resonanceBetween(visitorScores, scores)
+
+  let social: { rosee_received_total: number; rosee_received_today: number; pollen_received_total: number; pollen_received_today: number } | undefined
+  try {
+    const [roseeRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total, SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS today FROM ${tRosee} WHERE to_user_id = ?`,
+      [targetUserId]
+    )
+    const [pollenRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total, SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS today FROM ${tPollen} WHERE to_user_id = ?`,
+      [targetUserId]
+    )
+    social = {
+      rosee_received_total: Number(roseeRows?.[0]?.total ?? 0),
+      rosee_received_today: Number(roseeRows?.[0]?.today ?? 0),
+      pollen_received_total: Number(pollenRows?.[0]?.total ?? 0),
+      pollen_received_today: Number(pollenRows?.[0]?.today ?? 0),
+    }
+  } catch {
+    /* tables may not exist */
+  }
+
+  let presence: { is_online: boolean; last_seen_at: string | null } | undefined
+  try {
+    const [presRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_social_last_seen_at' LIMIT 1`,
+      [targetUserId]
+    )
+    const v = String(presRows?.[0]?.meta_value ?? '').trim()
+    presence = { is_online: v ? isOnlineFromLastSeen(v) : false, last_seen_at: v || null }
   } catch {
     /* ignore */
   }
@@ -886,7 +958,18 @@ export async function visitLisiere(
     userId: String(targetUserId),
     pseudo,
     avatarEmoji,
+    bio,
+    scores,
+    dominantPetal: profile.dominantPetal,
+    dominantPetalName: profile.dominantPetalName,
+    topPetals: profile.topPetals,
+    echoInflorescence: profile.echoInflorescence,
+    resonanceWithVisitor,
     fleurMoyenne: { petals: petalsNorm, lastUpdated },
     relationStatusWithVisitor: relationStatus,
+    hasDuoLink: relationStatus === 'accepted',
+    presence,
+    lastActivityAt,
+    social,
   }
 }
