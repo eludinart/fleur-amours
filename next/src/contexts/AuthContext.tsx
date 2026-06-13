@@ -74,7 +74,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
       return
     }
+    let impersonationRestored = false
+    try {
+      const url = new URL(window.location.href)
+      impersonationRestored = url.searchParams.get('impersonation_restored') === '1'
+      if (impersonationRestored) {
+        localStorage.removeItem('auth_user')
+      }
+    } catch {
+      /* ignore */
+    }
     const hasSessionHint =
+      impersonationRestored ||
       !!localStorage.getItem('auth_user') ||
       (isCapacitor() && !!localStorage.getItem('auth_token'))
     if (!hasSessionHint) {

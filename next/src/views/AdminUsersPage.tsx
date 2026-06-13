@@ -860,14 +860,24 @@ export default function AdminUsersPage() {
     if (impersonateLoading) return
     setImpersonateLoading(u.id)
     try {
-      // Sur web, le restore se fait via cookie backup côté serveur; on met juste une sentinelle.
-      // Sur Capacitor, on sauvegarde le token localStorage pour restauration.
-      sessionStorage.setItem('impersonate_restore', isCapacitor() ? (localStorage.getItem('auth_token') || '') : 'cookie')
+      // Le serveur renvoie le JWT admin pour restauration (sessionStorage + formulaire POST).
       const res = (await authApi.impersonate(String(u.id))) as {
         token: string
         user: User
+        admin_backup_token?: string | null
+        admin_user?: User
       }
-      const { token, user: target } = res
+      const { token, user: target, admin_backup_token: adminBackup, admin_user: adminUser } = res
+      const backupToken =
+        (typeof adminBackup === 'string' && adminBackup.trim()) ||
+        (isCapacitor() ? localStorage.getItem('auth_token') || '' : '')
+      if (!backupToken) {
+        throw new Error('Session admin introuvable pour la restauration.')
+      }
+      sessionStorage.setItem('impersonate_restore', backupToken)
+      if (adminUser) {
+        sessionStorage.setItem('impersonate_admin_user', JSON.stringify(adminUser))
+      }
       if (isCapacitor()) localStorage.setItem('auth_token', token)
       localStorage.setItem('auth_user', JSON.stringify(target))
       sessionStorage.setItem(

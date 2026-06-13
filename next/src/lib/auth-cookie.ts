@@ -60,6 +60,12 @@ export function clearAuthCookie(res: NextResponse): void {
   }
 }
 
+/** Remplace le cookie d'auth (purge puis pose le token applicatif). */
+export function replaceAuthCookie(res: NextResponse, token: string): void {
+  clearAuthCookie(res)
+  setAuthCookie(res, token)
+}
+
 /** Lit le token depuis le cookie de la requête entrante. */
 export function getTokenFromCookie(req: NextRequest): string | null {
   return req.cookies.get(AUTH_COOKIE_NAME)?.value ?? null
