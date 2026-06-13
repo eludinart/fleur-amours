@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useEffect, useId, useState } from 'react'
@@ -6,6 +5,26 @@ import { scoresToPetals } from '@/components/FlowerSVG'
 import { FLOWER_PERSON_GRADIENT, PETAL_BY_ID } from '@/lib/petal-theme'
 import { dominantPetalId } from '@/lib/petal-tarot'
 import { t } from '@/i18n'
+
+export type FleurSocialeProps = {
+  scores?: Record<string, number>
+  lastActivityAt?: string | null
+  size?: number
+  onClick?: () => void
+  isSelected?: boolean
+  avatarEmoji?: string
+  pseudo?: string
+  isMe?: boolean
+  showPseudo?: boolean
+  social?: {
+    rosee_received_today?: number
+    pollen_received_today?: number
+    rosee_received_total?: number
+    pollen_received_total?: number
+  } | null
+  isOnline?: boolean
+  variant?: 'compact' | 'portrait'
+}
 
 const PETALS = [
   { id: 'agape', angle: 0 },
@@ -23,7 +42,7 @@ const MAX_LEN = 28
 const PETAL_W = 8
 const CENTER = 50
 
-function petalPath(halfLen, width) {
+function petalPath(halfLen: number, width: number): string {
   const tip = halfLen * 2
   return [
     `M 0 0`,
@@ -47,7 +66,7 @@ export function FleurSociale({
   social = null,
   isOnline = false,
   variant = 'compact',
-}) {
+}: FleurSocialeProps) {
   const uid = useId().replace(/:/g, '')
   const petals = scoresToPetals(scores)
   const pulseId = isMe ? dominantPetalId(petals) : null
