@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { t } from '@/i18n'
-import { api, getResolvedApiBase, isCapacitor } from '@/lib/api-client'
+import { api, isCapacitor } from '@/lib/api-client'
 
 const BASE = (process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin').replace(/\/+$/, '').trim() || ''
+const AUTH_BEARER_KEY = 'auth_bearer'
 
 function getImpersonationState(): { active: boolean; name: string | null } {
   if (typeof window === 'undefined') return { active: false, name: null }
@@ -28,47 +29,24 @@ export function ImpersonationBanner() {
     setState(getImpersonationState())
   }, [])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const url = new URL(window.location.href)
-
-    if (url.searchParams.get('impersonation_restored') === '1') {
-      const cachedAdmin = sessionStorage.getItem('impersonate_admin_user')
-      if (cachedAdmin) {
-        try {
-          localStorage.setItem('auth_user', cachedAdmin)
-        } catch {
-          /* ignore */
-        }
-      }
-      clearImpersonationMarkers()
-      url.searchParams.delete('impersonation_restored')
-      const qs = url.searchParams.toString()
-      window.history.replaceState({}, '', url.pathname + (qs ? `?${qs}` : ''))
-      setState({ active: false, name: null })
-    }
-
-    if (url.searchParams.get('impersonation_restore_error') === '1') {
-      setError(t('admin.impersonationRestoreFailed'))
-      url.searchParams.delete('impersonation_restore_error')
-      const qs = url.searchParams.toString()
-      window.history.replaceState({}, '', url.pathname + (qs ? `?${qs}` : ''))
-    }
-  }, [])
-
   async function handleDisconnect() {
     if (typeof window === 'undefined' || restoring) return
     const restore = sessionStorage.getItem('impersonate_restore')
     if (!restore) return
 
+    if (restore === 'cookie') {
+      setError(t('admin.impersonationRestoreFailed'))
+      return
+    }
+
     setRestoring(true)
     setError(null)
-    localStorage.removeItem('auth_user')
+
+    const cachedAdmin = sessionStorage.getItem('impersonate_admin_user')
 
     if (isCapacitor()) {
       try {
         localStorage.setItem('auth_token', restore)
-        const cachedAdmin = sessionStorage.getItem('impersonate_admin_user')
         if (cachedAdmin) {
           localStorage.setItem('auth_user', cachedAdmin)
         } else {
@@ -85,26 +63,23 @@ export function ImpersonationBanner() {
       return
     }
 
-    const apiBase = getResolvedApiBase()
+    // Web : Bearer admin prioritaire sur le cookie impersonné (sessionStorage survit au reload)
+    sessionStorage.setItem(AUTH_BEARER_KEY, restore)
+    if (cachedAdmin) {
+      localStorage.setItem('auth_user', cachedAdmin)
+    } else {
+      localStorage.removeItem('auth_user')
+    }
+    clearImpersonationMarkers()
+    setState({ active: false, name: null })
 
-    // JWT admin stocké côté client → POST formulaire (navigation complète, Set-Cookie fiable)
-    if (restore !== 'cookie') {
-      const form = document.createElement('form')
-      form.method = 'POST'
-      form.action = `${apiBase}/api/auth/admin/impersonate-restore`
-      form.enctype = 'application/x-www-form-urlencoded'
-      const input = document.createElement('input')
-      input.type = 'hidden'
-      input.name = 'backup_token'
-      input.value = restore
-      form.appendChild(input)
-      document.body.appendChild(form)
-      form.submit()
-      return
+    try {
+      await api.post('/api/auth/admin/impersonate-restore', { backup_token: restore })
+    } catch (err) {
+      console.warn('Impersonation cookie restore failed (Bearer fallback actif):', err)
     }
 
-    // Ancienne session (sentinelle « cookie ») → GET avec cookie backup httpOnly
-    window.location.href = `${apiBase}/api/auth/admin/impersonate-restore?redirect=1`
+    window.location.href = `${BASE}/admin`
   }
 
   const displayName = state.name ?? t('admin.impersonatingUnknown')

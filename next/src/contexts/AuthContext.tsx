@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { authApi } from '@/api/auth'
-import { isCapacitor } from '@/lib/api-client'
+import { isCapacitor, clearAuthBearer } from '@/lib/api-client'
 
 type User = Record<string, unknown> | null
 
@@ -74,19 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
       return
     }
-    let impersonationRestored = false
-    try {
-      const url = new URL(window.location.href)
-      impersonationRestored = url.searchParams.get('impersonation_restored') === '1'
-      if (impersonationRestored) {
-        localStorage.removeItem('auth_user')
-      }
-    } catch {
-      /* ignore */
-    }
     const hasSessionHint =
-      impersonationRestored ||
       !!localStorage.getItem('auth_user') ||
+      (typeof window !== 'undefined' && !!sessionStorage.getItem('auth_bearer')) ||
       (isCapacitor() && !!localStorage.getItem('auth_token'))
     if (!hasSessionHint) {
       setLoading(false)
@@ -97,6 +87,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(u)
       localStorage.setItem('auth_user', JSON.stringify(u))
       scheduleRefresh(forceLogout)
+      if (typeof window !== 'undefined' && sessionStorage.getItem('auth_bearer')) {
+        try {
+          await authApi.refresh()
+          clearAuthBearer()
+        } catch {
+          /* Bearer temporaire conservé si le cookie httpOnly n'a pas pu être posé */
+        }
+      }
     } catch {
       // Session expirée ou révoquée côté serveur
       localStorage.removeItem('auth_token')

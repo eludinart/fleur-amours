@@ -76,6 +76,7 @@ function readAuthSessionHint(): boolean {
   if (typeof window === 'undefined') return false
   return (
     !!localStorage.getItem('auth_user') ||
+    !!sessionStorage.getItem('auth_bearer') ||
     (isCapacitor() && !!localStorage.getItem('auth_token'))
   )
 }

@@ -6,11 +6,13 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
  *
  * Stratégie d'authentification :
  *   - Navigateur web  : cookie httpOnly `auth_token` (envoyé via `credentials: 'include'`).
- *                        Aucun token dans localStorage — protection XSS.
+ *                        Pendant la sortie d'impersonation admin, Bearer via `sessionStorage.auth_bearer`.
  *   - Capacitor/Android : localStorage + `Authorization: Bearer` (cookie cross-origin non dispo).
  *
  * Détection Capacitor : `window.Capacitor` défini à l'exécution.
  */
+
+const AUTH_BEARER_KEY = 'auth_bearer'
 
 function getBase(): string {
   if (typeof window === 'undefined') return ''
@@ -40,14 +42,21 @@ export function setLocaleForRequests(locale: string | null) {
 }
 
 /**
- * Retourne le token JWT depuis localStorage.
- * Uniquement pour Capacitor — sur navigateur web, on renvoie null
- * (le cookie httpOnly est géré automatiquement par le navigateur).
+ * Retourne le token JWT pour Authorization: Bearer.
+ * Web : uniquement pendant la sortie d'impersonation (`auth_bearer` en sessionStorage).
+ * Capacitor : localStorage `auth_token`.
  */
 export function getAuthToken(): string | null {
-  if (!isCapacitor()) return null
   if (typeof window === 'undefined') return null
+  const bearer = sessionStorage.getItem(AUTH_BEARER_KEY)
+  if (bearer) return bearer
+  if (!isCapacitor()) return null
   return localStorage.getItem('auth_token')
+}
+
+/** Efface le Bearer temporaire (après commit cookie réussi). */
+export function clearAuthBearer(): void {
+  if (typeof window !== 'undefined') sessionStorage.removeItem(AUTH_BEARER_KEY)
 }
 
 export class ApiError extends Error {
