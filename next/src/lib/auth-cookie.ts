@@ -14,8 +14,10 @@
 import type { NextRequest, NextResponse } from 'next/server'
 
 export const AUTH_COOKIE_NAME = 'auth_token'
+export const ADMIN_BACKUP_COOKIE_NAME = 'auth_token_admin_backup'
 
 const EXPIRE_HOURS = parseInt(process.env.JWT_EXPIRE_HOURS || '720', 10)
+const ADMIN_BACKUP_MAX_AGE = 24 * 3600
 const IS_PROD = process.env.NODE_ENV === 'production'
 const COOKIE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 /**
@@ -31,10 +33,14 @@ const LEGACY_COOKIE_PATH = COOKIE_PATH === '/' ? null : '/'
  * `res.cookies.set` : ce dernier est indexé par NOM et écrase les appels précédents,
  * empêchant d'émettre plusieurs cookies `auth_token` (un par path) dans la même réponse.
  */
-function serializeCookie(value: string, path: string, maxAge: number): string {
-  let c = `${AUTH_COOKIE_NAME}=${value}; Path=${path}; Max-Age=${maxAge}; HttpOnly; SameSite=Lax`
+function serializeNamedCookie(name: string, value: string, path: string, maxAge: number): string {
+  let c = `${name}=${value}; Path=${path}; Max-Age=${maxAge}; HttpOnly; SameSite=Lax`
   if (IS_PROD) c += '; Secure'
   return c
+}
+
+function serializeCookie(value: string, path: string, maxAge: number): string {
+  return serializeNamedCookie(AUTH_COOKIE_NAME, value, path, maxAge)
 }
 
 /** Définit le cookie d'auth sur une réponse NextResponse existante. */
@@ -57,4 +63,19 @@ export function clearAuthCookie(res: NextResponse): void {
 /** Lit le token depuis le cookie de la requête entrante. */
 export function getTokenFromCookie(req: NextRequest): string | null {
   return req.cookies.get(AUTH_COOKIE_NAME)?.value ?? null
+}
+
+/** Sauvegarde le JWT admin avant impersonation (httpOnly, même path que auth_token). */
+export function setAdminBackupCookie(res: NextResponse, token: string): void {
+  res.headers.append('Set-Cookie', serializeNamedCookie(ADMIN_BACKUP_COOKIE_NAME, token, COOKIE_PATH, ADMIN_BACKUP_MAX_AGE))
+}
+
+/** Efface le cookie de backup admin après restauration. */
+export function clearAdminBackupCookie(res: NextResponse): void {
+  res.headers.append('Set-Cookie', serializeNamedCookie(ADMIN_BACKUP_COOKIE_NAME, '', COOKIE_PATH, 0))
+}
+
+/** Lit le JWT admin sauvegardé depuis la requête entrante. */
+export function getAdminBackupFromCookie(req: NextRequest): string | null {
+  return req.cookies.get(ADMIN_BACKUP_COOKIE_NAME)?.value ?? null
 }

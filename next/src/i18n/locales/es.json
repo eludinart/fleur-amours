@@ -288,6 +288,7 @@
   "admin": {
     "impersonationBanner": "Conectado como {name}",
     "impersonationDisconnect": "Volver al perfil admin",
+    "impersonationRestoreFailed": "No se pudo restaurar la sesión de administrador. Inténtalo de nuevo.",
     "impersonatingUnknown": "Usuario"
   },
   "nav": {

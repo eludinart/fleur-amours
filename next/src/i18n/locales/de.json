@@ -311,6 +311,7 @@
   "admin": {
     "impersonationBanner": "Angemeldet als {name}",
     "impersonationDisconnect": "Zum Admin-Profil zurückkehren",
+    "impersonationRestoreFailed": "Admin-Sitzung konnte nicht wiederhergestellt werden. Bitte erneut versuchen.",
     "impersonatingUnknown": "Benutzer"
   },
   "nav": {

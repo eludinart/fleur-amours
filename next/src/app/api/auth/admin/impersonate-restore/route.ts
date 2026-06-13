@@ -4,39 +4,44 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtDecodeForRefresh } from '@/lib/jwt'
-import { setAuthCookie } from '@/lib/auth-cookie'
+import { authMe } from '@/lib/db-auth'
+import { setAuthCookie, clearAdminBackupCookie, getAdminBackupFromCookie } from '@/lib/auth-cookie'
 
 export const dynamic = 'force-dynamic'
 
-const ADMIN_BACKUP_COOKIE = 'auth_token_admin_backup'
+async function isAdminPayload(payload: { sub: string; role?: string }): Promise<boolean> {
+  const role = String(payload.role ?? '').toLowerCase()
+  if (role === 'admin' || role === 'administrator') return true
+  try {
+    const user = await authMe(parseInt(payload.sub, 10))
+    const dbRole = user.app_role || user.wp_role || ''
+    return dbRole === 'admin' || dbRole === 'administrator'
+  } catch {
+    return false
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const backup = req.cookies.get(ADMIN_BACKUP_COOKIE)?.value ?? null
+    const backup = getAdminBackupFromCookie(req)
     if (!backup) {
       return NextResponse.json({ error: 'Aucune session admin à restaurer.' }, { status: 400 })
     }
     const payload = jwtDecodeForRefresh(backup)
-    const role = String(payload?.role ?? '').toLowerCase()
-    if (!payload?.sub || !(role === 'admin' || role === 'administrator')) {
+    if (!payload?.sub) {
+      return NextResponse.json({ error: 'Backup invalide.' }, { status: 401 })
+    }
+    if (!(await isAdminPayload(payload))) {
       return NextResponse.json({ error: 'Backup invalide.' }, { status: 401 })
     }
 
-    const res = NextResponse.json({ ok: true })
-    // Remet le cookie d'auth principal sur l'admin
+    const user = await authMe(parseInt(payload.sub, 10))
+    const res = NextResponse.json({ ok: true, user })
     setAuthCookie(res, backup)
-    // Efface le backup
-    res.cookies.set(ADMIN_BACKUP_COOKIE, '', {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin',
-      maxAge: 0,
-    })
+    clearAdminBackupCookie(res)
     return res
   } catch (err) {
     const e = err as Error
     return NextResponse.json({ error: e?.message || 'Erreur.' }, { status: 500 })
   }
 }
-

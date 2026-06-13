@@ -5,12 +5,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/api-auth'
 import { getAuthHeader } from '@/lib/api-auth'
 import { authMe } from '@/lib/db-auth'
-import { setAuthCookie } from '@/lib/auth-cookie'
+import { setAuthCookie, setAdminBackupCookie } from '@/lib/auth-cookie'
 import { jwtEncode } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
-
-const ADMIN_BACKUP_COOKIE = 'auth_token_admin_backup'
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,13 +27,7 @@ export async function POST(req: NextRequest) {
     })
     const res = NextResponse.json({ token, user })
     if (currentToken) {
-      res.cookies.set(ADMIN_BACKUP_COOKIE, currentToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        path: process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin',
-        maxAge: 24 * 3600,
-      })
+      setAdminBackupCookie(res, currentToken)
     }
     setAuthCookie(res, token)
     return res
