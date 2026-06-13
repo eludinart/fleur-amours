@@ -1,0 +1,42 @@
+name: Smoke post-déploiement
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'URL publique (ex. https://app-fleurdamours.eludein.art/jardin)'
+        required: true
+        default: 'https://app-fleurdamours.eludein.art/jardin'
+      strict:
+        description: 'Mode strict (DB + OpenRouter requis)'
+        type: boolean
+        default: true
+
+jobs:
+  smoke-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Smoke API production
+        run: |
+          ARGS="--base-url ${{ github.event.inputs.base_url }}"
+          if [ "${{ github.event.inputs.strict }}" = "true" ]; then ARGS="$ARGS --strict"; fi
+          node scripts/smoke-api.mjs $ARGS
+        env:
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+          SMOKE_TOKEN: ${{ secrets.SMOKE_TOKEN }}
+          SMOKE_VISIT_USER_ID: ${{ secrets.SMOKE_VISIT_USER_ID }}
+
+      - name: Résumé
+        if: always()
+        run: |
+          echo "## Smoke post-déploiement" >> $GITHUB_STEP_SUMMARY
+          echo "Cible : ${{ github.event.inputs.base_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "Strict : ${{ github.event.inputs.strict }}" >> $GITHUB_STEP_SUMMARY

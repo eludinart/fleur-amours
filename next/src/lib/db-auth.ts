@@ -19,6 +19,9 @@ export type UserRecord = {
   avatar?: string | null
   avatar_emoji?: string | null
   profile_public?: boolean
+  age?: number | null
+  jardin_intention?: string | null
+  profile_onboarding_done?: boolean
   points_de_rosee?: number
   avatar_graine_id?: string | null
   coach_headline?: string | null
@@ -96,6 +99,9 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
     'fleur_avatar',
     'fleur_avatar_emoji',
     'fleur_profile_public',
+    'fleur_age',
+    'fleur_jardin_intention',
+    'fleur_profile_onboarding_done',
     'fleur_points_de_rosee',
     'fleur_avatar_graine_id',
     'fleur_coach_headline',
@@ -127,6 +133,10 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
   ;(out as Record<string, unknown>).avatar = meta.fleur_avatar || null
   ;(out as Record<string, unknown>).avatar_emoji = meta.fleur_avatar_emoji || null
   ;(out as Record<string, unknown>).profile_public = (meta.fleur_profile_public ?? '') === '1'
+  const ageRaw = parseInt(meta.fleur_age ?? '', 10)
+  ;(out as Record<string, unknown>).age = !isNaN(ageRaw) && ageRaw >= 16 && ageRaw <= 120 ? ageRaw : null
+  ;(out as Record<string, unknown>).jardin_intention = meta.fleur_jardin_intention || null
+  ;(out as Record<string, unknown>).profile_onboarding_done = (meta.fleur_profile_onboarding_done ?? '') === '1'
   ;(out as Record<string, unknown>).points_de_rosee = parseInt(meta.fleur_points_de_rosee ?? '5', 10)
   ;(out as Record<string, unknown>).avatar_graine_id = meta.fleur_avatar_graine_id || null
   ;(out as Record<string, unknown>).coach_headline = meta.fleur_coach_headline || null
@@ -457,6 +467,25 @@ export async function updateProfile(
   if (Object.prototype.hasOwnProperty.call(body, 'profile_public')) {
     const pub = body.profile_public ? '1' : '0'
     await forceUsermeta(userId, 'fleur_profile_public', pub)
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'age')) {
+    const raw = body.age
+    if (raw === null || raw === '' || raw === undefined) {
+      await upsertUsermeta(userId, 'fleur_age', '')
+    } else {
+      const n = parseInt(String(raw), 10)
+      if (isNaN(n) || n < 16 || n > 120) {
+        throw new Error('Âge invalide : entre 16 et 120 ans')
+      }
+      await upsertUsermeta(userId, 'fleur_age', String(n))
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'jardin_intention')) {
+    const v = String(body.jardin_intention ?? '').trim().slice(0, 80)
+    await upsertUsermeta(userId, 'fleur_jardin_intention', v)
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'profile_onboarding_done')) {
+    await upsertUsermeta(userId, 'fleur_profile_onboarding_done', body.profile_onboarding_done ? '1' : '0')
   }
   if (Object.prototype.hasOwnProperty.call(body, 'avatar_graine_id')) {
     const gid = String(body.avatar_graine_id ?? '').trim().slice(0, 50)

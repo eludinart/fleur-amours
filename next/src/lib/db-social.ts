@@ -803,6 +803,8 @@ export async function visitLisiere(
   pseudo: string
   avatarEmoji: string
   bio: string | null
+  age: number | null
+  jardinIntention: string | null
   scores: Record<string, number>
   dominantPetal: string
   dominantPetalName: string
@@ -834,12 +836,16 @@ export async function visitLisiere(
     `SELECT u.ID, u.display_name,
       COALESCE(um_pseudo.meta_value, '') AS pseudo,
       COALESCE(um_emoji.meta_value, '🌸') AS avatar_emoji,
-      COALESCE(um_bio.meta_value, '') AS bio
+      COALESCE(um_bio.meta_value, '') AS bio,
+      COALESCE(um_age.meta_value, '') AS age,
+      COALESCE(um_intention.meta_value, '') AS jardin_intention
     FROM ${tUsers} u
     INNER JOIN ${tMeta} um_pub ON um_pub.user_id = u.ID AND um_pub.meta_key = 'fleur_profile_public' AND um_pub.meta_value = '1'
     LEFT JOIN ${tMeta} um_pseudo ON um_pseudo.user_id = u.ID AND um_pseudo.meta_key = 'fleur_pseudo'
     LEFT JOIN ${tMeta} um_emoji ON um_emoji.user_id = u.ID AND um_emoji.meta_key = 'fleur_avatar_emoji'
     LEFT JOIN ${tMeta} um_bio ON um_bio.user_id = u.ID AND um_bio.meta_key = 'fleur_bio'
+    LEFT JOIN ${tMeta} um_age ON um_age.user_id = u.ID AND um_age.meta_key = 'fleur_age'
+    LEFT JOIN ${tMeta} um_intention ON um_intention.user_id = u.ID AND um_intention.meta_key = 'fleur_jardin_intention'
     WHERE u.ID = ?`,
     [targetUserId]
   )
@@ -852,6 +858,9 @@ export async function visitLisiere(
   const avatarEmoji = String(target.avatar_emoji ?? '🌸').trim() || '🌸'
   const bioRaw = String(target.bio ?? '').trim()
   const bio = bioRaw ? bioRaw.slice(0, 320) : null
+  const ageParsed = parseInt(String(target.age ?? ''), 10)
+  const age = !isNaN(ageParsed) && ageParsed >= 16 && ageParsed <= 120 ? ageParsed : null
+  const jardinIntention = String(target.jardin_intention ?? '').trim() || null
 
   const petals = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
   const scores: Record<string, number> = Object.fromEntries(petals.map((p) => [p, 0]))
@@ -959,6 +968,8 @@ export async function visitLisiere(
     pseudo,
     avatarEmoji,
     bio,
+    age,
+    jardinIntention,
     scores,
     dominantPetal: profile.dominantPetal,
     dominantPetalName: profile.dominantPetalName,

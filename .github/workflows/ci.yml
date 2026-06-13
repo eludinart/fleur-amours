@@ -7,20 +7,110 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test:
-    runs-on: windows-latest
+  build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: |
+            package-lock.json
             next/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
 
       - name: Install Next.js dependencies
         run: npm ci --prefix next
 
+      - name: Lint
+        run: npm run lint --prefix next
+        continue-on-error: true
+
       - name: Build
         run: npm run build --prefix next
+
+  smoke-public:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            next/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix next
+
+      - name: Build Next.js
+        run: npm run build --prefix next
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Démarrer serveur + smoke + E2E public
+        run: |
+          JWT_SECRET=ci-smoke-jwt-secret-minimum-32-characters PORT=3001 npm run start --prefix next &
+          echo $! > /tmp/next.pid
+          node scripts/wait-for-health.mjs http://127.0.0.1:3001/jardin/api/health
+          node scripts/smoke-api.mjs --public
+          npm run test:e2e:public
+          kill $(cat /tmp/next.pid) 2>/dev/null || true
+        env:
+          CI: true
+          SMOKE_SKIP_WEBSERVER: '1'
+          SMOKE_BASE_URL: http://127.0.0.1:3001/jardin
+
+  e2e-auth:
+    needs: build
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && vars.SMOKE_ENABLED == 'true')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix next
+
+      - name: Build
+        run: npm run build --prefix next
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Smoke API strict
+        run: npm run smoke:strict
+        env:
+          SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL || 'http://127.0.0.1:3001/jardin' }}
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+          SMOKE_STRICT: '1'
+
+      - name: E2E authentifié
+        run: npm run test:e2e:auth
+        env:
+          CI: true
+          SMOKE_SKIP_WEBSERVER: '1'
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+          SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL || 'http://127.0.0.1:3001/jardin' }}

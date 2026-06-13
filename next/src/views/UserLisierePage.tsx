@@ -143,12 +143,20 @@ export default function UserLisierePage() {
                   pseudo={lisiere.pseudo}
                   isOnline={isOnline}
                   size={72}
+                  variant="portrait"
                 />
               </div>
               <div className="min-w-0 flex-1 pt-1">
                 <p className="text-lg font-bold text-amber-50 truncate">
                   {lisiere.pseudo} {lisiere.avatarEmoji}
                 </p>
+                {(lisiere.age || lisiere.jardinIntention) && (
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {lisiere.age ? t('social.lisiereAge', { age: lisiere.age }) : ''}
+                    {lisiere.age && lisiere.jardinIntention ? ' · ' : ''}
+                    {lisiere.jardinIntention ? t(`profileOnboarding.intention.${lisiere.jardinIntention}`) : ''}
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {isOnline ? (
                     <span className="px-1.5 py-0.5 rounded text-[9px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
@@ -197,14 +205,15 @@ export default function UserLisierePage() {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">
               {t('social.lisiereFlower')}
             </p>
-            <div className="flex justify-center mb-4 py-2">
+            <div className="flex justify-center mb-4 py-4 rounded-xl bg-gradient-to-b from-slate-800/40 via-slate-900/20 to-transparent">
               <FleurSociale
                 scores={lisiere.scores ?? {}}
                 lastActivityAt={lisiere.lastActivityAt}
                 avatarEmoji={lisiere.avatarEmoji}
                 pseudo={lisiere.pseudo}
                 isOnline={isOnline}
-                size={128}
+                size={140}
+                variant="portrait"
               />
             </div>
             {(lisiere.topPetals ?? []).length > 0 ? (

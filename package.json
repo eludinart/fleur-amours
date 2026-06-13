@@ -3,6 +3,7 @@
   "scripts": {
     "dev": "npm run dev:next",
     "dev.vps": "node scripts/dev-vps.js",
+    "dev.vps:clean": "node scripts/dev-clean-restart.js",
     "dev.vps:diagnostic": "node scripts/dev-vps-diagnostic.js",
     "dev:next": "npm run dev --prefix next",
     "dev:android": "node scripts/dev-android.js",
@@ -20,7 +21,16 @@
     "version:bump": "node scripts/bump-version.js",
     "build:git:push": "bash scripts/build-and-git.sh",
     "docker:next:build": "docker build -f Dockerfile.next -t fleur-next:latest .",
-    "docker:next:up": "docker compose -f docker-compose.next.yml -f docker-compose.next.local.yml --env-file docker-compose.env up -d"
+    "docker:next:up": "docker compose -f docker-compose.next.yml -f docker-compose.next.local.yml --env-file docker-compose.env up -d",
+    "smoke": "node scripts/smoke-api.mjs",
+    "smoke:public": "node scripts/smoke-api.mjs --public",
+    "smoke:strict": "node scripts/smoke-api.mjs --strict",
+    "smoke:prod": "node scripts/smoke-api.mjs --strict",
+    "test:e2e": "playwright test",
+    "test:e2e:public": "playwright test --grep @public",
+    "test:e2e:auth": "playwright test --grep @auth",
+    "predeploy": "node scripts/pre-deploy.mjs",
+    "predeploy:full": "node scripts/pre-deploy.mjs --full"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

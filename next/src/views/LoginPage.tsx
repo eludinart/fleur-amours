@@ -46,6 +46,8 @@ export function LoginPage() {
       if (mode === 'register') {
         await register(loginId.trim(), password, name.trim(), inviteToken || undefined)
         setHasSeenOnboardingTour(false)
+        router.replace('/profil-onboarding')
+        return
       } else {
         await login(loginId, password)
 

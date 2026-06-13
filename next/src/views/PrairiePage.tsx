@@ -731,6 +731,7 @@ export default function PrairiePage() {
                     social={selectedFleur.social}
                     isOnline={isOnline}
                     size={44}
+                    variant="portrait"
                   />
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-amber-50 text-sm truncate group-hover:text-amber-100">

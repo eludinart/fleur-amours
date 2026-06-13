@@ -10,6 +10,7 @@ import { useStore } from '@/store/useStore'
 import { SUPPORTED_LOCALES, t } from '@/i18n'
 import { PrairieOptInModal } from '@/components/PrairieOptInModal'
 import { INTENTIONS, socialApi } from '@/api/social'
+import { JARDIN_INTENTION_IDS } from '@/lib/profile-constants'
 import { toast } from '@/hooks/useToast'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
@@ -261,6 +262,8 @@ export function AccountPage() {
   const [profileForm, setProfileForm] = useState({
     name: '',
     pseudo: '',
+    age: '',
+    jardin_intention: 'resonance',
     bio: '',
     avatar: null as string | null,
     avatar_emoji: null as string | null,
@@ -375,6 +378,8 @@ export function AccountPage() {
         setProfileForm({
           name: (prof?.name ?? user?.name ?? '') as string,
           pseudo: (prof?.pseudo ?? '') as string,
+          age: prof?.age ? String(prof.age) : '',
+          jardin_intention: (prof?.jardin_intention ?? 'resonance') as string,
           bio: (prof?.bio ?? '') as string,
           avatar: (prof?.avatar ?? null) as string | null,
           avatar_emoji: (prof?.avatar_emoji ?? null) as string | null,
@@ -416,6 +421,8 @@ export function AccountPage() {
       const updated = await authApi.updateMyProfile({
         name: profileForm.name,
         pseudo: profileForm.pseudo || null,
+        age: profileForm.age ? parseInt(profileForm.age, 10) : null,
+        jardin_intention: profileForm.jardin_intention || null,
         bio: profileForm.bio || null,
         avatar: profileForm.avatar || null,
         avatar_emoji: profileForm.avatar_emoji || null,
@@ -919,6 +926,49 @@ export function AccountPage() {
               />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 {t('account.pseudoHint')}
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {t('account.age')}
+              </label>
+              <input
+                type="number"
+                min={16}
+                max={120}
+                value={profileForm.age}
+                onChange={(e) =>
+                  setProfileForm((f) => ({
+                    ...f,
+                    age: e.target.value.replace(/[^0-9]/g, '').slice(0, 3),
+                  }))
+                }
+                placeholder="32"
+                className="w-28 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+              />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('account.ageHint')}
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {t('account.jardinIntention')}
+              </label>
+              <select
+                value={profileForm.jardin_intention}
+                onChange={(e) =>
+                  setProfileForm((f) => ({ ...f, jardin_intention: e.target.value }))
+                }
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+              >
+                {JARDIN_INTENTION_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {t(`profileOnboarding.intention.${id}`)}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('account.jardinIntentionHint')}
               </p>
             </div>
             <div>

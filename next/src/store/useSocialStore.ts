@@ -18,6 +18,8 @@ export interface LisiereData {
   pseudo?: string
   avatarEmoji?: string
   bio?: string | null
+  age?: number | null
+  jardinIntention?: string | null
   scores?: Record<string, number>
   dominantPetal?: string
   dominantPetalName?: string

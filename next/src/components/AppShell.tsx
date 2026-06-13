@@ -38,6 +38,7 @@ import FleurBetaPage from '@/views/FleurBetaPage'
 import EclosionTimelinePage from '@/views/EclosionTimelinePage'
 import CheckinPage from '@/views/CheckinPage'
 import OnboardingDiagnosticPage from '@/views/OnboardingDiagnosticPage'
+import ProfileOnboardingPage from '@/views/ProfileOnboardingPage'
 import DyadePage from '@/views/DyadePage'
 import DuoPage from '@/views/DuoPage'
 import MesFleursPage from '@/views/MesFleursPage'
@@ -63,6 +64,7 @@ import AdminTelemetryPage from '@/views/AdminTelemetryPage'
 import CoachSuiviPage from '@/views/CoachSuiviPage'
 import CoachPatientelePage from '@/views/CoachPatientelePage'
 import PushNotificationPriming from '@/components/PushNotificationPriming'
+import { ProfileOnboardingGuard } from '@/components/ProfileOnboardingGuard'
 
 const AdminAnalyticsPage = dynamic(
   () => import('@/views/AdminAnalyticsPage').then((m) => m.default),
@@ -342,6 +344,11 @@ function AppRoutes() {
         <Layout>
           <OnboardingDiagnosticPage />
         </Layout>
+      </ProtectedLayout>
+    ),
+    'profil-onboarding': (
+      <ProtectedLayout>
+        <ProfileOnboardingPage />
       </ProtectedLayout>
     ),
     couple: (
@@ -773,5 +780,9 @@ function AppRoutes() {
 }
 
 export function AppShell() {
-  return <AppRoutes />
+  return (
+    <ProfileOnboardingGuard>
+      <AppRoutes />
+    </ProfileOnboardingGuard>
+  )
 }

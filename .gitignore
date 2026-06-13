@@ -21,9 +21,15 @@ build/
 # Env
 .env
 .env.local
+.env.smoke
 
 # Docker Compose (secrets)
 docker-compose.env
+
+# Smoke / E2E
+e2e/report/
+test-results/
+playwright-report/
 
 # IDE
 .idea/
