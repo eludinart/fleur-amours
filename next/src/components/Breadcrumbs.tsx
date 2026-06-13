@@ -24,7 +24,7 @@ const LABELS: Record<string, string> = {
 }
 
 const FALLBACK: Record<string, string> = {
-  dreamscape: 'Promenade Onirique',
+  dreamscape: 'Conversation intérieure',
   chat: 'Chat coach',
   account: 'Mon compte',
   presentation: 'Présentation',

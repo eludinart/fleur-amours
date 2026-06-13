@@ -506,10 +506,10 @@ function PatientEnsembleTab({
 
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-          Promenades oniriques (Dreamscape)
+          Conversations intérieures
         </p>
         {overview.dreamscape_walks.length === 0 ? (
-          <p className="text-xs text-slate-500">Aucune promenade sauvegardée.</p>
+          <p className="text-xs text-slate-500">Aucune conversation sauvegardée.</p>
         ) : (
           <ul className="space-y-2 max-h-64 overflow-y-auto">
             {overview.dreamscape_walks.map((d) => (

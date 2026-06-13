@@ -144,7 +144,7 @@ function buildNavGroups(
       items: [
         { to: '/admin', label: translate('nav.adminDashboard'), icon: '📊', end: true },
         { to: '/admin/emails', label: 'Campagnes e-mail', icon: '✉️' },
-        { to: '/admin/broadcasts', label: 'Diffusions', icon: '📣' },
+        { to: '/admin/broadcasts', label: 'Campagne de notification', icon: '📣' },
         { to: '/admin/sessions', label: translate('nav.adminSessions'), icon: '📋' },
         { to: '/admin/tirages', label: translate('nav.adminTirages'), icon: '🎴' },
         { to: '/admin/science', label: translate('nav.adminScience'), icon: '🧬' },

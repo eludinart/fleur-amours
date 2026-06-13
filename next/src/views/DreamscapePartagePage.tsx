@@ -72,7 +72,7 @@ export default function DreamscapePartagePage() {
 
   useEffect(() => {
     if (!item || !token) return
-    document.title = 'Promenade Onirique partagée — Fleur d\'AmOurs'
+    document.title = `${t('dreamscapePartage.title')} — Fleur d'AmOurs`
     const desc = ogMetaDescriptionDreamscape(synthesis)
     const title = ogMetaTitleDreamscape()
     const metaOg = [

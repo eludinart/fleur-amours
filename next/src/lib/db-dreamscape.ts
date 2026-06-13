@@ -1,5 +1,5 @@
 /**
- * Dreamscape (Promenades oniriques) — MariaDB
+ * Dreamscape (Conversations intérieures) — MariaDB
  */
 import { randomBytes } from 'crypto'
 import type { ResultSetHeader, RowDataPacket } from 'mysql2'
@@ -70,7 +70,7 @@ export async function update(
   ]
   const [result] = await exec(pool, sql, values)
   const affected = (result as { affectedRows?: number }).affectedRows ?? 0
-  if (affected === 0) throw new Error('Promenade introuvable ou accès refusé')
+  if (affected === 0) throw new Error('Conversation introuvable ou accès refusé')
 }
 
 /** Mise à jour uniquement du snapshot (régénération visuel), sans toucher au reste. */
@@ -80,7 +80,7 @@ export async function updateSnapshot(userId: string, id: number, snapshotBase64:
   const sql = `UPDATE ${t} SET snapshot_base64 = ? WHERE id = ? AND user_id = ?`
   const [result] = await exec(pool, sql, [snapshotBase64, id, userId])
   const affected = (result as { affectedRows?: number }).affectedRows ?? 0
-  if (affected === 0) throw new Error('Promenade introuvable ou accès refusé')
+  if (affected === 0) throw new Error('Conversation introuvable ou accès refusé')
 }
 
 export async function my(userId: string): Promise<{ items: Record<string, unknown>[] }> {
@@ -116,7 +116,7 @@ export async function share(userId: string, id: number): Promise<{ shareToken: s
   const sql = `UPDATE ${t} SET share_token = ? WHERE id = ? AND user_id = ?`
   const [result] = await exec(pool, sql, [token, id, userId])
   const affected = (result as { affectedRows?: number }).affectedRows ?? 0
-  if (affected === 0) throw new Error('Promenade introuvable ou accès refusé')
+  if (affected === 0) throw new Error('Conversation introuvable ou accès refusé')
   return { shareToken: token, shareUrl: `/dreamscape/partage/${token}` }
 }
 

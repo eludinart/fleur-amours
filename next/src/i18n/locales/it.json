@@ -1,6 +1,9 @@
 {
-  "dreamscape": "Passeggiata Onirica",
-  "dreamscapeShort": "Passeggiata onirica",
+  "dreamscape": "Conversazione interiore",
+  "dreamscapeSubtitle": "con la tua Fiore d'Amore",
+  "dreamscapeIntro": "Esprimi ciò che senti: la tua Fiore d'Amore ti risponde e ti aiuta ad ascoltarti.",
+  "dreamscapeShort": "Conversazione interiore",
+  "dreamscapePlural": "Conversazioni interiori",
   "contact": {
     "title": "Richiesta di appuntamento personalizzato",
     "pageTitle": "Richiedi un accompagnamento",
@@ -129,7 +132,7 @@
     "coachRequestOpenModal": "Apri il modulo di richiesta",
     "deleteAccount": "Elimina il mio account",
     "deleteAccountSection": "Zona pericolosa",
-    "deleteAccountWarning": "Questa azione è irreversibile. Tutti i tuoi dati verranno eliminati definitivamente: Fiori, sessioni, letture, passeggiate oniriche, messaggi chat e account. Non potrai più accedere.",
+    "deleteAccountWarning": "Questa azione è irreversibile. Tutti i tuoi dati verranno eliminati definitivamente: Fiori, sessioni, letture, conversazioni interiori, messaggi chat e account. Non potrai più accedere.",
     "deleteAccountConfirm1": "Sei assolutamente sicuro/a?",
     "deleteAccountConfirm2": "Per confermare, digita ELIMINA qui sotto",
     "deleteAccountPlaceholder": "ELIMINA",
@@ -421,7 +424,7 @@
     "pillarExplore": "Esplorare",
     "pillarExploreDesc": "Sessioni e letture — carte e conversazione per andare avanti",
     "pillarAccompany": "Accompagnarsi",
-    "pillarAccompanyDesc": "Chat e Passeggiata — supporto e introspezione",
+    "pillarAccompanyDesc": "Chat e Conversazione interiore — supporto e introspezione",
     "startWithFleur": "Da dove iniziare: Il mio Fiore",
     "sapIntro": "Hai 50 Linfe per scoprire l'app.",
     "sapIntroMore": "Le Linfe servono per le porte, le letture e le sessioni. Trova il tuo saldo nel tuo account.",
@@ -581,7 +584,7 @@
     "desc": "Le tue frasi-sintesi di sessioni e letture, per ritrovare le tue esplorazioni.",
     "empty": "Le tue frasi-sintesi appariranno qui",
     "session": "Sessione",
-    "dreamscape": "Passeggiata onirica",
+    "dreamscape": "Conversazione interiore",
     "tirage": "Lettura",
     "badgeShadow": "Ombra",
     "badgeLight": "Luce",
@@ -594,8 +597,8 @@
     "readingCardFallback": "Carta",
     "sessionWithEntry": "Sessione — ingresso con: « {entry} ». {body}",
     "sessionSynthesis": "Sessione — {body}",
-    "dreamscapeLine": "Passeggiata onirica — {text}",
-    "dreamscapeFallback": "Passeggiata onirica salvata."
+    "dreamscapeLine": "Conversazione interiore — {text}",
+    "dreamscapeFallback": "Conversazione interiore salvata."
   },
   "insight": {
     "title": "Scienza del Fiore",
@@ -622,7 +625,7 @@
     "cardsRevealed": "Carte rivelate",
     "maFleur": "Il mio Fiore",
     "duo": "Duo",
-    "dreamscape": "Passeggiate oniriche"
+    "dreamscape": "Conversazioni interiori"
   },
   "confirmation": {
     "title": "Conferma l'azione",
@@ -653,8 +656,8 @@
     "imageDownloaded": "Immagine scaricata",
     "pdfDownloaded": "PDF scaricato",
     "tirageShareText": "Scopri Fleur d'AmOurs — Letture intuitive",
-    "encourageDreamscapeTitle": "Condividi questa passeggiata onirica (link + anteprima social)",
-    "dreamscapeShareText": "Scopri una Passeggiata Onirica su Fleur d'AmOurs 🌸",
+    "encourageDreamscapeTitle": "Condividi questa conversazione (link + anteprima social)",
+    "dreamscapeShareText": "Scopri una Conversazione interiore su Fleur d'AmOurs 🌸",
     "dreamscapeShareError": "Impossibile ottenere il link di condivisione pubblico.",
     "publicLinkLabel": "Link da condividere (copialo o usa i pulsanti)",
     "linkPreparing": "Preparazione del link…",
@@ -680,10 +683,14 @@
     "landingBackTirage": "Estrazioni",
     "landingFallbackCard": "La tua carta",
     "landingFourTitle": "Le quattro porte",
-    "landingLoadingDreamscape": "Caricamento della passeggiata…",
+    "landingLoadingDreamscape": "Caricamento della conversazione…",
     "landingDreamscapeNotFound": "Contenuto non trovato",
     "landingDreamscapeCtaHome": "Home",
     "landingYourFlower": "Il suo fiore d'AmOri"
+  },
+  "dreamscapePage": {
+    "bannerAbout": "Su questa conversazione",
+    "bannerCollapse": "Riduci"
   },
   "dreamscapeCanvas": {
     "close": "Chiudi",
@@ -691,15 +698,15 @@
     "saveTitle": "Salva nella cronologia (accessibile ovunque)",
     "saveBtn": "💾 Salva",
     "historyBtn": "📜 Cronologia",
-    "historyTitle": "Vedi la cronologia delle passeggiate",
+    "historyTitle": "Vedi la cronologia delle conversazioni",
     "sendBtn": "Invia",
     "listening": "In ascolto…",
     "placeholder": "Mi sento…",
     "noReflection": "Nessuna riflessione da salvare",
-    "saveSuccess": "Passeggiata onirica salvata",
-    "closeSuccess": "Passeggiata onirica chiusa e salvata",
-    "closeModalTitle": "Chiudi la Passeggiata Onirica?",
-    "closeModalDesc": "Questa passeggiata sarà salvata con un riepilogo degli scambi, il percorso scelto e le azioni che ti sei impegnato/a a compiere.",
+    "saveSuccess": "Conversazione interiore salvata",
+    "closeSuccess": "Conversazione interiore chiusa e salvata",
+    "closeModalTitle": "Chiudere la conversazione?",
+    "closeModalDesc": "Questa conversazione sarà salvata con un riepilogo degli scambi, il percorso scelto e le azioni che ti sei impegnato/a a compiere.",
     "pathLabel": "Percorso scelto",
     "actionsLabel": "Azioni da compiere",
     "closeConfirm": "Chiudi e salva",
@@ -716,15 +723,29 @@
     "anchor": "Ancoraggio",
     "accompany": "Essere accompagnato/a →",
     "accompanyDistress": "Quello che stai attraversando merita un supporto umano.",
-    "accompanyLight": "Uno spazio dedicato può aiutarti a esplorare questo."
+    "accompanyLight": "Uno spazio dedicato può aiutarti a esplorare questo.",
+    "exchangeLimitSoft": "Hai già fatto {count} scambi. Se hai trovato ciò che cercavi, puoi chiudere ora — oppure continuare ancora un po'.",
+    "exchangeLimitHard": "Questa conversazione arriva al suo termine naturale ({count} scambi). Per integrare ciò che è emerso, ti propongo di chiuderla ora.",
+    "exchangeLimitForce": "Abbiamo superato il limite morbido ({count} scambi). Ti propongo di chiudere la conversazione ora.",
+    "closeNudgeKicker": "Una soglia di chiusura",
+    "closeNudgeTitle": "Vuoi sigillare questa conversazione?",
+    "shareFallback": "La mia conversazione interiore.",
+    "downloadFilename": "conversazione-interiore"
   },
   "dreamscapePartage": {
     "back": "Torna al Giardino",
-    "title": "Passeggiata Onirica condivisa",
+    "title": "Conversazione interiore condivisa",
     "synthesis": "Sintesi del percorso",
-    "cta": "Fai la mia passeggiata"
+    "cta": "Fare la mia conversazione"
   },
   "dreamscapeHistorique": {
+    "history": "Cronologia delle conversazioni interiori",
+    "backTo": "Torna alla conversazione interiore",
+    "backShort": "Indietro",
+    "emptyTitle": "Nessuna conversazione salvata",
+    "emptyDesc": "Salva una conversazione dallo spazio dialogo per ritrovarla qui.",
+    "emptyCta": "Iniziare una conversazione",
+    "errorBack": "Torna alla conversazione interiore",
     "resumeBtn": "Riprendi la lettura",
     "inProgress": "in corso",
     "snapshot": "Anteprima della lettura",
@@ -733,9 +754,10 @@
     "regenerateAllSnapshots": "Rigenera tutte le anteprime",
     "regenerateOk": "Anteprima aggiornata.",
     "regenerateError": "Impossibile rigenerare l'anteprima.",
-    "regenerateNoCards": "Nessuna carta rivelata da catturare per questa passeggiata.",
+    "regenerateNoCards": "Nessuna carta rivelata da catturare per questa conversazione.",
     "regenerateBusy": "Rigenerazione delle anteprime…",
-    "regenerateSnapshotMissing": "Nessuna anteprima salvata — usa il pulsante per crearne una."
+    "regenerateSnapshotMissing": "Nessuna anteprima salvata — usa il pulsante per crearne una.",
+    "emptyReflection": "Conversazione senza riflessione registrata"
   },
   "voiceInput": {
     "placeholder": "Scrivi o detta la tua risposta…"
@@ -1282,7 +1304,7 @@
     "tirages": "Letture",
     "maFleur": "Il mio Fiore",
     "mesFleurs": "I miei Fiori",
-    "dreamscape": "Passeggiata Onirica"
+    "dreamscape": "Conversazione interiore"
   },
   "logout": "Disconnetti",
   "mycelium": {
@@ -1420,7 +1442,7 @@
   },
   "eclosion": {
     "title": "Eclosione — la tua evoluzione",
-    "subtitle": "Il tuo filo relazionale nel tempo: sessioni, letture, esplorazioni Fleur, passeggiate oniriche, questionari, check-in e tutto ciò che registri nel Giardino.",
+    "subtitle": "Il tuo filo relazionale nel tempo: sessioni, letture, esplorazioni Fleur, conversazioni interiori, questionari, check-in e tutto ciò che registri nel Giardino.",
     "narrativeTitle": "Lettura del tuo movimento",
     "narrativeCta": "Genera lettura",
     "narrativeLoading": "Lettura in corso…",
@@ -1457,7 +1479,7 @@
     "socialQuote3Author": "Julien",
     "trustLine": "Connessione sicura · Dati rispettati · Senza carta di credito per scoprire",
     "visualTeaserTitle": "Il giardino è più di una carta",
-    "visualTeaserBody": "Percorsi guidati, letture salvate, il tuo Fiore, passeggiate oniriche e strumenti di chiarezza: uno spazio completo all’iscrizione — gratis per iniziare.",
+    "visualTeaserBody": "Percorsi guidati, letture salvate, il tuo Fiore, conversazioni interiori e strumenti di chiarezza: uno spazio completo all'iscrizione — gratis per iniziare.",
     "visualTeaserCta": "Crea un account e apri il giardino",
     "visualTeaserAria": "Anteprima visiva del giardino Fleur d'AmOurs",
     "visualTeaserAlt": "Anteprima app: Fleur d'AmOurs, otto petali e diario di ombre e luci con cronologia delle letture",
@@ -1512,7 +1534,7 @@
     "heroTitle": "Il giardino al servizio della tua pratica di accompagnamento",
     "heroSubtitle": "Fleur d'AmOurs collega uno strumento simbolico e relazionale di grande finezza a un'applicazione che struttura il legame con le persone che accompagni — individuazione, connessione a sé, questioni relazionali: un unico ecosistema.",
     "pillarToolTitle": "Comprendere e nominare, con la persona",
-    "pillarToolDesc": "Carte, essenze, domande radice, percorso delle porte, passeggiata onirica, manuale online: un vocabolario condiviso per esplorare l'emotivo e il relazionale senza portare tutto sul verbale da soli.",
+    "pillarToolDesc": "Carte, essenze, domande radice, percorso delle porte, conversazione interiore, manuale online: un vocabolario condiviso per esplorare l'emotivo e il relazionale senza portare tutto sul verbale da soli.",
     "pillarPracticeTitle": "Chiarezza nella gestione della tua attività",
     "pillarPracticeDesc": "Messaggistica integrata, richieste di accompagnamento, elenco degli accompagnanti e, per gli account abilitati, visione degli scambi e delle persone seguite: meno dispersione tra mail, SMS e appunti sparsi.",
     "benefitsTitle": "Cosa attivi in concreto",
@@ -1522,7 +1544,7 @@
     "b2Desc": "Percorsi strutturati, letture semplici o profonde, cronologia: la persona avanza con punti di riferimento; condividete materiale per approfondire.",
     "b3Title": "Manuale e quadro teorico",
     "b3Desc": "Le basi delle carte e i concetti nell'app: ancorare i tuoi interventi a una griglia di lettura coerente.",
-    "b4Title": "Dreamscape e introspezione",
+    "b4Title": "Conversazione interiore e introspezione",
     "b4Desc": "Spazio per il simbolico e l'esplorazione interiore, complementare al lavoro relazionale esplicito.",
     "b5Title": "Canale di accompagnamento e elenco",
     "b5Desc": "Le persone possono contattarti dal prodotto; la visibilità nell'elenco collega la tua pratica al giardino.",

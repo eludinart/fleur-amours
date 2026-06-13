@@ -93,9 +93,9 @@ export async function POST(req: NextRequest) {
   const userTurns = history.filter((m) => (m.role ?? '') === 'user').length
   if (userTurns <= 1) {
     userMsg +=
-      "\n[Nouvelle promenade — choisis des cartes variées, évite La Tige et Le Bouton si tu les as déjà souvent proposées.]"
+      "\n[Nouvelle conversation intérieure — choisis des cartes variées, évite La Tige et Le Bouton si tu les as déjà souvent proposées.]"
   }
-  userMsg += `\n[Promenade — tours utilisateur déjà effectués: ${userTurns}]`
+  userMsg += `\n[Conversation intérieure — tours utilisateur déjà effectués: ${userTurns}]`
   if (Object.keys(cardPositions).length > 0) {
     const lines = Object.entries(cardPositions).map(
       ([pos, carte]) => `${pos}:${carte}`

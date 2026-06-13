@@ -1,18 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import dynamic from 'next/dynamic'
-import type { EditorRef } from 'react-email-editor'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from '@/hooks/useToast'
 import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/lib/api-client'
 import {
   ADMIN_NOTIFICATION_DEST_CUSTOM,
-  ADMIN_NOTIFICATION_DEST_NONE,
-  ADMIN_NOTIFICATION_DESTINATIONS,
+  groupAdminNotificationDestinations,
+  resolveAdminNotificationAction,
 } from '@/lib/admin-notification-destinations'
-
-const EmailEditor = dynamic(() => import('react-email-editor'), { ssr: false })
 
 type AudienceSegment = {
   audience_type: 'single' | 'users' | 'coaches' | 'all'
@@ -26,17 +22,7 @@ type AudienceSegment = {
 }
 
 type Channels = {
-  email?: {
-    subject: string
-    preheader?: string
-    from_name?: string
-    from_email?: string
-    reply_to?: string
-    design_json?: unknown
-    html?: string
-    text?: string
-  }
-  inapp?: {
+  inapp: {
     type?: string
     title: string
     body?: string
@@ -83,7 +69,7 @@ export default function AdminBroadcastsPage() {
     coach_listed: 'any',
     exclude_admins: false,
     exclude_emails: [],
-    respect_email_optout: true,
+    respect_email_optout: false,
   })
 
   const [destinationId, setDestinationId] = useState<string>('home')
@@ -94,30 +80,17 @@ export default function AdminBroadcastsPage() {
   const [notifPriority, setNotifPriority] = useState<'low' | 'normal' | 'high' | 'urgent'>('normal')
 
   const [advancedOpen, setAdvancedOpen] = useState(false)
-  const [showEmailCampaign, setShowEmailCampaign] = useState(false)
-
-  const [channelsEmail, setChannelsEmail] = useState<NonNullable<Channels['email']>>({ subject: '' })
 
   const [preview, setPreview] = useState<{ count: number; sample: Array<{ user_id: number; email_masked: string }> } | null>(null)
   const [sending, setSending] = useState(false)
 
-  const emailEditorRef = useRef<EditorRef>(null)
+  const resolvedAction = useMemo(
+    () => resolveAdminNotificationAction(destinationId, customDestPath),
+    [destinationId, customDestPath],
+  )
 
-  const resolvedAction = useMemo(() => {
-    if (destinationId === ADMIN_NOTIFICATION_DEST_CUSTOM) {
-      const p = customDestPath.trim()
-      if (!p) return { url: null as string | null, label: '' as string }
-      const withSlash = p.startsWith('/') ? p : `/${p}`
-      return { url: withSlash, label: 'Ouvrir' }
-    }
-    const found = ADMIN_NOTIFICATION_DESTINATIONS.find((d) => d.id === destinationId)
-    if (!found || found.id === ADMIN_NOTIFICATION_DEST_NONE || !found.path) {
-      return { url: null, label: '' }
-    }
-    return { url: found.path, label: found.label }
-  }, [destinationId, customDestPath])
+  const destinationGroups = useMemo(() => groupAdminNotificationDestinations(), [])
 
-  /** Envoi possible dès qu’il y a une notif bien formée ; l’email reste optionnel */
   const canLaunch = useMemo(() => {
     if (!notifTitle.trim()) return false
     if (audienceSeg.audience_type === 'single') {
@@ -125,9 +98,8 @@ export default function AdminBroadcastsPage() {
       const em = audienceSeg.single_user_email.trim()
       if (!id && !em) return false
     }
-    if (showEmailCampaign && !channelsEmail.subject?.trim()) return false
     return true
-  }, [notifTitle, audienceSeg, showEmailCampaign, channelsEmail.subject])
+  }, [notifTitle, audienceSeg])
 
   async function refreshList() {
     setLoading(true)
@@ -138,7 +110,7 @@ export default function AdminBroadcastsPage() {
       }
       setList({ items: data.items ?? [], total: data.total ?? 0 })
     } catch {
-      toast('Impossible de charger les diffusions', 'error')
+      toast('Impossible de charger les campagnes', 'error')
     }
     setLoading(false)
   }
@@ -159,25 +131,13 @@ export default function AdminBroadcastsPage() {
     }
   }
 
-  async function exportEmailHtml(): Promise<{ design: unknown | null; html: string | null }> {
-    const editor = emailEditorRef.current?.editor
-    if (!editor?.exportHtml) return { design: null, html: null }
-    return await new Promise((resolve) => {
-      editor.exportHtml((data: { design?: unknown; html?: string }) => {
-        resolve({ design: data?.design ?? null, html: data?.html ?? null })
-      })
-    })
-  }
-
   async function createAndSend() {
     if (!canLaunch) {
-      if (showEmailCampaign) toast('Renseigne le sujet e-mail ou désactive la campagne e-mail', 'error')
-      else toast('Renseigne le titre de la notification et la cible', 'error')
+      toast('Renseigne le titre de la notification et la cible', 'error')
       return
     }
     setSending(true)
     try {
-      const emailExport = showEmailCampaign ? await exportEmailHtml() : { design: null, html: null }
       const channels: Channels = {
         inapp: {
           type: 'admin_announcement',
@@ -187,13 +147,6 @@ export default function AdminBroadcastsPage() {
           action_label: resolvedAction.url ? resolvedAction.label || 'Ouvrir' : undefined,
           priority: notifPriority,
         },
-      }
-      if (showEmailCampaign && channelsEmail.subject?.trim()) {
-        channels.email = {
-          ...channelsEmail,
-          design_json: emailExport.design ?? channelsEmail.design_json,
-          html: emailExport.html ?? channelsEmail.html,
-        }
       }
 
       const created = (await api.post('/api/admin/broadcasts/create', {
@@ -217,12 +170,13 @@ export default function AdminBroadcastsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Diffusions</h1>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Campagne de notification</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Notifications push et in-app ciblées (utilisateurs, coachs, tout le monde ou une personne), avec lien vers une rubrique de l&apos;app. L&apos;e-mail reste optionnel.
+            Notifications push et in-app ciblées (utilisateurs, coachs, tout le monde ou une personne), avec lien vers une rubrique de l&apos;app. Pour les campagnes e-mail, utilisez{' '}
+            <span className="font-medium text-slate-600 dark:text-slate-300">Campagnes e-mail</span>.
           </p>
         </div>
       </div>
@@ -247,7 +201,7 @@ export default function AdminBroadcastsPage() {
       {tab === 'list' && (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <div className="text-sm text-slate-500">{list ? `${list.total} diffusion(s)` : '—'}</div>
+            <div className="text-sm text-slate-500">{list ? `${list.total} campagne(s)` : '—'}</div>
             <button
               type="button"
               onClick={refreshList}
@@ -279,7 +233,7 @@ export default function AdminBroadcastsPage() {
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400 italic">Aucune diffusion</td></tr>
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400 italic">Aucune campagne</td></tr>
                 )}
               </tbody>
             </table>
@@ -300,14 +254,14 @@ export default function AdminBroadcastsPage() {
             </div>
 
             <div>
-              <span className="block text-xs font-medium text-slate-500 mb-2">Qui recevoir la notification</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <span className="block text-xs font-medium text-slate-500 mb-2">Qui recevra la notification</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 {(
                   [
-                    { value: 'single' as const, label: 'Une personne', hint: 'ID WordPress ou e-mail' },
+                    { value: 'single' as const, label: 'Une personne', hint: 'ID WordPress ou e-mail du compte' },
                     { value: 'users' as const, label: 'Tous les utilisateurs', hint: 'sans rôle coach ni admin' },
                     { value: 'coaches' as const, label: 'Tous les coachs', hint: 'rôle coach uniquement' },
-                    { value: 'all' as const, label: 'Tout le monde', hint: 'tous comptes avec e-mail' },
+                    { value: 'all' as const, label: 'Tout le monde', hint: 'tous les comptes inscrits' },
                   ] as const
                 ).map((opt) => (
                   <label
@@ -373,11 +327,11 @@ export default function AdminBroadcastsPage() {
               onClick={() => setAdvancedOpen((o) => !o)}
               className="text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline"
             >
-              {advancedOpen ? '▼ Masquer filtres avancés' : '▶ Filtres avancés (activité, e-mail, coach listé)'}
+              {advancedOpen ? '▼ Masquer filtres avancés' : '▶ Filtres avancés (activité, coach listé)'}
             </button>
 
             {advancedOpen && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">Activité (segmentation)</label>
                   <select
@@ -406,16 +360,6 @@ export default function AdminBroadcastsPage() {
                     <option value="not_listed">Non listés</option>
                   </select>
                 </div>
-                <div className="flex flex-col gap-2 justify-end">
-                  <label className="flex items-center gap-2 text-xs text-slate-500">
-                    <input
-                      type="checkbox"
-                      checked={audienceSeg.respect_email_optout}
-                      onChange={(e) => setAudienceSeg((s) => ({ ...s, respect_email_optout: e.target.checked }))}
-                    />
-                    Respecter désinscription e-mail (campagnes SMTP)
-                  </label>
-                </div>
               </div>
             )}
 
@@ -438,49 +382,27 @@ export default function AdminBroadcastsPage() {
 
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 space-y-4">
             <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Contenu de la notification</h2>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Rubrique ouverte au clic</label>
-              <select
-                value={destinationId}
-                onChange={(e) => setDestinationId(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-              >
-                {ADMIN_NOTIFICATION_DESTINATIONS.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.label}
-                  </option>
-                ))}
-                <option value={ADMIN_NOTIFICATION_DEST_CUSTOM}>Chemin personnalisé…</option>
-              </select>
-            </div>
-            {destinationId === ADMIN_NOTIFICATION_DEST_CUSTOM && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Chemin (ex. /session ou /clairiere)</label>
-                <input
-                  value={customDestPath}
-                  onChange={(e) => setCustomDestPath(e.target.value)}
-                  placeholder="/ma-route"
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-xs"
-                />
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Titre affiché</label>
-                <input
-                  value={notifTitle}
-                  onChange={(e) => setNotifTitle(e.target.value)}
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Formulaire ou page ouverte au clic
+                </label>
+                <select
+                  value={destinationId}
+                  onChange={(e) => setDestinationId(e.target.value)}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Message personnalisé</label>
-                <textarea
-                  value={notifBody}
-                  onChange={(e) => setNotifBody(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                />
+                >
+                  {destinationGroups.map(({ group, items }) => (
+                    <optgroup key={group} label={group}>
+                      {items.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                  <option value={ADMIN_NOTIFICATION_DEST_CUSTOM}>Chemin personnalisé…</option>
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Priorité</label>
@@ -495,54 +417,47 @@ export default function AdminBroadcastsPage() {
                   <option value="urgent">Urgente (bannière)</option>
                 </select>
               </div>
-              <div className="text-xs text-slate-500 flex items-end pb-2">
-                Clic :{' '}
-                <span className="font-mono text-slate-700 dark:text-slate-300 ml-1">
-                  {resolvedAction.url ?? '—'}
-                </span>
+              {destinationId === ADMIN_NOTIFICATION_DEST_CUSTOM && (
+                <div className="lg:col-span-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Chemin (ex. /session ou /clairiere)</label>
+                  <input
+                    value={customDestPath}
+                    onChange={(e) => setCustomDestPath(e.target.value)}
+                    placeholder="/ma-route"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-xs"
+                  />
+                </div>
+              )}
+              <div className="lg:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">Titre affiché</label>
+                <input
+                  value={notifTitle}
+                  onChange={(e) => setNotifTitle(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">Message personnalisé</label>
+                <textarea
+                  value={notifBody}
+                  onChange={(e) => setNotifBody(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                />
+              </div>
+              <div className="lg:col-span-2 text-xs text-slate-500">
+                {resolvedAction.url ? (
+                  <>
+                    Au clic, l&apos;utilisateur ouvre{' '}
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{resolvedAction.label}</span>
+                    {' '}
+                    <span className="font-mono text-slate-600 dark:text-slate-400">({resolvedAction.url})</span>
+                  </>
+                ) : (
+                  <>Au clic : aucune redirection</>
+                )}
               </div>
             </div>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-600 p-4 space-y-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-              <input
-                type="checkbox"
-                checked={showEmailCampaign}
-                onChange={(e) => setShowEmailCampaign(e.target.checked)}
-              />
-              Ajouter une campagne e-mail (éditeur + SMTP)
-            </label>
-            {showEmailCampaign && (
-              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Sujet</label>
-                    <input
-                      value={channelsEmail.subject ?? ''}
-                      onChange={(e) => setChannelsEmail((c) => ({ ...c, subject: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Reply-to (optionnel)</label>
-                    <input
-                      value={channelsEmail.reply_to ?? ''}
-                      onChange={(e) => setChannelsEmail((c) => ({ ...c, reply_to: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    />
-                  </div>
-                </div>
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                  <div className="p-2 text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-700">
-                    Éditeur blocs — HTML envoyé via SMTP.
-                  </div>
-                  <div className="h-[420px] bg-white">
-                    <EmailEditor ref={emailEditorRef} minHeight="420px" />
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="flex gap-3">

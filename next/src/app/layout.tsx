@@ -29,8 +29,9 @@ export const metadata: Metadata = {
   },
   manifest: `${basePathSeg}/manifest.webmanifest`,
   icons: {
-    icon: iconPath,
-    apple: iconPath,
+    icon: [{ url: iconPath, type: 'image/png' }],
+    apple: [{ url: iconPath, type: 'image/png' }],
+    shortcut: iconPath,
   },
 }
 
@@ -47,6 +48,8 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark">
       <head>
+        <link rel="icon" href={iconPath} type="image/png" sizes="any" />
+        <link rel="apple-touch-icon" href={iconPath} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

@@ -431,7 +431,7 @@ export async function fetchDashboardData() {
         label:
           ((d.poeticReflection as string)?.slice(0, 40) ?? '') +
           ((d.poeticReflection as string)?.length > 40 ? '…' : '') ||
-          'Promenade onirique',
+          'Conversation intérieure',
         petals: normalized,
         type: 'dreamscape',
       })

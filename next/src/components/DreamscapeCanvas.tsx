@@ -25,7 +25,7 @@ const FULL_SILHOUETTE_PETALS = Object.fromEntries(
   ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'].map(id => [id, 1])
 )
 
-export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
+export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstUserMessage = null }) {
   useStore((s) => s.locale)
   const [text, setText] = useState('')
   const [liveText, setLiveText] = useState('')
@@ -106,7 +106,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
       if (!closeNudgeShownRef.current) {
         closeNudgeShownRef.current = true
         setHardCloseMessage(
-          `Tu as déjà fait ${userTurns} échanges. Si tu as trouvé ce que tu venais chercher, tu peux clôturer maintenant — sinon tu peux encore poursuivre un peu.`
+          t('dreamscapeCanvas.exchangeLimitSoft', { count: String(userTurns) })
         )
         setShowCloseNudge(true)
       }
@@ -114,7 +114,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
     // Forcer la clôture après max + extra (doucement, avec message clair).
     if (userTurns >= max + extra && !showCloseModal) {
       setHardCloseMessage(
-        `On arrive au terme de cette promenade (${max + extra} échanges). Pour que ce qui a émergé puisse vraiment s'intégrer, je te propose de sceller la promenade maintenant.`
+        t('dreamscapeCanvas.exchangeLimitHard', { count: String(max + extra) })
       )
       setShowCloseNudge(false)
       setShowCloseModal(true)
@@ -416,9 +416,10 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
     const max = Number(dreamscapeConfig?.max_echanges ?? 0)
     const extra = Number(dreamscapeConfig?.extra_echanges_avant_forcer_cloture ?? 0)
     const userTurnsNow = history.filter(m => m.role === 'user').length
+    if (userTurnsNow === 0 && onFirstUserMessage) onFirstUserMessage()
     if (Number.isFinite(max) && max > 0 && userTurnsNow >= max + extra) {
       setHardCloseMessage(
-        `On est au-delà de la limite douce (${max + extra} échanges). Je te propose de clôturer la promenade maintenant.`
+        t('dreamscapeCanvas.exchangeLimitForce', { count: String(max + extra) })
       )
       setShowCloseNudge(false)
       setShowCloseModal(true)
@@ -507,7 +508,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
     } finally {
       setIsAnalyzing(false)
     }
-  }, [text, liveText, history, isAnalyzing, buildCardPositions, mergePetals, mergePetalsDeficit, revealCards, dreamscapeConfig])
+  }, [text, liveText, history, isAnalyzing, buildCardPositions, mergePetals, mergePetalsDeficit, revealCards, dreamscapeConfig, onFirstUserMessage])
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -869,7 +870,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
                   if (dataUrl) {
                     const a = document.createElement('a')
                     a.href = dataUrl
-                    a.download = `promenade-onirique-${Date.now()}.png`
+                    a.download = `${t('dreamscapeCanvas.downloadFilename')}-${Date.now()}.png`
                     a.click()
                     toast(t('share.imageDownloaded'), 'success')
                   }
@@ -1085,7 +1086,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
                     : []
                   const actionsTxt = actions.length ? ` Actions: ${actions.join(' / ')}` : ''
                   const override =
-                    (snippet ? `« ${snippet} »` : 'Ma promenade onirique.') + actionsTxt
+                    (snippet ? `« ${snippet} »` : t('dreamscapeCanvas.shareFallback')) + actionsTxt
                   return (
                     <div className="flex flex-col items-stretch gap-2">
                       <ShareDreamscapeButton
@@ -1157,10 +1158,10 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null }) {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold text-violet-300/90 uppercase tracking-wider">
-                  Un seuil de clôture
+                  {t('dreamscapeCanvas.closeNudgeKicker')}
                 </p>
                 <h3 className="text-lg font-bold text-white mt-1">
-                  Veux-tu sceller cette promenade ?
+                  {t('dreamscapeCanvas.closeNudgeTitle')}
                 </h3>
               </div>
               <button

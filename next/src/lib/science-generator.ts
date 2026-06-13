@@ -509,7 +509,7 @@ export async function generateScienceProfile(params: {
       }
     }
 
-    // Promenade onirique
+    // Conversation intérieure
     if (config.include_dreamscape) {
       try {
         const dreamRes = await myDreamscapes(String(params.userId))
@@ -735,7 +735,7 @@ export async function generateScienceProfile(params: {
     }
   }
 
-  // ── Promenade onirique (dreamscape) ──
+  // ── Conversation intérieure (dreamscape) ──
   if (config.include_dreamscape) {
     try {
       const dreamscapeItemsRes = await myDreamscapes(String(params.userId))

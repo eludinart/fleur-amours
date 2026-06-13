@@ -292,6 +292,14 @@ function renderManualInline(text: string, keyPrefix: string): ReactNode {
   return <>{out}</>
 }
 
+/** Le manuel encode les citations avec « » ; elles deviennent des <blockquote> (bloc, pas inline). */
+function containsManualQuote(text: string): boolean {
+  return /«[^»]*»/.test(text)
+}
+
+const MANUAL_BODY_CLASS =
+  'text-sm leading-7 text-slate-700 dark:text-slate-200 sm:text-base'
+
 function pushParagraphChunks(text: string, blocks: NarrativeBlock[]) {
   const t = text.trim()
   if (!t) return
@@ -508,9 +516,15 @@ function ManualNarrativeBlocks({
             <span className="inline-flex items-center rounded-full border border-sky-200 bg-white/90 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-700 dark:border-sky-800 dark:bg-slate-900 dark:text-sky-300">
               {b.label}
             </span>
-            <p className="mt-2 text-sm leading-7 text-slate-700 dark:text-slate-200 sm:text-base">
-              {renderManualInline(b.text, `${keyBase}-cot-${i}`)}
-            </p>
+            {containsManualQuote(b.text) ? (
+              <div className={`mt-2 ${MANUAL_BODY_CLASS}`}>
+                {renderManualInline(b.text, `${keyBase}-cot-${i}`)}
+              </div>
+            ) : (
+              <p className={`mt-2 ${MANUAL_BODY_CLASS}`}>
+                {renderManualInline(b.text, `${keyBase}-cot-${i}`)}
+              </p>
+            )}
           </div>
         ) : b.kind === 'list' ? (
           <ul
@@ -521,13 +535,24 @@ function ManualNarrativeBlocks({
               <li key={`${keyBase}-li-${i}-${li}`}>{renderManualInline(item, `${keyBase}-lit-${i}-${li}`)}</li>
             ))}
           </ul>
+        ) : containsManualQuote(b.text) ? (
+          <div
+            key={`${keyBase}-p-${i}`}
+            className={
+              isCycleIntro
+                ? 'mx-auto max-w-2xl text-base leading-8 text-slate-700 dark:text-slate-200 sm:text-lg'
+                : MANUAL_BODY_CLASS
+            }
+          >
+            {renderManualInline(b.text, `${keyBase}-pt-${i}`)}
+          </div>
         ) : (
           <p
             key={`${keyBase}-p-${i}`}
             className={
               isCycleIntro
                 ? 'mx-auto max-w-2xl text-base leading-8 text-slate-700 dark:text-slate-200 sm:text-lg'
-                : 'text-sm leading-7 text-slate-700 dark:text-slate-200 sm:text-base'
+                : MANUAL_BODY_CLASS
             }
           >
             {renderManualInline(b.text, `${keyBase}-pt-${i}`)}

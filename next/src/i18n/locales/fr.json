@@ -1,6 +1,9 @@
 {
-  "dreamscape": "Promenade Onirique",
-  "dreamscapeShort": "Promenade onirique",
+  "dreamscape": "Conversation intérieure",
+  "dreamscapeSubtitle": "avec votre Fleur d'AmOurs",
+  "dreamscapeIntro": "Posez ce que vous ressentez : votre Fleur d'AmOurs vous répond et vous aide à vous entendre.",
+  "dreamscapeShort": "Conversation intérieure",
+  "dreamscapePlural": "Conversations intérieures",
   "contact": {
     "title": "Demande de rendez-vous personnalisé",
     "pageTitle": "Demander un accompagnement",
@@ -129,7 +132,7 @@
     "coachRequestOpenModal": "Ouvrir le formulaire de demande",
     "deleteAccount": "Supprimer mon compte",
     "deleteAccountSection": "Zone de danger",
-    "deleteAccountWarning": "Cette action est irréversible. Toutes vos données seront définitivement effacées : Fleurs, sessions, tirages, promenades oniriques, messages de chat et compte. Vous ne pourrez plus vous reconnecter.",
+    "deleteAccountWarning": "Cette action est irréversible. Toutes vos données seront définitivement effacées : Fleurs, sessions, tirages, conversations intérieures, messages de chat et compte. Vous ne pourrez plus vous reconnecter.",
     "deleteAccountConfirm1": "Êtes-vous absolument sûr ?",
     "deleteAccountConfirm2": "Pour confirmer, tapez SUPPRIMER ci-dessous",
     "deleteAccountPlaceholder": "SUPPRIMER",
@@ -421,7 +424,7 @@
     "pillarExplore": "Explorer",
     "pillarExploreDesc": "Sessions et tirages — cartes et conversation pour avancer",
     "pillarAccompany": "S'accompagner",
-    "pillarAccompanyDesc": "Chat et Promenade — soutien et introspection",
+    "pillarAccompanyDesc": "Chat et Conversation intérieure — soutien et introspection",
     "startWithFleur": "Par où commencer : Ma Fleur",
     "sapIntro": "Tu as 50 Sèves pour découvrir l'app.",
     "sapIntroMore": "Les Sèves servent aux portes, tirages et sessions. Retrouve ton solde dans Mon compte.",
@@ -470,7 +473,7 @@
     "launchReading": "Lancer un tirage",
     "readingDesc": "Une carte ou les 4 Portes pour éclairer ta question",
     "statsLabel": "Statistiques",
-    "statsDesc": "Nombre de sessions, tirages, fleurs et promenades réalisés.",
+    "statsDesc": "Nombre de sessions, tirages, fleurs et conversations intérieures réalisés.",
     "climateSectionTitle": "Climat du jardin",
     "climateSectionDesc": "Vos activités et une métaphore douce de tendance — pas une note sur vous.",
     "climateHint": "Tendance intérieure",
@@ -581,7 +584,7 @@
     "desc": "Vos phrases-synthèses de sessions et tirages, pour retrouver vos explorations.",
     "empty": "Vos phrases-synthèses apparaîtront ici",
     "session": "Session",
-    "dreamscape": "Promenade onirique",
+    "dreamscape": "Conversation intérieure",
     "tirage": "Tirage",
     "badgeShadow": "Ombre",
     "badgeLight": "Lumière",
@@ -594,8 +597,8 @@
     "readingCardFallback": "Carte",
     "sessionWithEntry": "Session — entrée par : « {entry} ». {body}",
     "sessionSynthesis": "Session — {body}",
-    "dreamscapeLine": "Promenade onirique — {text}",
-    "dreamscapeFallback": "Promenade onirique enregistrée."
+    "dreamscapeLine": "Conversation intérieure — {text}",
+    "dreamscapeFallback": "Conversation intérieure enregistrée."
   },
   "insight": {
     "title": "Science de la Fleur",
@@ -622,7 +625,7 @@
     "cardsRevealed": "Cartes révélées",
     "maFleur": "Ma Fleur",
     "duo": "Duo",
-    "dreamscape": "Promenades oniriques"
+    "dreamscape": "Conversations intérieures"
   },
   "confirmation": {
     "title": "Confirmer l'action",
@@ -667,8 +670,8 @@
     "encourageFleurTitle": "Partager votre Fleur d’AmOurs",
     "encourageDreamscape": "Une phrase ou le lien suffisent : vos proches voient un aperçu poétique avec image.",
     "encourageDreamscapeMenu": "Le lien mène à votre page de partage avec carte et texte pour les réseaux.",
-    "encourageDreamscapeTitle": "Partager cette promenade (lien + aperçu sur les réseaux)",
-    "dreamscapeShareText": "Découvrez une Promenade Onirique sur Fleur d'AmOurs 🌸",
+    "encourageDreamscapeTitle": "Partager cette conversation (lien + aperçu sur les réseaux)",
+    "dreamscapeShareText": "Découvrez une Conversation intérieure sur Fleur d'AmOurs 🌸",
     "dreamscapeShareError": "Impossible d’obtenir le lien public de partage.",
     "socialPlatformsHint": "Twitter et WhatsApp reprennent le texte ci-dessus. Facebook et LinkedIn s’appuient surtout sur le titre, l’image et la description de la page. Instagram n’expose pas d’URL de partage web : utilisez « Copier le lien » puis collez dans une story ou une bio.",
     "dreamscapeShareTitle": "Partage",
@@ -680,10 +683,14 @@
     "landingBackTirage": "Tirages",
     "landingFallbackCard": "Votre carte",
     "landingFourTitle": "Les quatre portes",
-    "landingLoadingDreamscape": "Chargement de la promenade…",
+    "landingLoadingDreamscape": "Chargement de la conversation…",
     "landingDreamscapeNotFound": "Partage introuvable",
     "landingDreamscapeCtaHome": "Accueil",
     "landingYourFlower": "Sa fleur d’AmOurs"
+  },
+  "dreamscapePage": {
+    "bannerAbout": "À propos de cette conversation",
+    "bannerCollapse": "Réduire"
   },
   "dreamscapeCanvas": {
     "close": "Fermer",
@@ -691,15 +698,15 @@
     "saveTitle": "Sauvegarder dans l'historique (accessible partout)",
     "saveBtn": "💾 Sauvegarder",
     "historyBtn": "📜 Historique",
-    "historyTitle": "Voir l'historique des promenades",
+    "historyTitle": "Voir l'historique des conversations",
     "sendBtn": "Envoyer",
     "listening": "En écoute…",
     "placeholder": "Je me sens…",
     "noReflection": "Aucune réflexion à sauvegarder",
-    "saveSuccess": "Promenade onirique sauvegardée",
-    "closeSuccess": "Promenade onirique clôturée et sauvegardée",
-    "closeModalTitle": "Clôturer la Promenade Onirique ?",
-    "closeModalDesc": "Cette promenade sera sauvegardée avec un résumé des échanges, le chemin choisi et les actions que tu t'es engagé·e à œuvrer.",
+    "saveSuccess": "Conversation intérieure sauvegardée",
+    "closeSuccess": "Conversation intérieure clôturée et sauvegardée",
+    "closeModalTitle": "Clôturer la conversation ?",
+    "closeModalDesc": "Cette conversation sera sauvegardée avec un résumé des échanges, le chemin choisi et les actions que tu t'es engagé·e à œuvrer.",
     "pathLabel": "Chemin choisi",
     "actionsLabel": "Actions à œuvrer",
     "closeConfirm": "Clôturer et sauvegarder",
@@ -716,15 +723,29 @@
     "anchor": "Ancrage",
     "accompany": "Être accompagné·e →",
     "accompanyDistress": "Ce que vous traversez mérite un accompagnement humain.",
-    "accompanyLight": "Un espace dédié peut vous aider à explorer cela."
+    "accompanyLight": "Un espace dédié peut vous aider à explorer cela.",
+    "exchangeLimitSoft": "Tu as déjà fait {count} échanges. Si tu as trouvé ce que tu venais chercher, tu peux clôturer maintenant — sinon tu peux encore poursuivre un peu.",
+    "exchangeLimitHard": "On arrive au terme de cette conversation ({count} échanges). Pour que ce qui a émergé puisse vraiment s'intégrer, je te propose de la clôturer maintenant.",
+    "exchangeLimitForce": "On est au-delà de la limite douce ({count} échanges). Je te propose de clôturer la conversation maintenant.",
+    "closeNudgeKicker": "Un seuil de clôture",
+    "closeNudgeTitle": "Veux-tu sceller cette conversation ?",
+    "shareFallback": "Ma conversation intérieure.",
+    "downloadFilename": "conversation-interieure"
   },
   "dreamscapePartage": {
     "back": "Retour au Jardin",
-    "title": "Promenade Onirique partagée",
+    "title": "Conversation intérieure partagée",
     "synthesis": "Synthèse du parcours",
-    "cta": "Faire ma propre promenade"
+    "cta": "Faire ma propre conversation"
   },
   "dreamscapeHistorique": {
+    "history": "Historique des conversations intérieures",
+    "backTo": "Retour à la conversation intérieure",
+    "backShort": "Retour",
+    "emptyTitle": "Aucune conversation sauvegardée",
+    "emptyDesc": "Sauvegardez une conversation depuis l'espace dialogue pour la retrouver ici.",
+    "emptyCta": "Commencer une conversation",
+    "errorBack": "Retour à la conversation intérieure",
     "resumeBtn": "Reprendre le tirage",
     "inProgress": "en cours",
     "snapshot": "Aperçu du tirage",
@@ -733,9 +754,10 @@
     "regenerateAllSnapshots": "Régénérer tous les aperçus",
     "regenerateOk": "Aperçu mis à jour.",
     "regenerateError": "Impossible de régénérer l'aperçu.",
-    "regenerateNoCards": "Aucune carte révélée à capturer pour cette promenade.",
+    "regenerateNoCards": "Aucune carte révélée à capturer pour cette conversation.",
     "regenerateBusy": "Régénération des aperçus…",
-    "regenerateSnapshotMissing": "Aucun aperçu enregistré — utilisez le bouton pour en créer un."
+    "regenerateSnapshotMissing": "Aucun aperçu enregistré — utilisez le bouton pour en créer un.",
+    "emptyReflection": "Conversation sans réflexion enregistrée"
   },
   "voiceInput": {
     "placeholder": "Écrivez ou dictez votre réponse…"
@@ -1282,7 +1304,7 @@
     "tirages": "Tirages",
     "maFleur": "Ma Fleur",
     "mesFleurs": "Mes Fleurs",
-    "dreamscape": "Promenade Onirique"
+    "dreamscape": "Conversation intérieure"
   },
   "logout": "Se déconnecter",
   "mycelium": {
@@ -1420,7 +1442,7 @@
   },
   "eclosion": {
     "title": "Éclosion — votre évolution",
-    "subtitle": "Votre fil relationnel dans le temps : sessions, tirages, explorations Fleur, promenades oniriques, questionnaires, check-ins et plus — tout ce que vous enregistrez dans le Jardin.",
+    "subtitle": "Votre fil relationnel dans le temps : sessions, tirages, explorations Fleur, conversations intérieures, questionnaires, check-ins et plus — tout ce que vous enregistrez dans le Jardin.",
     "narrativeTitle": "Lecture de votre mouvement",
     "narrativeCta": "Générer la lecture",
     "narrativeLoading": "Lecture en cours…",
@@ -1457,7 +1479,7 @@
     "socialQuote3Author": "Julien",
     "trustLine": "Connexion sécurisée · Données respectées · Sans carte bancaire pour découvrir",
     "visualTeaserTitle": "Le jardin, ce n’est pas qu’une carte",
-    "visualTeaserBody": "Parcours guidé, tirages enregistrés, Fleur d’AmOurs, promenades et outils de clarté : un espace complet vous attend dès l’inscription — gratuit pour commencer.",
+    "visualTeaserBody": "Parcours guidé, tirages enregistrés, Fleur d'AmOurs, conversations intérieures et outils de clarté : un espace complet vous attend dès l'inscription — gratuit pour commencer.",
     "visualTeaserCta": "Créer un compte et ouvrir le jardin",
     "visualTeaserAria": "Aperçu visuel du jardin Fleur d’AmOurs",
     "visualTeaserAlt": "Aperçu de l’application : Fleur d’AmOurs, huit pétales et journal des ombres et lumières avec l’historique des tirages",
@@ -1512,7 +1534,7 @@
     "heroTitle": "Le jardin au service de votre pratique d’accompagnement",
     "heroSubtitle": "Fleur d’AmOurs relie un outil symbolique et relationnel d’une grande finesse à une application qui structure le lien avec les personnes que vous accompagnez — individuation, lien à soi, problématiques relationnelles : un même écosystème.",
     "pillarToolTitle": "Comprendre et nommer, avec la personne",
-    "pillarToolDesc": "Cartes, essences, questions racines, parcours des portes, promenade onirique, manuel en ligne : vous disposez d’un vocabulaire commun pour explorer l’émotionnel et le relationnel sans tout porter seul au verbal.",
+    "pillarToolDesc": "Cartes, essences, questions racines, parcours des portes, conversation intérieure, manuel en ligne : vous disposez d'un vocabulaire commun pour explorer l'émotionnel et le relationnel sans tout porter seul au verbal.",
     "pillarPracticeTitle": "Clarifier le suivi de votre activité",
     "pillarPracticeDesc": "Messagerie intégrée, demandes d’accompagnement, annuaire des accompagnants et, pour les comptes habilités, vue d’ensemble des échanges et de la patientèle : moins de dispersion entre mails, SMS et notes éparses.",
     "benefitsTitle": "Ce que vous activez concrètement",
@@ -1522,7 +1544,7 @@
     "b2Desc": "Parcours structuré, tirages simples ou en profondeur, historique : la personne avance avec des repères ; vous retrouvez du matériel partagé pour approfondir.",
     "b3Title": "Manuel et cadre théorique",
     "b3Desc": "Le fond des cartes et des concepts accessible dans l’app : ancrer vos interventions dans une grille de lecture cohérente.",
-    "b4Title": "Dreamscape et introspection",
+    "b4Title": "Conversation intérieure et introspection",
     "b4Desc": "Un espace pour la symbolique et l’exploration intérieure, complémentaire au travail relationnel explicite.",
     "b5Title": "Canal d’accompagnement et annuaire",
     "b5Desc": "Les personnes peuvent vous solliciter depuis le produit ; votre visibilité dans l’annuaire relie votre pratique au jardin.",

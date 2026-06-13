@@ -21,7 +21,7 @@ export function pathWithoutBase(pathname: string | null | undefined, basePath: s
   return p.replace(/^\/+|\/+$/g, '')
 }
 
-/** Parcours où le retour global ne doit pas s’afficher (Promenade onirique, Explorer ma Fleur, Tirages, Ma Fleur, Duo). */
+/** Parcours où le retour global ne doit pas s’afficher (Conversation intérieure, Explorer ma Fleur, Tirages, Ma Fleur, Duo). */
 export function isImmersiveParcoursPath(pathWithoutBaseSeg: string): boolean {
   const p = pathWithoutBaseSeg.replace(/^\/+|\/+$/g, '')
   if (!p) return false

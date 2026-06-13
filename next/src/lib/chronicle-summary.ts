@@ -142,6 +142,9 @@ export function buildDreamscapeChronicleSummary(d: Record<string, unknown>): str
   const assistant = history?.find((m) => m.role === 'assistant')?.content
   const raw = (poetic || assistant || '').trim()
   if (!raw) return t('chronicle.dreamscapeFallback')
-  const cleaned = raw.replace(/^promenade onirique\.?\s*/i, '').trim() || raw
+  const cleaned = raw
+    .replace(/^promenade onirique\.?\s*/i, '')
+    .replace(/^conversation intérieure\.?\s*/i, '')
+    .trim() || raw
   return t('chronicle.dreamscapeLine', { text: firstReadableChunk(cleaned, 280) })
 }

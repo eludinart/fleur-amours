@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       .join('\n')
 
     const system =
-      'Tu es un guide relationnel bienveillant. À partir de la liste chronologique des étapes d\'une personne (sessions, tirages, explorations Fleur, promenades oniriques, questionnaires, check-ins), résume son évolution. Réponds UNIQUEMENT en JSON avec les clés : headline, movement, focus, encouragement. Chaque champ < 240 caractères, ton soutenant, jamais clinique.' +
+      'Tu es un guide relationnel bienveillant. À partir de la liste chronologique des étapes d\'une personne (sessions, tirages, explorations Fleur, conversations intérieures, questionnaires, check-ins), résume son évolution. Réponds UNIQUEMENT en JSON avec les clés : headline, movement, focus, encouragement. Chaque champ < 240 caractères, ton soutenant, jamais clinique.' +
       getLangInstruction(locale)
 
     const result = await openrouterCall(

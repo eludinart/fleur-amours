@@ -113,25 +113,25 @@ export async function generateFlowerStateHaiku(ctx: FlowerHaikuContext): Promise
 
   const blendIntro =
     locale === 'en'
-      ? 'This is the CURRENT BLEND on the flower: a synthesis of the user’s recent sessions, questionnaires and dream walks — not a single past moment.'
+      ? 'This is the CURRENT BLEND on the flower: a synthesis of the user’s recent sessions, questionnaires and inner conversations — not a single past moment.'
       : locale === 'es'
-        ? 'Es la SÍNTESIS ACTUAL en la flor: mezcla de pasos recientes (sesiones, cuestionarios, paseos oníricos), no un solo momento pasado.'
+        ? 'Es la SÍNTESIS ACTUAL en la flor: mezcla de pasos recientes (sesiones, cuestionarios, conversaciones interiores), no un solo momento pasado.'
         : locale === 'de'
-          ? 'Das ist die AKTUELLE MISCHUNG auf der Blüte: Synthese aus jüngeren Sessions, Fragebögen und Traumspaziergängen — kein einzelner vergangener Moment.'
+          ? 'Das ist die AKTUELLE MISCHUNG auf der Blüte: Synthese aus jüngeren Sessions, Fragebögen und inneren Unterhaltungen — kein einzelner vergangener Moment.'
           : locale === 'it'
-            ? 'È la SINTESI ATTUALE sul fiore: fusione di passaggi recenti (sessioni, questionari, passeggiate oniriche), non un solo istante passato.'
-            : 'Il s’agit de la SYNTHÈSE ACTUELLE sur la rose : mélange de tes passages récents (sessions, questionnaires, promenades oniriques) — pas un seul moment passé.'
+            ? 'È la SINTESI ATTUALE sul fiore: fusione di passaggi recenti (sessioni, questionari, conversazioni interiori), non un solo istante passato.'
+            : 'Il s’agit de la SYNTHÈSE ACTUELLE sur la rose : mélange de tes passages récents (sessions, questionnaires, conversations intérieures) — pas un seul moment passé.'
 
   const snapIntro =
     locale === 'en'
-      ? 'This state is ONE frozen moment from the user’s history (session, questionnaire or dream walk).'
+      ? 'This state is ONE frozen moment from the user’s history (session, questionnaire or inner conversation).'
       : locale === 'es'
-        ? 'Este estado es UN momento fijado del historial (sesión, cuestionario o paseo onírico).'
+        ? 'Este estado es UN momento fijado del historial (sesión, cuestionario o conversación interior).'
         : locale === 'de'
-          ? 'Dieser Zustand ist EIN eingefrorener Moment aus der Historie (Sitzung, Fragebogen oder Traumgang).'
+          ? 'Dieser Zustand ist EIN eingefrorener Moment aus der Historie (Sitzung, Fragebogen oder innere Unterhaltung).'
           : locale === 'it'
-            ? 'Questo stato è UN momento fissato dalla cronologia (sessione, questionario o passeggiata onirica).'
-            : 'Cet état est UN moment figé de ton historique (session, questionnaire ou promenade onirique).'
+            ? 'Questo stato è UN momento fissato dalla cronologia (sessione, questionario o conversazione interiore).'
+            : 'Cet état est UN moment figé de ton historique (session, questionnaire ou conversation intérieure).'
 
   const metaBlock =
     ctx.mode === 'snapshot' && ctx.snapshotMeta

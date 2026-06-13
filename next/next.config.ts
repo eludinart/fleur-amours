@@ -37,6 +37,13 @@ const nextConfig: NextConfig = {
       // Évite le double /jardin/jardin (page blanche)
       { source: '/jardin', destination: '/', permanent: false },
       { source: '/', destination: '/jardin', permanent: false, basePath: false },
+      // Favicon à la racine du domaine (hors basePath) → logo Fleur
+      {
+        source: '/favicon.ico',
+        destination: '/jardin/juste-la-fleur.png',
+        permanent: false,
+        basePath: false,
+      },
     ]
   },
   async rewrites() {

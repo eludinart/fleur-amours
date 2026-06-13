@@ -6,7 +6,7 @@
  * Coolify : MariaDB est dans un conteneur Docker. Le script récupère l'IP du
  * conteneur et tunnelise vers celle-ci (localhost sur le VPS ne marche pas).
  *
- * Config : sync-config.env ou .env (SSH_VPS_*, MARIADB_CONTAINER)
+ * Config : sync-config.env, docker-compose.env (SMTP, secrets partagés) ou .env (surcharges locales)
  */
 import { spawn, spawnSync } from 'child_process'
 import { readFileSync, existsSync } from 'fs'
@@ -69,8 +69,10 @@ const ROOT = resolve(__dirname, '..')
 
 function loadEnv() {
   const env = { ...process.env }
+  // Ordre : sync-config → docker-compose.env (SMTP, JWT prod…) → .env (surcharges locales)
   for (const p of [
     resolve(ROOT, 'sync-config.env'),
+    resolve(ROOT, 'docker-compose.env'),
     resolve(ROOT, '.env'),
   ]) {
     if (existsSync(p)) {

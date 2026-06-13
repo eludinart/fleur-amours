@@ -229,7 +229,7 @@ export default function AdminEmailsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <div>
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Campagnes e-mail</h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -254,7 +254,9 @@ export default function AdminEmailsPage() {
           {!smtpOk && smtpOk !== null ? (
             <p className="text-xs text-amber-800 dark:text-amber-200 mt-1 max-w-xl">
               Ajoutez SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS et SMTP_FROM dans{' '}
-              <code className="font-mono">docker-compose.env</code>, puis redémarrez le conteneur Next.js.
+              <code className="font-mono">docker-compose.env</code> (ou <code className="font-mono">.env</code> en
+              local), puis redémarrez le serveur (<code className="font-mono">npm run dev.vps</code> ou le conteneur
+              Next.js).
             </p>
           ) : null}
         </div>
@@ -336,17 +338,16 @@ export default function AdminEmailsPage() {
       {tab === 'compose' && (
         <div className="space-y-5">
           <div className="bg-white dark:bg-slate-900 rounded-xl border p-5 space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Titre interne (historique)</label>
-              <input
-                value={draftTitle}
-                onChange={(e) => setDraftTitle(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border dark:border-slate-700 bg-white dark:bg-slate-800"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="sm:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Titre interne (historique)</label>
+                <input
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border dark:border-slate-700 bg-white dark:bg-slate-800"
+                />
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Sujet de l&apos;e-mail *</label>
                 <input
                   value={subject}
@@ -376,7 +377,7 @@ export default function AdminEmailsPage() {
 
           <div className="bg-white dark:bg-slate-900 rounded-xl border p-5 space-y-4">
             <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Destinataires</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
               {ROLE_OPTIONS.map((opt) => (
                 <label
                   key={opt.value}
@@ -470,10 +471,10 @@ export default function AdminEmailsPage() {
             <div className="p-3 text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/40 border-b">
               Éditeur visuel HTML — glissez des blocs, images et textes.
             </div>
-            <div className="h-[480px] bg-white">
+            <div className="h-[480px] lg:h-[min(640px,calc(100vh-14rem))] bg-white">
               <EmailEditor
                 ref={emailEditorRef}
-                minHeight="480px"
+                minHeight="100%"
                 onReady={() => setEditorReady(true)}
               />
             </div>

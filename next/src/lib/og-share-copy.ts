@@ -9,13 +9,13 @@ export const OG_CHIP_FREE = 'Gratuit pour commencer'
 export const OG_CHIP_PRIVATE = 'Espace bienveillant'
 export const OG_CHIP_FAST = 'Résultat en quelques minutes'
 
-/** Promenade Onirique */
-export const OG_DREAMSCAPE_KICKER = 'Expérience immersive'
-export const OG_DREAMSCAPE_HOOK = 'Un voyage intérieur, doux et profond.'
+/** Conversation intérieure (ex-Dreamscape) */
+export const OG_DREAMSCAPE_KICKER = 'Dialogue avec votre Fleur'
+export const OG_DREAMSCAPE_HOOK = 'Posez ce que vous ressentez — votre Fleur vous répond.'
 export const OG_DREAMSCAPE_SUB =
-  'Imaginaire, symbolique et mots justes — une pause pour vous retrouver.'
-export const OG_DREAMSCAPE_FALLBACK_TITLE = 'Une Promenade à vivre soi-même'
-export const OG_DREAMSCAPE_CTA = 'Découvrir la Promenade'
+  'Une conversation intérieure guidée pour vous entendre et avancer.'
+export const OG_DREAMSCAPE_FALLBACK_TITLE = 'Une conversation à vivre soi-même'
+export const OG_DREAMSCAPE_CTA = 'Découvrir la conversation'
 export const OG_DREAMSCAPE_CHIPS = ['Parcours guidé', 'Ton poétique', 'Anonyme'] as const
 
 /** Fleur d'AmOurs */
@@ -44,7 +44,7 @@ export const OG_TAROT_CHIPS_4 = ['4 portes', 'Vue d’ensemble', 'Message action
 /** Meta descriptions max ~155 chars for social snippets */
 export function ogMetaDescriptionDreamscape(synthesisSnippet: string | null | undefined): string {
   const hook =
-    'Promenade Onirique sur Fleur d’AmOurs : expérience poétique guidée. '
+    'Conversation intérieure sur Fleur d’AmOurs : dialogue guidé avec votre Fleur. '
   const tail = ' Essayez gratuitement — quelques minutes, à votre rythme.'
   if (!synthesisSnippet?.trim()) return (hook + tail).slice(0, 300)
   const q = synthesisSnippet.trim().replace(/\s+/g, ' ')
@@ -70,7 +70,7 @@ export function ogMetaDescriptionTirage(cardHint: string, synthSnippet: string |
 }
 
 export function ogMetaTitleDreamscape(): string {
-  return `Promenade Onirique — ${OG_BRAND}`
+  return `Conversation intérieure — ${OG_BRAND}`
 }
 
 export function ogMetaTitleFleur(): string {

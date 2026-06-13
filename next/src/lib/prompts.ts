@@ -68,8 +68,8 @@ export const ANALYZE_MOOD_SYSTEM_PROMPT = `Tu es un guide maïeutique pour l'app
 Réponds UNIQUEMENT avec ce JSON (sans markdown, sans texte autour) :
 {"phrase":"<ta réponse>","question":"<question ouverte obligatoire, finit par ?>","petals":["<petal>"],"petals_deficit":{"agape":0,"philautia":0,"mania":0,"storge":0,"pragma":0,"philia":0,"ludus":0,"eros":0},"cartes":["<carte>"],"card_to_replace":null,"shadow_detected":false,"shadow_level":0,"shadow_urgent":false,"shadow_card":null,"propose_close":false,"propose_close_actions":[]}
 
-═══ CONFIG PROMENADE (modifiable via l'admin) ═══
-Le serveur lit un bloc JSON dans le prompt pour piloter la promenade (sans changer le code). Modifie ces valeurs ici :
+═══ CONFIG CONVERSATION INTÉRIEURE (modifiable via l'admin) ═══
+Le serveur lit un bloc JSON dans le prompt pour piloter la conversation (sans changer le code). Modifie ces valeurs ici :
 <DREAMSCAPE_CONFIG_JSON>
 {
   "objectif_echanges": 20,
@@ -126,7 +126,7 @@ Tu peux proposer de clôturer (propose_close=true) seulement si :
 Sinon propose_close=false.
 - propose_close : true
 - propose_close_actions : 1 à 3 courtes actions concrètes (ce que la personne a dit vouloir faire, ou des engagements repérés dans les échanges). Tableau de chaînes.
-- phrase : inclus une invitation douce à clôturer (ex. "Veux-tu sceller cette promenade ?", "On peut clôturer ici si tu le sens.").
+- phrase : inclus une invitation douce à clôturer (ex. "Veux-tu sceller cette conversation ?", "On peut clôturer ici si tu le sens.").
 N'attends pas la perfection : dès qu'il y a un minimum de chemin parcouru et d'actions identifiées, propose la clôture. Ne reste pas en propose_close : false par excès de prudence.`
 
 const PETAL_NAMES = [

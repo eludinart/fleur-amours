@@ -188,7 +188,7 @@ export default function DreamscapeHistoriquePage() {
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center py-20 px-4">
         <p className="text-amber-600 dark:text-amber-400 text-center">{error}</p>
         <Link href="/dreamscape" className="mt-4 px-5 py-2.5 bg-violet-500 text-white rounded-xl font-medium hover:opacity-90">
-          Retour au Dreamscape
+          {t('dreamscapeHistorique.errorBack')}
         </Link>
       </div>
     )
@@ -199,21 +199,21 @@ export default function DreamscapeHistoriquePage() {
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <Link href="/dreamscape" className="text-sm text-violet-500 hover:text-violet-400 mb-4 inline-block">
-            ← Retour à la Promenade Onirique
+            ← {t('dreamscapeHistorique.backTo')}
           </Link>
           <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 p-12 text-center">
             <span className="text-5xl mb-4 block">🌙</span>
             <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-              Aucune promenade sauvegardée
+              {t('dreamscapeHistorique.emptyTitle')}
             </h2>
             <p className="text-slate-500 dark:text-slate-400 mb-6">
-              Sauvegardez une promenade onirique depuis le Dreamscape pour la retrouver ici.
+              {t('dreamscapeHistorique.emptyDesc')}
             </p>
             <Link
               href="/dreamscape"
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-rose-500 text-white rounded-full font-medium hover:opacity-90 transition-opacity"
             >
-              Commencer une promenade
+              {t('dreamscapeHistorique.emptyCta')}
             </Link>
           </div>
         </div>
@@ -241,10 +241,10 @@ export default function DreamscapeHistoriquePage() {
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <Link href="/dreamscape" className="text-sm text-violet-500 hover:text-violet-400 order-2 sm:order-1 shrink-0">
-            ← Retour au Dreamscape
+            ← {t('dreamscapeHistorique.backShort')}
           </Link>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 order-1 sm:order-2 text-center sm:text-left">
-            Historique des promenades oniriques
+            {t('dreamscapeHistorique.history')}
           </h1>
         </div>
 
@@ -289,7 +289,7 @@ export default function DreamscapeHistoriquePage() {
                     <p className="text-sm text-slate-700 dark:text-slate-200 italic line-clamp-2 leading-relaxed">
                       {(() => {
                         const s = (synthesis || '').replace(/\s+/g, ' ').trim()
-                        return s ? `"${s.slice(0, 180)}${s.length > 180 ? '…' : ''}"` : 'Promenade sans réflexion enregistrée'
+                        return s ? `"${s.slice(0, 180)}${s.length > 180 ? '…' : ''}"` : t('dreamscapeHistorique.emptyReflection')
                       })()}
                     </p>
                     <p className="text-xs text-slate-400 flex items-center gap-2 flex-wrap">

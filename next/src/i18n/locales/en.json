@@ -1,6 +1,9 @@
 {
-  "dreamscape": "Dream Walk",
-  "dreamscapeShort": "Dream walk",
+  "dreamscape": "Inner conversation",
+  "dreamscapeSubtitle": "with your Flower of Love",
+  "dreamscapeIntro": "Share what you feel: your Flower of Love answers and helps you hear yourself.",
+  "dreamscapeShort": "Inner conversation",
+  "dreamscapePlural": "Inner conversations",
   "contact": {
     "title": "Personal appointment request",
     "pageTitle": "Request coaching",
@@ -129,7 +132,7 @@
     "coachRequestOpenModal": "Open the request form",
     "deleteAccount": "Delete my account",
     "deleteAccountSection": "Danger zone",
-    "deleteAccountWarning": "This action is irreversible. All your data will be permanently erased: Flowers, sessions, readings, dreamscapes, chat messages, and account. You will not be able to log in again.",
+    "deleteAccountWarning": "This action is irreversible. All your data will be permanently erased: Flowers, sessions, readings, inner conversations, chat messages, and account. You will not be able to log in again.",
     "deleteAccountConfirm1": "Are you absolutely sure?",
     "deleteAccountConfirm2": "To confirm, type DELETE below",
     "deleteAccountPlaceholder": "DELETE",
@@ -398,7 +401,7 @@
     "pillarExplore": "Explore",
     "pillarExploreDesc": "Sessions and readings — cards and conversation to move forward",
     "pillarAccompany": "Support yourself",
-    "pillarAccompanyDesc": "Chat and Dream Walk — support and introspection",
+    "pillarAccompanyDesc": "Chat and Inner conversation — support and introspection",
     "startWithFleur": "Where to start: My Flower",
     "sapIntro": "You have 50 Sap to discover the app.",
     "sapIntroMore": "Sap is used for doors, readings and sessions. Check your balance in My account.",
@@ -447,7 +450,7 @@
     "launchReading": "Launch a reading",
     "readingDesc": "One card or the 4 Doors to illuminate your question",
     "statsLabel": "Statistics",
-    "statsDesc": "Number of sessions, readings, flowers and dream walks completed.",
+    "statsDesc": "Number of sessions, readings, flowers and inner conversations completed.",
     "climateSectionTitle": "Garden climate",
     "climateSectionDesc": "Your activity plus a gentle trend metaphor — not a grade on you.",
     "climateHint": "Inner trend",
@@ -558,7 +561,7 @@
     "desc": "Your synthesis phrases from sessions and readings.",
     "empty": "Your synthesis phrases will appear here",
     "session": "Session",
-    "dreamscape": "Dream walk",
+    "dreamscape": "Inner conversation",
     "tirage": "Reading",
     "badgeShadow": "Shadow",
     "badgeLight": "Light",
@@ -571,8 +574,8 @@
     "readingCardFallback": "Card",
     "sessionWithEntry": "Session — you entered with: « {entry} ». {body}",
     "sessionSynthesis": "Session — {body}",
-    "dreamscapeLine": "Dream walk — {text}",
-    "dreamscapeFallback": "Dream walk saved."
+    "dreamscapeLine": "Inner conversation — {text}",
+    "dreamscapeFallback": "Inner conversation saved."
   },
   "insight": {
     "title": "Science of the Flower",
@@ -599,7 +602,7 @@
     "cardsRevealed": "Cards revealed",
     "maFleur": "My Flower",
     "duo": "Duo",
-    "dreamscape": "Dream walks"
+    "dreamscape": "Inner conversations"
   },
   "confirmation": {
     "title": "Confirm action",
@@ -644,8 +647,8 @@
     "encourageFleurTitle": "Share your Fleur d’AmOurs",
     "encourageDreamscape": "A short line or the link is enough — others see a poetic preview with image.",
     "encourageDreamscapeMenu": "The link opens your share page with image and text for social previews.",
-    "encourageDreamscapeTitle": "Share this dream walk (link + social preview)",
-    "dreamscapeShareText": "Discover a Dream Walk on Fleur d'AmOurs 🌸",
+    "encourageDreamscapeTitle": "Share this conversation (link + social preview)",
+    "dreamscapeShareText": "Discover an Inner conversation on Fleur d'AmOurs 🌸",
     "dreamscapeShareError": "Could not get the public share link.",
     "socialPlatformsHint": "Twitter and WhatsApp use the text above. Facebook and LinkedIn rely mostly on the page title, image, and description. Instagram has no web share URL — use “Copy link” and paste into a story or bio.",
     "dreamscapeShareTitle": "Share",
@@ -657,10 +660,14 @@
     "landingBackTirage": "Readings",
     "landingFallbackCard": "Your card",
     "landingFourTitle": "The four doors",
-    "landingLoadingDreamscape": "Loading dream walk…",
+    "landingLoadingDreamscape": "Loading conversation…",
     "landingDreamscapeNotFound": "Share not found",
     "landingDreamscapeCtaHome": "Home",
     "landingYourFlower": "Their Fleur d’AmOurs"
+  },
+  "dreamscapePage": {
+    "bannerAbout": "About this conversation",
+    "bannerCollapse": "Collapse"
   },
   "dreamscapeCanvas": {
     "close": "Close",
@@ -668,15 +675,15 @@
     "saveTitle": "Save to history (accessible everywhere)",
     "saveBtn": "💾 Save",
     "historyBtn": "📜 History",
-    "historyTitle": "View dream walk history",
+    "historyTitle": "View conversation history",
     "sendBtn": "Send",
     "listening": "Listening…",
     "placeholder": "I feel…",
     "noReflection": "No reflection to save",
-    "saveSuccess": "Dream walk saved",
-    "closeSuccess": "Dream walk closed and saved",
-    "closeModalTitle": "Close the Dream Walk?",
-    "closeModalDesc": "This walk will be saved with a summary of the exchanges, the chosen path and the actions you committed to.",
+    "saveSuccess": "Inner conversation saved",
+    "closeSuccess": "Inner conversation closed and saved",
+    "closeModalTitle": "Close the conversation?",
+    "closeModalDesc": "This conversation will be saved with a summary of the exchanges, the chosen path and the actions you committed to.",
     "pathLabel": "Chosen path",
     "actionsLabel": "Actions to work on",
     "closeConfirm": "Close and save",
@@ -693,15 +700,29 @@
     "anchor": "Anchor",
     "accompany": "Be accompanied →",
     "accompanyDistress": "What you are going through deserves human support.",
-    "accompanyLight": "A dedicated space can help you explore this."
+    "accompanyLight": "A dedicated space can help you explore this.",
+    "exchangeLimitSoft": "You have already had {count} exchanges. If you found what you came for, you can close now — or continue a little longer.",
+    "exchangeLimitHard": "This conversation is reaching its natural end ({count} exchanges). To let what emerged settle, I suggest closing it now.",
+    "exchangeLimitForce": "We are past the soft limit ({count} exchanges). I suggest closing the conversation now.",
+    "closeNudgeKicker": "A closing threshold",
+    "closeNudgeTitle": "Would you like to seal this conversation?",
+    "shareFallback": "My inner conversation.",
+    "downloadFilename": "inner-conversation"
   },
   "dreamscapePartage": {
     "back": "Back to the Garden",
-    "title": "Shared Dream Walk",
+    "title": "Shared inner conversation",
     "synthesis": "Journey synthesis",
-    "cta": "Start my own walk"
+    "cta": "Start my own conversation"
   },
   "dreamscapeHistorique": {
+    "history": "Inner conversation history",
+    "backTo": "Back to inner conversation",
+    "backShort": "Back",
+    "emptyTitle": "No saved conversations",
+    "emptyDesc": "Save a conversation from the dialogue space to find it here.",
+    "emptyCta": "Start a conversation",
+    "errorBack": "Back to inner conversation",
     "resumeBtn": "Resume the reading",
     "inProgress": "in progress",
     "snapshot": "Reading overview",
@@ -710,9 +731,10 @@
     "regenerateAllSnapshots": "Regenerate all previews",
     "regenerateOk": "Preview updated.",
     "regenerateError": "Could not regenerate preview.",
-    "regenerateNoCards": "No revealed cards to capture for this walk.",
+    "regenerateNoCards": "No revealed cards to capture for this conversation.",
     "regenerateBusy": "Regenerating previews…",
-    "regenerateSnapshotMissing": "No preview saved yet — use the button to create one."
+    "regenerateSnapshotMissing": "No preview saved yet — use the button to create one.",
+    "emptyReflection": "Conversation with no saved reflection"
   },
   "voiceInput": {
     "placeholder": "Write or dictate your response…"
@@ -1259,7 +1281,7 @@
     "tirages": "Readings",
     "maFleur": "My Flower",
     "mesFleurs": "My Flowers",
-    "dreamscape": "Dream Walk"
+    "dreamscape": "Inner conversation"
   },
   "logout": "Log out",
   "mycelium": {
@@ -1397,7 +1419,7 @@
   },
   "eclosion": {
     "title": "Eclosion — your evolution",
-    "subtitle": "Your relational thread over time: sessions, card draws, Flower explorations, dream walks, questionnaires, check-ins and everything you record in the Garden.",
+    "subtitle": "Your relational thread over time: sessions, card draws, Flower explorations, inner conversations, questionnaires, check-ins and everything you record in the Garden.",
     "narrativeTitle": "Reading of your movement",
     "narrativeCta": "Generate reading",
     "narrativeLoading": "Reading…",
@@ -1434,7 +1456,7 @@
     "socialQuote3Author": "Julien",
     "trustLine": "Secure connection · Your data is respected · No card required to explore",
     "visualTeaserTitle": "The garden is more than one card",
-    "visualTeaserBody": "Guided paths, saved readings, your Flower, dream walks, and clarity tools: a full space opens when you sign up—free to start.",
+    "visualTeaserBody": "Guided paths, saved readings, your Flower, inner conversations, and clarity tools: a full space opens when you sign up—free to start.",
     "visualTeaserCta": "Create an account and open the garden",
     "visualTeaserAria": "Visual preview of the Fleur d'AmOurs garden",
     "visualTeaserAlt": "App preview: Fleur d'AmOurs eight-petal view and journal of shadows and lights with reading history",
@@ -1489,7 +1511,7 @@
     "heroTitle": "The garden at the service of your practice",
     "heroSubtitle": "Fleur d'AmOurs connects a finely crafted relational and symbolic tool with an app that structures how you work with the people you accompany—individuation, self-connection, relational issues: one ecosystem.",
     "pillarToolTitle": "Understand and name, together",
-    "pillarToolDesc": "Cards, essences, root questions, door paths, dream walk, online manual: a shared vocabulary to explore emotional and relational layers without carrying all the verbal load alone.",
+    "pillarToolDesc": "Cards, essences, root questions, door paths, inner conversation, online manual: a shared vocabulary to explore emotional and relational layers without carrying all the verbal load alone.",
     "pillarPracticeTitle": "Bring clarity to how you run your practice",
     "pillarPracticeDesc": "Built-in messaging, accompaniment requests, practitioners directory, and—for enabled accounts—overview of conversations and caseload: less scatter across email, SMS, and loose notes.",
     "benefitsTitle": "What you actually unlock",
@@ -1499,7 +1521,7 @@
     "b2Desc": "Structured paths, simple or deep draws, history: people move with landmarks; you share material to go further together.",
     "b3Title": "Manual and theoretical frame",
     "b3Desc": "Card meanings and concepts inside the app: ground your work in a coherent grid of reading.",
-    "b4Title": "Dreamscape and inner exploration",
+    "b4Title": "Inner conversation and introspection",
     "b4Desc": "Space for symbolism and inner exploration, alongside explicit relational work.",
     "b5Title": "Accompaniment channel and directory",
     "b5Desc": "People can reach out from the product; directory visibility links your practice to the garden.",

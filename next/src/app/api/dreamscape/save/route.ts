@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       userId: uid,
       source: 'dreamscape',
       refId: savedId,
-      title: 'Promenade onirique',
+      title: 'Conversation intérieure',
       summary: buildDreamscapeChronicleSummary({
         poeticReflection: body?.poeticReflection,
         history: body?.history,

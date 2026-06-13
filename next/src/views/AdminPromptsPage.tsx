@@ -241,7 +241,7 @@ export default function AdminPromptsPage() {
 
       <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 p-5">
         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-1">
-          Dreamscape — Promenade Onirique
+          Conversation intérieure
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
           Prompt utilisé pour l&apos;interface voix / texte avec les cartes et la fleur. Définit comment l&apos;IA interprète la parole, la disposition des cartes et génère les réflexions poétiques.

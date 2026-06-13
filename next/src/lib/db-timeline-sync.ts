@@ -1,6 +1,6 @@
 /**
  * Synchronise la timeline Éclosion depuis toutes les sources persistées
- * (sessions, tirages, explorations Fleur, promenades, check-ins, diagnostic…).
+ * (sessions, tirages, explorations Fleur, conversations intérieures, check-ins, diagnostic…).
  * Idempotent via recordTimelineEvent (user + source + ref_id).
  */
 import { authMe } from './db-auth'
@@ -160,7 +160,7 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
           userId,
           source: 'dreamscape',
           refId: id,
-          title: 'Promenade onirique',
+          title: 'Conversation intérieure',
           summary: buildDreamscapeChronicleSummary(d).slice(0, 280),
           petals: petalsObjectToArray(d.petals as Record<string, number>),
           occurredAt: d.savedAt as string,

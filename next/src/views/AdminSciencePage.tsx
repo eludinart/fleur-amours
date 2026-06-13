@@ -134,7 +134,7 @@ export default function AdminSciencePage() {
               ['include_petals_aggregate', 'Pétales (profil actuel)'],
               ['include_chat_coach', 'Chats Coach'],
               ['include_chat_clairiere', 'Clairière (P2P)'],
-              ['include_dreamscape', 'Promenade onirique'],
+              ['include_dreamscape', 'Conversation intérieure'],
               ['include_solo_fleur', 'Explorer ma Fleur'],
               ['include_tarot_1card', 'Tirage 1 carte'],
               ['include_tarot_4doors', 'Tirage 4 portes'],

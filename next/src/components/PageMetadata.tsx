@@ -14,7 +14,7 @@ const routeMeta: Record<
 > = {
   home: { titleKey: 'dashboard.title', descKey: 'dashboardSubtitle' },
   session: { titleKey: 'nav.session', descKey: 'session.accompanyLight' },
-  dreamscape: { title: 'Promenade Onirique', descKey: 'dreamscape' },
+  dreamscape: { titleKey: 'dreamscape', descKey: 'dreamscapeIntro' },
   fleur: { titleKey: 'fleur.title', descKey: 'fleur.introDesc' },
   duo: { titleKey: 'duo.title', descKey: 'duo.subtitle' },
   tirage: { titleKey: 'tarot.title', descKey: 'tarot.subtitle' },

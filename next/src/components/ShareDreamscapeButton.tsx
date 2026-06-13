@@ -20,7 +20,7 @@ function buildDreamscapeShareText(
   if (poeticReflection?.trim()) {
     const p = poeticReflection.trim()
     const poeticSnippet = ` « ${p.slice(0, 80)}${p.length > 80 ? '…' : ''} »`
-    return `J'ai traversé les cartes oniriques de Fleur d'AmOurs.${poeticSnippet} 🌸`
+    return `J'ai dialogué avec ma Fleur sur Fleur d'AmOurs.${poeticSnippet} 🌸`
   }
   return t('share.dreamscapeShareText')
 }

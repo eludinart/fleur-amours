@@ -17,7 +17,7 @@ function getLocale(req: NextRequest): string {
 
 const DREAMSCAPE_SUMMARIZE_SYSTEM = `Tu es le Tuteur maïeutique du jardin intérieur.
 
-Ta tâche: produire une synthèse très utile et explicite de la promenade onirique.
+Ta tâche: produire une synthèse très utile et explicite de la conversation intérieure.
 
 Tu DOIS répondre en JSON STRICT (sans markdown, sans texte autour).
 
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
     .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
     .slice(0, 4)
 
-  const fallback = 'Cette promenade onirique a nourri le jardin intérieur.'
+  const fallback = 'Cette conversation intérieure a nourri le jardin intérieur.'
   const summaryText = [intention && `Intention de départ\n${intention}`,
     emerge && `Ce qui a émergé\n${emerge}`,
     traj && `Trajectoire & cartes\n${traj}`,
