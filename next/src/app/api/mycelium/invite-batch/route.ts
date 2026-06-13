@@ -4,7 +4,7 @@
  * Respecte la capacité de sièges (db-organisations.createBatchInvites).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/api-auth'
+import { requireMyceliumRh } from '@/lib/mycelium-auth'
 import { isDbConfigured } from '@/lib/db'
 import { absolutePublicAppUrl } from '@/lib/app-public-url'
 import { createBatchInvites, getManagedOrg, type OrgRole } from '@/lib/db-organisations'
@@ -17,12 +17,14 @@ const VALID_ROLES: OrgRole[] = ['member', 'manager', 'rh']
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await requireAuth(req)
+    const ctx = await requireMyceliumRh(req)
     if (!isDbConfigured()) {
       return NextResponse.json({ error: 'Backend non configuré' }, { status: 503 })
     }
-    const managed = await getManagedOrg(parseInt(userId, 10))
-    if (!managed) return NextResponse.json({ error: 'Aucune organisation gérée' }, { status: 403 })
+    if (!ctx.org) {
+      return NextResponse.json({ error: 'Créez d\'abord une organisation' }, { status: 403 })
+    }
+    const managed = { org: ctx.org, role: ctx.role! }
 
     const body = (await req.json().catch(() => ({}))) as {
       emails?: string[] | string
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
       role,
     })
 
-    const inviter = await authMe(parseInt(userId, 10)).catch(() => null)
+    const inviter = await authMe(ctx.uid).catch(() => null)
     const inviterName = inviter?.name?.trim() || inviter?.email || 'Votre organisation'
 
     const invites = created.map((inv) => {

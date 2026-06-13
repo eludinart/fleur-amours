@@ -77,8 +77,10 @@ export const ADMIN_NOTIFICATION_DESTINATIONS: AdminNotificationDestination[] = [
   { id: 'admin_patientele', label: 'Patientèle', path: '/admin/patientele', group: 'Admin' },
   { id: 'admin_users', label: 'Utilisateurs', path: '/admin/users', group: 'Admin' },
   { id: 'admin_promo', label: 'Codes promo', path: '/admin/promo', group: 'Admin' },
+  { id: 'mycelium_dashboard', label: 'Mycélium — tableau de bord', path: '/mycelium/dashboard', group: 'Admin' },
+  { id: 'mycelium_espace', label: 'Mycélium — jardin pro', path: '/mycelium/espace', group: 'Admin' },
   { id: 'mycelium_admin', label: 'Mycélium — admin', path: '/mycelium/admin', group: 'Admin' },
-  { id: 'mycelium_climat', label: 'Mycélium — climat', path: '/mycelium/climat', group: 'Admin' },
+  { id: 'mycelium_climat', label: 'Mycélium — climat (legacy)', path: '/mycelium/climat', group: 'Admin' },
 ]
 
 export function groupAdminNotificationDestinations(): Array<{

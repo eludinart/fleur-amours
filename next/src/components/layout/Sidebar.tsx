@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSocialStore } from '@/store/useSocialStore'
+import { useMyceliumAccess } from '@/hooks/useMyceliumAccess'
 import { t } from '@/i18n'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
@@ -29,6 +30,7 @@ type NavGroup = {
 function buildNavGroups(
   isAdmin: boolean,
   isCoach: boolean,
+  mycelium: { showEspace: boolean; showDashboard: boolean; showAdmin: boolean },
   translate: (k: string) => string
 ): NavGroup[] {
   const accueilItems: NavItem[] = [
@@ -86,21 +88,49 @@ function buildNavGroups(
     { label: translate('compte'), items: compteItems },
   ]
 
+  const showMycelium = isAdmin || mycelium.showEspace || mycelium.showDashboard
+  if (showMycelium) {
+    const myceliumItems: NavItem[] = []
+    if (mycelium.showDashboard || isAdmin) {
+      myceliumItems.push({
+        to: '/mycelium/dashboard',
+        label: translate('nav.myceliumDashboard'),
+        icon: '📊',
+        title: translate('nav.myceliumDashboardTooltip'),
+      })
+    }
+    if (mycelium.showEspace || isAdmin) {
+      myceliumItems.push({
+        to: '/mycelium/espace',
+        label: translate('nav.myceliumEspace'),
+        icon: '🌿',
+        title: translate('nav.myceliumEspaceTooltip'),
+      })
+    }
+    if (mycelium.showAdmin || isAdmin) {
+      myceliumItems.push({
+        to: '/mycelium/admin',
+        label: translate('nav.myceliumAdmin'),
+        icon: '🍄',
+        title: translate('nav.myceliumAdminTooltip'),
+      })
+    }
+    if (myceliumItems.length) {
+      groups.push({
+        label: translate('nav.myceliumSection'),
+        collapsible: true,
+        defaultOpen: false,
+        items: myceliumItems,
+      })
+    }
+  }
+
   if (isAdmin) {
     groups.splice(2, 0, {
       label: translate('nav.eclosionSection'),
       collapsible: true,
       defaultOpen: true,
       items: eclosionItems,
-    })
-    groups.push({
-      label: translate('nav.myceliumSection'),
-      collapsible: true,
-      defaultOpen: false,
-      items: [
-        { to: '/mycelium/admin', label: translate('nav.myceliumAdmin'), icon: '🍄', title: translate('nav.myceliumAdminTooltip') },
-        { to: '/mycelium/climat', label: translate('nav.myceliumClimate'), icon: '🌡️', title: translate('nav.myceliumClimateTooltip') },
-      ],
     })
   }
 
@@ -341,8 +371,13 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [fetchClairiereUnread])
 
+  const { access: myceliumAccess } = useMyceliumAccess(!!user)
   const pathWithoutBase = (pathname.replace(basePath, '').replace(/^\/+|\/+$/g, '') || '') as string
-  const navGroups = buildNavGroups(isAdmin, isCoach, t)
+  const navGroups = buildNavGroups(isAdmin, isCoach, {
+    showEspace: myceliumAccess?.showEspace ?? false,
+    showDashboard: myceliumAccess?.showDashboard ?? false,
+    showAdmin: myceliumAccess?.showAdmin ?? false,
+  }, t)
 
   function handleLogout() {
     logout()

@@ -135,6 +135,14 @@ export async function requireManagerOrRh(
   throw new ApiError(403, 'Accès manager ou RH requis')
 }
 
+/**
+ * @deprecated Utiliser requireMyceliumRh / requireMyceliumMember.
+ */
+export async function requireMyceliumPilot(req: NextRequest): Promise<{ userId: string }> {
+  const { userId } = await requireAdmin(req)
+  return { userId }
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,

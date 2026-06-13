@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "grant-admin": "node scripts/grant-admin.js",
+    "seed:mycelium-demo": "node scripts/seed-mycelium-demo.js",
     "dev": "next dev -p 3001",
     "build": "next build",
     "build:export": "next build",

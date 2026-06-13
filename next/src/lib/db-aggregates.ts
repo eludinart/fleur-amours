@@ -112,3 +112,124 @@ export async function getTeamClimate(params: {
     windowDays,
   }
 }
+
+export type ClimateDashboard = {
+  current: AggregateResult
+  previous: AggregateResult
+  moodDelta: number | null
+  participationRate: number
+  totalMembers: number
+}
+
+/** Climat période courante vs période précédente (même durée). */
+export async function getClimateDashboard(params: {
+  orgId: number
+  teamId?: number | null
+  windowDays?: number
+  totalMembers?: number
+}): Promise<ClimateDashboard> {
+  const windowDays = Math.min(Math.max(params.windowDays ?? 30, 1), 365)
+  const current = await getTeamClimate({ orgId: params.orgId, teamId: params.teamId, windowDays })
+
+  // Période précédente : même fenêtre, décalée
+  const previous = await getTeamClimateForRange({
+    orgId: params.orgId,
+    teamId: params.teamId,
+    windowDays,
+    offsetDays: windowDays,
+  })
+
+  let moodDelta: number | null = null
+  if (current.moodAverage != null && previous.moodAverage != null) {
+    moodDelta = Math.round((current.moodAverage - previous.moodAverage) * 100) / 100
+  }
+
+  const totalMembers = params.totalMembers ?? 0
+  const participationRate =
+    totalMembers > 0 && current.respondents > 0
+      ? Math.round((current.respondents / totalMembers) * 100)
+      : 0
+
+  return { current, previous, moodDelta, participationRate, totalMembers }
+}
+
+async function getTeamClimateForRange(params: {
+  orgId: number
+  teamId?: number | null
+  windowDays: number
+  offsetDays: number
+}): Promise<AggregateResult> {
+  const base: AggregateResult = {
+    available: false,
+    respondents: 0,
+    threshold: K_ANONYMITY_THRESHOLD,
+    petalsAverage: null,
+    moodAverage: null,
+    eventCount: 0,
+    windowDays: params.windowDays,
+  }
+  if (!isDbConfigured()) return { ...base, reason: 'db_unavailable' }
+
+  const pool = getPool()
+  const conds = [
+    'org_id = ?',
+    'created_at >= (NOW() - INTERVAL ? DAY)',
+    'created_at < (NOW() - INTERVAL ? DAY)',
+  ]
+  const args: (number | string)[] = [params.orgId, params.windowDays + params.offsetDays, params.offsetDays]
+  if (params.teamId != null) {
+    conds.push('team_id = ?')
+    args.push(params.teamId)
+  }
+  const where = conds.join(' AND ')
+
+  const [countRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT COUNT(DISTINCT user_id) AS respondents, COUNT(*) AS events,
+            AVG(NULLIF(mood, 0)) AS mood_avg
+       FROM ${TBL()} WHERE ${where}`,
+    args
+  )
+  const respondents = Number(countRows[0]?.respondents ?? 0)
+  const eventCount = Number(countRows[0]?.events ?? 0)
+  const moodAverage = countRows[0]?.mood_avg != null ? Number(countRows[0].mood_avg) : null
+
+  if (respondents === 0) return { ...base, reason: 'no_data' }
+  if (respondents < K_ANONYMITY_THRESHOLD) {
+    return { ...base, respondents, eventCount, reason: 'below_threshold' }
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT petals_json FROM ${TBL()} WHERE ${where} AND petals_json IS NOT NULL`,
+    args
+  )
+  const sums = new Array(PETAL_IDS.length).fill(0)
+  let n = 0
+  for (const r of rows) {
+    try {
+      const arr = JSON.parse(r.petals_json)
+      if (Array.isArray(arr) && arr.length >= PETAL_IDS.length) {
+        for (let i = 0; i < PETAL_IDS.length; i++) sums[i] += Number(arr[i]) || 0
+        n++
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  let petalsAverage: Record<string, number> | null = null
+  if (n > 0) {
+    petalsAverage = {}
+    for (let i = 0; i < PETAL_IDS.length; i++) {
+      petalsAverage[PETAL_IDS[i]] = Math.round((sums[i] / n) * 100) / 100
+    }
+  }
+
+  return {
+    available: true,
+    respondents,
+    threshold: K_ANONYMITY_THRESHOLD,
+    petalsAverage,
+    moodAverage: moodAverage != null ? Math.round(moodAverage * 100) / 100 : null,
+    eventCount,
+    windowDays: params.windowDays,
+  }
+}

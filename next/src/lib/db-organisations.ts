@@ -30,6 +30,20 @@ export type Organisation = {
   name: string
   ownerUserId: number
   createdAt: string
+  charter?: string | null
+  pulseCampaign?: PulseCampaign | null
+}
+
+export type PulseCampaign = {
+  title: string
+  message: string
+  question: string
+  startedAt: string
+  active: boolean
+}
+
+export type OrgSettings = {
+  charter: string | null
 }
 
 export type Team = { id: number; orgId: number; name: string; createdAt: string }
@@ -62,10 +76,17 @@ async function _doEnsure(): Promise<void> {
       id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(160) NOT NULL,
       owner_user_id INT NOT NULL,
+      charter TEXT DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_owner (owner_user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `)
+  await pool
+    .execute(`ALTER TABLE ${T_ORG()} ADD COLUMN IF NOT EXISTS charter TEXT DEFAULT NULL`)
+    .catch(() => {})
+  await pool
+    .execute(`ALTER TABLE ${T_ORG()} ADD COLUMN IF NOT EXISTS pulse_campaign_json TEXT DEFAULT NULL`)
+    .catch(() => {})
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS ${T_TEAM()} (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -154,7 +175,58 @@ export async function getOrganisation(orgId: number): Promise<Organisation | nul
   const [rows] = await pool.execute<RowDataPacket[]>(`SELECT * FROM ${T_ORG()} WHERE id = ? LIMIT 1`, [orgId])
   if (!rows?.length) return null
   const r = rows[0]
-  return { id: Number(r.id), name: String(r.name), ownerUserId: Number(r.owner_user_id), createdAt: String(r.created_at ?? '') }
+  return {
+    id: Number(r.id),
+    name: String(r.name),
+    ownerUserId: Number(r.owner_user_id),
+    createdAt: String(r.created_at ?? ''),
+    charter: r.charter != null ? String(r.charter) : null,
+    pulseCampaign: parsePulseCampaign(r.pulse_campaign_json),
+  }
+}
+
+function parsePulseCampaign(raw: unknown): PulseCampaign | null {
+  if (raw == null || raw === '') return null
+  try {
+    const o = JSON.parse(String(raw)) as PulseCampaign
+    if (!o?.active) return null
+    return {
+      title: String(o.title ?? '').slice(0, 200),
+      message: String(o.message ?? '').slice(0, 1000),
+      question: String(o.question ?? '').slice(0, 400),
+      startedAt: String(o.startedAt ?? ''),
+      active: !!o.active,
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function updateOrgCharter(orgId: number, charter: string | null): Promise<void> {
+  if (!isDbConfigured()) throw new Error('DB non configurée')
+  await ensureOrgTables()
+  const pool = getPool()
+  await exec(pool, `UPDATE ${T_ORG()} SET charter = ? WHERE id = ?`, [
+    charter != null ? String(charter).slice(0, 4000) : null,
+    orgId,
+  ])
+}
+
+export async function setPulseCampaign(orgId: number, campaign: PulseCampaign | null): Promise<void> {
+  if (!isDbConfigured()) throw new Error('DB non configurée')
+  await ensureOrgTables()
+  const pool = getPool()
+  const json =
+    campaign && campaign.active
+      ? JSON.stringify({
+          title: campaign.title.slice(0, 200),
+          message: campaign.message.slice(0, 1000),
+          question: campaign.question.slice(0, 400),
+          startedAt: campaign.startedAt,
+          active: true,
+        })
+      : null
+  await exec(pool, `UPDATE ${T_ORG()} SET pulse_campaign_json = ? WHERE id = ?`, [json, orgId])
 }
 
 /** Membership de l'utilisateur (la première trouvée — un user = une org dans ce MVP). */

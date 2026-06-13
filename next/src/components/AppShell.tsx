@@ -13,8 +13,10 @@ import { LandingPage } from '@/views/LandingPage'
 import { CoachLandingPage } from '@/views/CoachLandingPage'
 import { MyceliumLandingPage } from '@/views/MyceliumLandingPage'
 import MyceliumAdminPage from '@/views/MyceliumAdminPage'
-import MyceliumClimatePage from '@/views/MyceliumClimatePage'
+import MyceliumDashboardPage from '@/views/MyceliumDashboardPage'
+import MyceliumEspacePage from '@/views/MyceliumEspacePage'
 import MyceliumJoinPage from '@/views/MyceliumJoinPage'
+import { MyceliumProtectedLayout } from '@/components/MyceliumProtectedLayout'
 import { HomePage } from '@/views/HomePage'
 import { PresentationPage } from '@/views/PresentationPage'
 import { AccountPage } from '@/views/AccountPage'
@@ -65,6 +67,7 @@ import CoachSuiviPage from '@/views/CoachSuiviPage'
 import CoachPatientelePage from '@/views/CoachPatientelePage'
 import PushNotificationPriming from '@/components/PushNotificationPriming'
 import { ProfileOnboardingGuard } from '@/components/ProfileOnboardingGuard'
+import { MyceliumAccessProvider } from '@/contexts/MyceliumAccessContext'
 
 const AdminAnalyticsPage = dynamic(
   () => import('@/views/AdminAnalyticsPage').then((m) => m.default),
@@ -106,6 +109,38 @@ function RedirectHome() {
 function getPathSegments(pathname: string): string[] {
   const p = pathname.replace(/^\/+|\/+$/g, '') || ''
   return p ? p.split('/') : []
+}
+
+function isProtectedMyceliumSubRoute(subRoute?: string): boolean {
+  return (
+    subRoute === 'admin' ||
+    subRoute === 'dashboard' ||
+    subRoute === 'climat' ||
+    subRoute === 'espace' ||
+    subRoute === 'join'
+  )
+}
+
+function renderMyceliumAppPage(subRoute: string | undefined) {
+  const level =
+    subRoute === 'join' ? 'join' : subRoute === 'espace' ? 'member' : ('rh' as const)
+  const page =
+    subRoute === 'admin' ? (
+      <MyceliumAdminPage />
+    ) : subRoute === 'espace' ? (
+      <MyceliumEspacePage />
+    ) : subRoute === 'join' ? (
+      <MyceliumJoinPage />
+    ) : (
+      <MyceliumDashboardPage />
+    )
+  return (
+    <ProtectedLayout>
+      <Layout>
+        <MyceliumProtectedLayout level={level}>{page}</MyceliumProtectedLayout>
+      </Layout>
+    </ProtectedLayout>
+  )
 }
 
 function ProtectedLayout({
@@ -193,7 +228,13 @@ function AppRoutes() {
   }
 
   // Page publique : pas d’attente du spinner auth sombre
-  if (loading && (route === 'accompagnants' || route === 'mycelium' || route === 'particuliers')) {
+  const protectedMycelium = route === 'mycelium' && isProtectedMyceliumSubRoute(subRoute)
+  if (
+    loading &&
+    (route === 'accompagnants' ||
+      route === 'particuliers' ||
+      (route === 'mycelium' && !protectedMycelium))
+  ) {
     return (
       <Suspense fallback={null}>
         <LocaleSync />
@@ -209,6 +250,14 @@ function AppRoutes() {
   }
 
   if (loading) {
+    if (protectedMycelium && !routesMounted) {
+      return (
+        <Suspense fallback={null}>
+          <LocaleSync />
+          <HomeAuthLoadingShell />
+        </Suspense>
+      )
+    }
     return (
       <div className="flex-1 min-h-screen flex items-center justify-center bg-slate-900">
         <span className="w-8 h-8 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
@@ -708,30 +757,8 @@ function AppRoutes() {
     )
   }
 
-  // Espaces entreprise protégés (admin / climat / acceptation d'invitation)
-  if (route === 'mycelium' && (subRoute === 'admin' || subRoute === 'climat' || subRoute === 'join')) {
-    // admin/climat : réservés aux rôles manager, RH ou admin ; join reste ouvert (invitation).
-    const needsManagerRole = subRoute === 'admin' || subRoute === 'climat'
-    return (
-      <Suspense fallback={<PageFallback />}>
-        <LocaleSync />
-        <ProtectedLayout managerOrRh={needsManagerRole}>
-          <Layout>
-            {subRoute === 'admin' ? (
-              <MyceliumAdminPage />
-            ) : subRoute === 'climat' ? (
-              <MyceliumClimatePage />
-            ) : (
-              <MyceliumJoinPage />
-            )}
-          </Layout>
-        </ProtectedLayout>
-      </Suspense>
-    )
-  }
-
   // Page publique entreprise / framework Mycelium
-  if (route === 'mycelium') {
+  if (route === 'mycelium' && !isProtectedMyceliumSubRoute(subRoute)) {
     return (
       <Suspense fallback={<PageFallback />}>
         <LocaleSync />
@@ -766,7 +793,10 @@ function AppRoutes() {
     )
   }
 
-  const page = protectedPages[route] ?? protectedPages.home
+  const page =
+    route === 'mycelium' && isProtectedMyceliumSubRoute(subRoute)
+      ? renderMyceliumAppPage(subRoute)
+      : (protectedPages[route] ?? protectedPages.home)
 
   return (
     <Suspense fallback={<PageFallback />}>
@@ -782,7 +812,9 @@ function AppRoutes() {
 export function AppShell() {
   return (
     <ProfileOnboardingGuard>
-      <AppRoutes />
+      <MyceliumAccessProvider>
+        <AppRoutes />
+      </MyceliumAccessProvider>
     </ProfileOnboardingGuard>
   )
 }

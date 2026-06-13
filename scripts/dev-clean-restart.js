@@ -37,15 +37,34 @@ function killPorts() {
   }
 }
 
+function removeNextCache() {
+  const nextCache = resolve(NEXT_DIR, '.next')
+  if (!existsSync(nextCache)) return
+  try {
+    rmSync(nextCache, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
+    console.log('   Cache next/.next supprimé')
+    return
+  } catch (err) {
+    if (platform() !== 'win32') throw err
+    // Windows : fichiers parfois verrouillés par un process node — PowerShell plus fiable
+    const ps = spawnSync(
+      'powershell',
+      ['-NoProfile', '-Command', `Remove-Item -LiteralPath '${nextCache.replace(/'/g, "''")}' -Recurse -Force -ErrorAction Stop`],
+      { stdio: 'pipe', encoding: 'utf8' }
+    )
+    if (ps.status !== 0) {
+      console.error(ps.stderr || ps.stdout || String(err))
+      throw err
+    }
+    console.log('   Cache next/.next supprimé (PowerShell)')
+  }
+}
+
 console.log('\n🧹 Nettoyage dev local…')
 killPorts()
 console.log(`   Ports libérés : ${PORTS.join(', ')}`)
 
-const nextCache = resolve(NEXT_DIR, '.next')
-if (existsSync(nextCache)) {
-  rmSync(nextCache, { recursive: true, force: true })
-  console.log('   Cache next/.next supprimé')
-}
+removeNextCache()
 
 console.log('\n▶  Relance dev.vps…\n')
 const child = spawn('node', ['scripts/dev-vps.js'], { cwd: ROOT, stdio: 'inherit', shell: true })

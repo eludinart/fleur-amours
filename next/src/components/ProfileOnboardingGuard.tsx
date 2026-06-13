@@ -13,6 +13,7 @@ const ALLOWED_PREFIXES = [
   'register',
   'account',
   'contact',
+  'mycelium',
 ]
 
 /** Redirige les nouveaux inscrits vers le micro-parcours profil tant qu'il n'est pas complété. */

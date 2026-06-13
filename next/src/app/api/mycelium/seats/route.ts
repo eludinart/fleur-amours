@@ -6,22 +6,21 @@
  *   - sinon → fixe directement la capacité (mode hors-paiement / admin).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/api-auth'
+import { requireMyceliumRh } from '@/lib/mycelium-auth'
 import { authMe } from '@/lib/db-auth'
 import { isDbConfigured } from '@/lib/db'
 import { absolutePublicAppUrl } from '@/lib/app-public-url'
-import { countMembers, getManagedOrg, getSeats, setSeats } from '@/lib/db-organisations'
+import { countMembers, getSeats, setSeats } from '@/lib/db-organisations'
 import { createCheckoutSession, getStripeSecretKey } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    const { userId } = await requireAuth(req)
+    const ctx = await requireMyceliumRh(req)
     if (!isDbConfigured()) return NextResponse.json({ seats: 0, members: 0 })
-    const managed = await getManagedOrg(parseInt(userId, 10))
-    if (!managed) return NextResponse.json({ error: 'Aucune organisation gérée' }, { status: 403 })
-    const [seats, members] = await Promise.all([getSeats(managed.org.id), countMembers(managed.org.id)])
+    if (!ctx.org) return NextResponse.json({ seats: 0, members: 0, needsOrg: true })
+    const [seats, members] = await Promise.all([getSeats(ctx.org.id), countMembers(ctx.org.id)])
     return NextResponse.json({ seats: seats.seats, members, stripe: !!seats.stripeSubscriptionId })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
@@ -31,13 +30,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await requireAuth(req)
-    const uid = parseInt(userId, 10)
-    if (!isDbConfigured()) {
-      return NextResponse.json({ error: 'Backend non configuré' }, { status: 503 })
+    const ctx = await requireMyceliumRh(req)
+    if (!ctx.org) {
+      return NextResponse.json({ error: 'Créez d\'abord une organisation' }, { status: 403 })
     }
-    const managed = await getManagedOrg(uid)
-    if (!managed) return NextResponse.json({ error: 'Aucune organisation gérée' }, { status: 403 })
+    const { org, uid } = ctx
 
     const body = (await req.json().catch(() => ({}))) as { seats?: number }
     const seats = Math.max(1, parseInt(String(body.seats ?? 0), 10) || 0)
@@ -60,9 +57,9 @@ export async function POST(req: NextRequest) {
         quantity: seats,
         successUrl: absolutePublicAppUrl('/mycelium/admin?seats=ok', req),
         cancelUrl: absolutePublicAppUrl('/mycelium/admin?seats=cancel', req),
-        clientReferenceId: `org_${managed.org.id}`,
+        clientReferenceId: `org_${org.id}`,
         customerEmail: email,
-        metadata: { user_id: String(uid), org_id: String(managed.org.id), seats: String(seats), plan_id: 'seats_b2b' },
+        metadata: { user_id: String(uid), org_id: String(org.id), seats: String(seats), plan_id: 'seats_b2b' },
       })
       if (session?.url) {
         // Les sièges ne sont accordés qu'au webhook checkout.session.completed.
@@ -81,7 +78,7 @@ export async function POST(req: NextRequest) {
         { status: 503 }
       )
     }
-    await setSeats(managed.org.id, seats)
+    await setSeats(org.id, seats)
     return NextResponse.json({ seats })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }

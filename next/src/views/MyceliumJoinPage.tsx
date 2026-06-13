@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { myceliumApi } from '@/api/mycelium'
+import { invalidateMyceliumAccessCache } from '@/hooks/useMyceliumAccess'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 
@@ -24,6 +25,7 @@ export default function MyceliumJoinPage() {
     myceliumApi
       .accept(token)
       .then(() => {
+        invalidateMyceliumAccessCache()
         if (!cancelled) setStatus('ok')
       })
       .catch((e) => {

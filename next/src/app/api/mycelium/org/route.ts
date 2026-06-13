@@ -4,7 +4,8 @@
  * POST /api/mycelium/org — crée une organisation (l'utilisateur en devient owner).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, requireManagerOrRh } from '@/lib/api-auth'
+import { requireAuth } from '@/lib/api-auth'
+import { requireMyceliumOrgCreator } from '@/lib/mycelium-auth'
 import { isDbConfigured } from '@/lib/db'
 import {
   countMembers,
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     // Créer une organisation exige le rôle global manager, rh ou admin.
-    const { userId } = await requireManagerOrRh(req)
+    const { userId } = await requireMyceliumOrgCreator(req)
     if (!isDbConfigured()) {
       return NextResponse.json({ error: 'Backend non configuré' }, { status: 503 })
     }
