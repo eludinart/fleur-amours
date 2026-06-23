@@ -1919,7 +1919,7 @@
     "patientBubbleFooterCoach": "{name}",
     "patientBubbleFooterAdmin": "{name} · équipe",
     "patientBubbleFooterOther": "{name} · autre accompagnant",
-    "conversationHistoryToggle": "Mes conversations d’accompagnement",
+    "conversationHistoryToggle": "Mes conversations avec un accompagnant",
     "pickerOngoingEyebrow": "En cours — reprendre",
     "pickerOngoingTitleOne": "1 conversation à reprendre tout de suite",
     "pickerOngoingTitleMany": "{n} conversations à reprendre tout de suite",

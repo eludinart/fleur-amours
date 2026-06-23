@@ -1277,6 +1277,71 @@ function ChapterBody({ text, title, locale = 'fr' }: { text: string; title?: str
   )
 }
 
+const CHAPTER_NAV_BTN =
+  'flex flex-col px-3 sm:px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white/60 dark:bg-slate-900/30 hover:border-violet-400/50 hover:bg-violet-500/5 transition-colors min-w-0 h-full'
+
+const CHAPTER_TOC_BTN =
+  'flex flex-col items-center justify-center px-4 sm:px-5 py-3.5 rounded-xl border border-violet-300/70 dark:border-violet-500/45 bg-violet-500/10 dark:bg-violet-500/15 hover:border-violet-400 hover:bg-violet-500/20 transition-colors text-center shrink-0 min-h-[4.5rem]'
+
+function ChapterPager({
+  prevS,
+  nextS,
+  resolveSectionTitle,
+  hrefFor,
+  goToToc,
+  className = '',
+}: {
+  prevS?: ManuelManifestSection
+  nextS?: ManuelManifestSection
+  resolveSectionTitle: (section: ManuelManifestSection) => string
+  hrefFor: (file: string) => string
+  goToToc: () => void
+  className?: string
+}) {
+  return (
+    <nav
+      className={`grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-2 sm:gap-3 ${className}`}
+      aria-label={t('manuel.toc')}
+    >
+      <div className="min-w-0">
+        {prevS ? (
+          <Link href={hrefFor(prevS.file)} className={CHAPTER_NAV_BTN}>
+            <span className="text-xs uppercase tracking-wide text-slate-400">{t('manuel.prev')}</span>
+            <span
+              className="font-medium text-slate-800 dark:text-slate-100 line-clamp-2"
+              translate="no"
+            >
+              {resolveSectionTitle(prevS)}
+            </span>
+          </Link>
+        ) : null}
+      </div>
+      <button type="button" onClick={goToToc} className={CHAPTER_TOC_BTN}>
+        <span className="text-xs uppercase tracking-wide text-violet-600/80 dark:text-violet-300/80">
+          ←
+        </span>
+        <span className="font-semibold text-violet-700 dark:text-violet-100">{t('manuel.toc')}</span>
+      </button>
+      <div className="min-w-0 flex justify-end">
+        {nextS ? (
+          <Link
+            href={hrefFor(nextS.file)}
+            className={`${CHAPTER_NAV_BTN} items-end text-right`}
+          >
+            <span className="text-xs uppercase tracking-wide text-slate-400">{t('manuel.next')}</span>
+            <span
+              className="font-medium text-slate-800 dark:text-slate-100 line-clamp-2"
+              translate="no"
+            >
+              {resolveSectionTitle(nextS)}
+            </span>
+          </Link>
+        ) : null}
+      </div>
+    </nav>
+  )
+}
+
 export default function ManuelOnlinePage({ chapterSlug }: { chapterSlug?: string }) {
   const router = useRouter()
   const storeLocale = useStore((s) => s.locale)
@@ -1502,42 +1567,14 @@ export default function ManuelOnlinePage({ chapterSlug }: { chapterSlug?: string
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex flex-wrap items-center gap-2 text-sm mb-4">
-        <button
-          type="button"
-          onClick={goToToc}
-          className="text-violet-600 dark:text-violet-400 font-medium hover:underline shrink-0"
-        >
-          ← {t('manuel.toc')}
-        </button>
-      </div>
-
-      <nav className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 mb-6 sm:mb-8 pb-4 sm:pb-5 border-b border-slate-200 dark:border-slate-800">
-        {prevS ? (
-          <Link
-            href={hrefFor(prevS.file)}
-            className="flex flex-col px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white/60 dark:bg-slate-900/30 hover:border-violet-400/50 hover:bg-violet-500/5 transition-colors sm:max-w-[48%]"
-          >
-            <span className="text-xs uppercase tracking-wide text-slate-400">{t('manuel.prev')}</span>
-            <span className="font-medium text-slate-800 dark:text-slate-100" translate="no">
-              {prevS ? resolveSectionTitle(prevS) : ''}
-            </span>
-          </Link>
-        ) : (
-          <span />
-        )}
-        {nextS ? (
-          <Link
-            href={hrefFor(nextS.file)}
-            className="flex flex-col items-end text-right px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white/60 dark:bg-slate-900/30 hover:border-violet-400/50 hover:bg-violet-500/5 transition-colors sm:max-w-[48%] sm:ml-auto"
-          >
-            <span className="text-xs uppercase tracking-wide text-slate-400">{t('manuel.next')}</span>
-            <span className="font-medium text-slate-800 dark:text-slate-100" translate="no">
-              {nextS ? resolveSectionTitle(nextS) : ''}
-            </span>
-          </Link>
-        ) : null}
-      </nav>
+      <ChapterPager
+        prevS={prevS}
+        nextS={nextS}
+        resolveSectionTitle={resolveSectionTitle}
+        hrefFor={hrefFor}
+        goToToc={goToToc}
+        className="mb-6 sm:mb-8 pb-4 sm:pb-5 border-b border-slate-200 dark:border-slate-800"
+      />
 
       <article className="rounded-3xl border border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-900/45 p-4 sm:p-8 md:p-10 shadow-md">
         {cardImageUrl ? (
@@ -1561,32 +1598,14 @@ export default function ManuelOnlinePage({ chapterSlug }: { chapterSlug?: string
         <ChapterBody text={parsed.body} title={displayTitle} locale={contentLocale} />
       </article>
 
-      <nav className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 mt-8 sm:mt-10 pt-6 sm:pt-7 border-t border-slate-200 dark:border-slate-800">
-        {prevS ? (
-          <Link
-            href={hrefFor(prevS.file)}
-            className="flex flex-col px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white/60 dark:bg-slate-900/30 hover:border-violet-400/50 hover:bg-violet-500/5 transition-colors sm:max-w-[48%]"
-          >
-            <span className="text-xs uppercase tracking-wide text-slate-400">{t('manuel.prev')}</span>
-            <span className="font-medium text-slate-800 dark:text-slate-100" translate="no">
-              {prevS ? resolveSectionTitle(prevS) : ''}
-            </span>
-          </Link>
-        ) : (
-          <span />
-        )}
-        {nextS ? (
-          <Link
-            href={hrefFor(nextS.file)}
-            className="flex flex-col items-end text-right px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white/60 dark:bg-slate-900/30 hover:border-violet-400/50 hover:bg-violet-500/5 transition-colors sm:max-w-[48%] sm:ml-auto"
-          >
-            <span className="text-xs uppercase tracking-wide text-slate-400">{t('manuel.next')}</span>
-            <span className="font-medium text-slate-800 dark:text-slate-100" translate="no">
-              {nextS ? resolveSectionTitle(nextS) : ''}
-            </span>
-          </Link>
-        ) : null}
-      </nav>
+      <ChapterPager
+        prevS={prevS}
+        nextS={nextS}
+        resolveSectionTitle={resolveSectionTitle}
+        hrefFor={hrefFor}
+        goToToc={goToToc}
+        className="mt-8 sm:mt-10 pt-6 sm:pt-7 border-t border-slate-200 dark:border-slate-800"
+      />
     </div>
   )
 }
