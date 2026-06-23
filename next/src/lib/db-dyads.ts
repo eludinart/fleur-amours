@@ -155,6 +155,42 @@ export async function getIncomingDyadInvite(
   }
 }
 
+/** Dyade active entre deux utilisateurs précis. */
+export async function findActiveDyadBetween(userA: number, userB: number): Promise<Dyad | null> {
+  if (!isDbConfigured()) return null
+  await ensureDyadTables()
+  const pool = getPool()
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT * FROM ${T_DYADS()}
+     WHERE status = 'active' AND user_b IS NOT NULL
+       AND ((user_a = ? AND user_b = ?) OR (user_a = ? AND user_b = ?))
+     ORDER BY created_at DESC LIMIT 1`,
+    [userA, userB, userB, userA]
+  )
+  return rows?.length ? mapDyad(rows[0]) : null
+}
+
+/** Ouvre une dyade active entre deux comptes (parcours À deux déjà complété). */
+export async function createActiveDyadBetween(userA: number, userB: number): Promise<Dyad> {
+  if (!isDbConfigured()) throw new Error('DB non configurée')
+  await ensureDyadTables()
+  const pool = getPool()
+  const [res] = await exec(
+    pool,
+    `INSERT INTO ${T_DYADS()} (user_a, user_b, status) VALUES (?, ?, 'active')`,
+    [userA, userB]
+  )
+  const dyad = await getDyadById(Number((res as ResultSetHeader).insertId))
+  if (!dyad) throw new Error('Création de la dyade impossible')
+  return dyad
+}
+
+export async function getDyadIfMember(dyadId: number, userId: number): Promise<Dyad | null> {
+  const dyad = await getDyadById(dyadId)
+  if (!dyad || !userInDyad(dyad, userId)) return null
+  return dyad
+}
+
 /** Dyade active (ou en attente) impliquant l'utilisateur. */
 export async function getMyDyad(userId: number): Promise<Dyad | null> {
   if (!isDbConfigured()) return null
@@ -191,8 +227,12 @@ export async function createDyadInvite(input: {
   await ensureDyadTables()
   const pool = getPool()
 
-  const existing = await getMyDyad(input.fromUserId)
-  if (existing) throw new Error('Vous avez déjà une dyade en cours')
+  const email = String(input.inviteeEmail).trim().toLowerCase().slice(0, 255)
+  const [pending] = await pool.execute<RowDataPacket[]>(
+    `SELECT id FROM ${T_DYADS()} WHERE user_a = ? AND invitee_email = ? AND status = 'pending' LIMIT 1`,
+    [input.fromUserId, email]
+  )
+  if (pending?.length) throw new Error('Une invitation est déjà en attente pour cet email')
 
   const token = randomBytes(24).toString('hex')
   const [res] = await exec(

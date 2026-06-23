@@ -75,4 +75,10 @@ export const aDeuxApi = {
   deleteAnchor: (id: number) => api.post('/api/a-deux/delete', { type: 'anchor', id }),
 
   deletePairing: (id: number) => api.post('/api/a-deux/delete', { type: 'pairing', id }),
+
+  getWorkspace: (token: string) =>
+    api.get(`/api/a-deux/pairing/${encodeURIComponent(token)}/workspace`),
+
+  postWorkspace: (token: string, body: Record<string, unknown>) =>
+    api.post(`/api/a-deux/pairing/${encodeURIComponent(token)}/workspace`, body),
 }

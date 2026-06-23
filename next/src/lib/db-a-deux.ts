@@ -15,6 +15,12 @@ import {
   type FleurBetaAnswerInput,
   type FleurBetaDoorKey,
 } from './fleur-beta-data'
+import {
+  addDyadEvent,
+  createActiveDyadBetween,
+  findActiveDyadBetween,
+  getDyadById,
+} from './db-dyads'
 
 const PETALS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
 const ALLOWED_BETA_VALUES = new Set(FLEUR_BETA_CHOICE_VALUES.map((v) => v))
@@ -600,4 +606,36 @@ export async function getDashboard(userId: number): Promise<{
 }> {
   const [anchors, pairings] = await Promise.all([listAnchors(userId), listPairingsForUser(userId)])
   return { anchors, pairings }
+}
+
+/** Lie un pairing complété à une dyade persistante (un jardin par duo / partenaire). */
+export async function ensureDyadForPairing(inviteToken: string, userId: number): Promise<number | null> {
+  const data = await getPairingByToken(inviteToken)
+  if (!data || data.pairing.status !== 'complete' || !data.pairing.partner_user_id) return null
+
+  const anchorUserId = Number(data.anchor.user_id)
+  const partnerUserId = data.pairing.partner_user_id
+  if (userId !== anchorUserId && userId !== partnerUserId) return null
+
+  if (data.pairing.couple_dyad_id) {
+    const linked = await getDyadById(data.pairing.couple_dyad_id)
+    if (linked && linked.status === 'active' && linked.userB != null) return linked.id
+  }
+
+  let dyad = await findActiveDyadBetween(anchorUserId, partnerUserId)
+  if (!dyad) {
+    dyad = await createActiveDyadBetween(anchorUserId, partnerUserId)
+    await addDyadEvent({
+      dyadId: dyad.id,
+      type: 'milestone',
+      content: 'Espace duo ouvert',
+    })
+  }
+
+  const pool = getPool()
+  await pool.execute(`UPDATE ${TBL_PAIRING()} SET couple_dyad_id = ? WHERE id = ?`, [
+    dyad.id,
+    data.pairing.id,
+  ])
+  return dyad.id
 }

@@ -155,28 +155,16 @@ function buildNavGroups(params: {
   const aDeuxItems: NavItem[] = [
     {
       to: '/a-deux',
-      label: translate('nav.aDeuxHub'),
+      label: translate('nav.aDeuxStart'),
       icon: '💞',
       end: true,
-      title: translate('nav.aDeuxHubTooltip'),
-    },
-    {
-      to: '/a-deux/par-une-porte',
-      label: translate('nav.aDeuxPorte'),
-      icon: '🚪',
-      title: translate('nav.aDeuxPorteTooltip'),
-    },
-    {
-      to: '/a-deux/complet',
-      label: translate('nav.aDeuxComplet'),
-      icon: '📋',
-      title: translate('nav.aDeuxCompletTooltip'),
+      title: translate('nav.aDeuxStartTooltip'),
     },
     {
       to: '/mes-duos',
-      label: translate('nav.mesDuos'),
+      label: translate('nav.mesDuosHub'),
       icon: '🌸',
-      title: translate('nav.mesDuosTooltip'),
+      title: translate('nav.mesDuosHubTooltip'),
     },
   ]
 

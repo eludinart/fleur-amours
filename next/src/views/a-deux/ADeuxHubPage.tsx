@@ -8,6 +8,7 @@ import { aDeuxApi } from '@/api/a-deux'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { AnchorInviteSection } from '@/components/a-deux/AnchorInviteSection'
+import { DuoJourneyNav } from '@/components/a-deux/DuoJourneyNav'
 
 export default function ADeuxHubPage() {
   useStore((s) => s.locale)
@@ -48,6 +49,7 @@ export default function ADeuxHubPage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-6 py-4">
+      <DuoJourneyNav current="questionnaire" />
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold text-accent">{t('aDeux.hubTitle')} 💞</h1>
         <p className="text-sm text-slate-500">{t('aDeux.hubSubtitle')}</p>
@@ -141,9 +143,9 @@ export default function ADeuxHubPage() {
                     {p.status === 'complete' ? (
                       <Link
                         href={`/a-deux/result?token=${encodeURIComponent(p.invite_token)}`}
-                        className="text-xs font-semibold text-accent"
+                        className="text-xs font-semibold text-violet-700 dark:text-violet-300"
                       >
-                        {t('aDeux.viewSynthesis')}
+                        {t('aDeux.openDuoSpace')}
                       </Link>
                     ) : (
                       <span className="text-xs text-amber-600">⏳</span>

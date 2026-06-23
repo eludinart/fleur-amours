@@ -15,6 +15,7 @@ export default function ADeuxResultPage() {
   const token = searchParams?.get('token') || ''
 
   const [duoData, setDuoData] = useState(null)
+  const [pairings, setPairings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -24,9 +25,9 @@ export default function ADeuxResultPage() {
       setLoading(false)
       return
     }
-    aDeuxApi
-      .getDuoResult(token)
-      .then((data) => {
+    Promise.all([aDeuxApi.getDuoResult(token), aDeuxApi.getDashboard()])
+      .then(([data, dash]) => {
+        setPairings(dash.pairings || [])
         if (data.status === 'waiting_partner') {
           setError(t('duo.partnerNotYet'))
         } else {
@@ -34,7 +35,6 @@ export default function ADeuxResultPage() {
             ...data,
             duo: computeDuoAnalysis(data.person_a, data.person_b),
             invite_token: token,
-            invited_email: data.invited_email,
           })
         }
       })
@@ -57,7 +57,11 @@ export default function ADeuxResultPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 lg:py-8">
-      <DuoSynthesisView duoData={duoData} onReset={() => router.push('/a-deux')} />
+      <DuoSynthesisView
+        duoData={duoData}
+        allPairings={pairings}
+        onReset={() => router.push('/a-deux')}
+      />
     </div>
   )
 }

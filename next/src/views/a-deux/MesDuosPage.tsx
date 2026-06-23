@@ -9,6 +9,7 @@ import { fleurApi } from '@/api/fleur'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { AnchorInviteSection } from '@/components/a-deux/AnchorInviteSection'
+import { DuoJourneyNav } from '@/components/a-deux/DuoJourneyNav'
 
 function formatDate(s) {
   if (!s) return '—'
@@ -65,10 +66,11 @@ export default function MesDuosPage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-6 py-4">
+      <DuoJourneyNav current="duo" />
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{t('aDeux.mesDuosTitle')}</h1>
-          <p className="text-sm text-slate-500">{t('aDeux.mesDuosSubtitle')}</p>
+          <h1 className="text-2xl font-bold">{t('aDeux.mesDuosHubTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('aDeux.mesDuosHubSubtitle')}</p>
         </div>
         <Link href="/a-deux" className="shrink-0 px-3 py-2 rounded-xl bg-accent text-white text-sm font-semibold">
           + {t('aDeux.newExploration')}
@@ -127,14 +129,14 @@ export default function MesDuosPage() {
                     {p.status === 'complete' ? t('mesFleurs.complete') : t('mesFleurs.waiting')} · {formatDate(p.created_at)}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
                   {p.status === 'complete' && (
                     <Link
-                      href={`/couple${p.invited_email ? `?invite_email=${encodeURIComponent(p.invited_email)}` : ''}`}
+                      href={`/a-deux/result?token=${encodeURIComponent(p.invite_token)}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-xs text-violet-600 underline"
+                      className="text-xs font-semibold text-violet-700 dark:text-violet-300 underline"
                     >
-                      {t('aDeux.coupleGardenShort')}
+                      {t('aDeux.openDuoSpace')}
                     </Link>
                   )}
                   <button
