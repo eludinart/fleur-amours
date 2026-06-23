@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9\s]/g, ' ')
   const doorKeywords: Record<string, string[]> = {
-    love: ['amour', 'relation', 'couple', 'coeur', 'aimer', 'sentiment', 'ami'],
+    love: ['amour', 'relation', 'couple', 'duo', 'coeur', 'aimer', 'sentiment', 'ami'],
     vegetal: ['temps', 'phase', 'etape', 'croissance', 'cycle', 'racine', 'fruit', 'fleur'],
     elements: ['environnement', 'contexte', 'atmosphere', 'climat', 'travail', 'famille'],
     life: ['vie', 'chemin', 'histoire', 'passe', 'memoire', 'avenir', 'sens', 'transformation'],

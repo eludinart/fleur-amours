@@ -32,10 +32,10 @@ export async function POST(req: NextRequest) {
         try {
           await createNotification({
             type: 'dyad_ritual',
-            title: 'Votre rituel de couple vous attend',
+            title: 'Votre rituel de duo vous attend',
             body: r.title || 'Un moment à partager avec votre partenaire.',
             action_url: '/couple',
-            action_label: 'Ouvrir le Jardin du couple',
+            action_label: 'Ouvrir le Jardin du duo',
             recipient_type: 'user',
             recipient_id: recipientId,
             priority: 'normal',

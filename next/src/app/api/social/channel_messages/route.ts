@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!isDbConfigured()) {
-      const stub = getStubMessages(cid)
+      const stub = getStubMessages(cid, parseInt(userId, 10))
       const formatted = stub.map((m) => ({
         id: m.id,
         messageId: m.id,
@@ -31,12 +31,13 @@ export async function GET(req: NextRequest) {
         cardSlug: m.cardSlug,
         temperature: m.temperature,
         createdAt: m.createdAt,
+        reactions: m.reactions ?? [],
       }))
       return NextResponse.json({ messages: formatted })
     }
 
     const messages = await getChannelMessages(cid, userId)
-    // Format attendu par DialogueStream : id, senderId, body, cardSlug, temperature, createdAt
+    // Format attendu par DialogueStream : id, senderId, body, cardSlug, temperature, createdAt, reactions
     const formatted = messages.map((m) => ({
       id: m.id,
       messageId: m.id,
@@ -45,6 +46,7 @@ export async function GET(req: NextRequest) {
       cardSlug: m.cardSlug,
       temperature: m.temperature,
       createdAt: m.createdAt,
+      reactions: m.reactions ?? [],
     }))
     return NextResponse.json({ messages: formatted })
   } catch (err: unknown) {

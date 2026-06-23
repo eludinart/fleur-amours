@@ -182,7 +182,7 @@ export function buildDyadSummaryContext(input: {
     lines.push(petalLine(input.members.memberB.label, input.members.memberB.petals))
   }
   if (input.dyad.fleur) {
-    lines.push(petalLine('Fleur de couple (moyenne)', input.dyad.fleur))
+    lines.push(petalLine('Fleur de duo (moyenne)', input.dyad.fleur))
   }
 
   const activeRituals = input.rituals.filter((r) => r.active)

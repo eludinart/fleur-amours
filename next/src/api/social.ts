@@ -58,8 +58,13 @@ export const socialApi = {
     }>,
   clairiereUnreadCount: () =>
     api.get('/api/social/clairiere_unread_count') as Promise<{ count: number }>,
-  markChannelRead: (channelId: number) =>
-    api.post('/api/social/mark_channel_read', { channelId }),
+  markChannelRead: (channelId: number, opts?: { viewing?: boolean }) =>
+    api.post('/api/social/mark_channel_read', { channelId, ...opts }),
+  toggleMessageReaction: (channelId: number, messageId: number, emoji: string) =>
+    api.post('/api/social/message_reaction', { channelId, messageId, emoji }) as Promise<{
+      action: 'added' | 'removed'
+      reactions: Array<{ emoji: string; count: number; mine: boolean }>
+    }>,
   markCommunityOnboardingDone: () =>
     api.post('/api/social/community_onboarding_done', {}),
   muteUser: (targetUserId: string | number, mute = true) =>

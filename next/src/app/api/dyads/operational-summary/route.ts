@@ -71,8 +71,8 @@ function fallbackSummary(locale: string): DyadOperationalSummary {
   if (en) {
     return {
       headline: 'Your shared garden is taking shape',
-      climate: 'The couple space is active; keep nurturing small rituals together.',
-      alignments: 'Your individual profiles feed the couple flower — observe what resonates.',
+      climate: 'The duo space is active; keep nurturing small rituals together.',
+      alignments: 'Your individual profiles feed the duo flower — observe what resonates.',
       gaps: 'Some petals may differ: treat gaps as invitations, not faults.',
       nextStep: 'Pick one ritual or one honest check-in conversation this week.',
     }
@@ -80,16 +80,16 @@ function fallbackSummary(locale: string): DyadOperationalSummary {
   if (es) {
     return {
       headline: 'Vuestro jardín compartido se está formando',
-      climate: 'El espacio de pareja está activo; cuiden pequeños rituales juntos.',
-      alignments: 'Vuestros perfiles individuales alimentan la flor de pareja.',
+      climate: 'El espacio duo está activo; cuiden pequeños rituales juntos.',
+      alignments: 'Vuestros perfiles individuales alimentan la flor de duo.',
       gaps: 'Algunos pétalos pueden diferir: tratad los huecos como invitaciones.',
       nextStep: 'Elijan un ritual o una conversación honesta esta semana.',
     }
   }
   return {
     headline: 'Votre jardin commun prend forme',
-    climate: 'L’espace couple est actif ; continuez à nourrir de petits rituels à deux.',
-    alignments: 'Vos profils individuels nourrissent la fleur de couple — observez ce qui résonne.',
+    climate: 'L’espace duo est actif ; continuez à nourrir de petits rituels à deux.',
+    alignments: 'Vos profils individuels nourrissent la fleur de duo — observez ce qui résonne.',
     gaps: 'Certains pétales peuvent diverger : voyez les écarts comme des invitations, pas des fautes.',
     nextStep: 'Choisissez un rituel ou un check-in honnête à deux cette semaine.',
   }
@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
     })
 
     const system =
-      'Tu es un coach relationnel pragmatique pour un couple dans l’app Fleur d’AmOurs. À partir des données (fleurs individuelles, fleur de couple, rituels, fil partagé), produis un RÉSUMÉ OPÉRATIONNEL : concret, bienveillant, jamais clinique ni accusateur. Réponds UNIQUEMENT en JSON avec les clés : headline (vue d’ensemble, 1 phrase), climate (climat actuel du lien), alignments (ressources / points d’accord observables), gaps (écarts ou zones de vigilance sans jugement), nextStep (un geste concret à deux cette semaine). Chaque champ < 280 caractères.' +
+      'Tu es un coach relationnel pragmatique pour un duo dans l’app Fleur d’AmOurs. À partir des données (fleurs individuelles, fleur de duo, rituels, fil partagé), produis un RÉSUMÉ OPÉRATIONNEL : concret, bienveillant, jamais clinique ni accusateur. Réponds UNIQUEMENT en JSON avec les clés : headline (vue d’ensemble, 1 phrase), climate (climat actuel du lien), alignments (ressources / points d’accord observables), gaps (écarts ou zones de vigilance sans jugement), nextStep (un geste concret à deux cette semaine). Chaque champ < 280 caractères.' +
       getLangInstruction(locale)
 
     const result = await llmCallForTask('dyad-summary', 

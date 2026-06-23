@@ -1102,7 +1102,7 @@ export function AccountPage() {
                       onClick={() => setProfileForm((f) => ({
                         ...f,
                         coach_short_bio:
-                          "J'aide les personnes et les couples a clarifier leurs blocages relationnels, retrouver une communication apaisée et poser des actions concretes en quelques echanges progressifs.",
+                          "J'aide les personnes et les duos a clarifier leurs blocages relationnels, retrouver une communication apaisée et poser des actions concretes en quelques echanges progressifs.",
                       }))}
                       className="text-[11px] px-2 py-1 rounded-md border border-violet-300/60 dark:border-violet-700/60 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30"
                     >
@@ -1207,7 +1207,7 @@ export function AccountPage() {
                       type="text"
                       value={profileForm.coach_specialties}
                       onChange={(e) => setProfileForm((f) => ({ ...f, coach_specialties: e.target.value }))}
-                      placeholder="Communication, couple, limites..."
+                      placeholder="Communication, duo, limites..."
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
                     />
                   </div>

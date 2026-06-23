@@ -84,7 +84,7 @@ function buildAccompagnementNavItems(params: {
 /**
  * Construit la navigation utilisateur en deux registres distincts :
  * - EXPLORATIONS : les 4 applications guidées par l'IA (Conversation intérieure, Explorer ma Fleur, Faire un tirage, Lire un tirage).
- * - À DEUX : parcours couple (Par une Porte, questionnaire complet, Mes duos).
+ * - À deux ou à plusieurs : parcours duo (Par une Porte, questionnaire complet, Mes duos).
  *
  * Les sections supplémentaires sont **filtrées par viewMode** :
  *  - 'personnel' : parcours individuel (Fleur, explorations, être accompagné).

@@ -17,7 +17,7 @@ const PORTE_LABELS: Record<string, string> = {
   life: 'Vie',
 }
 
-export type DuoInviteEmailKind = 'a_deux_porte' | 'a_deux_complet' | 'duo_classic'
+export type DuoInviteEmailKind = 'a_deux_porte' | 'a_deux_complet' | 'duo_classic' | 'couple_garden'
 
 export type DuoInviteEmailContentParams = {
   inviterName: string
@@ -38,6 +38,26 @@ function escapeHtml(s: string): string {
 }
 
 function procedureSteps(kind: DuoInviteEmailKind): Array<{ emoji: string; title: string; desc: string }> {
+  if (kind === 'couple_garden') {
+    return [
+      {
+        emoji: '🌸',
+        title: 'Découvrez la fleur de votre invitant·e',
+        desc: 'Chaque pétale représente une dimension de l’amour — Agapè, Éros, Philia… La leur est déjà dessinée ci-dessus.',
+      },
+      {
+        emoji: '🤝',
+        title: 'Acceptez l’invitation',
+        desc: 'Rejoignez le jardin commun : un espace privé à deux, sans questionnaire obligatoire pour commencer.',
+      },
+      {
+        emoji: '💫',
+        title: 'Cultivez votre lien au quotidien',
+        desc: 'Messages partagés, rituels, fleur de duo et médiation guidée pour accompagner votre relation dans la durée.',
+      },
+    ]
+  }
+
   const isPorte = kind === 'a_deux_porte'
   const isComplet = kind === 'a_deux_complet'
   const questionHint = isPorte
@@ -66,6 +86,9 @@ function procedureSteps(kind: DuoInviteEmailKind): Array<{ emoji: string; title:
 }
 
 function kindMeta(kind: DuoInviteEmailKind, porteKey?: string | null): { badge: string; duration: string } {
+  if (kind === 'couple_garden') {
+    return { badge: 'Jardin du duo', duration: 'Espace partagé' }
+  }
   if (kind === 'a_deux_porte') {
     const porte = porteKey ? PORTE_LABELS[porteKey] ?? porteKey : 'Porte'
     return { badge: `À deux · Par une Porte — ${porte}`, duration: '~5 min' }
@@ -74,6 +97,19 @@ function kindMeta(kind: DuoInviteEmailKind, porteKey?: string | null): { badge: 
     return { badge: 'À deux · Questionnaire complet', duration: '~15 min' }
   }
   return { badge: 'Fleur DUO', duration: '~15 min' }
+}
+
+function emailHeading(kind: DuoInviteEmailKind): { title: string; introLine: string } {
+  if (kind === 'couple_garden') {
+    return {
+      title: 'Une invitation au Jardin du duo',
+      introLine: 'vous invite à cultiver votre relation à deux dans un espace partagé et continu.',
+    }
+  }
+  return {
+    title: 'Une invitation à explorer à deux',
+    introLine: 'a cartographié sa Fleur d\'AmOurs<br/>et vous invite à compléter la vôtre.',
+  }
 }
 
 function buildPetalLegendHtml(scores: Record<string, number>): string {
@@ -106,13 +142,18 @@ export function buildDuoInviteEmailContent(params: DuoInviteEmailContentParams):
   const meta = kindMeta(params.kind, params.porteKey)
   const dominant = dominantPetalFromScores(params.scores)
   const flowerSvg = buildEmailFlowerSvg(params.scores, 240)
-  const cta = params.ctaLabel ?? 'Commencer mon questionnaire'
+  const cta =
+    params.ctaLabel ??
+    (params.kind === 'couple_garden' ? 'Rejoindre le Jardin du duo' : 'Commencer mon questionnaire')
   const steps = procedureSteps(params.kind)
+  const heading = emailHeading(params.kind)
 
   const subject =
     params.kind === 'duo_classic'
       ? `${inviter} vous invite à un questionnaire Duo sur ${APP_NAME} 🌸`
-      : `${inviter} vous invite à un parcours À deux sur ${APP_NAME} 🌸`
+      : params.kind === 'couple_garden'
+        ? `${inviter} vous invite au Jardin du duo sur ${APP_NAME} 🌸`
+        : `${inviter} vous invite à un parcours À deux sur ${APP_NAME} 🌸`
 
   const stepsHtml = steps
     .map(
@@ -147,9 +188,9 @@ export function buildDuoInviteEmailContent(params: DuoInviteEmailContentParams):
           <tr>
             <td style="background:linear-gradient(135deg,#7c3aed 0%,#db2777 55%,#ec8698 100%);padding:28px 28px 24px;text-align:center">
               <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.85);font-family:system-ui,sans-serif">${APP_NAME}</p>
-              <h1 style="margin:0;font-size:24px;line-height:1.35;color:#ffffff;font-weight:700">Une invitation à explorer à deux</h1>
+              <h1 style="margin:0;font-size:24px;line-height:1.35;color:#ffffff;font-weight:700">${escapeHtml(heading.title)}</h1>
               <p style="margin:12px 0 0;font-size:15px;line-height:1.5;color:rgba(255,255,255,0.92)">
-                <strong>${escapeHtml(display)}</strong> a cartographié sa Fleur d'AmOurs<br/>et vous invite à compléter la vôtre.
+                <strong>${escapeHtml(display)}</strong> ${heading.introLine}
               </p>
               <p style="margin:14px 0 0;display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:12px;font-family:system-ui,sans-serif;padding:6px 14px;border-radius:999px;font-weight:600">
                 ${escapeHtml(meta.badge)} · ${escapeHtml(meta.duration)}
@@ -207,10 +248,15 @@ export function buildDuoInviteEmailContent(params: DuoInviteEmailContentParams):
 </body>
 </html>`
 
+  const textIntro =
+    params.kind === 'couple_garden'
+      ? `${display} vous invite au Jardin du duo — un espace partagé pour cultiver votre relation à deux.`
+      : `${display} vous invite à compléter votre Fleur d'AmOurs.`
+
   const text = [
     `${APP_NAME} — Invitation à deux`,
     '',
-    `${display} vous invite à compléter votre Fleur d'AmOurs.`,
+    textIntro,
     meta.badge,
     dominant ? `Pétale dominant : ${dominant.name}` : '',
     '',

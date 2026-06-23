@@ -39,7 +39,7 @@ export const ADMIN_NOTIFICATION_DESTINATIONS: AdminNotificationDestination[] = [
   { id: 'checkin', label: 'Check-in quotidien', path: '/checkin', group: 'Formulaires & parcours' },
   { id: 'onboarding-diagnostic', label: 'Diagnostic de base (baseline)', path: '/onboarding-diagnostic', group: 'Formulaires & parcours' },
   { id: 'eclosion', label: 'Timeline Éclosion', path: '/eclosion', group: 'Formulaires & parcours' },
-  { id: 'couple', label: 'Espace couple (Dyade)', path: '/couple', group: 'Formulaires & parcours' },
+  { id: 'couple', label: 'Espace duo (Dyade)', path: '/couple', group: 'Formulaires & parcours' },
   { id: 'dreamscape', label: 'Conversation intérieure', path: '/dreamscape', group: 'Formulaires & parcours' },
   { id: 'dreamscape_historique', label: 'Conversation intérieure — historique', path: '/dreamscape/historique', group: 'Formulaires & parcours' },
   { id: 'contact', label: 'Formulaire de contact', path: '/contact', group: 'Formulaires & parcours' },

@@ -8,7 +8,8 @@ import { createDyadInvite } from '@/lib/db-dyads'
 import { authMe } from '@/lib/db-auth'
 import { createNotification } from '@/lib/db-notifications'
 import { absolutePublicAppUrl } from '@/lib/app-public-url'
-import { sendInviteEmail } from '@/lib/email'
+import { sendDuoInviteEmail } from '@/lib/email'
+import { resolveUserPetalsProfile } from '@/lib/resolve-user-petals'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,10 +35,13 @@ export async function POST(req: NextRequest) {
 
     const inviter = await authMe(uid).catch(() => null)
     const inviterName = inviter?.name?.trim() || inviter?.email || 'Quelqu’un'
+    const inviterDisplay =
+      (inviter?.pseudo && String(inviter.pseudo).trim()) || inviterName
+    const petals = (await resolveUserPetalsProfile(uid, inviter?.email ?? null)) ?? {}
     void createNotification({
       type: 'dyad_invite',
-      title: 'Invitation au Jardin du couple',
-      body: `${inviterName} vous invite à rejoindre un jardin commun.`,
+      title: 'Invitation au Jardin du duo',
+      body: `${inviterName} vous invite à rejoindre un jardin duo.`,
       action_url: invitePath,
       action_label: 'Accepter',
       recipient_type: 'user',
@@ -47,12 +51,14 @@ export async function POST(req: NextRequest) {
       source_id: dyad.id,
     }).catch(() => {})
 
-    void sendInviteEmail({
+    void sendDuoInviteEmail({
       to: email,
-      subject: `${inviterName} vous invite au Jardin du couple`,
-      intro: `${inviterName} vous invite à rejoindre un jardin commun sur Fleur d'AmOurs.`,
+      inviterName,
+      inviterDisplayName: inviterDisplay,
       inviteUrl,
-      ctaLabel: 'Accepter l\'invitation',
+      scores: petals,
+      kind: 'couple_garden',
+      ctaLabel: 'Rejoindre le Jardin du duo',
     }).catch(() => {})
 
     return NextResponse.json({ dyad, token, inviteUrl }, { status: 201 })

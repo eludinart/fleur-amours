@@ -11,6 +11,7 @@ export type ChannelMessage = {
   cardSlug?: string
   temperature?: string
   createdAt?: string
+  reactions?: Array<{ emoji: string; count: number; mine: boolean }>
 }
 
 export interface LisiereData {
@@ -60,7 +61,12 @@ export interface SocialStoreState {
   setTemperature: (channelId: number | string, value: string) => void
   clairiereUnreadCount: number
   fetchClairiereUnread: () => Promise<number>
-  markChannelRead: (channelId: number | string) => Promise<void>
+  markChannelRead: (channelId: number | string, opts?: { viewing?: boolean }) => Promise<void>
+  toggleMessageReaction: (
+    channelId: number | string,
+    messageId: number,
+    emoji: string
+  ) => Promise<Array<{ emoji: string; count: number; mine: boolean }>>
 }
 
 /**
@@ -190,12 +196,32 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
       return 0
     }
   },
-  markChannelRead: async (channelId) => {
+  markChannelRead: async (channelId, opts) => {
     try {
-      await socialApi.markChannelRead(Number(channelId))
-      get().fetchClairiereUnread()
+      await socialApi.markChannelRead(Number(channelId), opts)
+      if (opts?.viewing !== false) get().fetchClairiereUnread()
     } catch {
       /* silent */
     }
+  },
+
+  toggleMessageReaction: async (channelId, messageId, emoji) => {
+    const result = await socialApi.toggleMessageReaction(Number(channelId), messageId, emoji)
+    const reactions = result.reactions ?? []
+    set((s) => {
+      const key = String(channelId)
+      const list = s.messagesByChannel[key] || []
+      return {
+        messagesByChannel: {
+          ...s.messagesByChannel,
+          [key]: list.map((m) => {
+            const mid = Number(m.id ?? m.messageId)
+            if (mid !== messageId) return m
+            return { ...m, reactions }
+          }),
+        },
+      }
+    })
+    return reactions
   },
 }))

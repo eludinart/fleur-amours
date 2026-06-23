@@ -43,12 +43,12 @@ export default function ADeuxResultPage() {
   }, [token])
 
   if (loading) {
-    return <div className="max-w-lg mx-auto py-16 text-center text-slate-500">{t('common.loading')}</div>
+    return <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 text-center text-slate-500">{t('common.loading')}</div>
   }
 
   if (error || !duoData) {
     return (
-      <div className="max-w-lg mx-auto py-16 text-center space-y-4">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 text-center space-y-4">
         <p className="text-slate-600">{error || t('duo.tokenNotFound')}</p>
         <Link href="/mes-duos" className="text-accent underline">{t('aDeux.viewMesDuos')}</Link>
       </div>
@@ -56,7 +56,7 @@ export default function ADeuxResultPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto py-4">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 lg:py-8">
       <DuoSynthesisView duoData={duoData} onReset={() => router.push('/a-deux')} />
     </div>
   )

@@ -66,7 +66,7 @@ export const PETAL_INTERPRETATIONS: Record<string, { label: string; subtitle: st
     label: 'Mania',
     subtitle: 'Amour passionnel',
     description:
-      "L'intensité émotionnelle, la passion, parfois la jalousie ou l'attachement anxieux. Une dimension présente peut nourrir la vie du couple ; en excès, elle peut générer des tensions.",
+      "L'intensité émotionnelle, la passion, parfois la jalousie ou l'attachement anxieux. Une dimension présente peut nourrir la vie du duo ; en excès, elle peut générer des tensions.",
   },
   storge: {
     label: 'Storgè',
@@ -84,7 +84,7 @@ export const PETAL_INTERPRETATIONS: Record<string, { label: string; subtitle: st
     label: 'Philia',
     subtitle: 'Amitié amoureuse',
     description:
-      "L'affection, la complicité, le lien fraternel ou amical au sein du couple. Dimension de la tendresse, du partage et du « être ensemble » au quotidien.",
+      "L'affection, la complicité, le lien fraternel ou amical au sein du duo. Dimension de la tendresse, du partage et du « être ensemble » au quotidien.",
   },
   ludus: {
     label: 'Ludus',
@@ -101,4 +101,4 @@ export const PETAL_INTERPRETATIONS: Record<string, { label: string; subtitle: st
 }
 
 export const FLEUR_CONSEIL = `Votre fleur est un instantané — elle peut évoluer avec le temps et selon les relations. 
-Utilisez-la comme point de départ pour vous questionner, en couple ou en solo, sur ce qui vous nourrit et ce que vous souhaitez cultiver.`
+Utilisez-la comme point de départ pour vous questionner, en duo ou en solo, sur ce qui vous nourrit et ce que vous souhaitez cultiver.`

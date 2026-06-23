@@ -7,6 +7,7 @@ import { resonanceBetween, complementarityBetween, weakestPetals } from './grand
 import { buildLisierePublicProfile } from './lisiere-profile'
 import { getSocialMeteo } from './community-meteo'
 import { fetchMaturityStats, computeMaturityBadges, fetchMaturityStatsBatch, type MaturityBadgeId } from './community-maturity'
+import { CLAIRIERE_REACTION_EMOJIS, type MessageReactionSummary } from './clairiere-reactions'
 
 const PRESENCE_ONLINE_SECONDS = 300
 
@@ -215,6 +216,138 @@ export type ChannelMessage = {
   cardSlug: string | null
   temperature: string | null
   createdAt: string
+  reactions?: MessageReactionSummary[]
+}
+
+const P2P_REACTIONS_TABLE = 'fleur_chat_channel_message_reactions'
+
+let _ensureReactionsTablePromise: Promise<void> | null = null
+
+function ensureReactionsTable(pool: Awaited<ReturnType<typeof getPool>>): Promise<void> {
+  if (!_ensureReactionsTablePromise) {
+    const t = table(P2P_REACTIONS_TABLE)
+    _ensureReactionsTablePromise = pool
+      .execute(`
+      CREATE TABLE IF NOT EXISTS ${t} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        message_id INT NOT NULL,
+        user_id INT NOT NULL,
+        emoji VARCHAR(16) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_msg_user_emoji (message_id, user_id, emoji),
+        INDEX idx_message (message_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+      .then(() => undefined)
+      .catch(() => {
+        _ensureReactionsTablePromise = null
+      })
+  }
+  return _ensureReactionsTablePromise
+}
+
+function normalizeReactionEmoji(raw: string): string | null {
+  const emoji = String(raw ?? '').trim()
+  if (!emoji) return null
+  return (CLAIRIERE_REACTION_EMOJIS as readonly string[]).includes(emoji) ? emoji : null
+}
+
+/** Regroupe les réactions par message_id. */
+async function fetchReactionsByMessageIds(
+  pool: Awaited<ReturnType<typeof getPool>>,
+  messageIds: number[],
+  currentUserId: number
+): Promise<Map<number, MessageReactionSummary[]>> {
+  const out = new Map<number, MessageReactionSummary[]>()
+  if (messageIds.length === 0) return out
+  await ensureReactionsTable(pool)
+  const t = table(P2P_REACTIONS_TABLE)
+  const placeholders = messageIds.map(() => '?').join(',')
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT message_id, emoji, user_id FROM ${t} WHERE message_id IN (${placeholders})`,
+    messageIds
+  )
+  const grouped = new Map<number, Map<string, { count: number; mine: boolean }>>()
+  for (const r of rows ?? []) {
+    const mid = Number(r.message_id)
+    const emoji = String(r.emoji ?? '')
+    const uid = Number(r.user_id)
+    if (!grouped.has(mid)) grouped.set(mid, new Map())
+    const byEmoji = grouped.get(mid)!
+    const prev = byEmoji.get(emoji) ?? { count: 0, mine: false }
+    prev.count += 1
+    if (uid === currentUserId) prev.mine = true
+    byEmoji.set(emoji, prev)
+  }
+  for (const [mid, byEmoji] of grouped) {
+    out.set(
+      mid,
+      Array.from(byEmoji.entries()).map(([emoji, v]) => ({
+        emoji,
+        count: v.count,
+        mine: v.mine,
+      }))
+    )
+  }
+  return out
+}
+
+async function assertMessageChannelAccess(
+  pool: Awaited<ReturnType<typeof getPool>>,
+  messageId: number,
+  userId: number
+): Promise<{ channelId: number }> {
+  const tMsg = table(P2P_MESSAGES_TABLE)
+  const tCh = table('fleur_chat_channels')
+  await ensureMessagesTable(pool)
+  const [msgRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT m.channel_id, c.user_a, c.user_b
+     FROM ${tMsg} m
+     JOIN ${tCh} c ON c.id = m.channel_id
+     WHERE m.id = ?`,
+    [messageId]
+  )
+  if (!msgRows?.length) throw new Error('Message introuvable')
+  const ch = msgRows[0]
+  const ua = Number(ch.user_a)
+  const ub = Number(ch.user_b)
+  if (userId !== ua && userId !== ub) throw new Error('Accès non autorisé à ce message')
+  return { channelId: Number(ch.channel_id) }
+}
+
+/** Ajoute ou retire une réaction emoji sur un message Clairière. */
+export async function toggleChannelMessageReaction(
+  messageId: number,
+  userId: number,
+  emojiRaw: string
+): Promise<{ action: 'added' | 'removed'; reactions: MessageReactionSummary[] }> {
+  const pool = getPool()
+  const uid = Number(userId)
+  const mid = Number(messageId)
+  if (!uid || !mid) throw new Error('messageId et userId requis')
+  const emoji = normalizeReactionEmoji(emojiRaw)
+  if (!emoji) throw new Error('Emoji non autorisé')
+
+  await assertMessageChannelAccess(pool, mid, uid)
+  await ensureReactionsTable(pool)
+  const t = table(P2P_REACTIONS_TABLE)
+
+  const [existing] = await pool.execute<RowDataPacket[]>(
+    `SELECT id FROM ${t} WHERE message_id = ? AND user_id = ? AND emoji = ? LIMIT 1`,
+    [mid, uid, emoji]
+  )
+
+  let action: 'added' | 'removed'
+  if (existing?.length) {
+    await pool.execute(`DELETE FROM ${t} WHERE message_id = ? AND user_id = ? AND emoji = ?`, [mid, uid, emoji])
+    action = 'removed'
+  } else {
+    await pool.execute(`INSERT INTO ${t} (message_id, user_id, emoji) VALUES (?, ?, ?)`, [mid, uid, emoji])
+    action = 'added'
+  }
+
+  const reactionsMap = await fetchReactionsByMessageIds(pool, [mid], uid)
+  return { action, reactions: reactionsMap.get(mid) ?? [] }
 }
 
 /** Récupère les messages d'un canal (La Clairière) */
@@ -249,14 +382,21 @@ export async function getChannelMessages(
     [channelId]
   )
 
-  return (rows ?? []).map((r) => ({
-    id: Number(r.id),
-    senderId: Number(r.sender_id),
-    body: r.body ? String(r.body) : null,
-    cardSlug: r.card_slug ? String(r.card_slug) : null,
-    temperature: r.temperature ? String(r.temperature) : null,
-    createdAt: String(r.created_at ?? ''),
-  }))
+  const messageIds = (rows ?? []).map((r) => Number(r.id))
+  const reactionsMap = await fetchReactionsByMessageIds(pool, messageIds, uid)
+
+  return (rows ?? []).map((r) => {
+    const id = Number(r.id)
+    return {
+      id,
+      senderId: Number(r.sender_id),
+      body: r.body ? String(r.body) : null,
+      cardSlug: r.card_slug ? String(r.card_slug) : null,
+      temperature: r.temperature ? String(r.temperature) : null,
+      createdAt: String(r.created_at ?? ''),
+      reactions: reactionsMap.get(id) ?? [],
+    }
+  })
 }
 
 /** Récupère le timestamp de la dernière activité (created_at) du canal. */
@@ -330,14 +470,21 @@ export async function getChannelMessagesSince(
     [channelId, since]
   )
 
-  return (rows ?? []).map((r) => ({
-    id: Number(r.id),
-    senderId: Number(r.sender_id),
-    body: r.body ? String(r.body) : null,
-    cardSlug: r.card_slug ? String(r.card_slug) : null,
-    temperature: r.temperature ? String(r.temperature) : null,
-    createdAt: String(r.created_at ?? ''),
-  }))
+  const messageIds = (rows ?? []).map((r) => Number(r.id))
+  const reactionsMap = await fetchReactionsByMessageIds(pool, messageIds, uid)
+
+  return (rows ?? []).map((r) => {
+    const id = Number(r.id)
+    return {
+      id,
+      senderId: Number(r.sender_id),
+      body: r.body ? String(r.body) : null,
+      cardSlug: r.card_slug ? String(r.card_slug) : null,
+      temperature: r.temperature ? String(r.temperature) : null,
+      createdAt: String(r.created_at ?? ''),
+      reactions: reactionsMap.get(id) ?? [],
+    }
+  })
 }
 
 /** Envoie un message dans un canal P2P */
@@ -391,6 +538,83 @@ export async function sendChannelMessage(
 }
 
 const CHANNEL_READ_META_PREFIX = 'fleur_chat_channel_'
+/** Fenêtre pendant laquelle un canal est considéré comme ouvert (polling client ≈ 15 s). */
+const CHANNEL_VIEWING_SECONDS = 35
+
+function channelViewingMetaKey(channelId: number): string {
+  return `${CHANNEL_READ_META_PREFIX}${channelId}_viewing_at`
+}
+
+/** Indique si l'utilisateur consulte actuellement ce canal Clairière. */
+export async function isUserViewingChannel(channelId: number, userId: number): Promise<boolean> {
+  const pool = getPool()
+  const uid = Number(userId)
+  const cid = Number(channelId)
+  if (!uid || !cid) return false
+
+  const tMeta = table('usermeta')
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = ? LIMIT 1`,
+    [uid, channelViewingMetaKey(cid)]
+  )
+  const raw = rows?.[0]?.meta_value ? String(rows[0].meta_value).trim() : ''
+  if (!raw) return false
+
+  let ts: number
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)) {
+    ts = new Date(raw.replace(' ', 'T') + 'Z').getTime()
+  } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(raw)) {
+    ts = new Date(raw.endsWith('Z') ? raw : raw + 'Z').getTime()
+  } else {
+    ts = new Date(raw).getTime()
+  }
+  if (!Number.isFinite(ts)) return false
+  return (Date.now() - ts) / 1000 <= CHANNEL_VIEWING_SECONDS
+}
+
+/** Heartbeat : l'utilisateur a ce canal ouvert à l'écran. */
+export async function recordChannelViewing(channelId: number, userId: string): Promise<void> {
+  const pool = getPool()
+  const uid = parseInt(userId, 10)
+  if (!uid || !channelId) return
+
+  const tCh = table('fleur_chat_channels')
+  const tMeta = table('usermeta')
+  const metaKey = channelViewingMetaKey(channelId)
+  const now = new Date().toISOString()
+
+  const [chRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT user_a, user_b FROM ${tCh} WHERE id = ?`,
+    [channelId]
+  )
+  if (!chRows?.length) return
+  const ch = chRows[0]
+  const ua = Number(ch.user_a)
+  const ub = Number(ch.user_b)
+  if (uid !== ua && uid !== ub) return
+
+  const [existing] = await pool.execute<RowDataPacket[]>(
+    `SELECT umeta_id FROM ${tMeta} WHERE user_id = ? AND meta_key = ?`,
+    [uid, metaKey]
+  )
+  if (existing.length > 0) {
+    await pool.execute(`UPDATE ${tMeta} SET meta_value = ? WHERE user_id = ? AND meta_key = ?`, [now, uid, metaKey])
+  } else {
+    await pool.execute(`INSERT INTO ${tMeta} (user_id, meta_key, meta_value) VALUES (?, ?, ?)`, [uid, metaKey, now])
+  }
+}
+
+/** L'utilisateur a quitté le canal (notifications autorisées à nouveau). */
+export async function clearChannelViewing(channelId: number, userId: string): Promise<void> {
+  const pool = getPool()
+  const uid = parseInt(userId, 10)
+  if (!uid || !channelId) return
+  const tMeta = table('usermeta')
+  await pool.execute(`DELETE FROM ${tMeta} WHERE user_id = ? AND meta_key = ?`, [
+    uid,
+    channelViewingMetaKey(channelId),
+  ])
+}
 
 /** Retourne le nombre de messages non lus (La Clairière) pour l'utilisateur */
 export async function getClairiereUnreadCount(userId: string): Promise<number> {
@@ -454,6 +678,10 @@ export async function createClairiereMessageNotification(
   body: string | null,
   cardSlug: string | null
 ): Promise<void> {
+  if (await isUserViewingChannel(channelId, recipientId)) {
+    return
+  }
+
   const pool = getPool()
   const tNotif = table('fleur_notifications')
   const tDeliv = table('fleur_notification_deliveries')

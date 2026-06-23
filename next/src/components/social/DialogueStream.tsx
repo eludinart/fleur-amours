@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSocialStore } from '@/store/useSocialStore'
 import { TemperatureIndicator } from './TemperatureIndicator'
+import { MessageReactions } from './MessageReactions'
 import { ALL_CARDS, FOUR_DOORS } from '@/data/tarotCards'
 import { t } from '@/i18n'
 
@@ -29,7 +30,7 @@ function findCardBySlug(slug) {
 export function DialogueStream({ channelId, otherPseudo, otherIsOnline = false }) {
   const { user } = useAuth()
   const meId = user?.id ? Number(user.id) : null
-  const { messagesByChannel, temperatureByChannel, loadChannelMessages, sendMessage, markChannelRead } = useSocialStore()
+  const { messagesByChannel, temperatureByChannel, loadChannelMessages, sendMessage, markChannelRead, toggleMessageReaction } = useSocialStore()
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [showCardPicker, setShowCardPicker] = useState(false)
@@ -48,23 +49,30 @@ export function DialogueStream({ channelId, otherPseudo, otherIsOnline = false }
       inFlight = true
       try {
         await loadChannelMessages(channelId)
-        markChannelRead?.(channelId) // marquer comme lu à chaque rafraîchissement (canal consulté)
+        if (document.visibilityState === 'visible') {
+          markChannelRead?.(channelId, { viewing: true })
+        }
       } finally {
         inFlight = false
       }
     }
 
-    refresh() // chargement immédiat
-    const timer = setInterval(refresh, 15000) // polling toutes les 15 s pour limiter la charge DB
+    refresh()
+    const timer = setInterval(refresh, 15000)
 
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') refresh()
+      if (document.visibilityState === 'visible') {
+        refresh()
+      } else {
+        markChannelRead?.(channelId, { viewing: false })
+      }
     }
     document.addEventListener('visibilitychange', onVisibility)
 
     return () => {
       clearInterval(timer)
       document.removeEventListener('visibilitychange', onVisibility)
+      markChannelRead?.(channelId, { viewing: false })
     }
   }, [channelId, loadChannelMessages, markChannelRead])
 
@@ -166,10 +174,10 @@ export function DialogueStream({ channelId, otherPseudo, otherIsOnline = false }
           return (
             <div
               key={itemKey}
-              className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+              className={`group/msg flex flex-col max-w-[85%] ${isMe ? 'items-end ml-auto' : 'items-start mr-auto'}`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
+                className={`w-full rounded-2xl px-4 py-2.5 ${
                   isMe
                     ? 'bg-violet-500/20 dark:bg-violet-500/25 text-violet-900 dark:text-violet-100'
                     : 'bg-white/80 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-600'
@@ -192,6 +200,13 @@ export function DialogueStream({ channelId, otherPseudo, otherIsOnline = false }
                   <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
                 )}
               </div>
+              <MessageReactions
+                messageId={msg.id ?? msg.messageId}
+                reactions={msg.reactions ?? []}
+                isMe={isMe}
+                onToggle={(messageId, emoji) => toggleMessageReaction(channelId, messageId, emoji)}
+                className="-mt-1 relative z-10 opacity-90 group-hover/msg:opacity-100"
+              />
             </div>
           )
         })}

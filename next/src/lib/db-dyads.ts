@@ -307,7 +307,7 @@ export async function saveDyadFleur(
     `UPDATE ${T_DYADS()} SET fleur_json = ?, fleur_updated_at = NOW() WHERE id = ?`,
     [JSON.stringify(fleur), dyadId]
   )
-  await addDyadEvent({ dyadId, type: 'fleur', content: 'Fleur de couple mise à jour' })
+  await addDyadEvent({ dyadId, type: 'fleur', content: 'Fleur de duo mise à jour' })
 }
 
 // ── Rituels relationnels ────────────────────────────────────────

@@ -81,27 +81,42 @@ export function DuoSynthesisView({ duoData, onReset }: DuoSynthesisViewProps) {
 
   const scoresA = (person_a?.scores ?? {}) as Record<string, number>
   const scoresB = (person_b?.scores ?? {}) as Record<string, number>
+  const [flowerSize, setFlowerSize] = useState(260)
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth
+      setFlowerSize(w >= 1280 ? 400 : w >= 1024 ? 360 : w >= 640 ? 300 : 260)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   return (
-    <div className="space-y-6" style={{ animation: 'fadeIn .5s ease' }}>
-      <h2 className="text-2xl font-bold text-center">{t('aDeux.synthesisTitle')} 🌸💞🌸</h2>
+    <div className="space-y-8 lg:space-y-10" style={{ animation: 'fadeIn .5s ease' }}>
+      <header className="text-center lg:text-left">
+        <h2 className="text-2xl lg:text-3xl font-bold">{t('aDeux.synthesisTitle')} 🌸💞🌸</h2>
+      </header>
 
-      <div className="flex flex-col items-center">
-        <p className="text-xs font-medium text-slate-500 mb-1">{t('duo.twoFlowersOverlay')}</p>
-        <p className="text-[10px] text-slate-400 mb-2">{t('duo.legendAB')}</p>
-        <FlowerSVG
-          petalsA={scoresToPetals(scoresA)}
-          petalsB={scoresToPetals(scoresB)}
-          size={240}
-          animate
-          showLabels
-          showScores
-        />
+      <div className="grid gap-6 lg:grid-cols-[minmax(260px,440px)_minmax(0,1fr)] lg:gap-10 lg:items-start">
+        <div className="flex flex-col items-center lg:items-start lg:sticky lg:top-6">
+          <p className="text-xs font-medium text-slate-500 mb-1 text-center lg:text-left">{t('duo.twoFlowersOverlay')}</p>
+          <p className="text-[10px] text-slate-400 mb-3 text-center lg:text-left">{t('duo.legendAB')}</p>
+          <FlowerSVG
+            petalsA={scoresToPetals(scoresA)}
+            petalsB={scoresToPetals(scoresB)}
+            size={flowerSize}
+            animate
+            showLabels
+            showScores
+          />
+        </div>
+
+        <FleurInterpretation compact scores={duoScores} />
       </div>
 
-      <FleurInterpretation compact scores={duoScores} />
-
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4 lg:gap-6">
         {[
           [t('duo.personA'), person_a, 'border-accent/30 bg-accent/5', isPersonA],
           [t('duo.personB'), person_b, 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30', isPersonB],
@@ -129,33 +144,42 @@ export function DuoSynthesisView({ duoData, onReset }: DuoSynthesisViewProps) {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 p-5 space-y-4">
-        <h4 className="font-semibold text-base">{t('duo.relationalState')}</h4>
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 p-5 lg:p-6 space-y-4">
+        <h4 className="font-semibold text-base lg:text-lg">{t('duo.relationalState')}</h4>
         {aiExplanation === null ? (
           <p className="text-sm text-slate-500">{t('duo.generatingExplanation')}</p>
         ) : (
-          <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
-            {aiExplanation || t('duo.staticExplanation')}
-          </p>
+          <div className="text-sm lg:text-base leading-relaxed text-slate-700 dark:text-slate-200 text-left space-y-4 max-w-none lg:columns-2 lg:gap-x-8">
+            {(aiExplanation || t('duo.staticExplanation'))
+              .split(/\n\n+/)
+              .filter(Boolean)
+              .map((para, i) => (
+                <p key={i} className="whitespace-pre-wrap break-inside-avoid">
+                  {para.trim()}
+                </p>
+              ))}
+          </div>
         )}
       </div>
 
-      {sections.map(({ key, labelKey, color, bg }) => {
-        const petals = Object.keys(duo?.[key as keyof typeof duo] ?? {})
-        if (!petals.length) return null
-        return (
-          <div key={key} className={`rounded-xl border p-4 ${bg}`}>
-            <p className={`text-xs font-semibold mb-2 ${color}`}>{t(`duo.${labelKey}`)}</p>
-            <div className="flex flex-wrap gap-2">
-              {petals.map((p) => (
-                <span key={p} className="text-xs px-2 py-1 rounded-full bg-white/60 dark:bg-slate-900/40">
-                  {PETAL_LABELS[p] ?? p}
-                </span>
-              ))}
+      <div className="grid sm:grid-cols-2 gap-3 lg:gap-4">
+        {sections.map(({ key, labelKey, color, bg }) => {
+          const petals = Object.keys(duo?.[key as keyof typeof duo] ?? {})
+          if (!petals.length) return null
+          return (
+            <div key={key} className={`rounded-xl border p-4 ${bg}`}>
+              <p className={`text-xs font-semibold mb-2 ${color}`}>{t(`duo.${labelKey}`)}</p>
+              <div className="flex flex-wrap gap-2">
+                {petals.map((p) => (
+                  <span key={p} className="text-xs px-2 py-1 rounded-full bg-white/60 dark:bg-slate-900/40">
+                    {PETAL_LABELS[p] ?? p}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
 
       <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 p-5 space-y-3">
         <h3 className="font-semibold text-violet-900 dark:text-violet-100">{t('aDeux.coupleGardenTitle')}</h3>
@@ -172,7 +196,7 @@ export function DuoSynthesisView({ duoData, onReset }: DuoSynthesisViewProps) {
         </Link>
       </div>
 
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap lg:pt-2">
         {onReset && (
           <button
             type="button"

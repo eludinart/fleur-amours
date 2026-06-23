@@ -277,7 +277,7 @@ export async function sendDuoInviteEmail(
     inviterDisplayName?: string | null
     inviteUrl: string
     scores: Record<string, number>
-    kind: 'a_deux_porte' | 'a_deux_complet' | 'duo_classic'
+    kind: 'a_deux_porte' | 'a_deux_complet' | 'duo_classic' | 'couple_garden'
     porteKey?: string | null
     ctaLabel?: string
   }
