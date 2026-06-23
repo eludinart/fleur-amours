@@ -47,7 +47,7 @@ const POOL_CONNECTION_LIMIT = (() => {
 const POOL_QUEUE_LIMIT = (() => {
   const raw = process.env.MARIADB_POOL_QUEUE_LIMIT ?? ''
   const n = parseInt(raw, 10)
-  return Number.isFinite(n) && n >= 0 ? n : 10
+  return Number.isFinite(n) && n >= 0 ? n : 50
 })()
 
 const POOL_IDLE_TIMEOUT_MS = (() => {

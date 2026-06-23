@@ -29,6 +29,23 @@ function petalsObjectToArray(petals: Record<string, number> | undefined): number
   return PETAL_ORDER_IDS.map((id) => Math.min(1, Math.max(0, Number(petals[id]) || 0)))
 }
 
+/** Évite de saturer le pool MariaDB (erreur mysql2 « Queue limit reached. »). */
+async function runWithConcurrency(
+  fns: Array<() => Promise<unknown>>,
+  concurrency: number
+): Promise<void> {
+  if (fns.length === 0) return
+  const limit = Math.max(1, Math.min(concurrency, fns.length))
+  let index = 0
+  async function worker(): Promise<void> {
+    while (index < fns.length) {
+      const fn = fns[index++]
+      await fn().catch(() => {})
+    }
+  }
+  await Promise.all(Array.from({ length: limit }, () => worker()))
+}
+
 function scoresToPetalsArray(scores: Record<string, number> | undefined, maxScale = 5): number[] | null {
   if (!scores || typeof scores !== 'object') return null
   return PETAL_ORDER_IDS.map((id) => {
@@ -76,7 +93,7 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
     (await authMe(userId).catch(() => null))?.email?.trim() ||
     ''
 
-  const tasks: Promise<unknown>[] = []
+  const tasks: Array<() => Promise<unknown>> = []
 
   if (userEmail) {
     const { items: sessions } = await listByEmailForTimeline(userEmail, 200)
@@ -84,7 +101,7 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
       const id = Number(s.id)
       if (!id) continue
       const door = String(s.door_suggested ?? '').trim()
-      tasks.push(
+      tasks.push(() =>
         recordTimelineEvent({
           userId,
           source: 'session',
@@ -103,8 +120,8 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
     const id = parseInt(String(r.id ?? 0), 10)
     if (!id) continue
     const type = String(r.type ?? 'simple')
-      tasks.push(
-        recordTimelineEvent({
+    tasks.push(() =>
+      recordTimelineEvent({
           userId,
           source: 'tirage',
           refId: id,
@@ -120,7 +137,7 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
     const id = parseInt(String(r.id ?? 0), 10)
     if (!id) continue
     const layout = String(r.layout_template ?? 'free')
-    tasks.push(
+    tasks.push(() =>
       recordTimelineEvent({
         userId,
         source: 'paper_draw',
@@ -143,8 +160,8 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
         ? 'Exploration Fleur DUO (en attente)'
         : 'Exploration Fleur DUO'
       : 'Exploration Ma Fleur'
-      tasks.push(
-        recordTimelineEvent({
+    tasks.push(() =>
+      recordTimelineEvent({
           userId,
           source: 'fleur',
           refId: id,
@@ -159,8 +176,8 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
   const betaRows = await listFleurBetaResults(userId)
   for (const b of betaRows) {
     const porte = DIAG_PORTE_LABEL[b.porte] ?? b.porte
-      tasks.push(
-        recordTimelineEvent({
+    tasks.push(() =>
+      recordTimelineEvent({
           userId,
           source: 'diagnostic',
           refId: b.id,
@@ -175,8 +192,8 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
   for (const d of dreamscapes) {
     const id = Number(d.id)
     if (!id) continue
-      tasks.push(
-        recordTimelineEvent({
+    tasks.push(() =>
+      recordTimelineEvent({
           userId,
           source: 'dreamscape',
           refId: id,
@@ -190,8 +207,8 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
 
   const checkins = await getMyCheckins(userId, 100)
   for (const c of checkins) {
-      tasks.push(
-        recordTimelineEvent({
+    tasks.push(() =>
+      recordTimelineEvent({
           userId,
           source: 'checkin',
           refId: c.id,
@@ -205,8 +222,8 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
 
   const baseline = await getBaseline(userId)
   if (baseline) {
-      tasks.push(
-        recordTimelineEvent({
+    tasks.push(() =>
+      recordTimelineEvent({
           userId,
           source: 'onboarding',
           refId: userId,
@@ -223,8 +240,8 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
     const events = await listDyadEvents(dyad.id, 100)
     for (const ev of events) {
       if (ev.type === 'message') continue
-      tasks.push(
-        recordTimelineEvent({
+    tasks.push(() =>
+      recordTimelineEvent({
           userId,
           source: 'dyad',
           refId: ev.id,
@@ -237,8 +254,8 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
     const rituals = await listRituals(dyad.id)
     for (const r of rituals) {
       if (!r.lastDoneAt) continue
-      tasks.push(
-        recordTimelineEvent({
+    tasks.push(() =>
+      recordTimelineEvent({
           userId,
           source: 'ritual',
           refId: r.id,
@@ -250,5 +267,5 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
     }
   }
 
-  await Promise.all(tasks.map((p) => p.catch(() => {})))
+  await runWithConcurrency(tasks, 4)
 }
