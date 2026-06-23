@@ -195,7 +195,7 @@ function vegetalStemSlug(file: string): string {
 export function sortVegetalStemSections(
   sections: ManuelManifestSection[],
 ): ManuelManifestSection[] {
-  const rank = new Map(MANUEL_VEGETAL_STEM_SLUGS.map((s, i) => [s, i]))
+  const rank = new Map<string, number>(MANUEL_VEGETAL_STEM_SLUGS.map((s, i) => [s, i]))
   return [...sections].sort((a, b) => {
     const ra = rank.get(vegetalStemSlug(a.file)) ?? 99
     const rb = rank.get(vegetalStemSlug(b.file)) ?? 99

@@ -588,6 +588,7 @@ export async function adminPatchUser(
   }
 
   if (body.app_role !== undefined) {
+    const appRole = String(body.app_role)
     const appRoleTbl = table('fleur_app_roles')
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS ${appRoleTbl} (
@@ -598,9 +599,9 @@ export async function adminPatchUser(
     await pool.execute(
       `INSERT INTO ${appRoleTbl} (user_id, app_role) VALUES (?, ?)
        ON DUPLICATE KEY UPDATE app_role = ?`,
-      [targetUserId, body.app_role, body.app_role]
+      [targetUserId, appRole, appRole]
     )
-    if (body.app_role === 'coach' || body.app_role === 'admin') {
+    if (appRole === 'coach' || appRole === 'admin') {
       const { clearCoachRequestMeta } = await import('./db-coach-request')
       await clearCoachRequestMeta(targetUserId)
     }
