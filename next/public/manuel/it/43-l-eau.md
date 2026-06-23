@@ -1,0 +1,15 @@
+# L’ACQUA
+
+> Pagine libro (indice): 90–91 · PDF p. 90–91 (stimato dal testo estratto)
+
+Descrizione estesa: La matrice del vivente e la saggezza dell'emozione. L'Acqua è la prima culla della vita. È la matrice della nascita, lo specchio dell'anima, la custode della memoria universale. Nel tarot, simboleggia la sensibilità, l'intuizione, la ricettività, la capacità di accogliere e trasformare. Insegna la forza del lasciar andare, la guarigione attraverso l'ascolto, il movimento flessibile e sincero del cuore. L'Acqua non ha forma, ma plasma tutto.
+Parole chiave di luce: Intuizione, sensibilità, fluidità, guarigione, compassione, ascolto, memoria, adattamento, dolcezza, connessione emotiva.
+Ombra: Il traboccare o l'annegamento emotivo. Sotto la sua ombra, l'Acqua diventa torrente o ristagno. È la carta dello squilibrio emotivo, della confusione, dei pianti senza fine o dell'attaccamento eccessivo. Avverte che l'emozione non è nemica, ma deve circolare. L'acqua che non si muove si intorbida; quella che trabocca distrugge. Il giusto movimento è quello che riflette senza inghiottire.
+Parole chiave d’ombra: Malinconia, dipendenza affettiva, paura del cambiamento, confusione, passività, traboccamento emotivo, ristagno.
+L'ACQUA Evoca l'emozione e la fluidità. Simboleggia i sentimenti, l'intuizione, l'inconscio e la capacità di adattamento. Questa carta rappresenta la sensibilità, l'empatia, la guarigione e le profondità misteriose dell'anima.
+Percorsi di integrazione: Lasciare che le emozioni si vivano e si liberino senza giudizio. Purificare attraverso le lacrime, il movimento o il silenzio. Osservare i riflessi del mondo interiore senza identificarsi. Ricordare che la fluidità è una forma di forza. In una stesa, l'Acqua annuncia un periodo di sensibilità accresciuta, una guarigione, o un ritorno alla ricettività intuitiva. Può anche significare la necessità di ascoltare le emozioni piuttosto che fuggirle.
+Esercizio / Meditazione: Siediti vicino a una sorgente, un fiume o immagina un mare calmo. Respira a ritmo con le onde: inspira quando salgono, espira quando scendono. Senti la tua marea interiore. Lascia che tutto ciò che era bloccato riprenda il suo movimento naturale. L'Acqua è il linguaggio dell'anima. Insegna che la vulnerabilità è una forma di coraggio, e che la dolcezza è la forza più antica del mondo. Nel grande Tarot Fleur d'ÅmÔurs, rappresenta la memoria vivente della creazione, la compassione in movimento, la capacità di amare senza trattenere. Ci ricorda che tutto ciò che resiste si inaridisce, e tutto ciò che si abbandona ritorna alla fonte. Nulla può ferire l'acqua: si adatta, impara, ricorda.
+Corrispondenze energetiche: Elemento: Acqua Polarità: Femminile ricettiva (sensibile, matriciale, trasformatrice)
+Corrispondenze simboliche: Emozione, Intuizione, Memoria, Purificazione
+In risonanza: Vita (La Memoria della Linfa), Aria (L'Eco), Acqua (L'Estuario), Etere (L'Invisibile)
+Domanda radice: «Quale emozione sto reprimendo che chiede di fluire?»

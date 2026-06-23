@@ -1,0 +1,15 @@
+# IL SOLE INTERIORE
+
+> Pagine libro (indice): 148–149 · Pag. PDF 148–149 (stimata dal testo estratto)
+
+Descrizione estesa: La gioia radiosa e la pienezza del cuore. Il Sole Interiore è la luce diventata amore, il calore cosciente del cuore risvegliato. È la carta della pace radiosa, della gioia semplice, dell'accettazione totale di sé e del mondo. Insegna la felicità di esistere, la presenza alla Vita nella sua bellezza essenziale. Nel tarot, rappresenta il centro vitale, la forza solare che anima e illumina senza sforzo. È la luce incarnata, non ciò che si cerca, ma ciò che si emana.
+Parole chiave di luce: Gioia, radiosità, fiducia, gratitudine, vitalità, serenità, amore per il vivente, armonia, chiarezza del cuore.
+Ombra: L'ego solare o la paura di brillare Sotto la sua ombra, Il Sole Interiore diventa ombra proiettata: troppo orgoglio, troppo controllo, o, al contrario, paura della propria luce. È la carta dello squilibrio del proprio splendore: o si bruciano gli altri con il proprio bagliore, o ci si spegne per non disturbare. Ricorda che il vero sole illumina senza paragonarsi. L'ombra di questa carta è l'oblio della semplicità: la luce non ha bisogno di giustificazioni. IL SOLE INTERIORE Simboleggia il nucleo incandescente e la fonte del potere personale. La coppa della terra che rivela il cuore ardente al suo centro rappresenta il fuoco interiore che anima ogni essere. Questa carta parla di potenza personale, di vitalità profonda e della connessione al fuoco primordiale che abita ogni cosa.
+Parole chiave d’ombra: Orgoglio, narcisismo, paura di brillare, vergogna, inibizione, stanchezza, disallineamento, vanità spirituale.
+Percorsi di integrazione: Connettersi alla gioia senza motivo. Osare irradiare naturalmente, senza cercare di piacere o dominare. Ritrovare il calore interiore attraverso la gratitudine. Coltivare la pace piuttosto che la performance. In una stesa, Il Sole Interiore indica un'espansione di coscienza, un periodo di gioia semplice, di vitalità ed equilibrio, o un invito a riaccendere la luce del proprio cuore.
+Risonanza dell'anima: Il Sole Interiore è il cuore vivente della coscienza. Non cerca di dominare ma di riscaldare, non si impone: emana. Nel grande Tarot Fleur d'ÅmÔurs, rappresenta la gioia di essere, l'equilibrio perfetto tra fuoco e amore, tra luce e vita. Insegna che il risveglio non è un vertice ma una semplice evidenza: il sole non ha mai smesso di brillare, bastava aprire gli occhi.
+Corrispondenze energetiche: Elemento: Fuoco ed Etere Polarità: Maschile armoniosa (radiosa, generosa, cosciente)
+Corrispondenze simboliche: Gioia, Radianza, Centro vivente del mondo interiore
+In risonanza: Acqua (L'Oceano), Aria (Il Messaggero), Vita (L'Unità)
+Domanda radice: «Come posso irradiare chi sono senza scusarmi o cercare approvazione?»
+Esercizio / Meditazione: Chiudi gli occhi e visualizza un sole nel tuo petto. Ad ogni respiro, esso si ingrandisce e diffonde una luce dorata in tutto il tuo corpo. All'espirazione, invia questa luce intorno a te, come una benedizione silenziosa. Senti la gioia di essere questo sole vivente.

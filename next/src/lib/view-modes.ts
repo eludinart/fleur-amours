@@ -2,24 +2,25 @@
  * Registre central des « modes de vue » de l'application.
  *
  * Un mode de vue est un masque côté UI qui détermine quelles sections du menu
- * sont visibles. Cela n'altère **aucun droit backend** : un admin reste admin
- * et peut toujours accéder à ses routes via URL directe. C'est un outil pour :
- *  1. permettre à un utilisateur multi-rôles (ex. admin) de simuler l'expérience
- *     d'un rôle plus restreint (utilisateur lambda, coach, RH) ;
- *  2. recentrer le menu sur les fonctionnalités pertinentes du contexte courant.
+ * sont visibles et dans quel ordre. Cela n'altère **aucun droit backend**.
  *
- * Pour ajouter un nouveau rôle dans le futur :
- *  - ajouter la valeur dans `ViewMode`,
- *  - ajouter son descripteur dans `VIEW_MODE_DESCRIPTORS`,
- *  - étendre `getAvailableViewModes()` avec la règle de droit,
- *  - exposer les sections correspondantes dans `Sidebar.tsx`.
+ * Profils :
+ *  - `personnel` : parcours individuel (Fleur, explorations, être accompagné)
+ *  - `coach`     : patientèle et conversations d'accompagnement
+ *  - `rh`        : Mycelium / entreprise
+ *  - `admin`     : outils d'administration
  */
 
-export type ViewMode = 'lambda' | 'coach' | 'rh' | 'admin'
+export type ViewMode = 'personnel' | 'coach' | 'rh' | 'admin'
+
+/** @deprecated Alias historique — migré vers `personnel` en v11 du store. */
+export type LegacyViewMode = 'lambda' | ViewMode
 
 export interface ViewModePermissions {
   isAdmin: boolean
   isCoach: boolean
+  /** Admin « aussi coach » ou rôle coach app. */
+  actsAsCoach: boolean
   isManager: boolean
   isRh: boolean
   myceliumAccess: {
@@ -31,22 +32,18 @@ export interface ViewModePermissions {
 
 export interface ViewModeDescriptor {
   mode: ViewMode
-  /** Clé i18n pour le libellé court (ex. "Utilisateur", "Coach", "RH", "Admin"). */
   labelKey: string
-  /** Clé i18n pour la description (tooltip ou ligne secondaire). */
   descriptionKey: string
-  /** Emoji représentatif. */
   icon: string
-  /** Classes Tailwind pour le badge actif. */
   activeClass: string
 }
 
 export const VIEW_MODE_DESCRIPTORS: Record<ViewMode, ViewModeDescriptor> = {
-  lambda: {
-    mode: 'lambda',
-    labelKey: 'nav.viewModes.lambdaLabel',
-    descriptionKey: 'nav.viewModes.lambdaDesc',
-    icon: '👤',
+  personnel: {
+    mode: 'personnel',
+    labelKey: 'nav.viewModes.personnelLabel',
+    descriptionKey: 'nav.viewModes.personnelDesc',
+    icon: '🌸',
     activeClass:
       'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-600',
   },
@@ -76,76 +73,110 @@ export const VIEW_MODE_DESCRIPTORS: Record<ViewMode, ViewModeDescriptor> = {
   },
 }
 
-/** Liste ordonnée canonique (lambda → admin). Sert d'ordre d'affichage par défaut. */
-export const VIEW_MODE_ORDER: ViewMode[] = ['lambda', 'coach', 'rh', 'admin']
+/** Ordre d'affichage dans le sélecteur de vue. */
+export const VIEW_MODE_ORDER: ViewMode[] = ['personnel', 'coach', 'rh', 'admin']
+
+const VIEW_MODE_RANK: Record<ViewMode, number> = {
+  personnel: 0,
+  coach: 1,
+  rh: 2,
+  admin: 3,
+}
 
 export function getViewModeDescriptor(mode: ViewMode): ViewModeDescriptor {
-  return VIEW_MODE_DESCRIPTORS[mode] ?? VIEW_MODE_DESCRIPTORS.lambda
+  return VIEW_MODE_DESCRIPTORS[mode] ?? VIEW_MODE_DESCRIPTORS.personnel
 }
 
-/**
- * Détermine la vue « naturelle » d'un utilisateur d'après ses droits réels.
- * Sert de retombée par défaut et de seule vue accessible pour les non-admins.
- */
-export function getNaturalViewMode(perms: ViewModePermissions): ViewMode {
-  if (perms.isAdmin) return 'admin'
+/** Normalise une valeur persistée (y compris l'ancien slug `lambda`). */
+export function normalizeStoredViewMode(stored: string | null | undefined): ViewMode | null {
+  if (!stored) return null
+  if (stored === 'lambda') return 'personnel'
+  if ((VIEW_MODE_ORDER as readonly string[]).includes(stored)) {
+    return stored as ViewMode
+  }
+  return null
+}
+
+function hasMyceliumAccess(perms: ViewModePermissions): boolean {
   const myc = perms.myceliumAccess
-  const hasMyceliumAccess = !!(myc?.showAdmin || myc?.showDashboard || myc?.showEspace)
-  if (perms.isRh || perms.isManager || hasMyceliumAccess) return 'rh'
-  if (perms.isCoach) return 'coach'
-  return 'lambda'
+  return !!(myc?.showAdmin || myc?.showDashboard || myc?.showEspace)
+}
+
+function canActAsCoach(perms: ViewModePermissions): boolean {
+  return perms.actsAsCoach || perms.isCoach || perms.isAdmin
 }
 
 /**
- * Détermine les vues que l'utilisateur peut **sélectionner** dans le menu.
- *
- * **Politique** : la simulation multi-vues est un outil réservé aux administrateurs.
- *  - Admin → toutes les vues (`lambda`, `coach`, `rh`, `admin`) accessibles via le sélecteur.
- *  - Tous les autres (user, coach, RH non-admin…) → uniquement leur **vue naturelle**.
- *    Le sélecteur reste donc masqué pour eux (puisqu'une seule vue est dispo), mais
- *    la sidebar leur affiche correctement la section liée à leur rôle (Coach, Mycelium…).
- *
- * Cette séparation garantit qu'un coach ne peut pas voir/simuler la vue admin, et inversement.
- * Aucun droit backend n'est altéré : c'est uniquement un masque côté menu.
+ * Vues sélectionnables : cumul des registres auxquels l'utilisateur a accès.
+ * Un coach peut basculer personnel ↔ coach ; un RH personnel ↔ Mycelium, etc.
  */
 export function getAvailableViewModes(perms: ViewModePermissions): ViewMode[] {
-  if (!perms.isAdmin) {
-    return [getNaturalViewMode(perms)]
+  const modes = new Set<ViewMode>(['personnel'])
+
+  if (canActAsCoach(perms)) {
+    modes.add('coach')
   }
-  return ['lambda', 'coach', 'rh', 'admin']
+
+  if (perms.isRh || perms.isManager || hasMyceliumAccess(perms)) {
+    modes.add('rh')
+  }
+
+  if (perms.isAdmin) {
+    modes.add('admin')
+  }
+
+  return VIEW_MODE_ORDER.filter((m) => modes.has(m))
 }
 
 /**
- * Mode « naturel » par défaut sur la base d'une liste de vues disponibles.
- * Pour un admin (toutes vues dispo) → 'admin'. Pour les autres, retombée hiérarchique.
+ * Vue « naturelle » la plus élevée selon les droits (admin > rh > coach > personnel).
  */
+export function getNaturalViewMode(perms: ViewModePermissions): ViewMode {
+  return getDefaultViewMode(getAvailableViewModes(perms))
+}
+
 export function getDefaultViewMode(available: ViewMode[]): ViewMode {
   if (available.includes('admin')) return 'admin'
   if (available.includes('rh')) return 'rh'
   if (available.includes('coach')) return 'coach'
-  return 'lambda'
+  return 'personnel'
 }
 
-/**
- * Concilie une valeur stockée (possiblement obsolète) avec les vues réellement disponibles.
- * Si le mode stocké n'est plus accessible (perte de rôle), on retombe sur le défaut naturel.
- */
 export function resolveViewMode(
   stored: string | null | undefined,
   available: ViewMode[]
 ): ViewMode {
-  if (stored && (available as readonly string[]).includes(stored)) {
-    return stored as ViewMode
+  const normalized = normalizeStoredViewMode(stored)
+  if (normalized && available.includes(normalized)) {
+    return normalized
   }
   return getDefaultViewMode(available)
 }
 
-/**
- * Indique si l'utilisateur est en train de simuler un rôle inférieur à son rôle « naturel ».
- * Sert à afficher le bandeau de rappel ("Vue utilisateur activée — revenir en vue admin").
- */
+/** Vrai si l'utilisateur a choisi une vue moins « pro » que sa vue naturelle. */
 export function isSimulatingLowerRole(current: ViewMode, available: ViewMode[]): boolean {
   if (available.length <= 1) return false
   const natural = getDefaultViewMode(available)
-  return current !== natural
+  return VIEW_MODE_RANK[current] < VIEW_MODE_RANK[natural]
+}
+
+/** Ordre des blocs sidebar selon le profil de navigation actif. */
+export type SidebarBlockId =
+  | 'home'
+  | 'coach'
+  | 'mycelium'
+  | 'accompagnement'
+  | 'explorations'
+  | 'nav'
+  | 'coachRequest'
+
+const SIDEBAR_BLOCKS_BY_MODE: Record<ViewMode, SidebarBlockId[]> = {
+  personnel: ['home', 'accompagnement', 'explorations', 'nav', 'coachRequest'],
+  coach: ['home', 'coach', 'accompagnement', 'explorations', 'nav'],
+  rh: ['home', 'mycelium', 'accompagnement', 'explorations', 'nav'],
+  admin: ['home', 'coach', 'accompagnement', 'explorations', 'nav'],
+}
+
+export function getSidebarBlockOrder(viewMode: ViewMode): SidebarBlockId[] {
+  return SIDEBAR_BLOCKS_BY_MODE[viewMode] ?? SIDEBAR_BLOCKS_BY_MODE.personnel
 }

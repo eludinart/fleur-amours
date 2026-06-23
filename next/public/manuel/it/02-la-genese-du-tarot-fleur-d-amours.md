@@ -1,0 +1,5 @@
+# La Genesi del Tarot Fleur d’ÅmÔurs
+
+> Pagine libro (sommario): 9–9 · PDF p. 6–6 (stimato dal testo estratto)
+
+La Genesi del Tarot Fleur d'ÅmÔurs All'inizio, avevo bisogno di una cosa molto semplice: poter parlare d'amore con gli altri senza perdersi nei malintesi. Vedevo bene che ognuno metteva realtà diverse dietro questa parola, e che ciò complicava gli scambi tanto quanto li nutriva. Ho quindi cercato di stabilire un linguaggio comune, una base su cui persone molto diverse potessero capirsi. Da questa ricerca sono emerse otto parole, otto modi di entrare in relazione con l'amore, otto parole come otto petali: Agapè, l'amore che dona senza calcolo. Éros, lo slancio del desiderio, il fuoco che mette in moto. Philia, la gioia del legame scelto, la fratellanza dei cuori. Storgè, l'attaccamento tranquillo, tessuto dalla familiarità. Pragma, l'amore che si costruisce, giorno dopo giorno. Ludus, il gioco, la leggerezza, il piacere dell'incontro. Mania, l'amore che trabocca, intenso, a volte vertiginoso. Philautia, il rapporto con sé stessi, il modo in cui ci si ama. È a partire da queste otto forme d'amore che tutto è iniziato.

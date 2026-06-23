@@ -1,0 +1,15 @@
+# LAS HOJAS
+
+> Páginas libro (índice): 68–69 · p. PDF 68–69 (estimado desde el texto extraído)
+
+Descripción ampliada: La apertura y el intercambio. Las Hojas es la carta del aliento y la comunicación. Encarna la apertura a la luz, la capacidad de captar la energía del cielo y transformarla en alimento. En el tarot, representa la dimensión relacional de lo vivo: escuchar, compartir, recibir, expresar. Enseña que el crecimiento no es solo vertical, sino también respiración e interacción. Es el arte del justo intercambio entre uno mismo y el mundo, entre inspiración y expiración.
+Palabras clave de luz: Apertura, intercambio, respiración, comunicación, equilibrio, receptividad, fotosíntesis, escucha, claridad.
+Sombra: La dispersión o el cierre. Cuando la energía de Las Hojas se desajusta, se convierte en inestabilidad. Demasiado abiertas, pierden su savia en la tormenta; demasiado cerradas, se asfixian en la sombra. La sombra de esta carta evoca la dificultad para comunicarse, para recibir o dar de manera fluida. Es la mente dispersa, la palabra que se agita sin arraigarse, o el miedo a exponerse a la luz. Las Hojas recuerda que la energía debe circular, pero sin perderse. LAS HOJAS representan la respiración y el intercambio con el mundo. Las hojas que captan la luz y transforman el aliento representan la fotosíntesis del alma, la apertura al cosmos y la capacidad de transformar lo invisible en sustancia. Esta carta evoca la receptividad, la adaptación y el metabolismo vital.
+Palabras clave de sombra: Dispersión, cierre, confusión mental, parloteo, aislamiento, superficialidad, asfixia interior.
+Caminos de integración: Respirar conscientemente: inspiración del mundo, expiración de uno mismo. Encontrar la claridad en la palabra y el pensamiento. Aprender a escuchar tanto como a expresarse. Dejar circular la energía entre el interior y el exterior. En una tirada, Las Hojas señala una necesidad de comunicación auténtica, de intercambio equilibrado, o de reconexión a la respiración natural de lo vivo.
+Ejercicio / Meditación: Siéntate cerca de un árbol. Observa sus hojas moverse con el viento. Inspira profundamente y siente tu cuerpo respirar con ellas. Imagina que tu aliento y el del árbol forman un solo movimiento entre el cielo y la tierra. Las Hojas es el aliento del mundo a través de lo vivo. Enseña que la luz se convierte en materia por el acto de apertura y que la respiración es una oración silenciosa del cuerpo. En el gran ciclo del Tarot Fleur d'ÅmÔurs, Las Hojas representa la conciencia que se abre a la relación, el momento en que el ser comienza a comunicarse con el mundo, a captar y transformar la luz. Es el símbolo de la sabiduría del viento: flexible, clara y siempre en movimiento.
+Elemento: Aire
+Polaridad: Femenina abierta (receptiva, comunicativa, armonizadora)
+Correspondencias simbólicas: Respiración, Intercambio, Superficie consciente entre cielo y tierra
+En resonancia: Aire (El Eco, El Verbo), Agua (La Lluvia), Éter (La Armonía de los Ciclos)
+Pregunta raíz: "¿Me estoy asfixiando al guardarme todo, o estoy dejando circular el aire?"

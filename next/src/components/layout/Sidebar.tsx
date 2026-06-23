@@ -9,9 +9,12 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useSocialStore } from '@/store/useSocialStore'
 import { useMyceliumAccess } from '@/hooks/useMyceliumAccess'
 import { t } from '@/i18n'
+import { chatApi } from '@/api/chat'
 import {
   getAvailableViewModes,
+  getSidebarBlockOrder,
   resolveViewMode,
+  type SidebarBlockId,
   type ViewMode,
 } from '@/lib/view-modes'
 
@@ -33,10 +36,49 @@ type ExplorationNavItem = NavItem & {
 }
 
 type NavGroup = {
+  id: string
   label: string
   collapsible?: boolean
   defaultOpen?: boolean
   items: NavItem[]
+}
+
+type AccompagnementNavItem = NavItem & {
+  hint: string
+  featured?: boolean
+}
+
+function buildAccompagnementNavItems(params: {
+  show: boolean
+  translate: (k: string) => string
+  openChatCount?: number
+  unreadChatCount?: number
+}): AccompagnementNavItem[] | null {
+  const { show, translate, openChatCount = 0, unreadChatCount = 0 } = params
+  if (!show) return null
+
+  const items: AccompagnementNavItem[] = [
+    {
+      to: '/coaches',
+      label: translate('nav.coachesDirectory'),
+      hint: translate('nav.accompagnementCoachesHint'),
+      icon: '🌿',
+      end: true,
+      featured: true,
+      title: translate('nav.coachesDirectoryTooltip'),
+    },
+  ]
+  if (openChatCount > 0 || unreadChatCount > 0) {
+    items.push({
+      to: '/chat',
+      label: translate('chat.conversationHistoryToggle'),
+      hint: translate('nav.accompagnementChatsHint'),
+      icon: '💬',
+      end: false,
+      title: translate('nav.chatTooltip'),
+    })
+  }
+  return items
 }
 
 /**
@@ -45,33 +87,31 @@ type NavGroup = {
  * - À DEUX : parcours couple (Par une Porte, questionnaire complet, Mes duos).
  *
  * Les sections supplémentaires sont **filtrées par viewMode** :
- *  - 'lambda' : aucune section pro (expérience utilisateur novice).
- *  - 'coach'  : ajoute la section Coach.
- *  - 'rh'     : ajoute la section Mycelium (si accès réel détecté).
- *  - 'admin'  : ajoute toutes les sections (Mycelium + Coach + Outils + Administration).
- *
- * Les droits backend ne sont jamais altérés : le menu est un masque côté UI. Un admin
- * en vue 'lambda' reste admin et peut accéder à `/admin/*` par URL directe.
+ *  - 'personnel' : parcours individuel (Fleur, explorations, être accompagné).
+ *  - 'coach'     : patientèle et conversations en priorité.
+ *  - 'rh'        : Mycelium / entreprise en priorité.
+ *  - 'admin'     : outils d'administration.
  */
 function buildNavGroups(params: {
   viewMode: ViewMode
   isAdmin: boolean
   isCoach: boolean
+  actsAsCoach: boolean
   mycelium: { showEspace: boolean; showDashboard: boolean; showAdmin: boolean }
   translate: (k: string) => string
   profilePublic: boolean
 }): NavGroup[] {
-  const { viewMode, isAdmin, isCoach, mycelium, translate, profilePublic } = params
+  const { viewMode, isAdmin, isCoach, actsAsCoach, mycelium, translate, profilePublic } = params
 
   // Drapeaux UI dérivés du viewMode (pas des droits réels).
   // Pour qu'une section soit visible, deux conditions : l'utilisateur a le droit ET le mode actuel la révèle.
-  const showCoachSection = (isCoach || isAdmin) && (viewMode === 'coach' || viewMode === 'admin')
+  const showCoachSection = actsAsCoach && (viewMode === 'coach' || viewMode === 'admin')
   const hasMyceliumAccess = mycelium.showEspace || mycelium.showDashboard || mycelium.showAdmin
   const showMyceliumSection =
     (isAdmin || hasMyceliumAccess) && (viewMode === 'rh' || viewMode === 'admin')
   const showAdminTools = isAdmin && viewMode === 'admin'
   // La communauté est exposée à tous les modes sauf RH/Mycélium (silo pro distinct).
-  const showCommunitySection = viewMode === 'lambda' || viewMode === 'coach' || viewMode === 'admin'
+  const showCommunitySection = viewMode === 'personnel' || viewMode === 'coach' || viewMode === 'admin'
 
   const explorationsItems: ExplorationNavItem[] = [
     {
@@ -142,16 +182,23 @@ function buildNavGroups(params: {
 
   const groups: NavGroup[] = [
     {
+      id: 'explorations',
       label: translate('nav.explorationsSection'),
       collapsible: false,
       items: explorationsItems,
     },
     {
+      id: 'a-deux',
       label: translate('nav.aDeuxSection'),
       collapsible: false,
       items: aDeuxItems,
     },
-    {
+  ]
+
+  // En vue admin, la section Éclosion étendue remplace la version courte.
+  if (!showAdminTools) {
+    groups.push({
+      id: 'eclosion',
       label: translate('nav.eclosionSection'),
       collapsible: false,
       items: [
@@ -170,8 +217,8 @@ function buildNavGroups(params: {
           title: translate('nav.checkinTooltip'),
         },
       ],
-    },
-  ]
+    })
+  }
 
   // ── Section Communauté ─────────────────────────────────────────────────────
   // Toujours visible (sauf vue 'rh' pure, qui a son propre silo Mycélium).
@@ -234,6 +281,7 @@ function buildNavGroups(params: {
       })
     }
     groups.push({
+      id: 'community',
       label: translate('nav.communitySection'),
       collapsible: false,
       items: communityItems,
@@ -269,6 +317,7 @@ function buildNavGroups(params: {
     }
     if (myceliumItems.length) {
       groups.push({
+        id: 'mycelium',
         label: translate('nav.myceliumSection'),
         collapsible: true,
         defaultOpen: viewMode === 'rh',
@@ -277,18 +326,19 @@ function buildNavGroups(params: {
     }
   }
 
-  // ── Section Coach (vue 'coach' ou 'admin') ─────────────────────────────────
+  // ── Section Coach (vue 'coach' ou 'admin') — conversations et patientèle en tête ──
   if (showCoachSection) {
     groups.push({
+      id: 'coach',
       label: translate('nav.coachSection'),
       collapsible: true,
       defaultOpen: viewMode === 'coach',
       items: [
-        { to: '/?view=coach', label: translate('nav.coachDashboard'), icon: '💬', title: translate('nav.coachDashboardTooltip') },
-        { to: '/coach/analytics', label: translate('nav.coachAnalytics') ?? 'Vue globale', icon: '📊', title: translate('nav.coachAnalyticsTooltip') ?? '' },
-        { to: '/coach/suivi', label: translate('nav.coachSuivi') ?? 'Suivi individuel', icon: '🌸', title: translate('nav.coachSuiviTooltip') ?? '' },
         { to: '/coach/chat', label: translate('nav.coachChat'), icon: '💬', title: translate('nav.coachChatTooltip') },
         { to: '/coach/patientele', label: translate('nav.coachPatientele'), icon: '🌿', title: translate('nav.coachPatienteleTooltip') },
+        { to: '/coach/suivi', label: translate('nav.coachSuivi') ?? 'Suivi individuel', icon: '🌸', title: translate('nav.coachSuiviTooltip') ?? '' },
+        { to: '/?view=coach', label: translate('nav.coachDashboard'), icon: '📊', title: translate('nav.coachDashboardTooltip') },
+        { to: '/coach/analytics', label: translate('nav.coachAnalytics') ?? 'Vue globale', icon: '📈', title: translate('nav.coachAnalyticsTooltip') ?? '' },
       ],
     })
   }
@@ -298,6 +348,7 @@ function buildNavGroups(params: {
   // on ne les remet donc pas ici pour éviter le doublon.
   if (showAdminTools) {
     groups.push({
+      id: 'admin-eclosion',
       label: translate('nav.eclosionSection'),
       collapsible: true,
       defaultOpen: false,
@@ -313,6 +364,7 @@ function buildNavGroups(params: {
 
     // Administration (replié)
     groups.push({
+      id: 'admin',
       label: translate('nav.adminSection'),
       collapsible: true,
       defaultOpen: false,
@@ -339,6 +391,47 @@ function buildNavGroups(params: {
   return groups
 }
 
+type ChatCountPair = { openCount: number; unreadCount: number }
+
+function ChatCountBadges({
+  openCount,
+  unreadCount,
+  variant = 'inline',
+  size = 'xs',
+}: ChatCountPair & { variant?: 'overlay' | 'inline'; size?: 'xs' | 'sm' }) {
+  if (openCount <= 0 && unreadCount <= 0) return null
+  const textSize = size === 'xs' ? 'text-[9px]' : 'text-[10px]'
+  const pillSize = size === 'xs' ? 'min-w-[1.125rem] h-[1.125rem] px-0.5' : 'min-w-[1.125rem] h-[1.125rem] px-1'
+  const ringClass = variant === 'overlay' ? 'ring-2 ring-white dark:ring-slate-900 shadow-sm' : ''
+  const wrapClass =
+    variant === 'overlay'
+      ? 'absolute -top-1.5 -right-1 flex items-center gap-0.5'
+      : 'ml-auto flex items-center gap-0.5 shrink-0'
+
+  return (
+    <span className={wrapClass}>
+      {openCount > 0 ? (
+        <span
+          className={`${pillSize} flex items-center justify-center rounded-full bg-amber-500 text-white ${textSize} font-bold leading-none ${ringClass}`}
+          title={t('nav.accompagnementOpenCountBadge')}
+          aria-label={`${t('nav.accompagnementOpenCountBadge')}: ${openCount}`}
+        >
+          {openCount > 99 ? '99+' : openCount}
+        </span>
+      ) : null}
+      {unreadCount > 0 ? (
+        <span
+          className={`${pillSize} flex items-center justify-center rounded-full bg-rose-500 text-white ${textSize} font-bold leading-none ${ringClass}`}
+          title={t('nav.accompagnementUnreadBadge')}
+          aria-label={`${t('nav.accompagnementUnreadBadge')}: ${unreadCount}`}
+        >
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
 function NavItemWithTooltip({
   to,
   label,
@@ -348,6 +441,7 @@ function NavItemWithTooltip({
   onClose,
   isActive,
   badge,
+  countBadges,
 }: {
   to: string
   label: string
@@ -357,6 +451,7 @@ function NavItemWithTooltip({
   onClose?: () => void
   isActive: boolean
   badge?: number
+  countBadges?: ChatCountPair
 }) {
   const [hovered, setHovered] = useState(false)
   const [coords, setCoords] = useState({ top: 0, left: 0 })
@@ -407,11 +502,13 @@ function NavItemWithTooltip({
       >
         <span>{icon}</span>
         {label}
-        {badge != null && badge > 0 && (
+        {countBadges ? (
+          <ChatCountBadges {...countBadges} variant="inline" size="sm" />
+        ) : badge != null && badge > 0 ? (
           <span className="ml-auto min-w-[1.125rem] h-[1.125rem] px-1 flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-bold">
             {badge > 99 ? '99+' : badge}
           </span>
-        )}
+        ) : null}
       </Link>
       {hovered &&
         title &&
@@ -546,16 +643,281 @@ function ExplorationCard({
   )
 }
 
+function AccompagnementCard({
+  item,
+  isActive,
+  onClose,
+  badges,
+}: {
+  item: AccompagnementNavItem
+  isActive: boolean
+  onClose?: () => void
+  badges?: { openCount: number; unreadCount: number }
+}) {
+  const isFeatured = item.featured === true
+  const openCount = badges?.openCount ?? 0
+  const unreadCount = badges?.unreadCount ?? 0
+  const hasBadges = openCount > 0 || unreadCount > 0
+  return (
+    <Link
+      href={item.to === '/' ? '/' : item.to}
+      onClick={onClose}
+      title={item.title ?? item.label}
+      className={`group flex items-start gap-2.5 rounded-xl border transition-all duration-200 px-2.5 py-2 ${
+        isActive
+          ? isFeatured
+            ? 'bg-gradient-to-br from-emerald-600 via-teal-600 to-amber-600 border-emerald-400/60 text-white shadow-md shadow-emerald-600/20'
+            : 'bg-gradient-to-br from-violet-600 via-indigo-600 to-violet-700 border-violet-400/60 text-white shadow-md shadow-violet-600/20'
+          : isFeatured
+            ? 'bg-gradient-to-br from-emerald-500/12 via-teal-500/8 to-amber-500/5 border-emerald-200/70 dark:border-emerald-800/50 text-slate-800 dark:text-slate-100 hover:border-emerald-300/90 hover:shadow-sm hover:shadow-emerald-500/10 dark:hover:border-emerald-600/60'
+            : 'bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border-violet-200/60 dark:border-violet-800/45 text-slate-800 dark:text-slate-100 hover:border-violet-300/80 hover:shadow-sm hover:shadow-violet-500/10 dark:hover:border-violet-600/60'
+      }`}
+    >
+      <span className="relative mt-0.5 shrink-0">
+        <span
+          className={`flex h-9 w-9 items-center justify-center rounded-lg text-base ${
+            isActive
+              ? 'bg-white/20 shadow-inner'
+              : isFeatured
+                ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-sm shadow-emerald-500/30 ring-1 ring-white/20'
+                : 'bg-gradient-to-br from-violet-400 to-indigo-500 shadow-sm shadow-violet-500/25 ring-1 ring-white/20'
+          }`}
+          aria-hidden
+        >
+          {item.icon}
+        </span>
+        {hasBadges ? (
+          <ChatCountBadges openCount={openCount} unreadCount={unreadCount} variant="overlay" />
+        ) : null}
+      </span>
+      <span className="min-w-0 flex-1 leading-tight">
+        <span
+          className={`block text-[11px] font-semibold leading-snug line-clamp-2 ${
+            isActive ? 'text-white' : 'text-slate-800 dark:text-slate-100'
+          }`}
+        >
+          {item.label}
+        </span>
+        <span
+          className={`mt-0.5 block text-[10px] font-medium leading-snug line-clamp-2 ${
+            isActive
+              ? 'text-white/75'
+              : isFeatured
+                ? 'text-emerald-800/75 dark:text-emerald-200/80'
+                : 'text-violet-700/75 dark:text-violet-300/80'
+          }`}
+        >
+          {item.hint}
+        </span>
+      </span>
+      {!hasBadges && (
+        <span
+          className={`mt-1 shrink-0 self-start text-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${
+            isActive ? 'text-white/90 opacity-100' : 'text-slate-400'
+          }`}
+          aria-hidden
+        >
+          →
+        </span>
+      )}
+    </Link>
+  )
+}
+
+function AccompagnementSection({
+  items,
+  openChatCount,
+  unreadChatCount,
+  pathWithoutBase,
+  onClose,
+  label,
+  tooltip,
+}: {
+  items: AccompagnementNavItem[]
+  openChatCount: number
+  unreadChatCount: number
+  pathWithoutBase: string
+  onClose?: () => void
+  label: string
+  tooltip: string
+}) {
+  return (
+    <div className="shrink-0 px-3 pt-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center gap-2 px-0.5 pb-2.5" title={tooltip}>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400">
+          {label}
+        </p>
+        <span className="flex-1 h-px bg-gradient-to-r from-emerald-400/45 via-teal-300/30 to-transparent dark:from-emerald-600/50 dark:via-teal-500/35" />
+      </div>
+      <div className="flex flex-col gap-1 rounded-2xl p-1 bg-gradient-to-b from-emerald-50/70 to-amber-50/30 dark:from-emerald-950/25 dark:to-amber-950/10 ring-1 ring-emerald-200/40 dark:ring-emerald-800/35">
+        {items.map((item) => {
+          const itemPath = item.to.replace(/^\/+/, '')
+          const isExact = item.end !== false
+          const isActive = isExact
+            ? pathWithoutBase === itemPath
+            : pathWithoutBase === itemPath || pathWithoutBase.startsWith(itemPath + '/')
+          const badges =
+            item.to === '/chat'
+              ? { openCount: openChatCount, unreadCount: unreadChatCount }
+              : undefined
+          return (
+            <AccompagnementCard
+              key={item.to}
+              item={item}
+              isActive={isActive}
+              onClose={onClose}
+              badges={badges}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function buildCoachNavItems(
+  group: NavGroup | undefined,
+  translate: (k: string) => string
+): AccompagnementNavItem[] {
+  if (!group) return []
+  const hints: Record<string, string> = {
+    '/coach/chat': 'nav.coachChatFeaturedHint',
+    '/coach/patientele': 'nav.coachPatienteleFeaturedHint',
+    '/coach/suivi': 'nav.coachSuiviFeaturedHint',
+    '/?view=coach': 'nav.coachDashboardFeaturedHint',
+    '/coach/analytics': 'nav.coachAnalyticsFeaturedHint',
+  }
+  return group.items.map((item) => ({
+    ...item,
+    hint: translate(hints[item.to] ?? 'nav.coachNavDefaultHint'),
+    featured: item.to === '/coach/chat' || item.to === '/coach/patientele',
+    end: item.end,
+  }))
+}
+
+function isCoachNavItemActive(itemTo: string, pathWithoutBase: string, pathname: string): boolean {
+  if (itemTo === '/?view=coach') {
+    return pathWithoutBase === '' && pathname.includes('view=coach')
+  }
+  const itemPath = itemTo.replace(/^\/+/, '').replace(/\?.*$/, '')
+  return pathWithoutBase === itemPath || pathWithoutBase.startsWith(itemPath + '/')
+}
+
+function CoachNavSection({
+  items,
+  coachOpenCount,
+  coachUnreadCount,
+  pathWithoutBase,
+  pathname,
+  onClose,
+  label,
+  tooltip,
+}: {
+  items: AccompagnementNavItem[]
+  coachOpenCount: number
+  coachUnreadCount: number
+  pathWithoutBase: string
+  pathname: string
+  onClose?: () => void
+  label: string
+  tooltip: string
+}) {
+  if (items.length === 0) return null
+  return (
+    <div className="shrink-0 px-3 pt-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center gap-2 px-0.5 pb-2.5" title={tooltip}>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-400">
+          {label}
+        </p>
+        <span className="flex-1 h-px bg-gradient-to-r from-teal-400/45 via-emerald-300/30 to-transparent dark:from-teal-600/50 dark:via-emerald-500/35" />
+      </div>
+      <div className="flex flex-col gap-1 rounded-2xl p-1 bg-gradient-to-b from-teal-50/70 to-emerald-50/30 dark:from-teal-950/25 dark:to-emerald-950/10 ring-1 ring-teal-200/40 dark:ring-teal-800/35">
+        {items.map((item) => {
+          const isActive = isCoachNavItemActive(item.to, pathWithoutBase, pathname)
+          const badges =
+            item.to === '/coach/chat'
+              ? { openCount: coachOpenCount, unreadCount: coachUnreadCount }
+              : undefined
+          return (
+            <AccompagnementCard
+              key={item.to}
+              item={item}
+              isActive={isActive}
+              onClose={onClose}
+              badges={badges}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function MyceliumNavSection({
+  group,
+  pathname,
+  onClose,
+}: {
+  group: NavGroup
+  pathname: string
+  onClose?: () => void
+}) {
+  const currentPath = (pathname.replace(basePath, '').replace(/^\/+|\/+$/g, '') || '') as string
+  return (
+    <div className="shrink-0 px-3 pt-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center gap-2 px-0.5 pb-2.5" title={t('nav.myceliumSectionTooltip')}>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-400 to-amber-300">
+          {group.label}
+        </p>
+        <span className="flex-1 h-px bg-gradient-to-r from-amber-400/45 via-orange-300/30 to-transparent dark:from-amber-600/50" />
+      </div>
+      <div className="flex flex-col gap-1 rounded-2xl p-1 bg-gradient-to-b from-amber-50/70 to-orange-50/30 dark:from-amber-950/25 dark:to-orange-950/10 ring-1 ring-amber-200/40 dark:ring-amber-800/35">
+        {group.items.map(({ to, label, icon, end, title }) => {
+          const itemPath = to === '/' ? '' : to.replace(/^\/+/, '')
+          const isExact = end !== false
+          const isActive = isExact
+            ? currentPath === itemPath
+            : itemPath ? currentPath === itemPath || currentPath.startsWith(itemPath + '/') : false
+          return (
+            <Link
+              key={to}
+              href={to}
+              onClick={onClose}
+              title={title ?? label}
+              className={`flex items-center gap-2.5 rounded-xl border px-2.5 py-2 transition-all ${
+                isActive
+                  ? 'bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 border-amber-400/60 text-white shadow-md'
+                  : 'bg-gradient-to-br from-amber-500/10 to-orange-500/5 border-amber-200/70 dark:border-amber-800/50 text-slate-800 dark:text-slate-100 hover:border-amber-300/90'
+              }`}
+            >
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-base ${
+                  isActive ? 'bg-white/20' : 'bg-gradient-to-br from-amber-400 to-orange-500 ring-1 ring-white/20'
+                }`}
+              >
+                {icon}
+              </span>
+              <span className="text-[11px] font-semibold leading-snug">{label}</span>
+            </Link>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function NavGroup({
   group,
   onClose,
   pathname,
   badges = {},
+  countBadges = {},
 }: {
   group: NavGroup
   onClose?: () => void
   pathname: string
   badges?: Record<string, number>
+  countBadges?: Record<string, ChatCountPair>
 }) {
   const currentPath = (pathname.replace(basePath, '').replace(/^\/+|\/+$/g, '') || '') as string
   const isPathInGroup = group.items.some((item) => {
@@ -590,6 +952,7 @@ function NavGroup({
               ? currentPath === itemPath
               : itemPath ? currentPath === itemPath || currentPath.startsWith(itemPath + '/') : false
             const badge = badges[to]
+            const pairBadges = countBadges[to]
             return (
               <NavItemWithTooltip
                 key={to}
@@ -600,7 +963,8 @@ function NavGroup({
                 title={title}
                 onClose={onClose}
                 isActive={isActive}
-                badge={badge}
+                badge={pairBadges ? undefined : badge}
+                countBadges={pairBadges}
               />
             )
           })}
@@ -611,7 +975,7 @@ function NavGroup({
 }
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { user, logout, isAdmin, isCoach, isManager, isRh } = useAuth()
+  const { user, logout, isAdmin, isCoach, actsAsCoach, isManager, isRh } = useAuth()
   const router = useRouter()
   const pathname = usePathname() || ''
   useStore((s) => s.locale)
@@ -620,6 +984,125 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
 
   const clairiereUnreadCount = useSocialStore((s) => s.clairiereUnreadCount)
   const fetchClairiereUnread = useSocialStore((s) => s.fetchClairiereUnread)
+  const [openChatCount, setOpenChatCount] = useState(0)
+  const [unreadChatCount, setUnreadChatCount] = useState(0)
+  const [coachOpenCount, setCoachOpenCount] = useState(0)
+  const [coachUnreadCount, setCoachUnreadCount] = useState(0)
+
+  const { access: myceliumAccess } = useMyceliumAccess(!!user)
+
+  const availableModes = getAvailableViewModes({
+    isAdmin,
+    isCoach,
+    actsAsCoach,
+    isManager,
+    isRh,
+    myceliumAccess: myceliumAccess
+      ? {
+          showAdmin: myceliumAccess.showAdmin,
+          showDashboard: myceliumAccess.showDashboard,
+          showEspace: myceliumAccess.showEspace,
+        }
+      : null,
+  })
+  const viewMode = resolveViewMode(viewModeStored, availableModes)
+  const showCoachChatCounts = actsAsCoach && (viewMode === 'coach' || viewMode === 'admin')
+
+  useEffect(() => {
+    if (!user) {
+      setOpenChatCount(0)
+      setUnreadChatCount(0)
+      return
+    }
+    let cancelled = false
+    const refreshChatCounts = () => {
+      Promise.all([
+        chatApi.myConversations(),
+        chatApi.unread().catch(() => ({ count: 0 })),
+      ])
+        .then(([raw, unreadRes]) => {
+          if (cancelled) return
+          const r = raw as { conversations?: Array<{ status?: string }> }
+          const count = (r.conversations ?? []).filter((c) => c.status === 'open').length
+          setOpenChatCount(count)
+          setUnreadChatCount(Number((unreadRes as { count?: number })?.count ?? 0) || 0)
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setOpenChatCount(0)
+            setUnreadChatCount(0)
+          }
+        })
+    }
+    refreshChatCounts()
+    const interval = setInterval(refreshChatCounts, 60_000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!user || !showCoachChatCounts) {
+      setCoachOpenCount(0)
+      setCoachUnreadCount(0)
+      return
+    }
+    let cancelled = false
+    const refreshCoachCounts = () => {
+      chatApi
+        .stats()
+        .then((data) => {
+          if (cancelled) return
+          const stats = data as { open?: number; unread_messages?: number }
+          setCoachOpenCount(Number(stats.open ?? 0) || 0)
+          setCoachUnreadCount(Number(stats.unread_messages ?? 0) || 0)
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setCoachOpenCount(0)
+            setCoachUnreadCount(0)
+          }
+        })
+    }
+    refreshCoachCounts()
+    const interval = setInterval(refreshCoachCounts, 60_000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [user, showCoachChatCounts])
+
+  useEffect(() => {
+    if (!user) return
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        Promise.all([
+          chatApi.myConversations(),
+          chatApi.unread().catch(() => ({ count: 0 })),
+        ])
+          .then(([raw, unreadRes]) => {
+            const r = raw as { conversations?: Array<{ status?: string }> }
+            const count = (r.conversations ?? []).filter((c) => c.status === 'open').length
+            setOpenChatCount(count)
+            setUnreadChatCount(Number((unreadRes as { count?: number })?.count ?? 0) || 0)
+          })
+          .catch(() => {})
+        if (showCoachChatCounts) {
+          chatApi
+            .stats()
+            .then((data) => {
+              const stats = data as { open?: number; unread_messages?: number }
+              setCoachOpenCount(Number(stats.open ?? 0) || 0)
+              setCoachUnreadCount(Number(stats.unread_messages ?? 0) || 0)
+            })
+            .catch(() => {})
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [user, showCoachChatCounts])
 
   useEffect(() => {
     if (!user) return
@@ -636,31 +1119,16 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [fetchClairiereUnread])
 
-  const { access: myceliumAccess } = useMyceliumAccess(!!user)
   const pathWithoutBase = (pathname.replace(basePath, '').replace(/^\/+|\/+$/g, '') || '') as string
 
-  // Résolution du mode actif : on retombe sur le défaut naturel si le mode stocké
-  // ne correspond plus aux droits réels de l'utilisateur (ex. perte d'un rôle).
-  const availableModes = getAvailableViewModes({
-    isAdmin,
-    isCoach,
-    isManager,
-    isRh,
-    myceliumAccess: myceliumAccess
-      ? {
-          showAdmin: myceliumAccess.showAdmin,
-          showDashboard: myceliumAccess.showDashboard,
-          showEspace: myceliumAccess.showEspace,
-        }
-      : null,
-  })
-  const viewMode = resolveViewMode(viewModeStored, availableModes)
-
   const profilePublic = !!(user && (user as { profile_public?: boolean }).profile_public)
+  const showAccompagnementSection =
+    viewMode === 'personnel' || viewMode === 'coach' || viewMode === 'admin'
   const navGroups = buildNavGroups({
     viewMode,
     isAdmin,
     isCoach,
+    actsAsCoach,
     mycelium: {
       showEspace: myceliumAccess?.showEspace ?? false,
       showDashboard: myceliumAccess?.showDashboard ?? false,
@@ -668,6 +1136,12 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
     },
     translate: t,
     profilePublic,
+  })
+  const accompagnementItems = buildAccompagnementNavItems({
+    show: showAccompagnementSection,
+    translate: t,
+    openChatCount,
+    unreadChatCount,
   })
 
   // Première carte : item "Mon Jardin" (home) — toujours visible
@@ -678,11 +1152,166 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
     end: true,
     title: t('nav.homeTooltip'),
   }
-  const isHomeActive = pathWithoutBase === ''
+  const isHomeActive = pathWithoutBase === '' && !pathname.includes('view=coach')
 
-  // Extraction du groupe Explorations pour rendu en cards (en haut)
-  const explorationsGroup = navGroups[0]
-  const restGroups = navGroups.slice(1)
+  const explorationsGroup = navGroups.find((g) => g.id === 'explorations')
+  const coachGroup = navGroups.find((g) => g.id === 'coach')
+  const myceliumGroup = navGroups.find((g) => g.id === 'mycelium')
+  const restGroups = navGroups.filter(
+    (g) => g.id !== 'explorations' && g.id !== 'coach' && g.id !== 'mycelium'
+  )
+  const coachNavItems = buildCoachNavItems(coachGroup, t)
+  const sidebarBlocks = getSidebarBlockOrder(viewMode)
+
+  function renderSidebarBlock(blockId: SidebarBlockId) {
+    switch (blockId) {
+      case 'home':
+        return (
+          <div
+            key="home"
+            className="shrink-0 px-3 pt-3 pb-2 border-b border-slate-200 dark:border-slate-700"
+          >
+            <Link
+              href={viewMode === 'coach' ? '/?view=coach' : '/'}
+              onClick={onClose}
+              title={homeItem.title}
+              className={`flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                isHomeActive || (viewMode === 'coach' && pathname.includes('view=coach'))
+                  ? 'bg-accent text-white'
+                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <span className="text-base" aria-hidden>{homeItem.icon}</span>
+              <span>
+                {viewMode === 'coach'
+                  ? (t('nav.coachDashboard') ?? 'Dashboard coach')
+                  : homeItem.label}
+              </span>
+            </Link>
+          </div>
+        )
+      case 'coach':
+        return coachNavItems.length > 0 ? (
+          <CoachNavSection
+            key="coach"
+            items={coachNavItems}
+            coachOpenCount={coachOpenCount}
+            coachUnreadCount={coachUnreadCount}
+            pathWithoutBase={pathWithoutBase}
+            pathname={pathname}
+            onClose={onClose}
+            label={t('nav.coachSection')}
+            tooltip={t('nav.coachSectionTooltip')}
+          />
+        ) : null
+      case 'mycelium':
+        return myceliumGroup ? (
+          <MyceliumNavSection
+            key="mycelium"
+            group={myceliumGroup}
+            pathname={pathname}
+            onClose={onClose}
+          />
+        ) : null
+      case 'accompagnement':
+        return accompagnementItems && accompagnementItems.length > 0 ? (
+          <AccompagnementSection
+            key="accompagnement"
+            items={accompagnementItems}
+            openChatCount={openChatCount}
+            unreadChatCount={unreadChatCount}
+            pathWithoutBase={pathWithoutBase}
+            onClose={onClose}
+            label={t('accompagnement')}
+            tooltip={t('nav.accompagnementSectionTooltip')}
+          />
+        ) : null
+      case 'explorations':
+        return explorationsGroup ? (
+          <div
+            key="explorations"
+            className={`shrink-0 px-3 pt-3 pb-3 border-b border-slate-200 dark:border-slate-700 ${
+              viewMode === 'coach' || viewMode === 'rh' ? 'opacity-95' : ''
+            }`}
+          >
+            <div
+              className="flex items-center gap-2 px-0.5 pb-2.5"
+              title={t('nav.explorationsSectionTooltip')}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-violet-500 via-rose-400 to-fuchsia-400">
+                {explorationsGroup.label}
+                {viewMode === 'coach' || viewMode === 'rh' ? (
+                  <span className="text-slate-400 dark:text-slate-500 font-medium normal-case tracking-normal">
+                    {' '}
+                    · {t('nav.explorationsSecondary')}
+                  </span>
+                ) : null}
+              </p>
+              <span className="flex-1 h-px bg-gradient-to-r from-violet-400/40 via-rose-300/25 to-transparent dark:from-violet-600/50 dark:via-rose-500/30" />
+            </div>
+            <div className="flex flex-col gap-1.5 rounded-2xl p-1.5 bg-gradient-to-b from-slate-50/80 to-transparent dark:from-slate-800/40 dark:to-transparent">
+              {(explorationsGroup.items as ExplorationNavItem[]).map((item) => {
+                const itemPath = item.to.replace(/^\/+/, '')
+                const isActive =
+                  pathWithoutBase === itemPath || pathWithoutBase.startsWith(itemPath + '/')
+                return (
+                  <ExplorationCard
+                    key={item.to}
+                    item={item}
+                    isActive={isActive}
+                    onClose={onClose}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        ) : null
+      case 'nav':
+        return (
+          <nav
+            key="nav"
+            className="px-2 py-3 border-b border-slate-200 dark:border-slate-700 space-y-1"
+          >
+            {restGroups.map((group) => (
+              <NavGroup
+                key={group.id}
+                group={group}
+                onClose={onClose}
+                pathname={pathname}
+                badges={{ '/clairiere': clairiereUnreadCount }}
+                countBadges={{
+                  '/coach/chat': {
+                    openCount: coachOpenCount,
+                    unreadCount: coachUnreadCount,
+                  },
+                }}
+              />
+            ))}
+          </nav>
+        )
+      case 'coachRequest':
+        return user && !isCoach && !isAdmin ? (
+          <div
+            key="coachRequest"
+            className="shrink-0 px-3 py-3 border-b border-slate-200 dark:border-slate-700"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                openCoachRequestModal()
+                onClose?.()
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 border border-violet-200/80 dark:border-violet-800/60 hover:bg-violet-100 dark:hover:bg-violet-950/70 transition-colors text-left"
+            >
+              <span className="text-base shrink-0">💬</span>
+              <span className="leading-snug">{t('account.coachRequestTrigger')}</span>
+            </button>
+          </div>
+        ) : null
+      default:
+        return null
+    }
+  }
 
   function handleLogout() {
     logout()
@@ -718,77 +1347,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col">
-          {/* Home (Mon Jardin) — accès direct, hors des sections */}
-          <div className="shrink-0 px-3 pt-3 pb-2 border-b border-slate-200 dark:border-slate-700">
-            <Link
-              href="/"
-              onClick={onClose}
-              title={homeItem.title}
-              className={`flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                isHomeActive
-                  ? 'bg-accent text-white'
-                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <span className="text-base" aria-hidden>{homeItem.icon}</span>
-              <span>{homeItem.label}</span>
-            </Link>
-          </div>
-
-          {/* Section EXPLORATIONS — 4 apps phares, en cartes */}
-          {explorationsGroup && (
-            <div className="shrink-0 px-3 pt-3 pb-3 border-b border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-2 px-0.5 pb-2.5" title={t('nav.explorationsSectionTooltip')}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-violet-500 via-rose-400 to-fuchsia-400">
-                  {explorationsGroup.label}
-                </p>
-                <span className="flex-1 h-px bg-gradient-to-r from-violet-400/40 via-rose-300/25 to-transparent dark:from-violet-600/50 dark:via-rose-500/30" />
-              </div>
-              <div className="flex flex-col gap-1.5 rounded-2xl p-1.5 bg-gradient-to-b from-slate-50/80 to-transparent dark:from-slate-800/40 dark:to-transparent">
-                {(explorationsGroup.items as ExplorationNavItem[]).map((item) => {
-                  const itemPath = item.to.replace(/^\/+/, '')
-                  const isActive = pathWithoutBase === itemPath || pathWithoutBase.startsWith(itemPath + '/')
-                  return (
-                    <ExplorationCard
-                      key={item.to}
-                      item={item}
-                      isActive={isActive}
-                      onClose={onClose}
-                    />
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Autres sections */}
-          <nav className="px-2 py-3 border-b border-slate-200 dark:border-slate-700 space-y-1">
-            {restGroups.map((group) => (
-              <NavGroup
-                key={group.label}
-                group={group}
-                onClose={onClose}
-                pathname={pathname}
-                badges={{ '/clairiere': clairiereUnreadCount }}
-              />
-            ))}
-          </nav>
-
-          {user && !isCoach && !isAdmin && (
-            <div className="shrink-0 px-3 py-3 border-b border-slate-200 dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => {
-                  openCoachRequestModal()
-                  onClose?.()
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 border border-violet-200/80 dark:border-violet-800/60 hover:bg-violet-100 dark:hover:bg-violet-950/70 transition-colors text-left"
-              >
-                <span className="text-base shrink-0">💬</span>
-                <span className="leading-snug">{t('account.coachRequestTrigger')}</span>
-              </button>
-            </div>
-          )}
+          {sidebarBlocks.map((blockId) => renderSidebarBlock(blockId))}
         </div>
 
         {user && (

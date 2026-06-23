@@ -1,0 +1,15 @@
+# IL FRUTTO
+
+> Pagine libro (sommario): 74–75 · p. PDF 74–75 (stimato dal testo estratto)
+
+Descrizione estesa: Il raccolto e il dono nutriente, Il Frutto è la ricompensa della fioritura. Contiene la memoria del ciclo e la promessa della continuità. È la carta della generosità, del raccolto giusto, della dolcezza condivisa. Nel tarot, rappresenta la capacità di dare senza impoverirsi, di diventare nutrimento per il mondo pur conservando il proprio seme interiore. Insegna la fecondità cosciente, il piacere di trasmettere, la saggezza del ritmo naturale: ogni frutto cade quando è maturo.
+Parole chiave di luce: Abbondanza, maturità, raccolto, trasmissione, fecondità, condivisione, gioia tranquilla, gratitudine, compimento.
+Ombra: Il frutto troppo maturo o la perdita del gusto. Sotto la sua ombra, il Frutto diventa eccesso: possesso, avidità, consumo. Il raccolto diventa accumulo e la generosità si trasforma in controllo. Oppure, al contrario, il frutto non viene colto in tempo: marcisce, viene dimenticato, appassisce. Questa carta mette in guardia contro l'attaccamento al risultato e l'incapacità di lasciare andare ciò che ha già dato. Il Frutto insegna ad assaporare senza trattenere, a cogliere il momento giusto.
+Parole chiave d’ombra: Eccesso, gola, esaurimento, perdita di sapore, attaccamento al passato, stagnazione, spreco.
+IL FRUTTO Evoca il compimento e la generosità. Il frutto maturo che libera i suoi semi rappresenta il ciclo che si chiude e ricomincia, il successo trasformato in nutrimento e in promessa di futuro. Simboleggia l'abbondanza, la fecondità e la trasmissione del patrimonio vivente.
+Percorsi di integrazione: Celebrare ciò che ha portato frutto, poi offrire quel frutto al mondo. Imparare a raccogliere senza accaparrare. Riconoscere la fine naturale di un ciclo come l'inizio di un altro. Assaporare la dolcezza del presente. In una stesa, Il Frutto evoca il compimento concreto, la maturità di un progetto o di un legame, o la necessità di condividere ciò che è stato coltivato.
+Esercizio / Meditazione: Prendi un frutto tra le mani. Osserva la sua forma, il suo profumo, la sua consistenza. Prima di assaggiarlo, ringrazia tutto ciò che lo ha reso possibile: la pioggia, il sole, la terra, il tempo. Assaporalo lentamente, come una preghiera di gratitudine. Il Frutto è la dolcezza della maturità, la materia luminosa del tempo compiuto. Insegna la gratitudine, la saggezza della trasmissione e la bellezza della condivisione. Nel grande ciclo del Tarot Fleur d'ÅmÔurs, Il Frutto rappresenta la tranquilla fruizione dell'opera compiuta, il momento in cui l'essere assapora ciò che ha seminato. Ci ricorda che ogni frutto porta già il suo seme, che ogni conclusione è un nuovo inizio.
+Corrispondenze energetiche: Elemento: Terra e Acqua Polarità: Femminile fecondo (materno, nutriente, generoso)
+Corrispondenze simboliche: Maturità, Trasmissione, Dolcezza incarnata
+In risonanza: Terra (L'Humus), Acqua (L'Estuario), Vita (L'Anima del Mondo)
+Domanda radice: «Cosa ho compiuto che ora è maturo per essere condiviso?»

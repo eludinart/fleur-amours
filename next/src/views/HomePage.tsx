@@ -69,8 +69,8 @@ function ViewSwitcher({
 function HomePageInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { isAdmin, isCoach } = useAuth()
-  const showCoachTab = isCoach || isAdmin
+  const { isAdmin, isCoach, actsAsCoach } = useAuth()
+  const showCoachTab = actsAsCoach
   const viewParam = searchParams?.get?.('view') ?? 'user'
   const isStatsRoute = viewParam === 'stats'
   const view = ['user', 'coach', 'admin'].includes(viewParam)
@@ -95,7 +95,7 @@ function HomePageInner() {
   if (isStatsRoute) {
     return (
       <div className="flex-1 min-h-0 flex flex-col">
-        {(isCoach || isAdmin) && (
+        {actsAsCoach && (
           <ViewSwitcher
             view={view}
             showCoachTab={showCoachTab}
@@ -138,7 +138,7 @@ function HomePageInner() {
   // Cas "user" — UserFleurZenHome a son propre overflow-y-auto (comme DashboardPage)
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      {(isCoach || isAdmin) && (
+      {actsAsCoach && (
         <ViewSwitcher
           view={view}
           showCoachTab={showCoachTab}

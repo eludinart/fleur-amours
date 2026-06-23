@@ -25,14 +25,14 @@ import {
  * Pour ajouter un nouveau rôle : enrichir `lib/view-modes.ts` (descripteur + règle de droit dans
  * `getAvailableViewModes`). Le sélecteur prend la nouvelle vue en compte automatiquement.
  */
-export function ViewModeSelector() {
-  const { user, isAdmin, isCoach, isManager, isRh } = useAuth()
+export function ViewModeSelector({ layout = 'inline' }: { layout?: 'inline' | 'sidebar' }) {
+  const { user, isAdmin, isCoach, actsAsCoach, isManager, isRh } = useAuth()
   const viewMode = useStore((s) => s.viewMode)
   const setViewMode = useStore((s) => s.setViewMode)
   const { access: myceliumAccess } = useMyceliumAccess(!!user)
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -44,12 +44,26 @@ export function ViewModeSelector() {
   // Positionne le menu en fixed sous le bouton (en contournant tous les `overflow:hidden` parents).
   useLayoutEffect(() => {
     if (!open || !buttonRef.current) return
+    const MENU_MIN_WIDTH = 256
+    const GAP = 8
     const update = () => {
       const rect = buttonRef.current?.getBoundingClientRect()
       if (!rect) return
+      const menuWidth =
+        layout === 'sidebar'
+          ? Math.min(Math.max(rect.width, MENU_MIN_WIDTH), window.innerWidth - GAP * 2)
+          : MENU_MIN_WIDTH
+      let left = rect.left
+      if (left + menuWidth > window.innerWidth - GAP) {
+        left = window.innerWidth - menuWidth - GAP
+      }
+      if (left < GAP) {
+        left = GAP
+      }
       setMenuPos({
         top: rect.bottom + 4,
-        right: window.innerWidth - rect.right,
+        left,
+        width: menuWidth,
       })
     }
     update()
@@ -59,7 +73,7 @@ export function ViewModeSelector() {
       window.removeEventListener('resize', update)
       window.removeEventListener('scroll', update, true)
     }
-  }, [open])
+  }, [open, layout])
 
   // Fermeture au clic extérieur ou Escape.
   useEffect(() => {
@@ -86,6 +100,7 @@ export function ViewModeSelector() {
   const available = getAvailableViewModes({
     isAdmin,
     isCoach,
+    actsAsCoach,
     isManager,
     isRh,
     myceliumAccess: myceliumAccess
@@ -114,8 +129,14 @@ export function ViewModeSelector() {
         ref={menuRef}
         role="listbox"
         aria-label={t('nav.viewModes.selectorLabel')}
-        style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 1000 }}
-        className="w-64 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden"
+        style={{
+          position: 'fixed',
+          top: menuPos.top,
+          left: menuPos.left,
+          width: menuPos.width,
+          zIndex: 1000,
+        }}
+        className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden"
       >
         <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -167,7 +188,7 @@ export function ViewModeSelector() {
     ) : null
 
   return (
-    <div className="shrink-0">
+    <div className={layout === 'sidebar' ? 'w-full' : 'shrink-0'}>
       <button
         ref={buttonRef}
         type="button"
@@ -175,11 +196,26 @@ export function ViewModeSelector() {
         title={t(currentDescriptor.descriptionKey)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${currentDescriptor.activeClass}`}
+        aria-label={t('nav.viewModes.selectorLabel')}
+        className={`inline-flex items-center justify-center gap-1.5 min-w-[44px] min-h-[44px] px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${currentDescriptor.activeClass} ${
+          layout === 'sidebar' ? 'w-full justify-between' : ''
+        }`}
       >
-        <span aria-hidden>{currentDescriptor.icon}</span>
-        <span className="hidden sm:inline">{t(currentDescriptor.labelKey)}</span>
-        <span className="text-[10px] opacity-70" aria-hidden>▾</span>
+        <span className="inline-flex items-center gap-1.5 min-w-0">
+          <span aria-hidden>{currentDescriptor.icon}</span>
+          <span
+            className={
+              layout === 'sidebar'
+                ? 'truncate'
+                : 'hidden sm:inline truncate max-w-[5.5rem] md:max-w-none'
+            }
+          >
+            {t(currentDescriptor.labelKey)}
+          </span>
+        </span>
+        <span className="text-[10px] opacity-70 shrink-0" aria-hidden>
+          ▾
+        </span>
       </button>
       {/* Rendu dans document.body via portail pour échapper aux `overflow:hidden` / stacking contexts parents. */}
       {mounted && menu ? createPortal(menu, document.body) : null}

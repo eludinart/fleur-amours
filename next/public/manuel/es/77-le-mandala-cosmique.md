@@ -1,0 +1,16 @@
+# EL MANDALA CÓSMICO
+
+> Páginas libro (índice): 158–159 · PDF p. 158–159 (estimado desde el texto extraído)
+
+Descripción ampliada: El dibujo sagrado del mundo. El Mandala Cósmico es el mapa del orden secreto del mundo. Representa la danza armoniosa de los planetas, los átomos, las conciencias: cada cosa tiene su lugar, conectada a todas las demás por líneas de luz. En el tarot, simboliza la perfección en movimiento, la conciencia geométrica, la belleza fractal del universo. Es la carta de la visión clara, de la interconexión multidimensional, de la mirada que ve a la vez el todo y la parte. El Mandala Cósmico revela la música silenciosa de la creación.
+Palabras clave de luz: Unidad, interconexión, equilibrio, visión, expansión de conciencia, geometría sagrada, armonía, orden divino, vínculo cósmico.
+Sombra: La pérdida en la complejidad o la rigidez espiritual. Bajo su sombra, el Mandala se convierte en laberinto. Es la carta de la mente espiritual, de la fascinación por los sistemas, de la búsqueda de orden en detrimento de lo vivo. Advierte contra la rigidez, la pérdida de espontaneidad en la contemplación de la perfección. El cosmos no es una máquina, es un organismo vivo. Querer comprender demasiado el dibujo es olvidar la mano que lo traza.
+EL MANDALA CÓSMICO Encarna la perfección geométrica de la creación. La flor de la vida rodeada de vegetación y estrellas representa el plano divino, la matriz sagrada que sustenta toda manifestación. Esta carta evoca el orden cósmico, la belleza matemática del universo y la contemplación de la arquitectura divina.
+Palabras clave de sombra: Fijación, exceso de análisis, perfeccionismo espiritual, rigidez mental, pérdida de intuición, confusión mística, aislamiento conceptual.
+Caminos de integración: Contemplar el mundo sin buscar reducirlo. Ver los patrones ocultos en la vida cotidiana: las sincronicidades, los ciclos, las correspondencias. Sentirse a la vez centro y círculo, actor y testigo. Honrar la belleza del orden natural sin querer poseerlo. En una lectura, El Mandala Cósmico indica un período de claridad, de comprensión global, de expansión de conciencia, pero también la necesidad de volver al corazón cuando la complejidad se vuelve vértigo.
+Ejercicio / Meditación: Cierra los ojos e imagina un gran mandala de luz girando lentamente alrededor de tu corazón. Con cada respiración, se expande, conectando tus células con las galaxias. Observa cómo cada punto, cada forma, cada color emana de tu centro. Eres a la vez el dibujo y la mirada. El Mandala Cósmico es el rostro ordenado del infinito. Enseña que la belleza del mundo no reside en la perfección, sino en la coherencia del movimiento. En el gran Tarot Fleur d'ÅmÔurs, representa la conciencia de la estructura sagrada del universo, la geometría del alma que conecta todas las cosas en un mismo pulso. Recuerda que la creación no es un azar: es una danza precisa y amorosa del caos y la claridad. Cada existencia es una línea del dibujo eterno.
+Elemento: Éter
+Polaridad: Equilibrada (unión de lo masculino y lo femenino, del centro y la periferia)
+Correspondencias simbólicas: Orden universal, Interconexión, Geometría de lo vivo
+En resonancia: Fuego (El Sol Interior), Aire (El Alisios), Éter (La Armonía de los Ciclos)
+Pregunta raíz: "¿Cuál es el sentido oculto o el orden detrás del caos aparente de mi situación?"

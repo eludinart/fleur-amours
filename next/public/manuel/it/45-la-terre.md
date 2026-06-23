@@ -1,0 +1,15 @@
+# LA TERRA
+
+> Pagine libro (indice): 94–95 · Pag. PDF 94–96 (stimato dal testo estratto)
+
+Descrizione estesa: Il corpo del mondo e la pace dell'radicamento. La Terra è la presenza incarnata del sacro. È la carta della stabilità, della materia amata, della fecondità silenziosa. Insegna la potenza dell'ancoraggio, la lentezza come saggezza, la solidità come amore. Nel tarot, rappresenta la casa interiore, la perseveranza, la concretizzazione e la gratitudine verso ciò che sostiene. Ricorda che il divino si sperimenta qui, nella densità, nelle mani, nella vita quotidiana. La Terra è il cuore del cielo diventato tangibile.
+Parole chiave di luce: Stabilità, pazienza, fecondità, incarnazione, materializzazione, sicurezza, gratitudine, solidità, fiducia, perseveranza.
+Ombra: La pesantezza o la paura del movimento. Sotto la sua ombra, La Terra diventa inerzia o possesso. È la carta del materialismo, della paura del cambiamento, della rigidità o del controllo eccessivo. Avverte contro la tendenza a confondere sicurezza e reclusione, stabilità e stagnazione. Quando la Terra si chiude, non nutre più: soffoca. Invita a ritrovare la flessibilità del suolo vivo. LA TERRA rappresenta il fondamento e la manifestazione concreta. Simboleggia tutto ciò che è tangibile, stabile e materiale. Questa carta incarna l'ancoraggio, la fertilità, il corpo fisico, l'abbondanza materiale e la pazienza dei cicli lenti.
+Parole chiave d’ombra: Inerzia, attaccamento, paura del cambiamento, materialismo, lentezza eccessiva, rigidità, stanchezza, resistenza.
+Percorsi di integrazione: Prenditi cura del corpo e del territorio come di un tempio. Rallenta per ritrovare la presenza nell'azione. Radica i sogni in gesti semplici e duraturi. Onora la materia come espressione dello spirito. In una stesa, La Terra annuncia una stabilizzazione, una concretizzazione o un radicamento necessario. Può anche invitare a riprendere contatto con la natura e il corpo per riequilibrare l'energia.
+Risonanza dell'anima: La Terra è il ventre del mondo. Insegna la pazienza, l'ascolto e la fedeltà al reale. Nel grande Tarot Fleur d'ÅmÔurs, rappresenta l'incarnazione della coscienza, la saggezza del fare, la tenerezza del mondo concreto. Ci ricorda che tutto ciò che riceviamo dal cielo ha senso solo se trova radici nel suolo della vita. Amare la Terra significa imparare ad abitare la luce.
+Corrispondenze energetiche: Elemento: Terra. Polarità: Femminina stabile (materna, feconda, protettiva).
+Corrispondenze simboliche: Incarnazione, Ancoraggio, Fecondità, Pazienza, Realizzazione.
+In risonanza: Vegetale (Le Radici), Acqua (La Sorgente Profonda), Fuoco (Le Braci), Vita (La Memoria della Linfa).
+Domanda radice: «Come posso far scendere la mia idea dalla mente alla realtà concreta?»
+Esercizio / Meditazione: Cammina a piedi nudi sul terreno. Ad ogni passo, senti la Terra sostenerti. Di' interiormente: Sono portato. Faccio parte del corpo del mondo. Respira profondamente, fino a sentire il tuo peso diventare una preghiera silenziosa.

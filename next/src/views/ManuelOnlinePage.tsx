@@ -1471,7 +1471,6 @@ export default function ManuelOnlinePage({ chapterSlug }: { chapterSlug?: string
           hrefFor={hrefFor}
           openChapter={openChapter}
           query={query}
-          canonicalTitle={(raw) => canonicalManualTitle(raw)}
           sectionTitle={resolveSectionTitle}
           cardImageFor={(title) => cardsByNormName.get(normCardKey(title))?.img}
         />

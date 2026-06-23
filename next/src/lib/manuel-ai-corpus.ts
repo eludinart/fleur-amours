@@ -5,7 +5,7 @@
 import { existsSync, readFileSync, statSync } from 'fs'
 import { join } from 'path'
 import type { ManuelManifest, ManuelManifestSection } from '@/lib/manuel'
-import { formatMoreChaptersLine, getManuelAiStrings } from '@/lib/manuel-ai-i18n'
+import { formatMoreChaptersLine, getManuelAiStrings, normalizeManuelAiLocale } from '@/lib/manuel-ai-i18n'
 
 function manuelAiEnabled(): boolean {
   const v = String(process.env.MANUEL_AI_CONTEXT ?? '1').trim().toLowerCase()
@@ -93,8 +93,17 @@ function scoreSection(words: Set<string>, sec: ManuelManifestSection, bodySample
   return score
 }
 
-function readBodySample(root: string, file: string, maxLen: number): string {
-  const full = join(root, file)
+function resolveChapterPath(root: string, file: string, locale?: string): string {
+  const loc = normalizeManuelAiLocale(locale ?? 'fr')
+  if (loc !== 'fr') {
+    const localized = join(root, loc, file)
+    if (existsSync(localized)) return localized
+  }
+  return join(root, file)
+}
+
+function readBodySample(root: string, file: string, maxLen: number, locale?: string): string {
+  const full = resolveChapterPath(root, file, locale)
   if (!existsSync(full)) return ''
   try {
     const raw = readFileSync(full, 'utf8')
@@ -158,7 +167,7 @@ export function buildManuelAiContext(opts: ManuelAiContextOpts = {}): string {
     const maxQ = quickRanked[0]?.score ?? 0
     const slice = maxQ > 0 ? quickRanked.slice(0, 36) : quickRanked.slice(0, 48)
     for (const { sec } of slice) {
-      samples.set(sec.file, readBodySample(root, sec.file, 900))
+      samples.set(sec.file, readBodySample(root, sec.file, 900, opts.locale))
     }
   }
 
@@ -205,7 +214,7 @@ export function buildManuelAiContext(opts: ManuelAiContextOpts = {}): string {
   for (const { sec, score } of pool) {
     if (n >= maxChapters) break
     if (words.size > 0 && score < 1) break
-    const full = join(root, sec.file)
+    const full = resolveChapterPath(root, sec.file, opts.locale)
     if (!existsSync(full)) continue
     let excerpt = ''
     try {

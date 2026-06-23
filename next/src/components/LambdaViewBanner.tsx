@@ -6,7 +6,7 @@ import { useMyceliumAccess } from '@/hooks/useMyceliumAccess'
 import { t } from '@/i18n'
 import {
   getAvailableViewModes,
-  getDefaultViewMode,
+  getNaturalViewMode,
   getViewModeDescriptor,
   isSimulatingLowerRole,
   resolveViewMode,
@@ -20,7 +20,7 @@ import {
  * un lien rapide pour revenir au mode naturel (admin → admin, RH → rh, etc.).
  */
 export function LambdaViewBanner() {
-  const { user, isAdmin, isCoach, isManager, isRh } = useAuth()
+  const { user, isAdmin, isCoach, actsAsCoach, isManager, isRh } = useAuth()
   const viewMode = useStore((s) => s.viewMode)
   const setViewMode = useStore((s) => s.setViewMode)
   const { access: myceliumAccess } = useMyceliumAccess(!!user)
@@ -30,6 +30,7 @@ export function LambdaViewBanner() {
   const available = getAvailableViewModes({
     isAdmin,
     isCoach,
+    actsAsCoach,
     isManager,
     isRh,
     myceliumAccess: myceliumAccess
@@ -44,7 +45,20 @@ export function LambdaViewBanner() {
   const current = resolveViewMode(viewMode, available)
   if (!isSimulatingLowerRole(current, available)) return null
 
-  const natural = getDefaultViewMode(available)
+  const natural = getNaturalViewMode({
+    isAdmin,
+    isCoach,
+    actsAsCoach,
+    isManager,
+    isRh,
+    myceliumAccess: myceliumAccess
+      ? {
+          showAdmin: myceliumAccess.showAdmin,
+          showDashboard: myceliumAccess.showDashboard,
+          showEspace: myceliumAccess.showEspace,
+        }
+      : null,
+  })
   const currentDesc = getViewModeDescriptor(current)
   const naturalDesc = getViewModeDescriptor(natural)
 

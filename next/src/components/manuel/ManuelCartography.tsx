@@ -22,7 +22,6 @@ type Props = {
   hrefFor: (file: string) => string
   openChapter: (file: string, fromEl: HTMLElement) => void
   query: string
-  canonicalTitle: (raw: string) => string
   sectionTitle: (section: ManuelManifestSection) => string
   cardImageFor: (title: string) => string | undefined
 }
@@ -213,13 +212,13 @@ function PetalGrid({
   items,
   hrefFor,
   openChapter,
-  canonicalTitle,
+  sectionTitle,
   cardImageFor,
 }: {
   items: ManuelManifestSection[]
   hrefFor: (f: string) => string
   openChapter: (file: string, fromEl: HTMLElement) => void
-  canonicalTitle: (raw: string) => string
+  sectionTitle: (section: ManuelManifestSection) => string
   cardImageFor: (title: string) => string | undefined
 }) {
   return (
@@ -249,13 +248,13 @@ function StemTimeline({
   items,
   hrefFor,
   openChapter,
-  canonicalTitle,
+  sectionTitle,
   cardImageFor,
 }: {
   items: ManuelManifestSection[]
   hrefFor: (f: string) => string
   openChapter: (file: string, fromEl: HTMLElement) => void
-  canonicalTitle: (raw: string) => string
+  sectionTitle: (section: ManuelManifestSection) => string
   cardImageFor: (title: string) => string | undefined
 }) {
   const ordered = sortVegetalStemSections(items)
@@ -281,13 +280,13 @@ function LifeArc({
   items,
   hrefFor,
   openChapter,
-  canonicalTitle,
+  sectionTitle,
   cardImageFor,
 }: {
   items: ManuelManifestSection[]
   hrefFor: (f: string) => string
   openChapter: (file: string, fromEl: HTMLElement) => void
-  canonicalTitle: (raw: string) => string
+  sectionTitle: (section: ManuelManifestSection) => string
   cardImageFor: (title: string) => string | undefined
 }) {
   return (
@@ -312,15 +311,15 @@ function ClimateZone({
   query,
   hrefFor,
   openChapter,
-  canonicalTitle,
+  sectionTitle,
   cardImageFor,
 }: {
   sections: ManuelManifestSection[]
   filteredSet: Set<string>
   query: string
-  hrefFor: (f: string) => string
+  hrefFor: (file: string) => string
   openChapter: (file: string, fromEl: HTMLElement) => void
-  canonicalTitle: (raw: string) => string
+  sectionTitle: (section: ManuelManifestSection) => string
   cardImageFor: (title: string) => string | undefined
 }) {
   return (
@@ -372,7 +371,7 @@ function DoorPanel({
   query,
   hrefFor,
   openChapter,
-  canonicalTitle,
+  sectionTitle,
   cardImageFor,
   defaultOpen,
   fullWidth,
@@ -383,7 +382,7 @@ function DoorPanel({
   query: string
   hrefFor: (file: string) => string
   openChapter: (file: string, fromEl: HTMLElement) => void
-  canonicalTitle: (raw: string) => string
+  sectionTitle: (section: ManuelManifestSection) => string
   cardImageFor: (title: string) => string | undefined
   defaultOpen?: boolean
   fullWidth?: boolean
@@ -473,7 +472,7 @@ function DoorPanel({
               items={cardSections}
               hrefFor={hrefFor}
               openChapter={openChapter}
-              canonicalTitle={canonicalTitle}
+              sectionTitle={sectionTitle}
               cardImageFor={cardImageFor}
             />
           ) : zone.id === 'time' ? (
@@ -481,7 +480,7 @@ function DoorPanel({
               items={cardSections}
               hrefFor={hrefFor}
               openChapter={openChapter}
-              canonicalTitle={canonicalTitle}
+              sectionTitle={sectionTitle}
               cardImageFor={cardImageFor}
             />
           ) : zone.id === 'climate' ? (
@@ -491,7 +490,7 @@ function DoorPanel({
               query={query}
               hrefFor={hrefFor}
               openChapter={openChapter}
-              canonicalTitle={canonicalTitle}
+              sectionTitle={sectionTitle}
               cardImageFor={cardImageFor}
             />
           ) : (
@@ -499,7 +498,7 @@ function DoorPanel({
               items={cardSections}
               hrefFor={hrefFor}
               openChapter={openChapter}
-              canonicalTitle={canonicalTitle}
+              sectionTitle={sectionTitle}
               cardImageFor={cardImageFor}
             />
           )}
@@ -514,7 +513,6 @@ export default function ManuelCartography({
   hrefFor,
   openChapter,
   query,
-  canonicalTitle,
   sectionTitle,
   cardImageFor,
 }: Props) {
@@ -655,7 +653,7 @@ export default function ManuelCartography({
               query={query}
               hrefFor={hrefFor}
               openChapter={openChapter}
-              canonicalTitle={canonicalTitle}
+              sectionTitle={sectionTitle}
               cardImageFor={cardImageFor}
               defaultOpen={!query.trim()}
               fullWidth={zone.id === 'climate' || zone.id === 'history'}

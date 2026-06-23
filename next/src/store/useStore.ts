@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import { setLocale as setI18nLocale } from '@/i18n'
 import type { ViewMode } from '@/lib/view-modes'
+import { normalizeStoredViewMode } from '@/lib/view-modes'
 
 /** Évite le crash « Unexpected end of JSON input » si localStorage est corrompu ou vide. */
 function createSafeLocalStorage(): StateStorage {
@@ -81,7 +82,7 @@ interface StoreState {
   /**
    * Mode d'affichage actif : masque côté UI qui filtre les sections du menu.
    * Permet à un utilisateur multi-rôles (ex. admin) de simuler la vue d'un rôle plus restreint
-   * ('lambda', 'coach', 'rh'). La résolution finale est faite via `resolveViewMode()` selon les droits réels.
+   * ('personnel', 'coach', 'rh'). La résolution finale est faite via `resolveViewMode()` selon les droits réels.
    */
   viewMode: ViewMode
   setViewMode: (v: ViewMode) => void
@@ -160,7 +161,7 @@ export const useStore = create<StoreState>()(
       coachRequestModalOpen: false,
       openCoachRequestModal: () => set({ coachRequestModalOpen: true }),
       closeCoachRequestModal: () => set({ coachRequestModalOpen: false }),
-      viewMode: 'admin',
+      viewMode: 'personnel',
       setViewMode: (v) => set({ viewMode: v }),
       experimentalFeaturesEnabled: false,
       setExperimentalFeaturesEnabled: (v) => set({ experimentalFeaturesEnabled: !!v }),
@@ -168,7 +169,7 @@ export const useStore = create<StoreState>()(
     {
       name: 'fleur-amours-store',
       storage: createJSONStorage(() => createSafeLocalStorage()),
-      version: 10,
+      version: 11,
       onRehydrateStorage: () => (state) => {
         if (state?.locale) setI18nLocale(String(state.locale))
       },
@@ -191,19 +192,14 @@ export const useStore = create<StoreState>()(
             ? s.dismissedContextualHints
             : [],
           /**
-           * Migration v9 → v10 : ancien champ `adminViewMode: 'admin' | 'lambda'` est remplacé
-           * par `viewMode: ViewMode` (lambda/coach/rh/admin). On préserve l'intention de l'utilisateur :
-           *   - 'lambda' reste 'lambda'
-           *   - 'admin' (ou absent) devient 'admin' par défaut ; la résolution finale est faite côté UI
-           *     via `resolveViewMode()` selon les droits réels (un non-admin sera ramené à son défaut naturel).
+           * v10 → v11 : `lambda` renommé en `personnel` (vue parcours individuel).
+           * v9 → v10 : `adminViewMode` → `viewMode`.
            */
           viewMode: ((): ViewMode => {
-            const candidate = (s.viewMode ?? s.adminViewMode) as string | undefined
-            const allowed: ViewMode[] = ['lambda', 'coach', 'rh', 'admin']
-            if (candidate && (allowed as string[]).includes(candidate)) {
-              return candidate as ViewMode
-            }
-            return 'admin'
+            const candidate = normalizeStoredViewMode(
+              String(s.viewMode ?? s.adminViewMode ?? '')
+            )
+            return candidate ?? 'personnel'
           })(),
           experimentalFeaturesEnabled: !!s.experimentalFeaturesEnabled,
         }

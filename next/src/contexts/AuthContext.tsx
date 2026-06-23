@@ -15,6 +15,8 @@ type AuthContextValue = {
   refreshUser: () => Promise<void>
   isAdmin: boolean
   isCoach: boolean
+  /** Coach déclaré ou admin ayant activé le rôle coach dans son profil. */
+  actsAsCoach: boolean
   isManager: boolean
   isRh: boolean
 }
@@ -178,11 +180,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     jwtRole === 'admin' ||
     false
   const isCoach = appRole === 'coach' || jwtRole === 'coach'
+  const adminIsCoach = (user as Record<string, unknown> | null)?.admin_is_coach === true
+  const actsAsCoach = isCoach || (isAdmin && adminIsCoach)
   const isManager = isAdmin || appRole === 'manager' || jwtRole === 'manager'
   const isRh = isAdmin || appRole === 'rh' || jwtRole === 'rh'
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, isAdmin, isCoach, isManager, isRh }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, isAdmin, isCoach, actsAsCoach, isManager, isRh }}>
       {children}
     </AuthContext.Provider>
   )

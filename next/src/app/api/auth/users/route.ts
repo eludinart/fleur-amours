@@ -59,7 +59,9 @@ export async function GET(req: NextRequest) {
               a.eternal_sap as eternal_sap,
               (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = ? LIMIT 1) as caps,
               (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = 'fleur_last_login' LIMIT 1) as last_login,
-              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = 'fleur_demo_account' LIMIT 1) as demo_meta
+              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = 'fleur_demo_account' LIMIT 1) as demo_meta,
+              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = 'fleur_admin_is_coach' LIMIT 1) as admin_is_coach_meta,
+              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = 'fleur_coach_verified' LIMIT 1) as coach_verified_meta
        FROM ${usersTbl} u
        LEFT JOIN ${rolesTbl} r ON r.user_id = u.ID
        LEFT JOIN ${accessTbl} a ON a.user_id = u.ID
@@ -82,6 +84,8 @@ export async function GET(req: NextRequest) {
         eternal_sap: r.eternal_sap != null ? Number(r.eternal_sap) || 0 : 0,
         credits: 0,
         is_demo: isDemoAccount({ email: r.email ? String(r.email) : '', demoMeta: r.demo_meta }),
+        admin_is_coach: String(r.admin_is_coach_meta ?? '0') === '1',
+        coach_verified: String(r.coach_verified_meta ?? '0') === '1',
       }
     })
     return NextResponse.json({ items, total: items.length })

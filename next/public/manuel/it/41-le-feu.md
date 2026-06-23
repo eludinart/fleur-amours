@@ -1,0 +1,16 @@
+# IL FUOCO
+
+> Pagine libro (sommario): 86–87 · Pag. PDF 86–87 (stimato dal testo estratto)
+
+Descrizione estesa: La scintilla divina e la potenza creatrice. Il Fuoco è lo spirito in movimento. È la forza che anima, illumina, trasforma e ispira. Nel tarot, simboleggia la passione, la chiarezza, la creatività e il potere trasmutatore dell'amore cosciente. È la fiamma del cuore, il motore della visione, il coraggio di osare. Insegna che il Fuoco è sacro quando illumina senza distruggere, quando riscalda senza dominare. Il Fuoco è il respiro del cielo caduto nella materia.
+Parole chiave di luce: Ispirazione, vitalità, chiarezza, trasformazione, illuminazione, coraggio, creatività, purificazione, presenza, amore attivo.
+Ombra: L'incendio o la perdita di controllo. Sotto la sua ombra, il Fuoco diventa divorante. È la carta della rabbia, del potere incontrollato, della distruzione o del desiderio che consuma. Evoca anche la stanchezza interiore, il fuoco spento dal dubbio o dall'oblio di sé. Il Fuoco avverte: senza respiro per nutrirlo, si spegne; senza coscienza per guidarlo, brucia. Trovare il giusto fuoco significa imparare ad amare con discernimento.
+Parole chiave d’ombra: Rabbia, eccesso, dominazione, esaurimento, orgoglio, distruzione, frustrazione, perdita di senso.
+Ombra: IL FUOCO rappresenta la trasformazione e l'energia vitale. Simboleggia la passione, l'azione, il coraggio e la volontà creatrice. Questa carta incarna la forza che consuma e rinnova, la luce della coscienza e il potere di cambiare radicalmente.
+Percorsi di integrazione: Canalizzare il fuoco interiore nella creazione, non nella reazione. Nutrire la propria fiamma attraverso la respirazione, la gioia, la presenza. Imparare a riconoscere quando il fuoco diventa lotta. Accendere la luce interiore per illuminare, non per brillare. In una stesa, Il Fuoco annuncia un periodo di energia, passione o trasformazione, un potente slancio di creatività o una rivelazione spirituale.
+Risonanza dell'anima: Accendi una candela. Osserva la fiamma danzare: il suo centro blu, il suo alone dorato, il suo calore. Senti che respira come te. Ad ogni inspirazione, lascia che la fiamma entri nel tuo cuore; ad ogni espirazione, lascia che irradi intorno a te. Tu sei fuoco cosciente.
+Corrispondenze energetiche: Elemento: Fuoco puro. Polarità: Maschile attiva (creatrice, espansiva, visionaria).
+Corrispondenze simboliche: Energia vitale, Trasformazione, Volontà, Luce interiore.
+In risonanza: Fuoco (Il Cuore del Fuoco, Il Vulcano), Etere (La Sorgente Luminosa).
+Domanda radice: «Qual è l'azione coraggiosa che sto rimandando e che sbloccherebbe tutto?»
+Esercizio / Meditazione: Accendi una candela. Osserva la fiamma danzare: il suo centro blu, il suo alone dorato, il suo calore. Senti che respira come te. Ad ogni inspirazione, lascia che la fiamma entri nel tuo cuore; ad ogni espirazione, lascia che irradi intorno a te. Tu sei fuoco cosciente. Il Fuoco è la volontà di vivere, la coscienza che si accende. Insegna la potenza della trasformazione e la gioia di agire dal cuore. Nel grande Tarot Fleur d'ÅmÔurs, rappresenta l'energia creatrice universale, il motore del movimento e della metamorfosi. Ricorda che ogni essere porta una fiamma interiore: una parte del sole affidata alla carne. Mantenerla viva significa onorare la vita.

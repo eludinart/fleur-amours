@@ -45,6 +45,8 @@ type User = {
   token_balance?: number
   eternal_sap?: number
   is_demo?: boolean
+  admin_is_coach?: boolean
+  coach_verified?: boolean
 }
 
 type UsageData = {
@@ -72,6 +74,30 @@ function RoleBadge({ role, type = 'app' }: { role?: string; type?: string }) {
   )
 }
 
+function CoachVerifiedBadge() {
+  return (
+    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+      Vérifié
+    </span>
+  )
+}
+
+function showCoachVerifiedBadge(u: User): boolean {
+  if (!u.coach_verified) return false
+  return u.app_role === 'coach' || !!u.admin_is_coach
+}
+
+function AppRoleBadges({ user }: { user: User }) {
+  const showAlsoCoach = !!user.admin_is_coach && user.app_role !== 'coach'
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      <RoleBadge role={user.app_role} type="app" />
+      {showAlsoCoach ? <RoleBadge role="coach" type="app" /> : null}
+      {showCoachVerifiedBadge(user) ? <CoachVerifiedBadge /> : null}
+    </div>
+  )
+}
+
 function UserEditPanel({
   user,
   promoCodes,
@@ -84,9 +110,13 @@ function UserEditPanel({
   onClose: () => void
 }) {
   const [appRole, setAppRole] = useState(user.app_role || 'user')
+  const [adminIsCoach, setAdminIsCoach] = useState(!!user.admin_is_coach)
+  const [coachVerified, setCoachVerified] = useState(!!user.coach_verified)
   useEffect(() => {
     setAppRole(user.app_role || 'user')
-  }, [user.app_role])
+    setAdminIsCoach(!!user.admin_is_coach)
+    setCoachVerified(!!user.coach_verified)
+  }, [user.app_role, user.admin_is_coach, user.coach_verified])
   const [roleSaving, setRoleSaving] = useState(false)
   const [roleMsg, setRoleMsg] = useState<{ text: string; type: string } | null>(null)
   const [redemptions, setRedemptions] = useState<Redemption[] | null>(null)
@@ -142,7 +172,16 @@ function UserEditPanel({
   async function handleSaveRole() {
     setRoleSaving(true)
     try {
-      await authApi.updateUser({ id: user.id, app_role: appRole })
+      const payload: Record<string, unknown> = { id: user.id, app_role: appRole }
+      const willBeAdmin = appRole === 'admin' || user.wp_role === 'administrator'
+      const showCoachVerified = appRole === 'coach' || (willBeAdmin && adminIsCoach)
+      if (willBeAdmin) {
+        payload.admin_is_coach = adminIsCoach
+      }
+      if (showCoachVerified) {
+        payload.coach_verified = coachVerified
+      }
+      await authApi.updateUser(payload)
       flash(setRoleMsg, 'Rôle enregistré.')
       onRoleSaved()
     } catch (e: unknown) {
@@ -265,6 +304,9 @@ function UserEditPanel({
   }
 
   const activeRedemption = redemptions?.find((r) => r.active) ?? null
+  const willBeAdmin = appRole === 'admin' || user.wp_role === 'administrator'
+  const showAccompagnementSection = appRole === 'coach' || willBeAdmin
+  const showCoachVerified = appRole === 'coach' || (willBeAdmin && adminIsCoach)
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
@@ -349,6 +391,53 @@ function UserEditPanel({
               </p>
             )}
           </section>
+
+          {showAccompagnementSection && (
+            <section className="rounded-xl border border-amber-300/70 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-900/20 p-4 space-y-3">
+              <h3 className="text-xs font-bold text-amber-800 dark:text-amber-200 uppercase tracking-widest">
+                Profil accompagnant
+              </h3>
+              {willBeAdmin && (
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={adminIsCoach}
+                    onChange={(e) => setAdminIsCoach(e.target.checked)}
+                    className="mt-1 rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-400"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Aussi coach (accompagnant)
+                    </span>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Pour un administrateur : permet l&apos;apparition dans l&apos;annuaire des coachs sans changer le rôle app.
+                    </p>
+                  </div>
+                </label>
+              )}
+              {showCoachVerified && (
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={coachVerified}
+                    onChange={(e) => setCoachVerified(e.target.checked)}
+                    className="mt-1 rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-400"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Coach vérifié par l&apos;équipe
+                    </span>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Badge de confiance affiché côté utilisateur dans l&apos;annuaire.
+                    </p>
+                  </div>
+                </label>
+              )}
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                Enregistrez avec le bouton « Enregistrer » de la section Rôle ci-dessus.
+              </p>
+            </section>
+          )}
 
           <section className="space-y-3">
             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
@@ -925,7 +1014,13 @@ export default function AdminUsersPage() {
   useEffect(() => {
     if (editing && users?.items) {
       const fresh = users.items.find((u) => u.id === editing.id)
-      if (fresh && (fresh.app_role !== editing.app_role || fresh.wp_role !== editing.wp_role)) {
+      if (
+        fresh &&
+        (fresh.app_role !== editing.app_role ||
+          fresh.wp_role !== editing.wp_role ||
+          fresh.admin_is_coach !== editing.admin_is_coach ||
+          fresh.coach_verified !== editing.coach_verified)
+      ) {
         setEditing(fresh)
       }
     }
@@ -1094,7 +1189,7 @@ export default function AdminUsersPage() {
                       <RoleBadge role={u.wp_role} type="wp" />
                     </td>
                     <td className="px-3 py-2.5 align-middle whitespace-nowrap">
-                      <RoleBadge role={u.app_role} type="app" />
+                      <AppRoleBadges user={u} />
                     </td>
                     <td className="px-3 py-2.5 align-middle">
                       <AccessBadge redemption={redemption} />

@@ -17,8 +17,8 @@ import { ApiError } from '@/lib/api-client'
 export function CoachRequestModal() {
   const open = useStore((s) => s.coachRequestModalOpen)
   const close = useStore((s) => s.closeCoachRequestModal)
-  const { user, refreshUser, isAdmin, isCoach } = useAuth()
-  const hasCoachTab = isCoach || isAdmin
+  const { user, refreshUser, isAdmin, isCoach, actsAsCoach } = useAuth()
+  const hasCoachTab = actsAsCoach
 
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(false)

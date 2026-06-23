@@ -1,0 +1,15 @@
+# IL POLLINE
+
+> Pagine libro (indice): 76–77 · Pag. PDF 76–77 (stimato dal testo estratto)
+
+Descrizione estesa: La diffusione della vita e del soffio creatore Il Polline è il viaggiatore del vivente, il soffio che trasporta la promessa della fecondità. È la carta del movimento, della condivisione, della propagazione delle idee e dei semi. Nel tarot, simboleggia la comunicazione vibratoria: ciò che, da sé, tocca il mondo senza che lo si veda. Insegna la fiducia nella circolazione invisibile, la generosità del gesto che semina senza attendere ritorno. Il Polline ricorda che ogni parola, ogni atto, ogni respiro può diventare fecondo.
+Parole chiave di luce: Diffusione, condivisione, trasmissione, circolazione, ispirazione, fecondità, leggerezza, soffio creatore, interconnessione.
+Ombra: La dispersione e la perdita di sostanza. Sotto la sua ombra, Il Polline diventa sparpagliamento. L'energia si disperde, le intenzioni si dissolvono nel vento. È la carta della parola senza radici, della creatività che si disperde, o dei progetti che mancano di ancoraggio. In eccesso, evoca anche la contaminazione: l'idea imposta, il messaggio diffuso senza coscienza. Il Polline ricorda che il vento porta tutto, ma che ogni vento deve conoscere la sua origine. IL POLLINE Simboleggia la trasmissione e la fecondazione. I granelli di polline portati dal vento o dagli impollinatori rappresentano il messaggio genetico viaggiatore, la fortuna fertile e l'unione a distanza. Questa carta parla di disseminazione di idee, di incontri provvidenziali e di creatività collaborativa.
+Parole chiave d’ombra: Distrazione, dispersione, incoscienza, superficialità, influenza, perdita di direzione, parole vuote.
+Percorsi di integrazione: Semina senza attaccamento al risultato. Coltiva la leggerezza cosciente: lascia andare ciò che deve circolare. Parla con chiarezza, agisci con intenzione. Fidati delle correnti invisibili che collegano gli esseri. In una stesa, Il Polline evoca un periodo di espansione, di comunicazione, di trasmissione di idee o di energia, ma invita a non disperdersi.
+Risonanza dell'anima: Il Polline è il soffio della condivisione, l'amore che si sposta per grazia del vento. Insegna che ogni creazione deve circolare per restare viva. Nel grande ciclo del Tarot Fleur d'ÅmÔurs, rappresenta la trasmissione e la disseminazione delle forze fertili, il passaggio della creazione individuale alla fecondità collettiva. Il Polline ricorda che il vivente non trattiene nulla per sé: si propaga, collega, feconda per la sua sola presenza.
+Corrispondenze energetiche: Elemento: Aria e Fuoco Polarità: Maschile diffusa (attiva, volatile, fecondante)
+Corrispondenze simboliche: Trasmissione, Viaggio, Spirito del vento
+In risonanza: Aria (L'Aliseo), Vita (L'Ape), Fuoco (Il Vento Solare)
+Domanda radice: «Quale idea o quale messaggio ho bisogno di disseminare intorno a me?»
+Esercizio / Meditazione: Esci all'aperto in un giorno di vento. Respira profondamente. Immagina che il tuo respiro diventi polline d'oro, leggero, luminoso, portatore di ispirazione. Lascia che il vento lo porti via, fiducioso che saprà trovare terra fertile.

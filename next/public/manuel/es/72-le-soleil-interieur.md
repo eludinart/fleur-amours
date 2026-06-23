@@ -1,0 +1,15 @@
+# EL SOL INTERIOR
+
+> Páginas libro (índice): 148–149 · p. PDF 148–149 (estimado a partir del texto extraído)
+
+Descripción ampliada: La alegría radiante y la plenitud del corazón. El Sol Interior es la luz convertida en amor, el calor consciente del corazón despierto. Es la carta de la paz radiante, de la alegría simple, de la aceptación total de uno mismo y del mundo. Enseña la felicidad de existir, la presencia en la Vida en su belleza esencial. En el tarot, representa el centro vital, la fuerza solar que anima e ilumina sin esfuerzo. Es la luz encarnada, no lo que se busca, sino lo que se emana.
+Palabras clave de luz: Alegría, irradiación, confianza, gratitud, vitalidad, serenidad, amor por lo vivo, armonía, claridad del corazón.
+Sombra: El ego solar o el miedo a brillar Bajo su sombra, El Sol Interior se convierte en sombra proyectada: demasiado orgullo, demasiado control, o, por el contrario, miedo a la propia luz. Es la carta del desequilibrio de la irradiación: o quemamos a los demás con nuestro brillo, o nos apagamos para no molestar. Nos recuerda que el sol verdadero ilumina sin compararse. La sombra de esta carta es el olvido de la simplicidad: la luz no necesita justificación. EL SOL INTERIOR Simboliza el núcleo incandescente y la fuente de poder personal. La copa de la tierra revelando el corazón ardiente en su centro representa el fuego interior que anima a cada ser. Esta carta habla de poder personal, de vitalidad profunda y de la conexión con el fuego primordial que habita todas las cosas.
+Palabras clave de sombra: Orgullo, narcisismo, miedo a brillar, vergüenza, inhibición, fatiga, desalineación, vanidad espiritual.
+Caminos de integración: Conectarse con la alegría sin razón. Atreverse a irradiar naturalmente, sin buscar agradar ni dominar. Recuperar el calor interior a través de la gratitud. Cultivar la paz en lugar del rendimiento. En una lectura, El Sol Interior indica una expansión de la conciencia, un período de alegría simple, de vitalidad y equilibrio, o una llamada a reavivar la luz del corazón.
+Resonancia del alma: El Sol Interior es el corazón vivo de la conciencia. No busca dominar sino calentar, no se impone: emana. En el gran Tarot Fleur d'ÅmÔurs, representa la alegría de ser, el equilibrio perfecto entre fuego y amor, entre luz y vida. Enseña que el despertar no es una cumbre sino una simple evidencia: el sol nunca dejó de brillar, solo bastaba con abrir los ojos.
+Correspondencias energéticas: Elemento: Fuego y Éter Polaridad: Masculina armoniosa (radiante, generosa, consciente)
+Correspondencias simbólicas: Alegría, Irradiación, Centro vital del mundo interior
+En resonancia: Agua (El Océano), Aire (El Mensajero), Vida (La Unidad)
+Pregunta raíz: «¿Cómo puedo irradiar quién soy sin disculparme ni buscar aprobación?»
+Ejercicio / Meditación: Cierra los ojos y visualiza un sol en tu pecho. Con cada respiración, se agranda y difunde una luz dorada por todo tu cuerpo. Al exhalar, envía esta luz a tu alrededor, como una bendición silenciosa. Siente la alegría de ser este sol viviente.

@@ -39,6 +39,8 @@ export type UserRecord = {
   coach_request_status?: string | null
   coach_request_at?: string | null
   coach_request_message?: string | null
+  /** Admin qui s’affiche aussi comme accompagnant (annuaire coach). */
+  admin_is_coach?: boolean
 }
 
 async function getWpRole(userId: number): Promise<string> {
@@ -124,6 +126,7 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
     'fleur_coach_request_status',
     'fleur_coach_request_at',
     'fleur_coach_request_message',
+    'fleur_admin_is_coach',
   ]
   const placeholders = keys.map(() => '?').join(', ')
   const [rows] = await pool.execute<RowDataPacket[]>(
@@ -180,6 +183,7 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
   ;(out as Record<string, unknown>).coach_request_status = meta.fleur_coach_request_status || null
   ;(out as Record<string, unknown>).coach_request_at = meta.fleur_coach_request_at || null
   ;(out as Record<string, unknown>).coach_request_message = meta.fleur_coach_request_message || null
+  ;(out as Record<string, unknown>).admin_is_coach = (meta.fleur_admin_is_coach ?? '0') === '1'
 }
 
 export async function authLogin(login: string, password: string): Promise<UserRecord> {
@@ -556,7 +560,67 @@ export async function updateProfile(
   if (Object.prototype.hasOwnProperty.call(body, 'coach_verified')) {
     await upsertUsermeta(userId, 'fleur_coach_verified', body.coach_verified ? '1' : '0')
   }
+  if (Object.prototype.hasOwnProperty.call(body, 'admin_is_coach')) {
+    const wpRole = await getWpRole(userId)
+    const appRole = await getAppRole(userId, wpRole)
+    if (appRole !== 'admin' && wpRole !== 'administrator') {
+      throw new Error('Seuls les administrateurs peuvent modifier ce réglage')
+    }
+    await upsertUsermeta(userId, 'fleur_admin_is_coach', body.admin_is_coach ? '1' : '0')
+  }
   return authMe(userId)
+}
+
+/** Mise à jour admin (rôle, flags coach) depuis le panneau Utilisateurs. */
+export async function adminPatchUser(
+  targetUserId: number,
+  body: Record<string, unknown>
+): Promise<void> {
+  if (!targetUserId) throw new Error('Utilisateur invalide')
+  const pool = getPool()
+  const tbl = table('users')
+
+  if (body.name !== undefined) {
+    await pool.execute(`UPDATE ${tbl} SET display_name = ? WHERE ID = ?`, [
+      String(body.name ?? ''),
+      targetUserId,
+    ])
+  }
+
+  if (body.app_role !== undefined) {
+    const appRoleTbl = table('fleur_app_roles')
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS ${appRoleTbl} (
+        user_id BIGINT UNSIGNED PRIMARY KEY,
+        app_role VARCHAR(50) NOT NULL DEFAULT 'user'
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+    await pool.execute(
+      `INSERT INTO ${appRoleTbl} (user_id, app_role) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE app_role = ?`,
+      [targetUserId, body.app_role, body.app_role]
+    )
+    if (body.app_role === 'coach' || body.app_role === 'admin') {
+      const { clearCoachRequestMeta } = await import('./db-coach-request')
+      await clearCoachRequestMeta(targetUserId)
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'coach_verified')) {
+    await upsertUsermeta(targetUserId, 'fleur_coach_verified', body.coach_verified ? '1' : '0')
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'admin_is_coach')) {
+    const wpRole = await getWpRole(targetUserId)
+    const appRole =
+      body.app_role !== undefined
+        ? String(body.app_role)
+        : await getAppRole(targetUserId, wpRole)
+    if (appRole !== 'admin' && wpRole !== 'administrator') {
+      throw new Error('Seuls les administrateurs peuvent avoir le rôle « aussi coach »')
+    }
+    await upsertUsermeta(targetUserId, 'fleur_admin_is_coach', body.admin_is_coach ? '1' : '0')
+  }
 }
 
 /** Supprime les données utilisateur dans les tables Fleur connues, puis le compte WP. */

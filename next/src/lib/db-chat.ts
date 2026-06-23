@@ -237,19 +237,26 @@ export async function getCoachPublicCard(wpUserId: number): Promise<CoachPublicC
   }
 }
 
-/** Accompagnants listés : rôle coach ou admin (souvent un seul compte « coach + admin »). */
+/** Accompagnants listés : rôle coach, ou admin ayant activé « aussi coach » dans son profil admin. */
 export async function listCoaches(): Promise<CoachPublicCard[]> {
   const pool = getPool()
   const tUsers = table('users')
   const tRoles = table('fleur_app_roles')
   const tMeta = table('usermeta')
-  const joins = COACH_CARD_JOINS.replace(/TABLE_META/g, tMeta)
+  const joins = `${COACH_CARD_JOINS.replace(/TABLE_META/g, tMeta)}
+       LEFT JOIN ${tMeta} um_admin_coach ON um_admin_coach.user_id = u.ID AND um_admin_coach.meta_key = 'fleur_admin_is_coach'`
   try {
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT ${COACH_CARD_SELECT}
        FROM ${tUsers} u
        ${joins}
-       WHERE u.ID IN (SELECT user_id FROM ${tRoles} WHERE app_role IN ('coach', 'admin'))
+       WHERE (
+         u.ID IN (SELECT user_id FROM ${tRoles} WHERE app_role = 'coach')
+         OR (
+           u.ID IN (SELECT user_id FROM ${tRoles} WHERE app_role = 'admin')
+           AND COALESCE(um_admin_coach.meta_value, '0') = '1'
+         )
+       )
        AND COALESCE(um_listed.meta_value, '1') != '0'
        GROUP BY u.ID
        ORDER BY u.display_name ASC`

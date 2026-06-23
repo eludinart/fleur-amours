@@ -235,7 +235,7 @@ function coachCompletionScore(form: {
 }
 
 export function AccountPage() {
-  const { user, logout, refreshUser, isAdmin, isCoach } = useAuth()
+  const { user, logout, refreshUser, isAdmin, isCoach, actsAsCoach } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -281,6 +281,7 @@ export function AccountPage() {
     coach_years_experience: 0,
     coach_reviews_label: '',
     coach_verified: false,
+    admin_is_coach: false,
   })
   const [prairieOptInModalOpen, setPrairieOptInModalOpen] = useState(false)
   const [prairieOptInSaving, setPrairieOptInSaving] = useState(false)
@@ -297,7 +298,7 @@ export function AccountPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const coachShortBioRef = useRef<HTMLTextAreaElement>(null)
   const coachLongBioRef = useRef<HTMLTextAreaElement>(null)
-  const hasCoachTab = isCoach || isAdmin
+  const hasCoachTab = actsAsCoach
   const coachScore = coachCompletionScore(profileForm)
 
   useEffect(() => {
@@ -401,6 +402,7 @@ export function AccountPage() {
           coach_years_experience: Number(prof?.coach_years_experience ?? 0),
           coach_reviews_label: (prof?.coach_reviews_label ?? '') as string,
           coach_verified: (prof?.coach_verified ?? false) as boolean,
+          admin_is_coach: (prof?.admin_is_coach ?? false) as boolean,
         })
       })
       .catch(() => {
@@ -415,7 +417,7 @@ export function AccountPage() {
     setProfileError('')
     setProfileSuccess(false)
     try {
-      if ((isCoach || isAdmin) && profileTab === 'coach') {
+      if (actsAsCoach && profileTab === 'coach') {
         if (!profileForm.coach_headline.trim() || !profileForm.coach_short_bio.trim()) {
           throw new Error('Veuillez renseigner au minimum le titre et la presentation courte du coach.')
         }
@@ -445,6 +447,7 @@ export function AccountPage() {
         coach_years_experience: profileForm.coach_years_experience || 0,
         coach_reviews_label: profileForm.coach_reviews_label || null,
         coach_verified: !!profileForm.coach_verified,
+        admin_is_coach: !!profileForm.admin_is_coach,
       })
       setProfile(updated as Record<string, unknown>)
       await refreshUser()
@@ -1322,13 +1325,31 @@ export function AccountPage() {
               </div>
             )}
             {profileTab === 'admin' && isAdmin && (
-              <div className="rounded-xl border border-amber-300/70 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-900/20 p-4 space-y-3">
+              <div className="rounded-xl border border-amber-300/70 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-900/20 p-4 space-y-4">
                 <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">
                   Profil admin
                 </h3>
                 <p className="text-[12px] text-slate-700 dark:text-slate-200">
-                  En tant qu&apos;admin, vous avez aussi le role coach. Utilisez l&apos;onglet <strong>Profil coach</strong> pour regler votre fiche publique.
+                  En tant qu&apos;administrateur, vous gérez la plateforme. Activez le rôle coach uniquement si vous accompagnez aussi des personnes dans l&apos;annuaire.
                 </p>
+
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profileForm.admin_is_coach}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, admin_is_coach: e.target.checked }))}
+                    className="mt-1 rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-400"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Je suis aussi coach (accompagnant)
+                    </span>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Si activé, votre fiche peut apparaître dans l&apos;annuaire des coachs. Utilisez l&apos;onglet <strong>Profil coach</strong> pour la compléter.
+                    </p>
+                  </div>
+                </label>
+
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -1337,6 +1358,15 @@ export function AccountPage() {
                   >
                     Ouvrir le dashboard admin
                   </button>
+                  {profileForm.admin_is_coach && (
+                    <button
+                      type="button"
+                      onClick={() => setProfileTab('coach')}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-amber-500/50 text-amber-700 dark:text-amber-300 hover:bg-amber-100/60 dark:hover:bg-amber-900/30"
+                    >
+                      Configurer mon profil coach
+                    </button>
+                  )}
                   {(user as { email?: string })?.email && (
                     <button
                       type="button"
@@ -1395,7 +1425,7 @@ export function AccountPage() {
                 {t('account.profileSaved')}
               </p>
             )}
-            {profileTab !== 'admin' && (
+            {(profileTab === 'user' || profileTab === 'coach' || profileTab === 'admin') && (
               <button
                 type="submit"
                 disabled={profileSaving}

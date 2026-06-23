@@ -1,0 +1,15 @@
+# IL BOZZOLO
+
+> Pagine libro (indice): 70–71 · Pag. PDF 70–71 (stimato dal testo estratto)
+
+Descrizione estesa: Il potenziale pronto ad aprirsi. Il Bozzolo è la promessa del fiore, la soglia tra l'intimo e il mondo. È il momento appena prima della rivelazione, quando tutto è concentrato, vibrante, silenziosamente vivo. Nel tarot, questa carta incarna la potenza contenuta, la maestria del momento prima dell'espansione. Parla di maturazione, pazienza, fiducia nella germinazione invisibile. Il Bozzolo insegna a sentire la vita in gestazione, a onorare le fasi di preparazione prima della fioritura.
+Parole chiave di luce: Potenziale, preparazione, gestazione, tensione creativa, pazienza, fiducia, interiorizzazione, imminente emergere.
+Ombra: Il blocco prima dell'apertura. Quando l'energia del Bozzolo si irrigidisce, la paura di aprirsi prende il sopravvento. Il bocciolo si richiude, temendo la luce o il cambiamento. È la carta della eccessiva ritenzione, dell'autoprotezione diventata barriera, o del perfezionismo che impedisce di agire. Al contrario, un bocciolo forzato troppo presto appassisce prima di fiorire. Il Bozzolo ricorda che ogni schiusa ha il suo ritmo, né troppo presto, né troppo tardi.
+Il Bozzolo rappresenta la promessa contenuta e l'imminenza. Il bocciolo floreale pronto a sbocciare simboleggia ciò che sta per rivelarsi, la bellezza ancora nascosta ma già presente. Questa carta parla di anticipazione, di potenziale quasi maturo e del momento giusto prima della rivelazione.
+Parole chiave d’ombra: Paura della schiusa, resistenza, blocco, impazienza, controllo, immaturità, sterilità, autocensura.
+Percorsi di integrazione: Fidarsi del ritmo naturale dello sviluppo. Accogliere il silenzio prima dell'azione. Riconoscere la bellezza del processo, non solo del risultato. Liberare la paura di essere visti o di esprimersi pienamente. In una stesa, Il Bozzolo indica una fase di gestazione creativa, un'idea o un progetto sul punto di sbocciare, ma che richiede ancora ascolto e cura.
+Esercizio / Meditazione: Chiudi gli occhi e visualizza un fiore ancora chiuso. Senti la pressione dolce al suo centro, la vita che si prepara lì. Respira lentamente e immagina il momento preciso in cui Il Bozzolo si aprirà alla luce senza sforzo, senza paura, naturalmente. Il Bozzolo è la sacra ritenzione del vivente, quel momento sospeso in cui la vita si appresta a dire il suo nome. Incarna la tensione feconda tra ombra e luce, tra silenzio e parola. Nel grande ciclo del Tarot Fleur d'ÅmÔurs, Il Bozzolo è la soglia della rivelazione, l'istante che precede il risveglio, in cui si presagisce che tutto si aprirà. Insegna la pazienza vivente: saper attendere senza smettere di crescere.
+Corrispondenze energetiche: Elemento: Acqua e Fuoco Polarità: Femminile interiore (gestazione, promessa, tensione creativa)
+Corrispondenze simboliche: Involucro, Tensione vitale, Germinazione imminente
+In risonanza: Fuoco (La Fiamma), Acqua (La Sorgente Profonda), Vegetale (Il Seme Dormiente)
+Domanda radice: «Cosa è pronto a sbocciare in me se smetto di forzare l'apertura?»

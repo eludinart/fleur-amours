@@ -542,16 +542,16 @@
     "mesDuosTooltip": "Perfiles ancla y exploraciones con cada persona.",
     "viewModes": {
       "selectorLabel": "Vista activa",
-      "selectorHint": "Cambia entre las vistas disponibles según tus roles. No se modifican permisos.",
-      "lambdaLabel": "Usuario",
-      "lambdaDesc": "Menú ligero, como un usuario nuevo.",
-      "coachLabel": "Coach",
-      "coachDesc": "Añade el seguimiento de pacientes y las conversaciones de acompañamiento.",
-      "rhLabel": "RH",
-      "rhDesc": "Añade el panel Mycelium y el espacio de equipo.",
+      "selectorHint": "Cambia entre tus espacios según tu rol. No se modifican permisos.",
+      "personnelLabel": "Mi recorrido",
+      "personnelDesc": "Tu Flor, exploraciones y acompañamiento recibido.",
+      "coachLabel": "Acompañante",
+      "coachDesc": "Pacientes, conversaciones y seguimiento.",
+      "rhLabel": "Mycelium",
+      "rhDesc": "Espacio empresa: equipos y paneles.",
       "adminLabel": "Admin",
       "adminDesc": "Todo el arsenal: usuarios, prompts IA, telemetría, etc.",
-      "simulatingBanner": "Vista «{{current}}» activada — ves la aplicación con un menú restringido.",
+      "simulatingBanner": "Vista «{{current}}» activa — menú centrado en este espacio.",
       "returnTo": "Volver a la vista {{target}}"
     },
     "cartes": "Cartas",
@@ -603,7 +603,10 @@
     "adminMatrix": "Matriz",
     "adminScience": "Ciencia",
     "coachesDirectory": "Los acompañantes",
-    "coachesDirectoryTooltip": "Ver las fichas de los coaches y abrir una conversación por mensaje."
+    "coachesDirectoryTooltip": "Ver las fichas de los coaches y abrir una conversación por mensaje.",
+    "accompagnementSectionTooltip": "Una mirada humana para ir más allá de la exploración sola.",
+    "accompagnementCoachesHint": "Coaches, terapeutas, facilitadores",
+    "accompagnementChatsHint": "Retomar una conversación en curso"
   },
   "layout": {
     "toggleTheme": "Cambiar tema",

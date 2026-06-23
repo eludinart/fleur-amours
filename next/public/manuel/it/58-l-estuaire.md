@@ -1,0 +1,15 @@
+# L’ESTUAIRE
+
+> Pagine libro (indice): 120–121 · Pag. PDF 120–121 (stimata dal testo estratto)
+
+Descrizione estesa: L'incontro e l'armonia dei contrari. L'Estuario è la carta della riconciliazione fluida. È il luogo dove il fiume rinuncia alla sua corsa solitaria per unirsi al mare, senza perdersi, ma diventando più vasto. Incarna l'accettazione, la flessibilità, la fine delle dualità. Nel tarot, L'Estuario invita a unire le polarità: femminile e maschile, interiore ed esteriore, azione e ricezione. È la saggezza del miscuglio, la bellezza delle zone intermedie. Insegna che l'equilibrio non è immobilità, ma il respiro tra le forze.
+Parole chiave di luce: Unione, riconciliazione, fluidità, tolleranza, fusione, complementarità, passaggio, equità, accoglienza.
+Ombra: La diluizione o la confusione dei limiti. Sotto la sua ombra, L'Estuario diventa palude. I confini si dissolvono al punto da perdere ogni distinzione. È la carta dello sfocamento identitario, della fusione eccessiva, o del compromesso che soffoca la verità. Avverte che unire non significa dissolversi. Il pericolo è confondere l'armonia con l'assenza di forma. Ogni corrente mantiene il suo colore anche nell'incontro.
+L'ESTUARIO rappresenta l'incontro e la sintesi. Là dove il fiume raggiunge l'oceano, dove l'acqua dolce sposa l'acqua salata, gli uccelli segnano la libertà di passaggio tra i mondi. Simboleggia l'integrazione delle polarità, le zone di miscugli fertili e le transizioni armoniose.
+Parole chiave d’ombra: Confusione, dipendenza, perdita di sé, compromesso, indecisione, stanchezza relazionale, sovra-adattamento.
+Percorsi di integrazione: Imparare a unire senza confondersi. Trovare il proprio posto nel flusso collettivo. Celebrare le zone grigie come luoghi di Vita. Praticare l'ascolto reciproco e la cooperazione sincera. In una stesa, L'Estuario indica una riconciliazione, un'unione feconda, una relazione equilibrata o una transizione armoniosa. È una carta di incontro, di pace e di integrazione.
+Esercizio / Meditazione: Chiudi gli occhi e visualizza due correnti d'acqua che si incontrano. Osserva i loro colori, le loro velocità, i loro suoni. Lasciali unirsi lentamente, senza forzarli. Respira e senti in te questo punto di equilibrio: né resistenza, né fusione totale, solo la danza delle maree. L'Estuario è la bocca della Terra dove le acque si parlano. Incarna la saggezza del miscuglio, la bellezza delle sfumature, l'incontro fecondo tra differenze. Nel grande Tarot Fleur d'ÅmÔurs, rappresenta l'unione cosciente, la riconciliazione del fiume e del mare, del "sé" e del "tutto". Insegna che l'amore vero non cancella i contorni: li collega. L'Estuario è il volto della pace liquida.
+Corrispondenze energetiche: Elemento: Acqua e Terra Polarità: Equilibrata (integratrice, adattativa, riconciliatrice)
+Corrispondenze simboliche: Unione, Transizione, Armonia tra opposti
+In risonanza: Terra (L'Humus), Fuoco (La Cenere Fertile), Etere (L'Armonia dei Cicli)
+Domanda radice: «Quali sono le due parti di me (o della mia vita) che cercano di riconciliarsi?»
