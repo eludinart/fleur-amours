@@ -50,7 +50,7 @@ export default function ADeuxResultPage() {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 text-center space-y-4">
         <p className="text-slate-600">{error || t('duo.tokenNotFound')}</p>
-        <Link href="/mes-duos" className="text-accent underline">{t('aDeux.viewMesDuos')}</Link>
+        <Link href="/a-deux" className="text-accent underline">{t('aDeux.viewMesDuos')}</Link>
       </div>
     )
   }

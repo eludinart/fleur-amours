@@ -7,24 +7,9 @@ import { getPool, table } from './db'
 import { isDemoAccount } from './demo-accounts'
 import { getSocialMeteoBatch } from './community-meteo'
 import { countSemisToday } from './db-semis'
+import { isOnlineFromLastSeen } from './social-presence'
 
 const PETALS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
-const PRESENCE_ONLINE_SECONDS = 300
-
-function isOnlineFromLastSeen(lastSeenAt: string): boolean {
-  if (!lastSeenAt) return false
-  const s = String(lastSeenAt).trim()
-  let ts: number
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) {
-    ts = new Date(s.replace(' ', 'T') + 'Z').getTime()
-  } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
-    ts = new Date(s + 'Z').getTime()
-  } else {
-    ts = new Date(s).getTime()
-  }
-  if (isNaN(ts)) return false
-  return (Date.now() - ts) / 1000 <= PRESENCE_ONLINE_SECONDS
-}
 
 async function touchSocialPresence(pool: Awaited<ReturnType<typeof getPool>>, userId: number): Promise<void> {
   if (userId <= 0) return
@@ -698,11 +683,18 @@ export async function getJardinPouls(viewerId: number): Promise<JardinPouls> {
        LEFT JOIN ${tMeta} ump ON ump.user_id = u.ID AND ump.meta_key = 'fleur_pseudo'
        LEFT JOIN ${tMeta} ums ON ums.user_id = u.ID AND ums.meta_key = 'fleur_social_last_seen_at'`
     )
-    jardiniersPublicTotal = rows.length
+    const uniquePublicIds = new Set<number>()
+    const onlineIds = new Set<number>()
     for (const r of rows) {
+      const uid = Number(r.ID)
+      if (!Number.isFinite(uid)) continue
+      uniquePublicIds.add(uid)
+      if (onlineIds.has(uid)) continue
       const v = String(r.last_seen ?? '').trim()
-      if (v && isOnlineFromLastSeen(v)) jardiniersOnline += 1
+      if (v && isOnlineFromLastSeen(v)) onlineIds.add(uid)
     }
+    jardiniersPublicTotal = uniquePublicIds.size
+    jardiniersOnline = onlineIds.size
   } catch {
     /* ignore */
   }

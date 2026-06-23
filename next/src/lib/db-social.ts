@@ -8,25 +8,7 @@ import { buildLisierePublicProfile } from './lisiere-profile'
 import { getSocialMeteo } from './community-meteo'
 import { fetchMaturityStats, computeMaturityBadges, fetchMaturityStatsBatch, type MaturityBadgeId } from './community-maturity'
 import { CLAIRIERE_REACTION_EMOJIS, type MessageReactionSummary } from './clairiere-reactions'
-
-const PRESENCE_ONLINE_SECONDS = 300
-
-function isOnlineFromLastSeen(lastSeenAt: string): boolean {
-  if (!lastSeenAt) return false
-  const s = String(lastSeenAt).trim()
-  let ts: number
-  // Stored format from our code: 'YYYY-MM-DD HH:mm:ss' (UTC without timezone marker)
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) {
-    ts = new Date(s.replace(' ', 'T') + 'Z').getTime()
-  } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
-    // Some environments may store ISO without timezone marker
-    ts = new Date(s + 'Z').getTime()
-  } else {
-    ts = new Date(s).getTime()
-  }
-  if (isNaN(ts)) return false
-  return (Date.now() - ts) / 1000 <= PRESENCE_ONLINE_SECONDS
-}
+import { isOnlineFromLastSeen } from './social-presence'
 
 async function touchSocialPresence(pool: Awaited<ReturnType<typeof getPool>>, userId: number): Promise<void> {
   if (userId <= 0) return

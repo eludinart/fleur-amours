@@ -14,8 +14,16 @@ import { TranslatableContent } from '@/components/TranslatableContent'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 
+type DuoProfileScores = {
+  label: string
+  scores: Record<string, number>
+  toneClass?: string
+}
+
 type FleurInterpretationProps = {
   scores?: Record<string, number>
+  /** En duo : un bloc score par personne (remplace « Votre score »). */
+  duoProfiles?: DuoProfileScores[]
   answers?: Array<{ dimension: string; label: string }>
   resultId?: string | number | null
   interpretation?: { summary?: string; insights?: string; reflection?: string } | null
@@ -28,8 +36,14 @@ type FleurInterpretationProps = {
   showOuterHeading?: boolean
 }
 
+function formatPetalScore(v: unknown): string {
+  if (typeof v !== 'number' || Number.isNaN(v)) return String(v ?? '—')
+  return String(Math.round(v * 10) / 10)
+}
+
 export function FleurInterpretation({
   scores = {},
+  duoProfiles,
   answers = [],
   resultId = null,
   interpretation: storedInterpretation = null,
@@ -52,8 +66,14 @@ export function FleurInterpretation({
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
 
-  const hasScores = scores && Object.values(scores).some((v) => (v ?? 0) > 0)
-  const scoresKey = hasScores ? JSON.stringify(scores) : ''
+  const hasScores =
+    duoProfiles?.some((p) => Object.values(p.scores).some((v) => (v ?? 0) > 0)) ||
+    (scores && Object.values(scores).some((v) => (v ?? 0) > 0))
+  const scoresKey = hasScores
+    ? duoProfiles?.length
+      ? JSON.stringify(duoProfiles)
+      : JSON.stringify(scores)
+    : ''
   const betaAiTitle =
     interpretationApi === 'fleur-beta' ? t('fleurBeta.aiReading') : t('fleur.interpretation.sectionTitle')
 
@@ -79,6 +99,7 @@ export function FleurInterpretation({
     }
 
     if (!scoresKey) return
+    if (duoProfiles?.length) return
     if (
       storedInterpretation &&
       (storedInterpretation.summary || storedInterpretation.insights || storedInterpretation.reflection)
@@ -116,7 +137,11 @@ export function FleurInterpretation({
         {['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'].map((key) => {
           const def = petalInterpretations[key]
           const val = scores[key]
-          if (!def) return null
+          const duoVals = duoProfiles?.map((p) => ({ label: p.label, val: p.scores[key] }))
+          const hasPetal =
+            val !== undefined ||
+            duoVals?.some((d) => d.val !== undefined && d.val !== null)
+          if (!def || !hasPetal) return null
           return (
             <div
               key={key}
@@ -127,10 +152,30 @@ export function FleurInterpretation({
                 <span className="text-xs text-slate-500">{def.subtitle}</span>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{def.description}</p>
-              {val !== undefined && (
-                <p className="mt-2 text-xs text-accent font-medium">
-                  {t('fleur.interpretation.yourScore').replace('{val}', String(val))}
-                </p>
+              {duoProfiles?.length ? (
+                <ul className="mt-2 space-y-1">
+                  {duoProfiles.map((profile) => {
+                    const profileVal = profile.scores[key]
+                    if (profileVal === undefined || profileVal === null) return null
+                    return (
+                      <li
+                        key={profile.label}
+                        className={`text-xs font-medium ${profile.toneClass ?? 'text-accent'}`}
+                      >
+                        {t('fleur.interpretation.personScore', {
+                          name: profile.label,
+                          val: formatPetalScore(profileVal),
+                        })}
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : (
+                val !== undefined && (
+                  <p className="mt-2 text-xs text-accent font-medium">
+                    {t('fleur.interpretation.yourScore', { val: formatPetalScore(val) })}
+                  </p>
+                )
               )}
             </div>
           )
@@ -142,7 +187,8 @@ export function FleurInterpretation({
     </>
   )
 
-  const showAiBlock = interpretationApi === 'fleur-beta' ? hasScores || !!resultId : hasScores
+  const showAiBlock =
+    !duoProfiles?.length && (interpretationApi === 'fleur-beta' ? hasScores || !!resultId : hasScores)
 
   const content = (
     <>

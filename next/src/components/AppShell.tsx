@@ -47,7 +47,6 @@ import ADeuxParUnePortePage from '@/views/a-deux/ADeuxParUnePortePage'
 import ADeuxCompletPage from '@/views/a-deux/ADeuxCompletPage'
 import ADeuxInvitationPage from '@/views/a-deux/ADeuxInvitationPage'
 import ADeuxResultPage from '@/views/a-deux/ADeuxResultPage'
-import MesDuosPage from '@/views/a-deux/MesDuosPage'
 import { RouteRedirect } from '@/components/RouteRedirect'
 import { DuoLegacyGate } from '@/components/DuoLegacyGate'
 import ManuelOnlinePage from '@/views/ManuelOnlinePage'
@@ -439,7 +438,7 @@ function AppRoutes() {
     'mes-duos': (
       <ProtectedLayout>
         <Layout>
-          <MesDuosPage />
+          <RouteRedirect to="/a-deux" />
         </Layout>
       </ProtectedLayout>
     ),
@@ -497,7 +496,7 @@ function AppRoutes() {
     'mes-fleurs': (
       <ProtectedLayout>
         <Layout>
-          <RouteRedirect to="/mes-duos" />
+          <RouteRedirect to="/a-deux" />
         </Layout>
       </ProtectedLayout>
     ),

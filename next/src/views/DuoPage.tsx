@@ -280,7 +280,21 @@ function DuoResult({ duoData, onReset, currentUser }) {
         </div>
       </div>
 
-      <FleurInterpretation compact scores={duoScores} />
+      <FleurInterpretation
+        compact
+        duoProfiles={[
+          {
+            label: `${personLabel(person_a, t('duo.personALauncher'))}${isPersonA ? ` (${t('duo.you')})` : isPersonB ? ` (${t('duo.yourPartner')})` : ''}`,
+            scores: person_a.scores ?? {},
+            toneClass: 'text-rose-700 dark:text-rose-400',
+          },
+          {
+            label: `${personLabel(person_b, t('duo.personBInvited'))}${isPersonB ? ` (${t('duo.you')})` : isPersonA ? ` (${t('duo.yourPartner')})` : ''}`,
+            scores: person_b.scores ?? {},
+            toneClass: 'text-emerald-700 dark:text-emerald-400',
+          },
+        ]}
+      />
 
       {/* Fleurs individuelles (différenciées par couleur) */}
       <div className="flex flex-wrap justify-center gap-6">

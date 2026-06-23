@@ -72,6 +72,13 @@ export const aDeuxApi = {
       app_base_url: getAppBaseUrl(),
     }),
 
+  inviteByUserId: (inviteToken: string, toUserId: number) =>
+    api.post('/api/a-deux/pairing/invite-by-user-id', {
+      invite_token: inviteToken,
+      to_user_id: toUserId,
+      app_base_url: getAppBaseUrl(),
+    }) as Promise<{ sent?: boolean; notified?: boolean; email_sent?: boolean }>,
+
   deleteAnchor: (id: number) => api.post('/api/a-deux/delete', { type: 'anchor', id }),
 
   deletePairing: (id: number) => api.post('/api/a-deux/delete', { type: 'pairing', id }),

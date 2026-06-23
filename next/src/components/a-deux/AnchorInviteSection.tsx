@@ -63,7 +63,7 @@ export function AnchorInviteSection({
     try {
       await aDeuxApi.deleteAnchor(Number(anchor.id))
       onDeleted?.()
-      if (!onDeleted) router.push('/mes-duos')
+      if (!onDeleted) router.push('/a-deux')
     } catch {
       /* ignore */
     }

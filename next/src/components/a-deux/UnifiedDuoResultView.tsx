@@ -8,7 +8,6 @@ import { useStore } from '@/store/useStore'
 import { t } from '@/i18n'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
 import { FleurInterpretation } from '@/components/FleurInterpretation'
-import { DuoJourneyNav } from '@/components/a-deux/DuoJourneyNav'
 import { DuoGardenTools } from '@/components/a-deux/DuoGardenTools'
 import { DuoPartnerSelector, type DuoPartnerOption } from '@/components/a-deux/DuoPartnerSelector'
 import { PETAL_BY_ID } from '@/lib/petal-theme'
@@ -125,6 +124,16 @@ export function UnifiedDuoResultView({
     return () => window.removeEventListener('resize', update)
   }, [])
 
+  const duoInterpretationProfiles = useMemo(() => {
+    if (!person_b) return undefined
+    const labelA = `${personLabel(person_a, t('duo.personALegend'))}${isPersonA ? ` (${t('duo.you')})` : isPersonB ? ` (${t('duo.yourPartner')})` : ''}`
+    const labelB = `${personLabel(person_b, t('duo.personBLegend'))}${isPersonB ? ` (${t('duo.you')})` : isPersonA ? ` (${t('duo.yourPartner')})` : ''}`
+    return [
+      { label: labelA, scores: scoresA, toneClass: 'text-rose-700 dark:text-rose-400' },
+      { label: labelB, scores: scoresB, toneClass: 'text-emerald-700 dark:text-emerald-400' },
+    ]
+  }, [person_a, person_b, scoresA, scoresB, isPersonA, isPersonB])
+
   const sections = [
     { key: 'stable', labelKey: 'inPhase', color: 'text-emerald-800 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800', dot: 'bg-emerald-500' },
     { key: 'adjust', labelKey: 'toAdjust', color: 'text-amber-900 dark:text-amber-300', bg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800', dot: 'bg-amber-500' },
@@ -134,13 +143,7 @@ export function UnifiedDuoResultView({
 
   return (
     <div className="space-y-8 lg:space-y-10" style={{ animation: 'unifiedDuoFade .5s ease' }}>
-      <DuoJourneyNav current="duo" />
       <DuoPartnerSelector pairings={allPairings} currentToken={pairingToken} />
-
-      <div className="rounded-xl border border-violet-200 bg-violet-50/80 px-4 py-3 dark:border-violet-900 dark:bg-violet-950/30">
-        <p className="text-sm font-medium text-violet-900 dark:text-violet-100">{t('duoJourney.roleUnifiedTitle')}</p>
-        <p className="mt-1 text-xs text-violet-800/90 dark:text-violet-200/90">{t('duoJourney.roleUnifiedDesc')}</p>
-      </div>
 
       <header className="text-center lg:text-left space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-400">
@@ -267,8 +270,8 @@ export function UnifiedDuoResultView({
         </section>
       ) : null}
 
-      {/* Bloc 3 — Interprétation fleur moyenne */}
-      <FleurInterpretation compact scores={duoScores} />
+      {/* Bloc 3 — Interprétation par pétale (scores par personne) */}
+      <FleurInterpretation compact duoProfiles={duoInterpretationProfiles} />
 
       {/* Bloc 4 — Zones comparées A vs B */}
       {person_b ? (
@@ -357,7 +360,7 @@ export function UnifiedDuoResultView({
         ) : null}
         <button
           type="button"
-          onClick={() => router.push('/mes-duos')}
+          onClick={() => router.push('/a-deux')}
           className="px-5 py-2.5 bg-accent text-white rounded-xl text-sm font-semibold"
         >
           {t('aDeux.viewMesDuos')}

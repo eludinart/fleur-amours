@@ -81,10 +81,24 @@ function buildAccompagnementNavItems(params: {
   return items
 }
 
+function buildADeuxNavItems(translate: (k: string) => string): ExplorationNavItem[] {
+  return [
+    {
+      to: '/a-deux',
+      label: translate('nav.aDeux'),
+      hint: translate('nav.aDeuxNavHint'),
+      icon: '💞',
+      accent: 'rose',
+      end: true,
+      title: translate('nav.aDeuxTooltip'),
+    },
+  ]
+}
+
 /**
  * Construit la navigation utilisateur en deux registres distincts :
- * - EXPLORATIONS : les 4 applications guidées par l'IA (Conversation intérieure, Explorer ma Fleur, Faire un tirage, Lire un tirage).
- * - À deux ou à plusieurs : parcours duo (Par une Porte, questionnaire complet, Mes duos).
+ * - EXPLORATIONS : les 4 applications guidées par l'IA.
+ * - FLEUR À DEUX : parcours duo (questionnaire, invitations, espaces partenaires).
  *
  * Les sections supplémentaires sont **filtrées par viewMode** :
  *  - 'personnel' : parcours individuel (Fleur, explorations, être accompagné).
@@ -152,34 +166,12 @@ function buildNavGroups(params: {
     },
   ]
 
-  const aDeuxItems: NavItem[] = [
-    {
-      to: '/a-deux',
-      label: translate('nav.aDeuxStart'),
-      icon: '💞',
-      end: true,
-      title: translate('nav.aDeuxStartTooltip'),
-    },
-    {
-      to: '/mes-duos',
-      label: translate('nav.mesDuosHub'),
-      icon: '🌸',
-      title: translate('nav.mesDuosHubTooltip'),
-    },
-  ]
-
   const groups: NavGroup[] = [
     {
       id: 'explorations',
       label: translate('nav.explorationsSection'),
       collapsible: false,
       items: explorationsItems,
-    },
-    {
-      id: 'a-deux',
-      label: translate('nav.aDeuxSection'),
-      collapsible: false,
-      items: aDeuxItems,
     },
   ]
 
@@ -196,13 +188,6 @@ function buildNavGroups(params: {
           icon: '🌱',
           end: true,
           title: translate('nav.eclosionTooltip'),
-        },
-        {
-          to: '/checkin',
-          label: translate('nav.checkin'),
-          icon: '📝',
-          end: true,
-          title: translate('nav.checkinTooltip'),
         },
       ],
     })
@@ -232,7 +217,7 @@ function buildNavGroups(params: {
       {
         to: '/clairiere',
         label: translate('nav.clairiereLabel'),
-        icon: '🌿',
+        icon: '💬',
         end: false,
         title: translate('nav.clairiereTooltip'),
       },
@@ -242,20 +227,6 @@ function buildNavGroups(params: {
         icon: '📡',
         end: true,
         title: translate('nav.poulsTooltip'),
-      },
-      {
-        to: '/salons',
-        label: translate('salons.title'),
-        icon: '🏛️',
-        end: false,
-        title: translate('nav.salonsTooltip'),
-      },
-      {
-        to: '/constellations',
-        label: translate('constellations.title'),
-        icon: '✨',
-        end: true,
-        title: translate('nav.constellationsTooltip'),
       },
     ]
     // Petite étiquette d'aide : si l'utilisateur n'est pas encore visible, l'inviter à l'onboarding.
@@ -342,7 +313,6 @@ function buildNavGroups(params: {
       defaultOpen: false,
       items: [
         { to: '/eclosion', label: translate('nav.eclosion'), icon: '🌱', title: translate('nav.eclosionTooltip') },
-        { to: '/checkin', label: translate('nav.checkin'), icon: '📝', title: translate('nav.checkinTooltip') },
         { to: '/onboarding-diagnostic', label: translate('nav.baseline'), icon: '🌼', title: translate('nav.baselineTooltip') },
         { to: '/couple', label: translate('nav.couple'), icon: '💞', title: translate('nav.coupleTooltip') },
         { to: '/cartes', label: translate('nav.cartes'), icon: '🃏', title: translate('nav.cartesTooltip') },
@@ -1131,6 +1101,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
     openChatCount,
     unreadChatCount,
   })
+  const aDeuxItems = buildADeuxNavItems(t)
 
   // Première carte : item "Mon Jardin" (home) — toujours visible
   const homeItem: NavItem = {
@@ -1239,6 +1210,40 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             </div>
             <div className="flex flex-col gap-1.5 rounded-2xl p-1.5 bg-gradient-to-b from-slate-50/80 to-transparent dark:from-slate-800/40 dark:to-transparent">
               {(explorationsGroup.items as ExplorationNavItem[]).map((item) => {
+                const itemPath = item.to.replace(/^\/+/, '')
+                const isActive =
+                  pathWithoutBase === itemPath || pathWithoutBase.startsWith(itemPath + '/')
+                return (
+                  <ExplorationCard
+                    key={item.to}
+                    item={item}
+                    isActive={isActive}
+                    onClose={onClose}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        ) : null
+      case 'aDeux':
+        return aDeuxItems.length > 0 ? (
+          <div
+            key="aDeux"
+            className={`shrink-0 px-3 pt-3 pb-3 border-b border-slate-200 dark:border-slate-700 ${
+              viewMode === 'coach' || viewMode === 'rh' ? 'opacity-95' : ''
+            }`}
+          >
+            <div
+              className="flex items-center gap-2 px-0.5 pb-2.5"
+              title={t('nav.aDeuxSectionTooltip')}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-400 to-violet-400">
+                {t('nav.aDeuxSection')}
+              </p>
+              <span className="flex-1 h-px bg-gradient-to-r from-rose-400/40 via-pink-300/25 to-transparent dark:from-rose-600/50 dark:via-pink-500/30" />
+            </div>
+            <div className="flex flex-col gap-1.5 rounded-2xl p-1.5 bg-gradient-to-b from-slate-50/80 to-transparent dark:from-slate-800/40 dark:to-transparent">
+              {aDeuxItems.map((item) => {
                 const itemPath = item.to.replace(/^\/+/, '')
                 const isActive =
                   pathWithoutBase === itemPath || pathWithoutBase.startsWith(itemPath + '/')

@@ -566,6 +566,191 @@ export async function invitePairingByEmail(params: {
   return result
 }
 
+/** Vérifie qu'un lien social existe entre deux utilisateurs (graine, clairière ou prairie). */
+async function usersShareSocialLink(userA: number, userB: number): Promise<boolean> {
+  if (!userA || !userB || userA === userB) return false
+  const pool = getPool()
+  const lo = Math.min(userA, userB)
+  const hi = Math.max(userA, userB)
+  const tLinks = table('fleur_prairie_links')
+  const tChannels = table('fleur_chat_channels')
+  const tSeeds = table('fleur_social_seeds')
+
+  try {
+    const [linkRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT 1 FROM ${tLinks} WHERE user_a = ? AND user_b = ? LIMIT 1`,
+      [lo, hi]
+    )
+    if (linkRows.length) return true
+  } catch {
+    /* table absente */
+  }
+
+  try {
+    const [chRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT 1 FROM ${tChannels} WHERE user_a = ? AND user_b = ? LIMIT 1`,
+      [lo, hi]
+    )
+    if (chRows.length) return true
+  } catch {
+    /* table absente */
+  }
+
+  try {
+    const [seedRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT 1 FROM ${tSeeds}
+       WHERE status IN ('pending', 'accepted')
+         AND ((from_user_id = ? AND to_user_id = ?) OR (from_user_id = ? AND to_user_id = ?))
+       LIMIT 1`,
+      [userA, userB, userB, userA]
+    )
+    if (seedRows.length) return true
+  } catch {
+    /* table absente */
+  }
+
+  return false
+}
+
+async function notifyPairingInviteInApp(params: {
+  toUserId: number
+  fromUserId: number
+  inviter: string
+  inviteUrl: string
+}): Promise<void> {
+  const actionUrl = params.inviteUrl.replace(/^https?:\/\/[^/]+/, '')
+  const { createNotification } = await import('./db-notifications')
+  const { sendFcmPush } = await import('./fcm')
+  const title = 'Invitation À deux'
+  const body = `${params.inviter} vous invite à un parcours À deux.`
+  await createNotification({
+    type: 'a_deux_invite',
+    title,
+    body,
+    action_url: actionUrl,
+    recipient_type: 'user',
+    recipient_id: params.toUserId,
+    created_by: params.fromUserId,
+    skip_email: true,
+  })
+  const pool = getPool()
+  const tblUsers = table('users')
+  const [urows] = await pool.execute<RowDataPacket[]>(
+    `SELECT user_email FROM ${tblUsers} WHERE ID = ? LIMIT 1`,
+    [params.toUserId]
+  )
+  const email = urows[0]?.user_email ? String(urows[0].user_email) : null
+  await sendFcmPush(params.toUserId, email, title, body, actionUrl)
+}
+
+/** Invite un utilisateur inscrit déjà en lien dans l'application (notification + e-mail). */
+export async function invitePairingByUserId(params: {
+  inviteToken: string
+  fromUserId: number
+  toUserId: number
+  inviteUrl: string
+  inviterName?: string
+}): Promise<{ sent: boolean; notified: boolean; email_sent: boolean; error?: string }> {
+  if (params.toUserId === params.fromUserId) {
+    throw new Error('Vous ne pouvez pas vous inviter vous-même')
+  }
+
+  const linked = await usersShareSocialLink(params.fromUserId, params.toUserId)
+  if (!linked) {
+    throw new Error('Aucun lien avec cet utilisateur — utilisez un e-mail ou un lien partagé')
+  }
+
+  const data = await getPairingByToken(params.inviteToken)
+  if (!data) throw new Error('Invitation introuvable')
+  if (Number(data.anchor.user_id) !== params.fromUserId) throw new Error('Non autorisé')
+  if (data.pairing.status === 'complete') throw new Error('Ce duo est déjà complété')
+
+  const pool = getPool()
+  const tblUsers = table('users')
+  const [urows] = await pool.execute<RowDataPacket[]>(
+    `SELECT user_email FROM ${tblUsers} WHERE ID = ? LIMIT 1`,
+    [params.toUserId]
+  )
+  const email = urows[0]?.user_email ? String(urows[0].user_email).trim().toLowerCase() : ''
+  if (!email) throw new Error('Utilisateur introuvable')
+
+  await pool.execute(`UPDATE ${TBL_PAIRING()} SET invited_email = ? WHERE invite_token = ?`, [
+    email,
+    params.inviteToken.trim(),
+  ])
+
+  const inviter = params.inviterName?.trim() || "Quelqu'un"
+  const anchor = data.anchor
+  const scores = (anchor.scores_display ?? anchor.scores) as Record<string, number>
+  const qType = String(anchor.questionnaire_type ?? 'porte')
+  const inviterDisplay =
+    (anchor.pseudo as string | undefined)?.trim() ||
+    (anchor.display_name as string | undefined)?.trim() ||
+    inviter
+
+  const { sendDuoInviteEmail } = await import('./email')
+  const { isSmtpConfigured } = await import('./smtp')
+
+  let emailSent = false
+  let emailError: string | undefined
+  if (isSmtpConfigured()) {
+    const emailResult = await sendDuoInviteEmail({
+      to: email,
+      inviterName: inviter,
+      inviterDisplayName: inviterDisplay,
+      inviteUrl: params.inviteUrl,
+      scores: scores ?? {},
+      kind: qType === 'complet' ? 'a_deux_complet' : 'a_deux_porte',
+      porteKey: anchor.porte ? String(anchor.porte) : null,
+      ctaLabel: 'Rejoindre le parcours',
+    })
+    emailSent = emailResult.sent
+    emailError = emailResult.error
+  } else {
+    emailError = "Envoi d'e-mails non configuré sur le serveur (SMTP)."
+  }
+
+  let notified = false
+  try {
+    await notifyPairingInviteInApp({
+      toUserId: params.toUserId,
+      fromUserId: params.fromUserId,
+      inviter,
+      inviteUrl: params.inviteUrl,
+    })
+    notified = true
+  } catch {
+    /* traité ci-dessous */
+  }
+
+  if (!notified && !emailSent) {
+    return {
+      sent: false,
+      notified: false,
+      email_sent: false,
+      error: emailError ?? 'Échec envoi invitation',
+    }
+  }
+  if (!notified) {
+    return {
+      sent: false,
+      notified: false,
+      email_sent: emailSent,
+      error: 'Notification in-app impossible',
+    }
+  }
+  if (!emailSent) {
+    return {
+      sent: false,
+      notified: true,
+      email_sent: false,
+      error: emailError ?? 'Échec envoi e-mail',
+    }
+  }
+
+  return { sent: true, notified: true, email_sent: true }
+}
+
 export async function notifyPairingCompleted(inviteToken: string, partnerUserId: number): Promise<void> {
   const data = await getPairingByToken(inviteToken)
   if (!data) return

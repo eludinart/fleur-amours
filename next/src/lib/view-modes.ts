@@ -167,14 +167,15 @@ export type SidebarBlockId =
   | 'mycelium'
   | 'accompagnement'
   | 'explorations'
+  | 'aDeux'
   | 'nav'
   | 'coachRequest'
 
 const SIDEBAR_BLOCKS_BY_MODE: Record<ViewMode, SidebarBlockId[]> = {
-  personnel: ['home', 'accompagnement', 'explorations', 'nav', 'coachRequest'],
-  coach: ['home', 'coach', 'accompagnement', 'explorations', 'nav'],
-  rh: ['home', 'mycelium', 'accompagnement', 'explorations', 'nav'],
-  admin: ['home', 'coach', 'accompagnement', 'explorations', 'nav'],
+  personnel: ['home', 'accompagnement', 'explorations', 'aDeux', 'nav', 'coachRequest'],
+  coach: ['home', 'coach', 'accompagnement', 'explorations', 'aDeux', 'nav'],
+  rh: ['home', 'mycelium', 'accompagnement', 'explorations', 'aDeux', 'nav'],
+  admin: ['home', 'coach', 'accompagnement', 'explorations', 'aDeux', 'nav'],
 }
 
 export function getSidebarBlockOrder(viewMode: ViewMode): SidebarBlockId[] {

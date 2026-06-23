@@ -24,7 +24,7 @@ export default function DyadePage() {
         router.replace(`/a-deux/result?token=${encodeURIComponent(pairingToken)}`)
         return
       }
-      router.replace('/mes-duos')
+      router.replace('/a-deux')
     }
     void go()
   }, [acceptToken, pairingToken, router])
