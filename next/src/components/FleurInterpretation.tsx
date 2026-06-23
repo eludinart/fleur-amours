@@ -88,7 +88,11 @@ export function FleurInterpretation({
     }
     setAiLoading(true)
     setAiError('')
-    const payload = { scores, answers: Array.isArray(answers) ? answers : [] } as Record<string, unknown>
+    const payload = {
+      scores,
+      answers: Array.isArray(answers) ? answers : [],
+      locale: locale || 'fr',
+    } as Record<string, unknown>
     if (resultId) (payload as Record<string, unknown>).result_id = resultId
     aiApi
       .fleurInterpretation(payload)

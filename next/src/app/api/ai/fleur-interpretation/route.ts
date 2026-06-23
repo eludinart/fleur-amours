@@ -13,9 +13,9 @@ export const dynamic = 'force-dynamic'
 
 const PETALS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
 
-function safeLocale(s: string | undefined): 'fr' | 'en' | 'es' {
-  const l = String(s ?? 'fr').toLowerCase()
-  if (l === 'en' || l === 'es' || l === 'fr') return l
+function safeLocale(s: string | undefined): 'fr' | 'en' | 'es' | 'it' | 'de' {
+  const l = String(s ?? 'fr').toLowerCase().split('-')[0]
+  if (l === 'en' || l === 'es' || l === 'it' || l === 'de' || l === 'fr') return l
   return 'fr'
 }
 

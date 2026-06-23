@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { aDeuxApi, getADeuxInviteUrl } from '@/api/a-deux'
+import { InvitePartnerHint } from '@/components/a-deux/InvitePartnerHint'
 import { t } from '@/i18n'
 
 type InvitePartnerPanelProps = {
@@ -10,9 +11,27 @@ type InvitePartnerPanelProps = {
   onPairingCreated?: (token: string) => void
 }
 
-export function InvitePartnerPanel({ anchorId, onPairingCreated }: InvitePartnerPanelProps) {
+function InviteEmailSentBanner({ email }: { email: string }) {
+  return (
+    <div
+      role="status"
+      className="rounded-xl border-2 border-emerald-400/70 bg-emerald-100/90 dark:bg-emerald-900/50 dark:border-emerald-500/50 px-4 py-3 space-y-1"
+    >
+      <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+        ✓ {t('aDeux.inviteSentTo', { email })}
+      </p>
+      <p className="text-xs text-emerald-800/90 dark:text-emerald-200/90">{t('aDeux.inviteSentHint')}</p>
+    </div>
+  )
+}
+
+export function InvitePartnerPanel({
+  anchorId,
+  onPairingCreated,
+}: InvitePartnerPanelProps) {
   const [inviteToken, setInviteToken] = useState<string | null>(null)
   const [partnerEmail, setPartnerEmail] = useState('')
+  const [sentToEmail, setSentToEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [inviteSent, setInviteSent] = useState(false)
   const [error, setError] = useState('')
@@ -22,6 +41,8 @@ export function InvitePartnerPanel({ anchorId, onPairingCreated }: InvitePartner
     setLoading(true)
     setError('')
     setMessage('')
+    setInviteSent(false)
+    setSentToEmail('')
     try {
       const email = partnerEmail.trim()
       const res = (await aDeuxApi.createPairing(anchorId, email || undefined)) as {
@@ -33,8 +54,9 @@ export function InvitePartnerPanel({ anchorId, onPairingCreated }: InvitePartner
       if (email) {
         if (res.email_sent) {
           setInviteSent(true)
-          setMessage(t('aDeux.inviteSentTo', { email }))
+          setSentToEmail(email)
         } else {
+          setMessage(t('aDeux.inviteCreated'))
           setError(t('aDeux.inviteFailed'))
         }
       } else {
@@ -53,10 +75,12 @@ export function InvitePartnerPanel({ anchorId, onPairingCreated }: InvitePartner
     setLoading(true)
     setError('')
     try {
-      const res = (await aDeuxApi.inviteByEmail(inviteToken, partnerEmail.trim())) as { sent?: boolean }
+      const email = partnerEmail.trim()
+      const res = (await aDeuxApi.inviteByEmail(inviteToken, email)) as { sent?: boolean }
       if (res?.sent) {
         setInviteSent(true)
-        setMessage(t('aDeux.inviteSentTo', { email: partnerEmail.trim() }))
+        setSentToEmail(email)
+        setMessage('')
       } else {
         setError(t('aDeux.inviteFailed'))
       }
@@ -76,6 +100,17 @@ export function InvitePartnerPanel({ anchorId, onPairingCreated }: InvitePartner
       () => setError(t('aDeux.copyLinkManual'))
     )
   }
+
+  function resetInvite() {
+    setInviteToken(null)
+    setInviteSent(false)
+    setSentToEmail('')
+    setPartnerEmail('')
+    setMessage('')
+    setError('')
+  }
+
+  const sendingLabel = partnerEmail.trim() ? t('aDeux.sendingInvite') : t('aDeux.creatingInvite')
 
   return (
     <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 p-5 space-y-4">
@@ -99,12 +134,23 @@ export function InvitePartnerPanel({ anchorId, onPairingCreated }: InvitePartner
             disabled={loading}
             className="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50"
           >
-            {loading ? '…' : t('aDeux.createInvite')}
+            {loading ? sendingLabel : t('aDeux.createInvite')}
           </button>
-          <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">{t('aDeux.multiInviteHint')}</p>
+          <InvitePartnerHint />
         </div>
       ) : (
         <div className="space-y-3">
+          {inviteSent && sentToEmail && <InviteEmailSentBanner email={sentToEmail} />}
+
+          {!inviteSent && message && (
+            <div
+              role="status"
+              className="rounded-xl border border-emerald-300/70 bg-white/80 dark:bg-slate-900/60 px-4 py-3"
+            >
+              <p className="text-sm text-emerald-800 dark:text-emerald-200">{message}</p>
+            </div>
+          )}
+
           <div className="flex gap-2 items-start">
             <code className="flex-1 text-xs font-mono break-all bg-white dark:bg-slate-900 rounded-lg px-3 py-2 border border-emerald-200 dark:border-emerald-800">
               {getADeuxInviteUrl(inviteToken)}
@@ -117,24 +163,19 @@ export function InvitePartnerPanel({ anchorId, onPairingCreated }: InvitePartner
               {t('aDeux.copyLink')}
             </button>
           </div>
-          {!inviteSent && partnerEmail.trim() && error && (
+          {!inviteSent && partnerEmail.trim() && (
             <button
               type="button"
               onClick={retrySendEmail}
               disabled={loading}
               className="w-full py-2 text-sm text-emerald-700 dark:text-emerald-300 underline disabled:opacity-50"
             >
-              {loading ? '…' : t('aDeux.sendEmail')}
+              {loading ? t('aDeux.sendingInvite') : t('aDeux.sendEmail')}
             </button>
           )}
           <button
             type="button"
-            onClick={() => {
-              setInviteToken(null)
-              setInviteSent(false)
-              setPartnerEmail('')
-              setMessage('')
-            }}
+            onClick={resetInvite}
             className="w-full py-2 text-sm text-emerald-700 dark:text-emerald-300 underline"
           >
             {t('aDeux.inviteAnother')}
@@ -142,7 +183,9 @@ export function InvitePartnerPanel({ anchorId, onPairingCreated }: InvitePartner
         </div>
       )}
 
-      {message && <p className="text-sm text-emerald-700 dark:text-emerald-300">{message}</p>}
+      {(message && (!inviteSent || message === t('aDeux.linkCopied'))) && (
+        <p className="text-sm text-emerald-700 dark:text-emerald-300">{message}</p>
+      )}
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <Link

@@ -11,6 +11,7 @@ import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
 import { FleurInterpretation } from '@/components/FleurInterpretation'
 import { VoiceTextInput } from '@/components/VoiceTextInput'
 import { BuyTarotCTA } from '@/components/BuyTarotCTA'
+import { InvitePartnerHint } from '@/components/a-deux/InvitePartnerHint'
 
 // Questionnaire individuel pour chaque participant du DUO
 const DEFINITION_SLUG = 'fleur-amour-individuel'
@@ -656,8 +657,15 @@ export default function DuoPage() {
             )}
             {inviteSent ? (
               <div className="space-y-3">
-                <p className="text-sm text-emerald-700 dark:text-emerald-300">{t('duo.inviteSentTo', { email: partnerEmail || invitePseudo })}</p>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">{t('duo.inviteHint')}</p>
+                <div
+                  role="status"
+                  className="rounded-xl border-2 border-emerald-400/70 bg-emerald-100/90 dark:bg-emerald-900/50 dark:border-emerald-500/50 px-4 py-3 space-y-1"
+                >
+                  <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                    ✓ {t('duo.inviteSentTo', { email: partnerEmail || invitePseudo })}
+                  </p>
+                  <p className="text-xs text-emerald-800/90 dark:text-emerald-200/90">{t('duo.inviteHint')}</p>
+                </div>
                 <button onClick={checkDuo} disabled={checkLoading}
                   className="w-full py-2.5 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent-hover disabled:opacity-50 transition-colors">
                   {checkLoading ? t('duo.checking') : t('duo.checkPartner')}
@@ -676,7 +684,7 @@ export default function DuoPage() {
                       onBlur={tryAutoSendInvite}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); tryAutoSendInvite() } }}
                     />
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400">{t('aDeux.multiInviteHint')}</p>
+                    <InvitePartnerHint className="text-xs text-emerald-600 dark:text-emerald-400" />
                   </>
                 )}
                 {inviteLoading && (

@@ -10,7 +10,7 @@ import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { FOUR_DOORS } from '@/data/tarotCards'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
-import { InvitePartnerPanel } from '@/components/a-deux/InvitePartnerPanel'
+import { AnchorInviteSection } from '@/components/a-deux/AnchorInviteSection'
 import { FirstFlowerReveal } from '@/components/a-deux/FirstFlowerReveal'
 import { WelcomeExperienceBanner } from '@/components/a-deux/WelcomeExperienceBanner'
 import {
@@ -52,6 +52,14 @@ export default function ADeuxParUnePortePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [anchor, setAnchor] = useState(null)
+  const [inviteExpanded, setInviteExpanded] = useState(true)
+
+  function openInviteSection() {
+    setInviteExpanded(true)
+    requestAnimationFrame(() => {
+      document.getElementById('anchor-invite')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
 
   useEffect(() => {
     if (inviteOnly && anchorIdParam) {
@@ -94,6 +102,7 @@ export default function ADeuxParUnePortePage() {
       const res = await aDeuxApi.submitAnchorPorte({ porte, answers: answersPayload })
       setAnchor({ ...res, porte, scores: res.scores })
       setStep('result')
+      setInviteExpanded(true)
     } catch (e) {
       setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
@@ -105,7 +114,15 @@ export default function ADeuxParUnePortePage() {
     return (
       <div className="max-w-lg mx-auto py-4 space-y-4">
         <Link href="/a-deux" className="text-sm text-slate-500 underline">← {t('aDeux.hubTitle')}</Link>
-        <InvitePartnerPanel anchorId={Number(anchor.id || anchorIdParam)} />
+        <AnchorInviteSection
+          anchor={{
+            id: Number(anchor.id || anchorIdParam),
+            questionnaire_type: anchor.questionnaire_type || 'porte',
+            porte: anchor.porte,
+            created_at: anchor.created_at,
+          }}
+          defaultExpanded
+        />
       </div>
     )
   }
@@ -114,9 +131,17 @@ export default function ADeuxParUnePortePage() {
     const scores = anchor.scores || {}
     return (
       <div className="max-w-lg mx-auto py-4 space-y-4">
-        <FirstFlowerReveal scores={scores} showInvite>
-          <InvitePartnerPanel anchorId={Number(anchor.id)} />
-        </FirstFlowerReveal>
+        <FirstFlowerReveal scores={scores} onInviteNow={openInviteSection} />
+        <AnchorInviteSection
+          anchor={{
+            id: Number(anchor.id),
+            questionnaire_type: 'porte',
+            porte: anchor.porte || porte,
+            created_at: anchor.created_at,
+          }}
+          expanded={inviteExpanded}
+          onExpandedChange={setInviteExpanded}
+        />
       </div>
     )
   }

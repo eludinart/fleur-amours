@@ -3,19 +3,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { aDeuxApi } from '@/api/a-deux'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
-
-function formatDate(s) {
-  if (!s) return '—'
-  return new Date(s).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
-}
+import { AnchorInviteSection } from '@/components/a-deux/AnchorInviteSection'
 
 export default function ADeuxHubPage() {
   useStore((s) => s.locale)
-  const router = useRouter()
   const searchParams = useSearchParams()
   const anchorIdParam = searchParams?.get('anchor')
 
@@ -23,17 +18,30 @@ export default function ADeuxHubPage() {
   const [pairings, setPairings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [expandedAnchor, setExpandedAnchor] = useState<number | null>(() => {
+    const id = Number(anchorIdParam)
+    return Number.isFinite(id) && id > 0 ? id : null
+  })
 
-  useEffect(() => {
-    aDeuxApi
+  function loadDashboard() {
+    return aDeuxApi
       .getDashboard()
       .then((d) => {
         setAnchors(d.anchors || [])
         setPairings(d.pairings || [])
       })
       .catch(() => setError(t('aDeux.loadError')))
-      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    setLoading(true)
+    loadDashboard().finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    const id = Number(anchorIdParam)
+    if (Number.isFinite(id) && id > 0) setExpandedAnchor(id)
+  }, [anchorIdParam])
 
   const pendingPairings = pairings.filter((p) => p.status === 'pending')
   const completePairings = pairings.filter((p) => p.status === 'complete')
@@ -89,25 +97,19 @@ export default function ADeuxHubPage() {
               <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">{t('aDeux.myAnchors')}</h2>
               <ul className="space-y-2">
                 {anchors.slice(0, 5).map((a) => (
-                  <li
-                    key={a.id}
-                    className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex items-center justify-between gap-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {a.questionnaire_type === 'porte'
-                          ? t('aDeux.anchorPorte', { porte: a.porte || '—' })
-                          : t('aDeux.anchorComplet')}
-                      </p>
-                      <p className="text-xs text-slate-500">{formatDate(a.created_at)}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/a-deux?anchor=${a.id}`)}
-                      className="shrink-0 text-xs font-semibold text-accent underline"
-                    >
-                      {t('aDeux.inviteFromAnchor')}
-                    </button>
+                  <li key={a.id}>
+                    <AnchorInviteSection
+                      anchor={{
+                        id: Number(a.id),
+                        questionnaire_type: a.questionnaire_type,
+                        porte: a.porte,
+                        created_at: a.created_at,
+                      }}
+                      expanded={expandedAnchor === a.id}
+                      onExpandedChange={(open) => setExpandedAnchor(open ? Number(a.id) : null)}
+                      onDeleted={() => loadDashboard()}
+                      onPairingCreated={() => loadDashboard()}
+                    />
                   </li>
                 ))}
               </ul>
@@ -150,18 +152,6 @@ export default function ADeuxHubPage() {
                 ))}
               </ul>
             </section>
-          )}
-
-          {anchorIdParam && (
-            <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 p-4">
-              <p className="text-sm mb-3">{t('aDeux.inviteFromAnchorHint')}</p>
-              <Link
-                href={`/a-deux/par-une-porte?anchor=${anchorIdParam}&invite=1`}
-                className="inline-flex px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold"
-              >
-                {t('aDeux.createInvite')}
-              </Link>
-            </div>
           )}
 
           <Link

@@ -308,7 +308,7 @@ export default function DyadePage() {
                 disabled={busy || !inviteEmail.trim()}
                 className="rounded-full bg-pink-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-pink-600 disabled:opacity-60"
               >
-                {t('couple.inviteCta')}
+                {busy ? t('aDeux.sendingInvite') : t('couple.inviteCta')}
               </button>
             </div>
             {inviteUrl && (
@@ -321,10 +321,19 @@ export default function DyadePage() {
 
         {/* Dyade en attente */}
         {dyad?.status === 'pending' && (
-          <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200">
-            <p>
-              {t('couple.pending')} {dyad.inviteeEmail ? `(${dyad.inviteeEmail})` : ''}
-            </p>
+          <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200 space-y-3">
+            {dyad.inviteeEmail && (
+              <div
+                role="status"
+                className="rounded-xl border-2 border-emerald-400/70 bg-emerald-100/90 px-4 py-3 dark:bg-emerald-900/50 dark:border-emerald-500/50"
+              >
+                <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                  ✓ {t('couple.inviteSentTo', { email: dyad.inviteeEmail })}
+                </p>
+                <p className="mt-1 text-xs text-emerald-800/90 dark:text-emerald-200/90">{t('couple.inviteSentHint')}</p>
+              </div>
+            )}
+            <p>{t('couple.pending')}</p>
             <p className="mt-2 text-xs text-amber-900/90 dark:text-amber-100/90">{t('couple.pendingHint')}</p>
             {inviteUrl && (
               <p className="mt-3 break-all text-xs font-mono text-amber-950 dark:text-amber-50">

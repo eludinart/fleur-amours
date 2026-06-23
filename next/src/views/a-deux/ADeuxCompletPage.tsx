@@ -8,7 +8,7 @@ import { fleurApi } from '@/api/fleur'
 import { aDeuxApi } from '@/api/a-deux'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
-import { InvitePartnerPanel } from '@/components/a-deux/InvitePartnerPanel'
+import { AnchorInviteSection } from '@/components/a-deux/AnchorInviteSection'
 import { FirstFlowerReveal } from '@/components/a-deux/FirstFlowerReveal'
 import { WelcomeExperienceBanner } from '@/components/a-deux/WelcomeExperienceBanner'
 
@@ -40,6 +40,14 @@ export default function ADeuxCompletPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [anchor, setAnchor] = useState(null)
+  const [inviteExpanded, setInviteExpanded] = useState(true)
+
+  function openInviteSection() {
+    setInviteExpanded(true)
+    requestAnimationFrame(() => {
+      document.getElementById('anchor-invite')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
 
   useEffect(() => {
     fleurApi
@@ -72,6 +80,7 @@ export default function ADeuxCompletPage() {
       }))
       const res = await aDeuxApi.submitAnchorComplet({ answers: answersPayload })
       setAnchor(res)
+      setInviteExpanded(true)
     } catch (e) {
       setError((e as { message?: string })?.message || t('errors.generic'))
     } finally {
@@ -82,9 +91,16 @@ export default function ADeuxCompletPage() {
   if (anchor) {
     return (
       <div className="max-w-lg mx-auto py-4 space-y-4">
-        <FirstFlowerReveal scores={anchor.scores || {}} showInvite>
-          <InvitePartnerPanel anchorId={Number(anchor.id)} />
-        </FirstFlowerReveal>
+        <FirstFlowerReveal scores={anchor.scores || {}} onInviteNow={openInviteSection} />
+        <AnchorInviteSection
+          anchor={{
+            id: Number(anchor.id),
+            questionnaire_type: 'complet',
+            created_at: anchor.created_at,
+          }}
+          expanded={inviteExpanded}
+          onExpandedChange={setInviteExpanded}
+        />
       </div>
     )
   }

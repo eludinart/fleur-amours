@@ -651,6 +651,7 @@ export async function inviteDuoPartner(params: {
       recipient_type: 'user',
       recipient_email: partnerEmail,
       created_by: params.fromUserId,
+      skip_email: true,
     }).catch(() => {})
   }
 

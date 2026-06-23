@@ -8,7 +8,7 @@ import { aDeuxApi } from '@/api/a-deux'
 import { fleurApi } from '@/api/fleur'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
-import { InvitePartnerPanel } from '@/components/a-deux/InvitePartnerPanel'
+import { AnchorInviteSection } from '@/components/a-deux/AnchorInviteSection'
 
 function formatDate(s) {
   if (!s) return '—'
@@ -44,16 +44,6 @@ export default function MesDuosPage() {
   useEffect(() => {
     load()
   }, [])
-
-  async function deleteAnchor(id) {
-    if (!window.confirm(t('aDeux.deleteAnchorConfirm'))) return
-    try {
-      await aDeuxApi.deleteAnchor(id)
-      load()
-    } catch {
-      setError(t('mesFleurs.deleteError'))
-    }
-  }
 
   async function deletePairing(id) {
     if (!window.confirm(t('aDeux.deletePairingConfirm'))) return
@@ -94,28 +84,19 @@ export default function MesDuosPage() {
         ) : (
           <ul className="space-y-2">
             {anchors.map((a) => (
-              <li key={a.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
-                <div className="flex justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-sm">
-                      {a.questionnaire_type === 'porte'
-                        ? t('aDeux.anchorPorte', { porte: a.porte || '—' })
-                        : t('aDeux.anchorComplet')}
-                    </p>
-                    <p className="text-xs text-slate-500">{formatDate(a.created_at)}</p>
-                  </div>
-                  <button type="button" onClick={() => deleteAnchor(Number(a.id))} className="text-xs text-red-500">
-                    {t('common.delete')}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setExpandedAnchor(expandedAnchor === a.id ? null : a.id)}
-                  className="text-xs font-semibold text-accent underline"
-                >
-                  {expandedAnchor === a.id ? t('common.close') : t('aDeux.inviteAnother')}
-                </button>
-                {expandedAnchor === a.id && <InvitePartnerPanel anchorId={Number(a.id)} onPairingCreated={() => load()} />}
+              <li key={a.id}>
+                <AnchorInviteSection
+                  anchor={{
+                    id: Number(a.id),
+                    questionnaire_type: a.questionnaire_type,
+                    porte: a.porte,
+                    created_at: a.created_at,
+                  }}
+                  expanded={expandedAnchor === a.id}
+                  onExpandedChange={(open) => setExpandedAnchor(open ? a.id : null)}
+                  onDeleted={load}
+                  onPairingCreated={() => load()}
+                />
               </li>
             ))}
           </ul>

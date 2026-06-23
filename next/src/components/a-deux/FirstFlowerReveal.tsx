@@ -11,9 +11,8 @@ import { useStore } from '@/store/useStore'
 
 type FirstFlowerRevealProps = {
   scores: Record<string, number>
-  onInviteLater?: () => void
-  showInvite?: boolean
-  children?: React.ReactNode
+  /** Scroll / ouvre le panneau d'invitation partenaire. */
+  onInviteNow?: () => void
 }
 
 function petalLabel(petalId: string): string {
@@ -22,7 +21,7 @@ function petalLabel(petalId: string): string {
   return s !== key ? s : PETAL_DEFS.find((p) => p.id === petalId)?.name ?? petalId
 }
 
-export function FirstFlowerReveal({ scores, onInviteLater, showInvite, children }: FirstFlowerRevealProps) {
+export function FirstFlowerReveal({ scores, onInviteNow }: FirstFlowerRevealProps) {
   const router = useRouter()
   useStore((s) => s.locale)
   const petals = useMemo(() => scoresToPetals(scores), [scores])
@@ -99,24 +98,26 @@ export function FirstFlowerReveal({ scores, onInviteLater, showInvite, children 
         </button>
       </motion.div>
 
+      {onInviteNow ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.52, duration: 0.4 }}
+          className="relative"
+        >
+          <button
+            type="button"
+            onClick={onInviteNow}
+            className="w-full px-6 py-3.5 rounded-full font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 shadow-lg shadow-emerald-600/35 ring-2 ring-emerald-400/40 hover:opacity-95 hover:shadow-emerald-500/45 transition-all"
+          >
+            {t('firstFlower.inviteNow')}
+          </button>
+        </motion.div>
+      ) : null}
+
       <p className="relative text-center text-xs text-slate-500 dark:text-slate-400">
         {t('firstFlower.firstDrawFree')}
       </p>
-
-      {showInvite && children ? (
-        <details className="relative text-sm">
-          <summary className="cursor-pointer text-center text-slate-500 hover:text-violet-600 dark:hover:text-violet-300">
-            {t('firstFlower.inviteLater')}
-          </summary>
-          <div className="mt-4">{children}</div>
-        </details>
-      ) : null}
-
-      {onInviteLater ? (
-        <button type="button" onClick={onInviteLater} className="sr-only">
-          skip
-        </button>
-      ) : null}
     </div>
   )
 }

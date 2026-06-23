@@ -550,6 +550,7 @@ export async function invitePairingByEmail(params: {
         recipient_type: 'user',
         recipient_email: params.partnerEmail.trim().toLowerCase(),
         created_by: params.fromUserId,
+        skip_email: true,
       })
     } catch {
       /* optionnel */

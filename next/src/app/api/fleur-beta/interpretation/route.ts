@@ -14,9 +14,9 @@ export const dynamic = 'force-dynamic'
 
 const Q_BY_ID = new Map(FLEUR_BETA_QUESTION_BANK.map((q) => [q.id, q]))
 
-function safeLocale(s: string | undefined): 'fr' | 'en' | 'es' {
-  const l = String(s ?? 'fr').toLowerCase()
-  if (l === 'en' || l === 'es' || l === 'fr') return l
+function safeLocale(s: string | undefined): 'fr' | 'en' | 'es' | 'it' | 'de' {
+  const l = String(s ?? 'fr').toLowerCase().split('-')[0]
+  if (l === 'en' || l === 'es' || l === 'it' || l === 'de' || l === 'fr') return l
   return 'fr'
 }
 

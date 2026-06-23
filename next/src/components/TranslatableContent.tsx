@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useMemo, type ElementType } from 'react'
+import { useState, useMemo, useEffect, type ElementType } from 'react'
 import { useStore } from '@/store/useStore'
 import { translateText } from '@/lib/api-client'
 import { t } from '@/i18n'
-import { SUPPORTED_LOCALES } from '@/i18n'
 
 const STOP_WORDS: Record<string, Set<string>> = {
   fr: new Set([
@@ -31,6 +30,18 @@ const STOP_WORDS: Record<string, Set<string>> = {
     'would', 'could', 'should', 'do', 'did', 'does', 'so', 'if', 'all', 'can',
     'which', 'when', 'there',
   ]),
+  it: new Set([
+    'il', 'lo', 'la', 'i', 'gli', 'le', 'un', 'una', 'di', 'che', 'e', 'è',
+    'in', 'per', 'con', 'su', 'da', 'del', 'della', 'dei', 'non', 'si', 'ma',
+    'come', 'più', 'anche', 'tutto', 'bene', 'questo', 'questa', 'sono', 'ho',
+    'hai', 'ha', 'noi', 'voi', 'loro', 'io', 'tu', 'lui', 'lei', 'essere',
+  ]),
+  de: new Set([
+    'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'einem',
+    'und', 'ist', 'in', 'zu', 'mit', 'auf', 'für', 'von', 'nicht', 'sich',
+    'auch', 'als', 'an', 'er', 'sie', 'es', 'wir', 'ihr', 'ich', 'du', 'aber',
+    'oder', 'wenn', 'wie', 'noch', 'nur', 'schon', 'sein', 'haben', 'wird',
+  ]),
 }
 
 function detectLang(text: string): string | null {
@@ -40,9 +51,9 @@ function detectLang(text: string): string | null {
       .toLowerCase()
       .slice(0, 600)
       .match(/\b[a-zàâäéèêëîïôùûüÿæœç]{2,}\b/g) || []
-  const scores: Record<string, number> = { fr: 0, es: 0, en: 0 }
+  const scores: Record<string, number> = { fr: 0, es: 0, en: 0, it: 0, de: 0 }
   for (const w of words) {
-    for (const lang of ['fr', 'es', 'en']) {
+    for (const lang of Object.keys(STOP_WORDS)) {
       if (STOP_WORDS[lang]?.has(w)) scores[lang]++
     }
   }
@@ -68,63 +79,48 @@ export function TranslatableContent({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const displayText = translated ?? text
   const detectedLang = useMemo(() => detectLang(text), [text])
   const sourceLang = detectedLang || locale
-  const otherLocales = SUPPORTED_LOCALES.filter((l) => l.code !== sourceLang)
+  const needsTranslation = Boolean(text?.trim()) && locale !== sourceLang
 
-  const handleTranslate = async (target: string) => {
-    if (!text?.trim()) return
+  useEffect(() => {
+    if (!needsTranslation) {
+      setTranslated(null)
+      setLoading(false)
+      setError(null)
+      return
+    }
+
+    let cancelled = false
     setLoading(true)
     setError(null)
-    try {
-      const result = await translateText(text, target, sourceLang)
-      setTranslated(result)
-    } catch (e) {
-      setError((e as Error)?.message || t('common.translateError'))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const showOriginal = () => {
     setTranslated(null)
-    setError(null)
-  }
+
+    translateText(text, locale, sourceLang)
+      .then((result) => {
+        if (!cancelled) setTranslated(result?.trim() || null)
+      })
+      .catch((e) => {
+        if (!cancelled) setError((e as Error)?.message || t('common.translateError'))
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [text, locale, sourceLang, needsTranslation])
+
+  const displayText = needsTranslation && translated ? translated : text
 
   return (
     <span className={`block ${className}`}>
-      <As {...rest}>{displayText}</As>
-      {text?.trim() && (
-        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-          {translated ? (
-            <button
-              type="button"
-              onClick={showOriginal}
-              className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 underline"
-            >
-              {locale === 'fr'
-                ? 'Voir original'
-                : locale === 'es'
-                  ? 'Ver original'
-                  : 'Show original'}
-            </button>
-          ) : (
-            otherLocales.map(({ code, label }) => (
-              <button
-                key={code}
-                type="button"
-                onClick={() => handleTranslate(code)}
-                disabled={loading}
-                className="text-xs text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 underline disabled:opacity-50"
-              >
-                {loading ? t('common.translating') : t('common.translateTo', { lang: label })}
-              </button>
-            ))
-          )}
-          {error && <span className="text-xs text-red-500">{error}</span>}
-        </span>
+      {loading && needsTranslation && !translated && (
+        <span className="text-xs text-slate-500 italic mb-1 block">{t('common.translating')}</span>
       )}
+      <As {...rest}>{displayText}</As>
+      {error && <span className="text-xs text-red-500 mt-1 block">{error}</span>}
     </span>
   )
 }

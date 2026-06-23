@@ -49,9 +49,10 @@ export async function POST(req: NextRequest) {
       created_by: uid,
       source_type: 'dyad',
       source_id: dyad.id,
+      skip_email: true,
     }).catch(() => {})
 
-    void sendDuoInviteEmail({
+    const emailResult = await sendDuoInviteEmail({
       to: email,
       inviterName,
       inviterDisplayName: inviterDisplay,
@@ -59,9 +60,12 @@ export async function POST(req: NextRequest) {
       scores: petals,
       kind: 'couple_garden',
       ctaLabel: 'Rejoindre le Jardin du duo',
-    }).catch(() => {})
+    }).catch(() => ({ sent: false as const }))
 
-    return NextResponse.json({ dyad, token, inviteUrl }, { status: 201 })
+    return NextResponse.json(
+      { dyad, token, inviteUrl, email_sent: emailResult.sent },
+      { status: 201 }
+    )
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json({ error: e.message }, { status: e.status || 400 })
