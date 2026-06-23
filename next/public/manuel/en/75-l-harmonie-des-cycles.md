@@ -1,0 +1,15 @@
+# THE HARMONY OF CYCLES
+
+> Book pages (table of contents): 154–155 · PDF p. 154–155 (estimated from extracted text)
+
+Extended description: The Harmony of Cycles expresses the subtle adjustment of the world's movements, the invisible rhythm where everything transforms without breaking. The circular breath of the world, The Harmony of Cycles is the steady beat of the universe's great heart. It is the card of subtle order, the kind that does not impose itself but breathes through everything: birth, flowering, decline, recommencement. It teaches trust in movement, the peace of the eternal flow, the certainty that all returns transformed. In the tarot, it represents dynamic balance, the intelligence of life at work. The cycle is not a loop: it is an ascending spiral.
+Light keywords: Sacred rhythm, balance, circulation, transformation, breath of the world, trust, unity, fluidity, conscious temporality.
+Shadow: Forgetting the rhythm or breaking the flow. Under its shadow, The Harmony of Cycles becomes discord. It is the card of inner disorder, of misalignment with the right time, of impatience, resistance to change, or fear of passage. It warns that when one tries to freeze life, the current breaks. Imbalance is not a mistake, but an invitation to find the center. THE HARMONY OF CYCLES Represents sacred rhythm and temporal balance. The wheel of seasons with the sun, moon, and plant symbols evokes the eternal dance of passing time. It symbolizes the acceptance of natural cycles, the wisdom of life's seasons, and trust in the universal flow.
+Shadow keywords: Impatience, resistance, desynchronization, rigidity, chaos, fear of change, fatigue of time.
+Integration paths: Reconnect to the rhythm of the body, the Earth, and the sky. Observe the seasons of one's life without judgment. Accept that transformation is the purest form of stability. Breathe consciously to regain natural movement. In a reading, The Harmony of Cycles evokes a return to inner order, the healing of imbalances, or awareness of the global flow; a reminder that Life always works in unison.
+Exercise / Meditation: Sit in stillness. Visualize a circle of light slowly turning around you. With each rotation, feel your breath align with this movement. Silently say: "Everything changes, everything returns, everything rises." The Harmony of Cycles is the silent song of the universe in motion. It teaches that all that lives aligns with a vaster rhythm, a breath that traverses worlds. In the Grand Tarot Fleur d'ÅmÔurs, it represents the etheric principle of sacred time, the consciousness of the cycle as an instrument of creation. It reminds us that true stability is not immobility: it is fidelity to movement.
+Element: Ether (the binder of the four elements)
+Polarity: Unifying (neither masculine nor feminine, fluid totality)
+Symbolic correspondences: Law of return, Cosmic balance, Circulation of the living
+In resonance: Earth (The Humus), Water (The Estuary), Air (The Trade Wind), Fire (The Ember), Ether (The Starry Silence)
+Root question: "Is it time to act, or time to wait for the wheel to turn?"

@@ -7,9 +7,11 @@
 import { createHash } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { openrouterCall } from '@/lib/openrouter'
+import { getLlmMeta, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 import { cacheGet, cacheSet } from '@/lib/server-cache'
+import { AiAccessDeniedError, aiAccessErrorResponse, guardedLlmCall, logAiCacheHit } from '@/lib/ai-guard'
+import { buildSystemPrompt } from '@/lib/ai-system-prompt'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,9 +27,15 @@ function resolveLocale(req: NextRequest, bodyLocale?: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  let userId: string
   try {
-    await requireAuth(req)
+    ;({ userId } = await requireAuth(req))
+  } catch {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+  const uid = parseInt(userId, 10)
 
+  try {
     const body = (await req.json().catch(() => ({}))) as {
       type?: string
       intention?: string
@@ -44,16 +52,18 @@ export async function POST(req: NextRequest) {
     const intention = String(body.intention ?? '').trim().slice(0, 400)
     const locale = resolveLocale(req, body.locale)
 
-    // Cache : même tirage + intention + locale → même interprétation.
     const cacheKey =
       'tarot_interp:' +
       createHash('sha256')
         .update(JSON.stringify({ type, intention, locale, cards: cards.map((c) => c.name) }))
         .digest('hex')
     const cached = cacheGet<string>(cacheKey)
-    if (cached) return NextResponse.json({ interpretation: cached, cached: true })
+    if (cached) {
+      void logAiCacheHit('tarot-interpretation', uid, cached.length)
+      return NextResponse.json({ interpretation: cached, cached: true })
+    }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!(await isLlmConfigured())) {
       return NextResponse.json({ interpretation: '' })
     }
 
@@ -73,28 +83,36 @@ export async function POST(req: NextRequest) {
         ? "Le tirage comporte 4 cartes : 1) situation actuelle, 2) obstacle ou tension, 3) ressource disponible, 4) direction d'évolution."
         : 'Le tirage comporte une seule carte : un éclairage du moment présent.'
 
-    const system =
-      "Tu es un guide symbolique bienveillant du jardin Fleur d'AmOurs. " +
+    const baseSystem =
       'Tu interprètes un tirage de cartes relationnelles (pas de divination, pas de prédiction). ' +
       positions +
       " Relie les cartes entre elles et à l'intention si elle est fournie. " +
       'Ton chaleureux et concret, jamais clinique ni ésotérique. ' +
-      'Réponds en texte simple (pas de JSON, pas de markdown), 3 paragraphes maximum, 1200 caractères maximum.' +
-      getLangInstruction(locale)
+      'Réponds en texte simple (pas de JSON, pas de markdown), 3 paragraphes maximum, 1200 caractères maximum.'
+
+    const system = await buildSystemPrompt({
+      taskId: 'tarot-interpretation',
+      basePrompt: baseSystem,
+      locale,
+    })
+    const systemWithLang = `${system}\n${getLangInstruction(locale)}`
 
     const userContent = intention ? `Intention : ${intention}\n\n${cardsText}` : cardsText
 
-    const result = await openrouterCall(
-      system,
-      [{ role: 'user', content: userContent }],
-      { rawText: true, maxTokens: 700 }
-    )
+    const { result } = await guardedLlmCall({
+      taskId: 'tarot-interpretation',
+      userId: uid,
+      system: systemWithLang,
+      messages: [{ role: 'user', content: userContent }],
+      options: { rawText: true, maxTokens: 700 },
+    })
 
     const interpretation = typeof result === 'string' ? result.trim().slice(0, 2000) : ''
     if (interpretation) cacheSet(cacheKey, interpretation, CACHE_TTL_MS)
-    return NextResponse.json({ interpretation })
+    return NextResponse.json({ interpretation, provider: (await getLlmMeta('light')).provider })
   } catch (err: unknown) {
+    if (err instanceof AiAccessDeniedError) return aiAccessErrorResponse(err.result)
     const e = err as { status?: number; message?: string }
-    return NextResponse.json({ error: e.message ?? 'Erreur' }, { status: e.status || 401 })
+    return NextResponse.json({ error: e.message ?? 'Erreur' }, { status: e.status || 500 })
   }
 }

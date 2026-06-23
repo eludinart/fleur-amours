@@ -269,6 +269,30 @@ export async function sendInviteEmail(params: {
   })
 }
 
+export async function sendDuoInviteEmail(
+  params: {
+    to: string
+    subject?: string
+    inviterName: string
+    inviterDisplayName?: string | null
+    inviteUrl: string
+    scores: Record<string, number>
+    kind: 'a_deux_porte' | 'a_deux_complet' | 'duo_classic'
+    porteKey?: string | null
+    ctaLabel?: string
+  }
+): Promise<{ sent: boolean; error?: string }> {
+  const { buildDuoInviteEmailContent } = await import('./email-duo-invite')
+  const { html, text, subject } = buildDuoInviteEmailContent(params)
+  return sendTransactionalEmail({
+    to: params.to,
+    subject: params.subject ?? subject,
+    html,
+    text,
+    skipPrefs: true,
+  })
+}
+
 export async function sendContactConfirmationEmail(params: {
   to: string
   name?: string | null

@@ -16,6 +16,7 @@ export interface OpenRouterOptions {
   responseFormatJson?: boolean
   timeoutMs?: number
   maxAttempts?: number
+  model?: string
 }
 
 /**
@@ -33,6 +34,7 @@ export async function openrouterCall(
     responseFormatJson = false,
     timeoutMs = 90000,
     maxAttempts = 2,
+    model,
   } = options
 
   const apiKey = process.env.OPENROUTER_API_KEY
@@ -41,7 +43,7 @@ export async function openrouterCall(
   }
 
   const payload = {
-    model: getOpenRouterModel(),
+    model: model || getOpenRouterModel(),
     messages: [
       { role: 'system' as const, content: system },
       ...messages,

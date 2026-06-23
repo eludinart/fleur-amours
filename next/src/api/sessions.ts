@@ -5,9 +5,10 @@ export const sessionsApi = {
   update: (data: Record<string, unknown>) => api.post('/api/sessions/update', data),
   planProgress: (data: { id: number | string; completed: number[]; bilan?: string }) =>
     api.post('/api/sessions/plan-progress', data),
-  my: (status?: string) => {
+  my: (status?: string, limit?: number) => {
     const p = new URLSearchParams()
     if (status) p.set('status', status)
+    if (limit != null && limit > 0) p.set('limit', String(limit))
     const qs = p.toString()
     return api.get(`/api/sessions/my${qs ? '?' + qs : ''}`)
   },

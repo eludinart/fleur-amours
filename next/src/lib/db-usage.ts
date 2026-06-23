@@ -7,7 +7,7 @@ import { getPool, isDbConfigured, table } from '@/lib/db'
 
 type SqlExecutor = Pick<Pool, 'execute'>
 
-export type UsageKey = 'chat_messages' | 'sessions' | 'tirages' | 'fleur_submits'
+export type UsageKey = 'chat_messages' | 'sessions' | 'tirages' | 'fleur_submits' | 'ai_light_calls'
 
 export type UsageCounters = Record<`${UsageKey}_count`, number> & { period: string }
 
@@ -31,10 +31,17 @@ export function ensureUsageTable(exec: SqlExecutor): Promise<void> {
         sessions_count INT NOT NULL DEFAULT 0,
         tirages_count INT NOT NULL DEFAULT 0,
         fleur_submits_count INT NOT NULL DEFAULT 0,
+        ai_light_calls_count INT NOT NULL DEFAULT 0,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, period)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    `).then(() => undefined).catch((err) => { _ensureUsageTablePromise = null; throw err })
+    `).then(async () => {
+      await exec
+        .execute(
+          `ALTER TABLE ${prefix}fleur_user_usage_monthly ADD COLUMN IF NOT EXISTS ai_light_calls_count INT NOT NULL DEFAULT 0`
+        )
+        .catch(() => {})
+    }).then(() => undefined).catch((err) => { _ensureUsageTablePromise = null; throw err })
   }
   return _ensureUsageTablePromise
 }
@@ -54,6 +61,7 @@ export async function readMonthlyUsage(userId: number, period = currentPeriod())
       sessions_count: 0,
       tirages_count: 0,
       fleur_submits_count: 0,
+      ai_light_calls_count: 0,
     }
   }
   const pool = getPool()
@@ -61,7 +69,7 @@ export async function readMonthlyUsage(userId: number, period = currentPeriod())
   await ensureRow(pool, userId, period)
 
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT chat_messages_count, sessions_count, tirages_count, fleur_submits_count
+    `SELECT chat_messages_count, sessions_count, tirages_count, fleur_submits_count, ai_light_calls_count
      FROM ${TBL()} WHERE user_id = ? AND period = ? LIMIT 1`,
     [userId, period]
   )
@@ -72,6 +80,7 @@ export async function readMonthlyUsage(userId: number, period = currentPeriod())
     sessions_count: Math.max(0, Number(r.sessions_count) || 0),
     tirages_count: Math.max(0, Number(r.tirages_count) || 0),
     fleur_submits_count: Math.max(0, Number(r.fleur_submits_count) || 0),
+    ai_light_calls_count: Math.max(0, Number(r.ai_light_calls_count) || 0),
   }
 }
 
@@ -92,6 +101,7 @@ export async function incrementMonthlyUsage(
     ['sessions', 'sessions_count'],
     ['tirages', 'tirages_count'],
     ['fleur_submits', 'fleur_submits_count'],
+    ['ai_light_calls', 'ai_light_calls_count'],
   ]
   for (const [k, col] of map) {
     const n = Math.floor(Number(delta[k] ?? 0))
@@ -106,6 +116,10 @@ export async function incrementMonthlyUsage(
     `UPDATE ${TBL()} SET ${updates.join(', ')}, updated_at = NOW() WHERE user_id = ? AND period = ?`,
     sqlParams
   )
+}
+
+export async function incrementUsage(userId: number, key: UsageKey, amount = 1): Promise<void> {
+  await incrementMonthlyUsage(userId, { [key]: amount })
 }
 
 export async function creditMonthlyUsage(
@@ -126,6 +140,7 @@ export async function creditMonthlyUsage(
     ['sessions', 'sessions_count'],
     ['tirages', 'tirages_count'],
     ['fleur_submits', 'fleur_submits_count'],
+    ['ai_light_calls', 'ai_light_calls_count'],
   ]
   for (const [k, col] of map) {
     const n = Math.floor(Number(credit[k] ?? 0))

@@ -10,11 +10,11 @@ import { isDbConfigured } from '@/lib/db'
 import { getUserTimeline, timelineSignature } from '@/lib/db-timeline'
 import { syncUserTimeline } from '@/lib/db-timeline-sync'
 import { my as tarotMy } from '@/lib/db-tarot'
+import { myPaperDraws } from '@/lib/db-paper-draw'
 import { listByEmailForTimeline } from '@/lib/db-sessions'
 import { resolveUserPetalsProfile } from '@/lib/resolve-user-petals'
 import { getCachedZenBrief, setCachedZenBrief, zenBriefSignature, normalizeZenBriefPayload, type ZenBriefPayload } from '@/lib/db-zen-brief'
-import { openrouterCall } from '@/lib/openrouter'
-import { getOpenRouterModel } from '@/lib/openrouter-config'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 import { PETAL_ORDER_IDS } from '@/lib/petal-theme'
 import {
@@ -104,10 +104,16 @@ function buildContext(params: {
     .slice(0, 12)
     .map((r) => {
       const intent = String(r.intention ?? '').trim()
-      const refl = String(r.reflection ?? '').trim()
-      const type = String(r.type ?? 'simple')
+      const refl = String(r.reflection ?? r.interpretation ?? '').trim()
+      const type = String(r.type ?? r.layout_template ?? 'simple')
       if (!intent && !refl) return ''
-      const parts = [type === 'four' ? 'Tirage 4 portes' : 'Tirage']
+      const parts = [
+        type === 'four' || type === 'four_doors'
+          ? 'Tirage 4 portes'
+          : type === 'paper' || type === 'paper_draw' || type === 'flower_8'
+            ? 'Tirage papier'
+            : 'Tirage',
+      ]
       if (intent) parts.push(`intention: « ${intent.slice(0, 160)} »`)
       if (refl) parts.push(`réflexion: ${refl.slice(0, 140)}`)
       return parts.join(' — ')
@@ -219,15 +225,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ brief, cached: false })
     }
 
-    const [{ items: readings }, { items: sessions }] = await Promise.all([
+    const [{ items: readings }, { items: paperDraws }, sessionsResult] = await Promise.all([
       tarotMy(String(uid), email),
+      myPaperDraws(String(uid)),
       email ? listByEmailForTimeline(email, 12) : Promise.resolve({ items: [] as Record<string, unknown>[] }),
     ])
+    const sessions = sessionsResult.items
+
+    const mergedReadings = [
+      ...(readings as Record<string, unknown>[]),
+      ...(paperDraws as Record<string, unknown>[]).map((p) => ({
+        ...p,
+        type: 'paper',
+        reflection: p.interpretation,
+      })),
+    ]
 
     const context = buildContext({
       petals,
       events,
-      readings: readings as Record<string, unknown>[],
+      readings: mergedReadings,
       sessions: sessions as Record<string, unknown>[],
       shadowZones: detectShadowZones({
         petals: petals ?? {},
@@ -246,7 +263,7 @@ export async function POST(req: NextRequest) {
       'Interdits : compteur d\'activités, jargon clinique, haïku, généralités vides, phrase inachevée.\n' +
       getLangInstruction(locale)
 
-    const result = await openrouterCall(
+    const result = await llmCallForTask('zen-brief', 
       system,
       [{ role: 'user', content: context || 'Peu de données — inviter à explorer avec bienveillance.' }],
       { responseFormatJson: true, maxTokens: 1200 }
@@ -262,7 +279,8 @@ export async function POST(req: NextRequest) {
         aspirations: String(r.aspirations ?? '').trim() || fb.aspirations,
         movement: String(r.movement ?? r.focus ?? '').trim() || fb.movement,
       })
-      await setCachedZenBrief(uid, locale, signature, brief, getOpenRouterModel()).catch(() => {})
+      const { model } = await getLlmMetaForTask('zen-brief')
+      await setCachedZenBrief(uid, locale, signature, brief, model).catch(() => {})
       return NextResponse.json({ brief, cached: false })
     }
 

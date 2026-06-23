@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState, useMemo } from 'react'
 import { dashboardApi, type ZenBrief } from '@/api/dashboard'
 import { PETAL_DEFS } from '@/components/FlowerSVG'
@@ -171,9 +172,15 @@ export function ZenHomeBrief({
 
   if (!hasAnyActivity) {
     return (
-      <div className="rounded-2xl border border-white/12 bg-white/[0.05] backdrop-blur-sm px-4 py-4 mb-5">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-teal-300/75 mb-2">{t('fleurZen.briefTitle')}</p>
-        <p className="text-sm text-violet-100/90 leading-relaxed">{t('fleurZen.briefNoData')}</p>
+      <div className="rounded-2xl border border-violet-400/25 bg-gradient-to-br from-violet-950/40 to-rose-950/20 backdrop-blur-sm px-4 py-5 mb-5 space-y-3">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-teal-300/75">{t('fleurZen.briefTitle')}</p>
+        <p className="text-sm text-violet-100/95 leading-relaxed font-medium">{t('fleurZen.briefNoDataWow')}</p>
+        <Link
+          href="/a-deux/par-une-porte?welcome=1"
+          className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-rose-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-500/20 hover:opacity-95 transition-opacity"
+        >
+          {t('fleurZen.briefNoDataCta')}
+        </Link>
       </div>
     )
   }

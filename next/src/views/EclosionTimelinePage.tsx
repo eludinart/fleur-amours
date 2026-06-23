@@ -8,6 +8,7 @@ import { useStore } from '@/store/useStore'
 const SOURCE_META: Record<string, { icon: string; tint: string }> = {
   session: { icon: '🌿', tint: 'border-violet-200 bg-violet-50 dark:border-violet-900 dark:bg-violet-950/30' },
   tirage: { icon: '🃏', tint: 'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30' },
+  paper_draw: { icon: '📷', tint: 'border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30' },
   fleur: { icon: '🌸', tint: 'border-rose-200 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/30' },
   dreamscape: { icon: '🌙', tint: 'border-indigo-200 bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/30' },
   diagnostic: { icon: '📋', tint: 'border-cyan-200 bg-cyan-50 dark:border-cyan-900 dark:bg-cyan-950/30' },

@@ -64,13 +64,23 @@ function toneBadgeClass(tone: string | undefined, zen: boolean) {
 }
 
 function typeChipClass(
-  kind: 'session' | 'session_anchor' | 'dreamscape' | 'tirage',
+  kind: 'session' | 'session_anchor' | 'dreamscape' | 'tirage' | 'paper_draw' | 'fleur' | 'fleur_duo' | 'fleur_beta',
   zen: boolean
 ) {
+  if (kind === 'fleur' || kind === 'fleur_duo' || kind === 'fleur_beta') {
+    return zen
+      ? 'bg-fuchsia-600/28 text-fuchsia-50 border border-fuchsia-400/35'
+      : 'bg-fuchsia-100 dark:bg-fuchsia-950/50 text-fuchsia-950 dark:text-fuchsia-100 border border-fuchsia-300/55 dark:border-fuchsia-800/45'
+  }
   if (kind === 'dreamscape') {
     return zen
       ? 'bg-violet-600/30 text-violet-100 border border-violet-400/35'
       : 'bg-violet-100 dark:bg-violet-950/55 text-violet-900 dark:text-violet-100 border border-violet-300/60 dark:border-violet-700/45'
+  }
+  if (kind === 'paper_draw') {
+    return zen
+      ? 'bg-amber-600/28 text-amber-50 border border-amber-400/35'
+      : 'bg-amber-100 dark:bg-amber-950/50 text-amber-950 dark:text-amber-100 border border-amber-300/55 dark:border-amber-800/45'
   }
   if (kind === 'tirage') {
     return zen
@@ -158,14 +168,30 @@ export function ChronicleList({
         ? (item.type as 'session' | 'session_anchor')
         : item.type === 'dreamscape'
           ? 'dreamscape'
-          : 'tirage'
+          : item.type === 'paper_draw'
+            ? 'paper_draw'
+            : item.type === 'fleur_duo'
+              ? 'fleur_duo'
+              : item.type === 'fleur_beta'
+                ? 'fleur_beta'
+                : item.type === 'fleur'
+                  ? 'fleur'
+                  : 'tirage'
     const typeChip = typeChipClass(kind, zen)
     const typeLabel =
       kind === 'dreamscape'
         ? t('chronicle.dreamscape')
-        : kind === 'tirage'
-          ? t('chronicle.tirage')
-          : t('chronicle.session')
+        : kind === 'paper_draw'
+          ? t('chronicle.paperDraw')
+          : kind === 'fleur_duo'
+            ? t('chronicle.fleurDuo')
+            : kind === 'fleur_beta'
+              ? t('chronicle.fleurBeta')
+              : kind === 'fleur'
+                ? t('chronicle.fleurSolo')
+                : kind === 'tirage'
+                  ? t('chronicle.tirage')
+                  : t('chronicle.session')
 
     const chips = (
       <div className="flex flex-wrap items-center gap-1.5 mb-2">
@@ -227,6 +253,65 @@ export function ChronicleList({
             zen
               ? 'hover:border-sky-400/45 hover:ring-sky-400/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400/50'
               : 'hover:border-sky-400/45 hover:bg-sky-50/70 dark:hover:bg-sky-950/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500/40'
+          }`}
+        >
+          {body}
+        </Link>
+      )
+    }
+    if (item.type === 'paper_draw' && item.id != null && String(item.id) !== '') {
+      const rid = encodeURIComponent(String(item.id))
+      return (
+        <Link
+          href={`/tirage-papier?reading=${rid}`}
+          className={`${shellCls} ${
+            zen
+              ? 'hover:border-amber-400/45 hover:ring-amber-400/15'
+              : 'hover:border-amber-400/45 hover:bg-amber-50/70 dark:hover:bg-amber-950/40'
+          }`}
+        >
+          {body}
+        </Link>
+      )
+    }
+    if (item.type === 'fleur_duo' && item.token) {
+      return (
+        <Link
+          href={`/duo?token=${encodeURIComponent(String(item.token))}`}
+          className={`${shellCls} ${
+            zen
+              ? 'hover:border-fuchsia-400/45 hover:ring-fuchsia-400/15'
+              : 'hover:border-fuchsia-400/45 hover:bg-fuchsia-50/70 dark:hover:bg-fuchsia-950/40'
+          }`}
+        >
+          {body}
+        </Link>
+      )
+    }
+    if (item.type === 'fleur_beta' && item.id != null && String(item.id) !== '') {
+      const rid = encodeURIComponent(String(item.id))
+      return (
+        <Link
+          href={`/fleur-beta?result=${rid}`}
+          className={`${shellCls} ${
+            zen
+              ? 'hover:border-fuchsia-400/45 hover:ring-fuchsia-400/15'
+              : 'hover:border-fuchsia-400/45 hover:bg-fuchsia-50/70 dark:hover:bg-fuchsia-950/40'
+          }`}
+        >
+          {body}
+        </Link>
+      )
+    }
+    if (item.type === 'fleur' && item.id != null && String(item.id) !== '') {
+      const rid = encodeURIComponent(String(item.id))
+      return (
+        <Link
+          href={`/fleur?result=${rid}`}
+          className={`${shellCls} ${
+            zen
+              ? 'hover:border-fuchsia-400/45 hover:ring-fuchsia-400/15'
+              : 'hover:border-fuchsia-400/45 hover:bg-fuchsia-50/70 dark:hover:bg-fuchsia-950/40'
           }`}
         >
           {body}

@@ -1,5 +1,25 @@
 import type { NextConfig } from 'next'
 import path from 'path'
+import { readFileSync, existsSync } from 'fs'
+
+/** Racine .env — Next ne lit que next/ par défaut ; aligné sur dev-vps. */
+function applyWorkspaceEnv() {
+  const root = path.resolve(__dirname, '..')
+  for (const name of ['sync-config.env', 'docker-compose.env', '.env']) {
+    const filePath = path.join(root, name)
+    if (!existsSync(filePath)) continue
+    for (const line of readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^([^#=]+)=(.*)$/)
+      if (!m) continue
+      const key = m[1].trim()
+      const val = m[2].trim().replace(/^["']|["']$/g, '')
+      if (process.env[key] === undefined || process.env[key] === '') {
+        process.env[key] = val
+      }
+    }
+  }
+}
+applyWorkspaceEnv()
 
 // Node API : MariaDB direct via les routes Next.js
 const useNodeApi = process.env.USE_NODE_API !== 'false'
@@ -25,7 +45,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
           // HSTS : appliqué seulement derrière HTTPS (prod Coolify/Hostinger)
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
         ],

@@ -6,11 +6,14 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { openrouterCall } from '@/lib/openrouter'
+import { getLlmMeta, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 import { getById, update } from '@/lib/db-sessions'
 import { isDbConfigured } from '@/lib/db'
-import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
+import { buildSystemPrompt } from '@/lib/ai-system-prompt'
+import { AiAccessDeniedError, aiAccessErrorResponse, guardedLlmCall, logAiCacheHit } from '@/lib/ai-guard'
+import { resolveAiAccess } from '@/lib/ai-access'
+import { deductSapForAiTask } from '@/lib/ai-billing'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,14 +35,16 @@ const PLAN14J_SYSTEM = `Tu es le Tuteur maïeutique du Jardin Fleur d'AmOurs. À
 - Réponds en JSON strict, sans texte avant ou après.`
 
 export async function POST(req: NextRequest) {
+  let userId: string
   try {
-    await requireAuth(req)
+    ;({ userId } = await requireAuth(req))
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json({ error: e?.message }, { status: e?.status || 401 })
   }
+  const uid = parseInt(userId, 10)
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(await isLlmConfigured())) {
     const fallbackThemes = [
       { theme: 'Ancrage', action: 'Respirer et observer.' },
       { theme: 'Présence', action: 'Prendre 3 souffles conscients.' },
@@ -89,6 +94,7 @@ export async function POST(req: NextRequest) {
       if (session?.plan14j && typeof session.plan14j === 'object') {
         const p = session.plan14j as Record<string, unknown>
         if (p.synthesis && Array.isArray(p.plan_14j) && (p.plan_14j as unknown[]).length > 0) {
+          void logAiCacheHit('plan14j', uid, JSON.stringify(p).length)
           return NextResponse.json({ ...p, cached: true })
         }
       }
@@ -135,16 +141,39 @@ export async function POST(req: NextRequest) {
     'Génère le plan personnalisé en JSON strict avec les clés: synthesis (string), levers (array de 3 strings), plan_14j (array de 14 objets {day, theme, action, context}).' +
     getLangInstruction(locale)
 
-  const planSystem = appendManuelReferenceToSystem(PLAN14J_SYSTEM, {
-    retrievalQuery: [notes, cardsDrawn.join(' ')].filter(Boolean).join('\n').slice(0, 4_000),
-    maxChars: 14_000,
+  const force = body.force === true
+  const access = await resolveAiAccess(uid, 'plan14j', { force })
+  if (!access.allowed) {
+    return aiAccessErrorResponse(access)
+  }
+
+  const planSystem = await buildSystemPrompt({
+    taskId: 'plan14j',
+    basePrompt: PLAN14J_SYSTEM,
     locale,
+    manuelQuery: [notes, cardsDrawn.join(' ')].filter(Boolean).join('\n').slice(0, 4_000),
+    manuelMaxChars: 14_000,
   })
 
-  const result = await openrouterCall(planSystem, [{ role: 'user', content: userContent }], {
-    maxTokens: 2400,
-    responseFormatJson: true,
-  })
+  let result: Record<string, unknown> | string | null = null
+  try {
+    const guarded = await guardedLlmCall({
+      taskId: 'plan14j',
+      userId: uid,
+      system: planSystem,
+      messages: [{ role: 'user', content: userContent }],
+      options: { maxTokens: 2400, responseFormatJson: true },
+      force,
+      skipAccessCheck: true,
+    })
+    result = guarded.result
+    if (access.billingMode === 'sap') {
+      await deductSapForAiTask(uid, 'plan14j', access, sessionId ? `s${sessionId}` : undefined)
+    }
+  } catch (e: unknown) {
+    if (e instanceof AiAccessDeniedError) return aiAccessErrorResponse(e.result)
+    result = null
+  }
 
   if (!result || typeof result !== 'object') {
     return NextResponse.json({

@@ -500,8 +500,9 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
         }
       }
 
-      if (res?._openrouter_error) {
-        toast(`IA dégradée : ${res._openrouter_error}`, 'warning')
+      const aiErr = res?._ai_error ?? res?._openrouter_error
+      if (aiErr) {
+        toast(`IA dégradée : ${aiErr}`, 'warning')
       }
     } catch (e) {
       console.error('Erreur analyze_mood:', e)

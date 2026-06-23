@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { authApi } from '@/api/auth'
 import { billingApi } from '@/api/billing'
 import { isCapacitor } from '@/lib/api-client'
+import DemoAccountBadge from '@/components/DemoAccountBadge'
 
 const APP_ROLES = ['user', 'admin', 'coach'] as const
 
@@ -43,6 +44,7 @@ type User = {
   credits?: number
   token_balance?: number
   eternal_sap?: number
+  is_demo?: boolean
 }
 
 type UsageData = {
@@ -282,8 +284,9 @@ function UserEditPanel({
             {(user.name || user.login || '?')[0].toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-slate-800 dark:text-slate-100 truncate">
-              {user.name || user.login}
+            <p className="font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5 flex-wrap">
+              <span className="truncate">{user.name || user.login}</span>
+              {user.is_demo ? <DemoAccountBadge /> : null}
             </p>
             <p className="text-xs text-slate-400 truncate">{user.email}</p>
             {user.last_login && (
@@ -965,6 +968,12 @@ export default function AdminUsersPage() {
             <p className="text-xs text-slate-500">Coachs</p>
           </div>
           <div className="rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-white/40 dark:border-slate-700/60 p-4">
+            <p className="text-2xl font-bold text-sky-500">
+              {users.items?.filter((u) => u.is_demo).length ?? 0}
+            </p>
+            <p className="text-xs text-slate-500">Comptes virtuels (démo)</p>
+          </div>
+          <div className="rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-white/40 dark:border-slate-700/60 p-4">
             <p className="text-2xl font-bold text-emerald-500">
               {redemptions.filter((r) => r.active).length}
             </p>
@@ -1068,8 +1077,9 @@ export default function AdminUsersPage() {
                           {(u.name || u.login || '?')[0].toUpperCase()}
                         </div>
                         <div className="min-w-0 truncate">
-                          <p className="font-medium text-slate-800 dark:text-slate-200 truncate">
-                            {u.name || u.login}
+                          <p className="font-medium text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5 flex-wrap">
+                            <span className="truncate">{u.name || u.login}</span>
+                            {u.is_demo ? <DemoAccountBadge /> : null}
                           </p>
                           <p className="text-[10px] text-slate-400 truncate">{u.login}</p>
                         </div>

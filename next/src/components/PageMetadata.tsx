@@ -18,6 +18,7 @@ const routeMeta: Record<
   fleur: { titleKey: 'fleur.title', descKey: 'fleur.introDesc' },
   duo: { titleKey: 'duo.title', descKey: 'duo.subtitle' },
   tirage: { titleKey: 'tarot.title', descKey: 'tarot.subtitle' },
+  'tirage-papier': { titleKey: 'paperDraw.title', descKey: 'paperDraw.subtitle' },
   chat: { title: 'Coach Eludein', descKey: 'onboarding.pillarAccompanyDesc' },
   presentation: { title: 'Présentation', descKey: 'presentation.welcomeSubtitle' },
   account: { titleKey: 'accountTitle', descKey: 'sap.desc' },

@@ -9,10 +9,10 @@
  * Config : sync-config.env, docker-compose.env (SMTP, secrets partagés) ou .env (surcharges locales)
  */
 import { spawn, spawnSync } from 'child_process'
-import { readFileSync, existsSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { platform } from 'os'
+import { loadRootEnv } from './load-root-env.mjs'
 
 /** Next `npm run dev` dans next/package.json */
 const NEXT_DEV_PORT = 3001
@@ -67,28 +67,7 @@ function killListenersOnPort(port) {
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 
-function loadEnv() {
-  const env = { ...process.env }
-  // Ordre : sync-config → docker-compose.env (SMTP, JWT prod…) → .env (surcharges locales)
-  for (const p of [
-    resolve(ROOT, 'sync-config.env'),
-    resolve(ROOT, 'docker-compose.env'),
-    resolve(ROOT, '.env'),
-  ]) {
-    if (existsSync(p)) {
-      // split sur /\r?\n/ : les fichiers .env en CRLF (Windows) laissaient sinon un \r
-      // en fin de valeur, et la regex `(.*)$` échouait → variables silencieusement ignorées
-      // (ex. JWT_SECRET non injecté → Next retombe sur le secret de dev → tokens invalides).
-      for (const line of readFileSync(p, 'utf8').split(/\r?\n/)) {
-        const m = line.match(/^([^#=]+)=(.*)$/)
-        if (m) env[m[1].trim()] = m[2].trim().replace(/^["']|["']$/g, '')
-      }
-    }
-  }
-  return env
-}
-
-const env = loadEnv()
+const env = loadRootEnv({ override: true })
 const SSH_HOST = env.SSH_VPS_HOST || env.VPS_HOST || '187.124.42.135'
 const SSH_USER = env.SSH_VPS_USER || env.VPS_USER || 'root'
 const TUNNEL_PORT = env.TUNNEL_LOCAL_PORT || '3307'

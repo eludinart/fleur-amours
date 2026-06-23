@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
 import { isDbConfigured } from '@/lib/db'
 import { addDyadEvent, getMyDyad, userInDyad } from '@/lib/db-dyads'
-import { openrouterCall } from '@/lib/openrouter'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Aucune dyade active' }, { status: 404 })
     }
 
-    const result = await openrouterCall(
+    const result = await llmCallForTask('relational-mediation', 
       systemPrompt(locale),
       [{ role: 'user', content: message.slice(0, 2000) }],
       { responseFormatJson: true, maxTokens: 700 }

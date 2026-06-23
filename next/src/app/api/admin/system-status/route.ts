@@ -5,6 +5,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/api-auth'
 import { isSmtpConfigured } from '@/lib/smtp'
+import { getAiRuntimeConfig, isActiveAiConfigured, resolveActiveModel } from '@/lib/db-ai-config'
+import { aiProviderLabel } from '@/lib/ai-providers'
 import os from 'os'
 
 export const dynamic = 'force-dynamic'
@@ -83,10 +85,13 @@ export async function GET(req: NextRequest) {
     const load = os.loadavg()
     const cpus = os.cpus()
 
-    const [publicIp, coolifyServers] = await Promise.all([
+    const [publicIp, coolifyServers, aiCfg] = await Promise.all([
       fetchPublicIp(),
       fetchCoolifyServers(),
+      getAiRuntimeConfig(),
     ])
+    const aiModel = await resolveActiveModel(aiCfg)
+    const aiConfigured = await isActiveAiConfigured(aiCfg)
 
     return NextResponse.json({
       hostname: os.hostname(),
@@ -117,6 +122,13 @@ export async function GET(req: NextRequest) {
         configured: isSmtpConfigured(),
         host: process.env.SMTP_HOST?.trim() || null,
         from: process.env.SMTP_FROM?.trim() || null,
+      },
+      ai: {
+        provider: aiCfg.provider,
+        provider_label: aiProviderLabel(aiCfg.provider),
+        model: aiModel,
+        configured: aiConfigured,
+        source: aiCfg.source,
       },
       coolify: coolifyServers
         ? {

@@ -33,23 +33,34 @@ import GraphPage from '@/views/GraphPage'
 import SciencePage from '@/views/SciencePage'
 import MatrixPage from '@/views/MatrixPage'
 import TarotPage from '@/views/TarotPage'
+import PaperDrawPage from '@/views/PaperDrawPage'
 import SessionPage from '@/views/SessionPage'
 import { SessionErrorBoundary } from '@/components/SessionErrorBoundary'
-import FleurPage from '@/views/FleurPage'
-import FleurBetaPage from '@/views/FleurBetaPage'
 import EclosionTimelinePage from '@/views/EclosionTimelinePage'
 import CheckinPage from '@/views/CheckinPage'
 import OnboardingDiagnosticPage from '@/views/OnboardingDiagnosticPage'
 import ProfileOnboardingPage from '@/views/ProfileOnboardingPage'
 import DyadePage from '@/views/DyadePage'
 import DuoPage from '@/views/DuoPage'
-import MesFleursPage from '@/views/MesFleursPage'
+import ADeuxHubPage from '@/views/a-deux/ADeuxHubPage'
+import ADeuxParUnePortePage from '@/views/a-deux/ADeuxParUnePortePage'
+import ADeuxCompletPage from '@/views/a-deux/ADeuxCompletPage'
+import ADeuxInvitationPage from '@/views/a-deux/ADeuxInvitationPage'
+import ADeuxResultPage from '@/views/a-deux/ADeuxResultPage'
+import MesDuosPage from '@/views/a-deux/MesDuosPage'
+import { RouteRedirect } from '@/components/RouteRedirect'
+import { DuoLegacyGate } from '@/components/DuoLegacyGate'
 import ManuelOnlinePage from '@/views/ManuelOnlinePage'
 import DreamscapePage from '@/views/DreamscapePage'
 import DreamscapeHistoriquePage from '@/views/DreamscapeHistoriquePage'
 import PrairiePage from '@/views/PrairiePage'
 import UserLisierePage from '@/views/UserLisierePage'
 import ClairierePage from '@/views/ClairierePage'
+import MesLiensPage from '@/views/MesLiensPage'
+import JardinFilPage from '@/views/JardinFilPage'
+import ConstellationsHubPage from '@/views/ConstellationsHubPage'
+import ConstellationPage from '@/views/ConstellationPage'
+import SalonsPage from '@/views/SalonsPage'
 import BoutiquePage from '@/views/BoutiquePage'
 import AdminDashboardPage from '@/views/AdminDashboardPage'
 import AdminTiragesPage from '@/views/AdminTiragesPage'
@@ -60,6 +71,7 @@ import AdminNotificationsPage from '@/views/AdminNotificationsPage'
 import AdminUsersPage from '@/views/AdminUsersPage'
 import AdminSessionsPage from '@/views/AdminSessionsPage'
 import AdminSciencePage from '@/views/AdminSciencePage'
+import AdminAiPage from '@/views/AdminAiPage'
 import AdminBroadcastsPage from '@/views/AdminBroadcastsPage'
 import AdminEmailsPage from '@/views/AdminEmailsPage'
 import AdminTelemetryPage from '@/views/AdminTelemetryPage'
@@ -67,6 +79,7 @@ import CoachSuiviPage from '@/views/CoachSuiviPage'
 import CoachPatientelePage from '@/views/CoachPatientelePage'
 import PushNotificationPriming from '@/components/PushNotificationPriming'
 import { ProfileOnboardingGuard } from '@/components/ProfileOnboardingGuard'
+import { CommunityOnboardingGuard } from '@/components/social/CommunityOnboardingGuard'
 import { MyceliumAccessProvider } from '@/contexts/MyceliumAccessContext'
 
 const AdminAnalyticsPage = dynamic(
@@ -181,7 +194,12 @@ function ProtectedLayout({
   if (adminOrCoach && !isAdmin && !isCoach) return null
   if (managerOrRh && !isAdmin && !isManager && !isRh) return null
 
-  return <>{children}</>
+  return (
+    <>
+      <CommunityOnboardingGuard />
+      {children}
+    </>
+  )
 }
 
 function AppRoutes() {
@@ -214,7 +232,7 @@ function AppRoutes() {
         <Suspense fallback={null}>
           <LocaleSync />
           <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
-            <LandingPage />
+            <LandingPage showIndividualSection />
           </div>
         </Suspense>
       )
@@ -310,6 +328,34 @@ function AppRoutes() {
         </Layout>
       </ProtectedLayout>
     ),
+    liens: (
+      <ProtectedLayout>
+        <Layout>
+          <MesLiensPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
+    pouls: (
+      <ProtectedLayout>
+        <Layout>
+          <JardinFilPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
+    constellations: (
+      <ProtectedLayout>
+        <Layout>
+          <ConstellationsHubPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
+    salons: (
+      <ProtectedLayout>
+        <Layout>
+          <SalonsPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
     boutique: (
       <ProtectedLayout>
         <Layout>
@@ -338,6 +384,13 @@ function AppRoutes() {
         </Layout>
       </ProtectedLayout>
     ),
+    'tirage-papier': (
+      <ProtectedLayout>
+        <Layout>
+          <PaperDrawPage />
+        </Layout>
+      </ProtectedLayout>
+    ),
     dreamscape: subRoute === 'historique' ? (
       <ProtectedLayout>
         <Layout>
@@ -363,14 +416,30 @@ function AppRoutes() {
     fleur: (
       <ProtectedLayout>
         <Layout>
-          <FleurPage />
+          <RouteRedirect to="/a-deux" />
         </Layout>
       </ProtectedLayout>
     ),
     'fleur-beta': (
       <ProtectedLayout>
         <Layout>
-          <FleurBetaPage />
+          <RouteRedirect to="/a-deux/par-une-porte" />
+        </Layout>
+      </ProtectedLayout>
+    ),
+    'a-deux': (
+      <ProtectedLayout>
+        <Layout>
+          <Suspense fallback={null}>
+            <ADeuxHubPage />
+          </Suspense>
+        </Layout>
+      </ProtectedLayout>
+    ),
+    'mes-duos': (
+      <ProtectedLayout>
+        <Layout>
+          <MesDuosPage />
         </Layout>
       </ProtectedLayout>
     ),
@@ -421,14 +490,14 @@ function AppRoutes() {
     duo: (
       <ProtectedLayout>
         <Layout>
-          <DuoPage />
+          <DuoLegacyGate />
         </Layout>
       </ProtectedLayout>
     ),
     'mes-fleurs': (
       <ProtectedLayout>
         <Layout>
-          <MesFleursPage />
+          <RouteRedirect to="/mes-duos" />
         </Layout>
       </ProtectedLayout>
     ),
@@ -613,6 +682,13 @@ function AppRoutes() {
           </Layout>
         </ProtectedLayout>
       ),
+      ai: (
+        <ProtectedLayout adminOnly>
+          <Layout>
+            <AdminAiPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
       telemetry: (
         <ProtectedLayout adminOnly>
           <Layout>
@@ -621,7 +697,7 @@ function AppRoutes() {
         </ProtectedLayout>
       ),
     }
-    const adminPage = adminPages[adminSubRoute] ?? adminPages[''] ?? adminPages.sessions
+    const adminPage = adminPages[adminSubRoute] ?? adminPages['']
     if (adminPage) return (
       <Suspense fallback={<PageFallback />}>
         <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
@@ -680,6 +756,67 @@ function AppRoutes() {
           <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
             <LocaleSync />
             {coachPage}
+          </div>
+        </Suspense>
+      )
+    }
+  }
+
+  // À deux — sous-routes (hub, par une porte, invitation partenaire, synthèse)
+  if (route === 'a-deux') {
+    const aDeuxSub = subRoute || ''
+    const aDeuxPages: Record<string, React.ReactNode> = {
+      '': (
+        <ProtectedLayout>
+          <Layout>
+            <Suspense fallback={null}>
+              <ADeuxHubPage />
+            </Suspense>
+          </Layout>
+        </ProtectedLayout>
+      ),
+      'par-une-porte': (
+        <ProtectedLayout>
+          <Layout>
+            <Suspense fallback={null}>
+              <ADeuxParUnePortePage />
+            </Suspense>
+          </Layout>
+        </ProtectedLayout>
+      ),
+      complet: (
+        <ProtectedLayout>
+          <Layout>
+            <ADeuxCompletPage />
+          </Layout>
+        </ProtectedLayout>
+      ),
+      invitation: (
+        <ProtectedLayout>
+          <Layout>
+            <Suspense fallback={null}>
+              <ADeuxInvitationPage />
+            </Suspense>
+          </Layout>
+        </ProtectedLayout>
+      ),
+      result: (
+        <ProtectedLayout>
+          <Layout>
+            <Suspense fallback={null}>
+              <ADeuxResultPage />
+            </Suspense>
+          </Layout>
+        </ProtectedLayout>
+      ),
+    }
+    const aDeuxPage = aDeuxPages[aDeuxSub] ?? aDeuxPages['']
+    if (aDeuxPage) {
+      return (
+        <Suspense fallback={<PageFallback />}>
+          <div className="flex-1 min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
+            <LocaleSync />
+            {aDeuxPage}
           </div>
         </Suspense>
       )
@@ -787,14 +924,22 @@ function AppRoutes() {
       <Suspense fallback={<PageFallback />}>
         <LocaleSync />
         <div className="scrollbar-cream min-h-[100svh] min-h-[100dvh] min-h-0 w-full overflow-y-auto overflow-x-hidden">
-          <LandingPage showAccessSection showIndividualSection={false} />
+          <LandingPage showIndividualSection />
         </div>
       </Suspense>
     )
   }
 
   const page =
-    route === 'mycelium' && isProtectedMyceliumSubRoute(subRoute)
+    route === 'constellation' && subRoute
+      ? (
+        <ProtectedLayout>
+          <Layout>
+            <ConstellationPage />
+          </Layout>
+        </ProtectedLayout>
+      )
+      : route === 'mycelium' && isProtectedMyceliumSubRoute(subRoute)
       ? renderMyceliumAppPage(subRoute)
       : (protectedPages[route] ?? protectedPages.home)
 

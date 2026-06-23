@@ -2,10 +2,11 @@
 
 import { useState, useRef, useLayoutEffect, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { Sidebar } from './Sidebar'
 import { ToastContainer } from './Toast'
 import { ImpersonationBanner } from '../ImpersonationBanner'
+import { LambdaViewBanner } from '../LambdaViewBanner'
+import { ViewModeSelector } from '../ViewModeSelector'
 import { SapGauge } from '../SapGauge'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/contexts/AuthContext'
@@ -27,7 +28,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     eternal_sap?: number
     total_accumulated_eternal?: number
   } | null>(null)
-  const { user, isAdmin, refreshUser } = useAuth()
+  const { user, refreshUser } = useAuth()
   const { theme, toggle } = useTheme()
   const fontSizePreference = useStore((s) => s.fontSizePreference)
   const locale = useStore((s) => s.locale)
@@ -36,8 +37,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     setI18nLocale(locale || 'fr')
   }
   const headerRef = useRef<HTMLElement>(null)
-  const pathname = usePathname() || ''
-  const pathWithoutBase = pathname.replace('/jardin', '').replace(/^\/+|\/+$/g, '') || ''
   const refreshAccessInFlight = useRef<Promise<void> | null>(null)
 
   useEffect(() => {
@@ -133,6 +132,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <ImpersonationBanner />
+        <LambdaViewBanner />
         <header
           ref={headerRef}
           className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 min-w-0 overflow-hidden relative z-10"
@@ -145,33 +145,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
           >
             ☰
           </button>
-          <nav className="md:hidden flex items-center gap-1 flex-1 min-w-0 overflow-x-auto overflow-y-hidden flex-nowrap scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            {[
-              { to: '/dreamscape', labelKey: 'dreamscapeShort', icon: '🌙' },
-              { to: '/session', labelKey: 'nav.session', icon: '🌿' },
-              { to: '/fleur', labelKey: 'nav.fleur', icon: '🌸' },
-              { to: '/duo', labelKey: 'nav.duo', icon: '💕' },
-              { to: '/mes-fleurs', labelKey: 'nav.mesFleurs', icon: '📄' },
-              { to: '/tirage', labelKey: 'nav.tirages', icon: '🎴' },
-              ...(isAdmin ? [{ to: '/admin', labelKey: 'nav.adminDashboard', icon: '📊' }, { to: '/campaigns', labelKey: 'campaigns', icon: '✉️' }] : []),
-            ].map(({ to, labelKey, icon }) => {
-              const isActive = pathWithoutBase === to.replace(/^\//, '') || (pathWithoutBase === '' && to === '/')
-              return (
-                <Link
-                  key={to}
-                  href={to}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0 min-w-0 ${
-                    isActive ? 'bg-accent/10 text-accent' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <span className="text-base shrink-0">{icon}</span>
-                  <span className="truncate w-full text-center">{t(labelKey)}</span>
-                </Link>
-              )
-            })}
-          </nav>
-          <span className="hidden md:block flex-1" />
+          {/*
+            Mobile : on n'expose qu'un wordmark discret. La navigation se fait via le drawer (☰),
+            qui partage la même source de vérité que le sidebar desktop (Sidebar.tsx).
+            On supprime ainsi la mini-barre horizontale qui dupliquait — et désynchronisait — le menu.
+          */}
+          <Link
+            href="/"
+            className="md:hidden flex items-center gap-1.5 min-w-0 text-sm font-bold text-accent truncate"
+          >
+            <span aria-hidden>🏡</span>
+            <span className="truncate">{t('nav.home') ?? 'Mon Jardin'}</span>
+          </Link>
+          <span className="flex-1" />
           <div className="shrink-0 flex items-center gap-1 sm:gap-2">
+            <ViewModeSelector />
             {user && (
               <SapGauge
                 tokenBalance={access?.token_balance ?? 0}
@@ -197,6 +185,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </header>
 
         <main
+          id="jardin-main-scroll"
           key={locale}
           className="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-hidden overscroll-none p-4 pb-[max(1rem,env(safe-area-inset-bottom,48px))] md:p-6 md:pb-6"
         >

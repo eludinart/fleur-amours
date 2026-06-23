@@ -32,6 +32,8 @@ export function isImmersiveParcoursPath(pathWithoutBaseSeg: string): boolean {
     'fleur',
     'fleur-beta',
     'duo',
+    'a-deux',
+    'mes-duos',
   ]
   for (const r of roots) {
     if (p === r || p.startsWith(`${r}/`)) return true

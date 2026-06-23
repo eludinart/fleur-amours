@@ -12,13 +12,16 @@ import { getMyResults } from './db-fleur'
 import { listFleurBetaResults } from './db-fleur-beta'
 import { listByEmailForTimeline } from './db-sessions'
 import { my as tarotMy } from './db-tarot'
+import { myPaperDraws } from './db-paper-draw'
 import { recordTimelineEvent } from './db-timeline'
 import { isDbConfigured } from './db'
 import { PETAL_ORDER_IDS } from './petal-theme'
 import {
   buildDreamscapeChronicleSummary,
+  buildPaperDrawChronicleSummary,
   buildReadingChronicleSummary,
   buildSessionChronicleSummary,
+  paperDrawTimelineTitle,
 } from './chronicle-summary'
 
 function petalsObjectToArray(petals: Record<string, number> | undefined): number[] | null {
@@ -110,6 +113,23 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
           occurredAt: (r.createdAt ?? r.created_at) as string,
         })
       )
+  }
+
+  const { items: paperDraws } = await myPaperDraws(String(userId))
+  for (const r of paperDraws) {
+    const id = parseInt(String(r.id ?? 0), 10)
+    if (!id) continue
+    const layout = String(r.layout_template ?? 'free')
+    tasks.push(
+      recordTimelineEvent({
+        userId,
+        source: 'paper_draw',
+        refId: id,
+        title: paperDrawTimelineTitle(layout),
+        summary: buildPaperDrawChronicleSummary(r)?.slice(0, 280) || null,
+        occurredAt: (r.createdAt ?? r.created_at) as string,
+      })
+    )
   }
 
   const { items: fleurItems } = await getMyResults(String(userId))

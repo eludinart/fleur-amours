@@ -228,7 +228,9 @@ export default function MyceliumDashboardPage() {
                         </ul>
                       )}
                       <p className="mt-2 text-xs text-slate-400">
-                        {synthesis.provider === 'openrouter' ? t('mycelium.synthesisAi') : t('mycelium.synthesisFallback')}
+                        {synthesis.provider === 'openrouter' || synthesis.provider === 'mistral'
+                          ? t('mycelium.synthesisAi')
+                          : t('mycelium.synthesisFallback')}
                       </p>
                     </>
                   ) : (

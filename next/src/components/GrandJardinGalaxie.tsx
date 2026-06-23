@@ -14,8 +14,15 @@ import {
 import ForceGraph2D from 'react-force-graph-2d'
 import { forceLink } from 'd3-force-3d'
 import { scoresToPetals } from '@/components/FlowerSVG'
-import { PETAL_DEFS } from '@/lib/petal-theme'
-import { loadGalaxieView, saveGalaxieView, resonanceBetween } from '@/lib/grand-jardin-view'
+import { PETAL_DEFS, PETAL_BY_ID } from '@/lib/petal-theme'
+import {
+  loadGalaxieView,
+  saveGalaxieView,
+  resonanceBetween,
+  complementarityBetween,
+  BOUSSOLE_MIRROR_THRESHOLD,
+  BOUSSOLE_COMPLEMENT_THRESHOLD,
+} from '@/lib/grand-jardin-view'
 import { GalaxieLegend } from '@/components/galaxie/GalaxieLegend'
 import { GalaxieMinimap } from '@/components/galaxie/GalaxieMinimap'
 import { GalaxieTooltip } from '@/components/galaxie/GalaxieTooltip'
@@ -238,6 +245,12 @@ function nodeMatchesFilter(node, filterMode, petalFilter, searchQuery) {
   if (petalFilter && node?.dominantPetal !== petalFilter) return false
   if (filterMode === 'contacts' && !node?.isContact) return false
   if (filterMode === 'online' && !(node?.presence?.is_online ?? node?.is_online)) return false
+  if (filterMode === 'mirror') {
+    return (node?.resonanceWithMe ?? 0) >= BOUSSOLE_MIRROR_THRESHOLD
+  }
+  if (filterMode === 'complement') {
+    return (node?.complementarityWithMe ?? 0) >= BOUSSOLE_COMPLEMENT_THRESHOLD
+  }
   if (filterMode === 'neighborhood') {
     if (node?.isContact) return true
     if ((node?.resonanceWithMe ?? 0) >= NEIGHBORHOOD_RESONANCE) return true
@@ -436,6 +449,11 @@ export const GrandJardinGalaxie = forwardRef(function GrandJardinGalaxie({
         profileAngle: vector.angle,
         profileCoherence: vector.coherence,
         resonanceWithMe: isMeNode ? 1 : resonanceBetween(meNodeScores, f?.scores),
+        complementarityWithMe: isMeNode
+          ? 1
+          : complementarityBetween(meNodeScores, f?.scores, f?.meteo_petal || null),
+        meteoPetal: f?.meteo_petal ?? null,
+        socialMode: f?.social_mode ?? 'open',
         isMe: isMeNode,
         isContact: id !== myId && contactSet.has(id),
       }
@@ -626,6 +644,24 @@ export const GrandJardinGalaxie = forwardRef(function GrandJardinGalaxie({
         ctx.lineWidth = 0.8
         ctx.fill()
         ctx.stroke()
+      }
+
+      const meteoId = node?.meteoPetal
+      if (!dimmed && meteoId && PETAL_BY_ID[meteoId]) {
+        const mc = PETAL_BY_ID[meteoId].color
+        ctx.beginPath()
+        ctx.arc(0, 0, BASE * 1.12, 0, Math.PI * 2)
+        ctx.strokeStyle = mc
+        ctx.lineWidth = 1.1
+        ctx.globalAlpha = 0.42
+        ctx.stroke()
+      }
+
+      if (!dimmed && node?.socialMode === 'focus') {
+        ctx.beginPath()
+        ctx.arc(-BASE * 0.72, -BASE * 0.62, 2.2, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(167,139,250,0.9)'
+        ctx.fill()
       }
 
       ctx.restore()

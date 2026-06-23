@@ -6,8 +6,12 @@ import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSocialStore } from '@/store/useSocialStore'
+import { socialApi } from '@/api/social'
 import { FleurSociale } from '@/components/FleurSociale'
 import { SeedModal } from '@/components/social/SeedModal'
+import { ModerationMenu } from '@/components/social/ModerationMenu'
+import { BoussolePetalRadar } from '@/components/social/BoussolePetalRadar'
+import { MaturityBadges } from '@/components/social/MaturityBadges'
 import { PETAL_BY_ID } from '@/lib/petal-theme'
 import { t } from '@/i18n'
 
@@ -40,6 +44,7 @@ export default function UserLisierePage() {
   const [showSeedModal, setShowSeedModal] = useState(false)
   const [seedError, setSeedError] = useState(null)
   const [accepting, setAccepting] = useState(false)
+  const [snoozing, setSnoozing] = useState(false)
 
   const meId = user?.id ? String(user.id) : null
   const isMe = meId && userId && String(userId) === meId
@@ -66,6 +71,19 @@ export default function UserLisierePage() {
       if (result?.channelId) router.replace(`/clairiere/${result.channelId}`)
     } finally {
       setAccepting(false)
+    }
+  }
+
+  const handleSnoozeSeed = async (seedId) => {
+    if (!seedId) return
+    setSnoozing(true)
+    try {
+      await socialApi.snoozeSeed(seedId)
+      await loadLisiere(userId)
+    } catch (err) {
+      setSeedError((err as Error)?.message || null)
+    } finally {
+      setSnoozing(false)
     }
   }
 
@@ -98,6 +116,10 @@ export default function UserLisierePage() {
   const seedId = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('seed')
   const dominantDef = lisiere.dominantPetal ? PETAL_BY_ID[lisiere.dominantPetal] : null
   const resonancePct = Math.round((lisiere.resonanceWithVisitor ?? 0) * 100)
+  const complementPct = Math.round((lisiere.complementarityWithVisitor ?? 0) * 100)
+  const complementDef = lisiere.complementPetal ? PETAL_BY_ID[lisiere.complementPetal] : null
+  const meteoDef = lisiere.meteoPetal ? PETAL_BY_ID[lisiere.meteoPetal] : null
+  const isFocus = lisiere.socialMode === 'focus'
   const activityLabel = formatActivityAgo(lisiere.lastActivityAt || lisiere.fleurMoyenne?.lastUpdated)
   const isOnline = !!lisiere.presence?.is_online
 
@@ -123,6 +145,12 @@ export default function UserLisierePage() {
         >
           🌌 {t('social.lisiereViewGalaxy')}
         </button>
+        <ModerationMenu
+          targetUserId={lisiere.userId}
+          targetPseudo={lisiere.pseudo}
+          onMuted={() => router.replace('/prairie')}
+          onReported={() => router.replace('/prairie')}
+        />
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-5">
@@ -180,7 +208,23 @@ export default function UserLisierePage() {
                       {t('social.lisiereDuoLink')}
                     </span>
                   )}
+                  {meteoDef && (
+                    <span
+                      className="px-1.5 py-0.5 rounded text-[9px] border"
+                      style={{ color: meteoDef.color, borderColor: `${meteoDef.color}44`, backgroundColor: `${meteoDef.color}14` }}
+                    >
+                      {t('meteo.badge', { petal: meteoDef.name })}
+                    </span>
+                  )}
+                  {isFocus && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] text-violet-300 border border-violet-500/30">
+                      {t('meteo.focusBadge')}
+                    </span>
+                  )}
                 </div>
+                {Array.isArray(lisiere.maturityBadges) && lisiere.maturityBadges.length > 0 && (
+                  <MaturityBadges badges={lisiere.maturityBadges} compact className="mt-2" />
+                )}
                 {activityLabel && (
                   <p className="text-[10px] text-slate-500 mt-2">
                     {t('social.lisiereLastActivity')}: {activityLabel}
@@ -233,7 +277,19 @@ export default function UserLisierePage() {
             <p className="text-xs text-slate-400">
               {t('social.lisiereResonance')}:{' '}
               <span className="text-cyan-300 font-medium">{resonancePct}%</span>
+              {' · '}
+              {t('boussole.complement')}:{' '}
+              <span className="text-amber-300 font-medium">{complementPct}%</span>
+              {complementDef ? ` (${complementDef.name})` : ''}
             </p>
+            {Array.isArray(lisiere.petalComparison) && lisiere.petalComparison.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-slate-700/40">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                  {t('boussole.radarTitle')}
+                </p>
+                <BoussolePetalRadar comparison={lisiere.petalComparison} compact />
+              </div>
+            )}
           </section>
 
           {/* Présence sociale (agrégats, pas d'intimité) */}
@@ -245,6 +301,34 @@ export default function UserLisierePage() {
               <p className="text-xs text-slate-400">
                 💧 {lisiere.social.rosee_received_total ?? 0} · 🌸 {lisiere.social.pollen_received_total ?? 0}
               </p>
+            </section>
+          )}
+
+          {/* Arrosages récents — boucle réciproque (A4) */}
+          {Array.isArray(lisiere.recentArrosages) && lisiere.recentArrosages.length > 0 && (
+            <section className="rounded-2xl border border-emerald-700/30 bg-emerald-950/15 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400/90 mb-2">
+                💧 {t('social.lisiereRecentArrosages')}
+              </p>
+              <ul className="space-y-1">
+                {lisiere.recentArrosages.slice(0, 3).map((a) => {
+                  const when = formatActivityAgo(a.created_at) ?? ''
+                  return (
+                    <li key={`${a.from_user_id}-${a.created_at}`}>
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/lisiere/${a.from_user_id}`)}
+                        className="w-full flex items-center gap-2 text-xs text-slate-300 hover:text-slate-100 hover:bg-emerald-900/20 rounded-lg px-2 py-1 transition-colors text-left"
+                      >
+                        <span className="text-base">{a.avatar_emoji || '🌸'}</span>
+                        <span className="truncate flex-1">
+                          {t('social.lisiereArrosageBy', { pseudo: a.from_pseudo, when })}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
             </section>
           )}
 
@@ -260,17 +344,27 @@ export default function UserLisierePage() {
               {t('social.lisiereMeet')}
             </p>
 
-            {status === 'pending_in' && seedId && (
+            {status === 'pending_in' && (seedId || lisiere.incomingSeedId) && (
               <div className="rounded-xl border border-amber-500/30 bg-amber-950/30 p-3 mb-2">
                 <p className="text-sm text-amber-100 mb-3">{t('social.graineTAttend')}</p>
-                <button
-                  type="button"
-                  onClick={() => handleAcceptSeed(seedId)}
-                  disabled={accepting}
-                  className="w-full py-2.5 rounded-xl bg-amber-500 text-amber-950 font-medium text-sm hover:bg-amber-400 disabled:opacity-50"
-                >
-                  {accepting ? '…' : t('social.accueillir')}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAcceptSeed(seedId || lisiere.incomingSeedId)}
+                    disabled={accepting || snoozing}
+                    className="flex-1 py-2.5 rounded-xl bg-amber-500 text-amber-950 font-medium text-sm hover:bg-amber-400 disabled:opacity-50"
+                  >
+                    {accepting ? '…' : t('social.accueillir')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSnoozeSeed(seedId || lisiere.incomingSeedId)}
+                    disabled={accepting || snoozing}
+                    className="shrink-0 px-3 py-2.5 rounded-xl bg-slate-800/80 text-slate-300 border border-slate-600/50 text-xs font-medium hover:bg-slate-700/80 disabled:opacity-50"
+                  >
+                    🌙 {t('social.peutEtrePlusTard')}
+                  </button>
+                </div>
               </div>
             )}
 

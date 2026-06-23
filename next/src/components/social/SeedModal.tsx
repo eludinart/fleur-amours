@@ -3,14 +3,18 @@
 
 import { useState } from 'react'
 import { INTENTIONS } from '@/api/social'
+import { useAuth } from '@/contexts/AuthContext'
 import { t } from '@/i18n'
 
 const SAP_COST = 5
 
 /**
- * Modal "Déposer une Graine" — choix d'Intention de Pollinisation puis envoi (coût Sève).
+ * Modal "Déposer une Graine" — choix d'Intention de Pollinisation puis envoi.
+ * La première Graine du jardinier est offerte (coût : 0 Sève), les suivantes coûtent {SAP_COST} Sève.
  */
 export function SeedModal({ targetUserId, targetPseudo, onClose, onSent, onError }) {
+  const { user } = useAuth()
+  const firstFree = !((user as { first_seed_used?: boolean })?.first_seed_used)
   const [intentionId, setIntentionId] = useState('')
   const [sending, setSending] = useState(false)
 
@@ -21,10 +25,19 @@ export function SeedModal({ targetUserId, targetPseudo, onClose, onSent, onError
       await onSent(targetUserId, intentionId)
       onClose()
     } catch (err) {
-      if (err?.code === 'insufficient_sap') {
+      if (err?.code === 'seed_cooldown') {
+        onError?.(t('social.graineCooldown'))
+      } else if (err?.code === 'social_focus') {
+        onError?.(t('social.graineFocus'))
+      } else if (err?.code === 'insufficient_sap') {
         let available = 0
         let required = SAP_COST
-        try { const d = JSON.parse(err.raw ?? '{}'); available = d.available ?? 0; required = d.required ?? SAP_COST } catch {}
+        try {
+          const raw = typeof err.raw === 'string' && err.raw.trim() ? err.raw : '{}'
+          const d = JSON.parse(raw)
+          available = d.available ?? 0
+          required = d.required ?? SAP_COST
+        } catch { /* ignore */ }
         onError?.(`Sève insuffisante (${available}/${required}). Rechargez votre Sève pour déposer une Graine.`)
       } else {
         onError?.(err?.detail || err?.message)
@@ -44,8 +57,18 @@ export function SeedModal({ targetUserId, targetPseudo, onClose, onSent, onError
           <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100 mb-1">
             🌱 {t('social.deposerGraine') ?? 'Déposer une Graine'}
           </h3>
+          {firstFree ? (
+            <div className="mb-3 px-3 py-2 rounded-xl bg-amber-100 dark:bg-amber-950/40 border border-amber-300/60 dark:border-amber-700/60">
+              <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+                🎁 {t('social.graineFirstFreeBadge')}
+              </p>
+              <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
+                {t('social.graineFirstFreeHint')}
+              </p>
+            </div>
+          ) : null}
           <p className="text-sm text-emerald-700 dark:text-emerald-300 mb-4">
-            {(t('social.deposerGraineDescAnonymous') ?? 'Choisis une intention. Coût : {{cost}} Sève.').replace('{{cost}}', String(SAP_COST))}
+            {(t('social.deposerGraineDescAnonymous') ?? 'Choisis une intention. Coût : {{cost}} Sève.').replace('{{cost}}', String(firstFree ? 0 : SAP_COST))}
           </p>
           <div className="space-y-2 mb-4">
             {INTENTIONS.map((int) => (

@@ -29,6 +29,8 @@ import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { ShareTirageButton } from '@/components/ShareTirageButton'
 import { FlowerSVG } from '@/components/FlowerSVG'
 import { PETAL_ORDER } from '@/lib/petal-tarot'
+import { readLandingIntention } from '@/lib/first-experience'
+import { WelcomeExperienceBanner } from '@/components/a-deux/WelcomeExperienceBanner'
 import {
   buildSharePetalsWithTirageInfluence,
   enrichTarotPayloadWithShareFlower,
@@ -1776,6 +1778,7 @@ export default function TarotPage() {
   // landing_card : carte pré-sélectionnée depuis la landing page (intent card_analysis)
   // petal : id pétale → intention suggérée + tirage libre parmi tout le jeu (pas de carte « amour » imposée)
   const landingCardName = searchParams?.get('landing_card') || null
+  const isWelcome = searchParams?.get('welcome') === '1'
   const petalKeyRaw = (searchParams?.get('petal') || '').toLowerCase().trim()
   const isPetalFlow =
     !!petalKeyRaw && (PETAL_ORDER as readonly string[]).includes(petalKeyRaw)
@@ -1967,6 +1970,8 @@ export default function TarotPage() {
         </p>
       </div>
 
+      {isWelcome && tab === 'simple' ? <WelcomeExperienceBanner /> : null}
+
       {!hasDoneFirstTirage && (tab === 'simple' || tab === 'four') && (
         <div className="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/20 p-4">
           <p className="text-sm text-rose-700 dark:text-rose-300">
@@ -2020,7 +2025,9 @@ export default function TarotPage() {
           quotaExceeded={!!quotaError}
           landingCard={landingCardTranslated}
           initialIntention={
-            isPetalFlow && !landingCardObj ? petalSuggestedIntention : undefined
+            isPetalFlow && !landingCardObj
+              ? petalSuggestedIntention
+              : readLandingIntention() || undefined
           }
           petalFlow={isPetalFlow && !landingCardObj}
           fleurBasePetals={fleurBasePetals}

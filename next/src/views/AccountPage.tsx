@@ -242,6 +242,8 @@ export function AccountPage() {
   const fontSizePreference = useStore((s) => s.fontSizePreference)
   const setFontSizePreference = useStore((s) => s.setFontSizePreference)
   const openCoachRequestModal = useStore((s) => s.openCoachRequestModal)
+  const experimentalFeaturesEnabled = useStore((s) => s.experimentalFeaturesEnabled)
+  const setExperimentalFeaturesEnabled = useStore((s) => s.setExperimentalFeaturesEnabled)
   const locale = useStore((s) => s.locale)
   const setLocale = useStore((s) => s.setLocale)
   const [access, setAccess] = useState<Access | null>(null)
@@ -1707,6 +1709,47 @@ export function AccountPage() {
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 p-6 space-y-4">
+          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            🧪 {t('account.experimentalSectionTitle')}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            {t('account.experimentalSectionDesc')}
+          </p>
+          <div className="flex items-start justify-between gap-4 pt-2 border-t border-slate-200 dark:border-slate-700">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                {t('account.experimentalFleurBeta')}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('account.experimentalFleurBetaDesc')}
+              </p>
+              {experimentalFeaturesEnabled && (
+                <p className="text-[11px] text-violet-600 dark:text-violet-400 mt-1.5">
+                  {t('account.experimentalEnabledHint')}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setExperimentalFeaturesEnabled(!experimentalFeaturesEnabled)}
+              role="switch"
+              aria-checked={experimentalFeaturesEnabled}
+              className={`shrink-0 inline-flex items-center h-7 w-12 rounded-full transition-colors ${
+                experimentalFeaturesEnabled
+                  ? 'bg-violet-500'
+                  : 'bg-slate-300 dark:bg-slate-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 bg-white rounded-full shadow transform transition-transform ${
+                  experimentalFeaturesEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
         </div>
 

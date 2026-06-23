@@ -5,7 +5,7 @@
     "dev.vps": "node scripts/dev-vps.js",
     "dev.vps:clean": "node scripts/dev-clean-restart.js",
     "dev.vps:diagnostic": "node scripts/dev-vps-diagnostic.js",
-    "dev:next": "npm run dev --prefix next",
+    "dev:next": "node scripts/run-next-dev.mjs",
     "dev:android": "node scripts/dev-android.js",
     "dev:android:device": "node scripts/dev-android.js --device",
     "cap:sync:dev": "cross-env CAP_SERVER_URL=http://10.0.2.2:3001 npx cap sync",

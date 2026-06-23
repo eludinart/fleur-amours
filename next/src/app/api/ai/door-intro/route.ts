@@ -5,9 +5,11 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { openrouterCall } from '@/lib/openrouter'
+import { getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { DOOR_INTRO_SYSTEM_PROMPT } from '@/lib/prompts'
 import { getLangInstruction } from '@/lib/prompts'
+import { buildSystemPrompt } from '@/lib/ai-system-prompt'
+import { AiAccessDeniedError, aiAccessErrorResponse, guardedLlmCall } from '@/lib/ai-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,12 +25,14 @@ function getLocale(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  let userId: string
   try {
-    await requireAuth(req)
+    ;({ userId } = await requireAuth(req))
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json({ error: e.message }, { status: e.status || 401 })
   }
+  const uid = parseInt(userId, 10)
 
   let body: {
     door?: string
@@ -87,23 +91,36 @@ export async function POST(req: NextRequest) {
   }
   oaiMessages.push({ role: 'user', content: userContent })
 
-  if (process.env.OPENROUTER_API_KEY) {
-    const result = await openrouterCall(
-      DOOR_INTRO_SYSTEM_PROMPT,
-      oaiMessages,
-      { maxTokens: 400 }
-    )
-    if (
-      result &&
-      typeof result === 'object' &&
-      ((result as Record<string, unknown>).door_intro || (result as Record<string, unknown>).question)
-    ) {
-      const r = result as Record<string, unknown>
-      return NextResponse.json({
-        door_intro: String(r.door_intro ?? '').trim(),
-        question: String(r.question ?? r.first_question ?? '').trim() || "Qu'est-ce qui est vivant pour vous en entrant dans cette porte ?",
-        provider: 'openrouter',
+  if (await isLlmConfigured()) {
+    try {
+      const system = await buildSystemPrompt({
+        taskId: 'door-intro',
+        basePrompt: DOOR_INTRO_SYSTEM_PROMPT,
+        locale,
       })
+      const { result } = await guardedLlmCall({
+        taskId: 'door-intro',
+        userId: uid,
+        system,
+        messages: oaiMessages,
+        options: { maxTokens: 400 },
+      })
+      if (
+        result &&
+        typeof result === 'object' &&
+        ((result as Record<string, unknown>).door_intro || (result as Record<string, unknown>).question)
+      ) {
+        const r = result as Record<string, unknown>
+        return NextResponse.json({
+          door_intro: String(r.door_intro ?? '').trim(),
+          question:
+            String(r.question ?? r.first_question ?? '').trim() ||
+            "Qu'est-ce qui est vivant pour vous en entrant dans cette porte ?",
+          provider: (await getLlmMetaForTask('door-intro')).provider,
+        })
+      }
+    } catch (e: unknown) {
+      if (e instanceof AiAccessDeniedError) return aiAccessErrorResponse(e.result)
     }
   }
 

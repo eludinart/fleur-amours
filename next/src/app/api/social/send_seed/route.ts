@@ -27,19 +27,25 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isDbConfigured()) {
-      return NextResponse.json({ status: 'ok', alignment: 'high', sapDebited: 0, seedId: 0 }, { status: 201 })
+      return NextResponse.json(
+        { status: 'ok', alignment: 'high', sapDebited: 0, firstFree: true, seedId: 0 },
+        { status: 201 }
+      )
     }
 
-    const { seedId } = await sendSeed(fromUserId, targetUserId, intentionId)
+    const { seedId, firstFree } = await sendSeed(fromUserId, targetUserId, intentionId)
     return NextResponse.json(
-      { status: 'ok', alignment: 'high', sapDebited: 0, seedId },
+      { status: 'ok', alignment: 'high', sapDebited: firstFree ? 0 : 5, firstFree, seedId },
       { status: 201 }
     )
   } catch (err: unknown) {
-    const e = err as { status?: number; message?: string }
+    const e = err as { status?: number; message?: string; code?: string }
     return NextResponse.json(
-      { error: e.message ?? 'Erreur lors de l\'envoi de la graine' },
-      { status: e.status || 400 }
+      {
+        error: e.message ?? 'Erreur lors de l\'envoi de la graine',
+        code: e.code ?? null,
+      },
+      { status: e.status || (e.code === 'seed_cooldown' ? 429 : e.code === 'social_focus' ? 423 : 400) }
     )
   }
 }

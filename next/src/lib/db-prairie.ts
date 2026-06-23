@@ -4,6 +4,9 @@
  */
 import type { RowDataPacket } from 'mysql2'
 import { getPool, table } from './db'
+import { isDemoAccount } from './demo-accounts'
+import { getSocialMeteoBatch } from './community-meteo'
+import { countSemisToday } from './db-semis'
 
 const PETALS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
 const PRESENCE_ONLINE_SECONDS = 300
@@ -84,7 +87,8 @@ export async function getFleurs(
   const userCols = `u.ID, u.user_email, u.display_name,
     COALESCE(um_pseudo.meta_value, '') AS pseudo,
     COALESCE(um_emoji.meta_value, '🌸') AS avatar_emoji,
-    COALESCE(um_graine.meta_value, '') AS avatar_graine_id`
+    COALESCE(um_graine.meta_value, '') AS avatar_graine_id,
+    COALESCE(um_demo.meta_value, '') AS demo_meta`
 
   // Requête 2 : tous les utilisateurs publics (sauf moi) + moi — 2 requêtes parallèles
   const [usersResult, meResult] = await Promise.all([
@@ -95,6 +99,7 @@ export async function getFleurs(
        LEFT JOIN ${tMeta} um_pseudo ON um_pseudo.user_id = u.ID AND um_pseudo.meta_key = 'fleur_pseudo'
        LEFT JOIN ${tMeta} um_emoji  ON um_emoji.user_id  = u.ID AND um_emoji.meta_key  = 'fleur_avatar_emoji'
        LEFT JOIN ${tMeta} um_graine ON um_graine.user_id = u.ID AND um_graine.meta_key = 'fleur_avatar_graine_id'
+       LEFT JOIN ${tMeta} um_demo ON um_demo.user_id = u.ID AND um_demo.meta_key = 'fleur_demo_account'
        WHERE u.ID != ?`,
       [uid]
     ),
@@ -105,6 +110,7 @@ export async function getFleurs(
        LEFT JOIN ${tMeta} um_pseudo ON um_pseudo.user_id = u.ID AND um_pseudo.meta_key = 'fleur_pseudo'
        LEFT JOIN ${tMeta} um_emoji  ON um_emoji.user_id  = u.ID AND um_emoji.meta_key  = 'fleur_avatar_emoji'
        LEFT JOIN ${tMeta} um_graine ON um_graine.user_id = u.ID AND um_graine.meta_key = 'fleur_avatar_graine_id'
+       LEFT JOIN ${tMeta} um_demo ON um_demo.user_id = u.ID AND um_demo.meta_key = 'fleur_demo_account'
        WHERE u.ID = ?`,
       [uid]
     ),
@@ -184,6 +190,7 @@ export async function getFleurs(
     [roseeRows],
     [pollenRows],
     [presenceRows],
+    meteoByUser,
   ] = await Promise.all([
     fleurResultsPromise,
     sessionsPromise,
@@ -191,6 +198,7 @@ export async function getFleurs(
     roseePromise,
     pollenPromise,
     presenceBatchPromise,
+    getSocialMeteoBatch(allIds),
   ])
 
   // ── Index en mémoire (O(1) lookup) ────────────────────────────────────────
@@ -237,6 +245,7 @@ export async function getFleurs(
 
     const rosee  = roseeByUser.get(oid)  ?? { total: 0, today: 0 }
     const pollen = pollenByUser.get(oid) ?? { total: 0, today: 0 }
+    const meteo = meteoByUser.get(oid) ?? { meteoPetal: null, meteoDate: null, socialMode: 'open' as const }
 
     return {
       id: isMe ? 'p_me' : `p_${oid}`,
@@ -258,6 +267,9 @@ export async function getFleurs(
         pollen_received_today: pollen.today,
       },
       presence: presenceByUser.get(oid) ?? { is_online: false, last_seen_at: null },
+      meteo_petal: meteo.meteoPetal,
+      social_mode: meteo.socialMode,
+      is_demo: isDemoAccount({ email, demoMeta: u.demo_meta }),
     }
   }
 
@@ -467,7 +479,10 @@ export async function notifyPrairieInteraction(params: {
   }
 }
 
-/** Arrose la fleur d'un autre jardinier (coûte 1 goutte de rosée) */
+/** Quota souple anti-spam : nombre max d'arrosages émis par jour. */
+const ARROSER_DAILY_QUOTA = 20
+
+/** Arrose la fleur d'un autre jardinier (coûte 1 goutte de rosée, plafond doux 20/j). */
 export async function arroseFleur(
   fromUserId: number,
   toUserId: number
@@ -486,7 +501,26 @@ export async function arroseFleur(
   const points = await getPointsDeRosee(pool, fromUserId)
   if (points < 1) throw new Error('Plus de gouttes de rosée disponibles')
 
+  // Plafond doux anti-spam : protège la communauté sans pénaliser l'usage normal.
   const tRosee = table('fleur_rosee_events')
+  try {
+    const [qRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS c FROM ${tRosee} WHERE from_user_id = ? AND DATE(created_at) = CURDATE()`,
+      [fromUserId]
+    )
+    const sent = Number(qRows?.[0]?.c ?? 0)
+    if (sent >= ARROSER_DAILY_QUOTA) {
+      const err = new Error(
+        `Vous avez atteint la limite douce de ${ARROSER_DAILY_QUOTA} arrosages aujourd'hui. Reprenez demain.`
+      ) as Error & { code?: string }
+      err.code = 'arroser_quota_reached'
+      throw err
+    }
+  } catch (e) {
+    if ((e as { code?: string })?.code === 'arroser_quota_reached') throw e
+    /* table peut ne pas exister : on laisse passer pour ne pas bloquer */
+  }
+
   await pool.execute(
     `INSERT INTO ${tRosee} (from_user_id, to_user_id, amount) VALUES (?, ?, 1)`,
     [fromUserId, toUserId]
@@ -588,6 +622,162 @@ export async function removePrairieLink(fromUserId: number, toUserId: number): P
   const tLinks = table('fleur_prairie_links')
   await pool.execute(`DELETE FROM ${tLinks} WHERE user_a = ? AND user_b = ?`, [ua, ub])
   return { ok: true }
+}
+
+// ── Pouls du jardin (signaux systémiques agrégés) ────────────────────────────
+
+export type JardinPouls = {
+  arrosagesToday: number
+  pollensToday: number
+  jardiniersOnline: number
+  jardiniersPublicTotal: number
+  fleursWeek: number
+  dominantPetalToday: string | null
+  recentEclosions: Array<{
+    userId: number
+    pseudo: string
+    avatarEmoji: string
+    createdAt: string
+  }>
+  semisToday: number
+}
+
+/**
+ * Agrège des signaux systémiques (anonymes) pour le « Pouls du jardin ».
+ * Ne fait apparaître que des compteurs et des dernières éclosions de fleurs publiques —
+ * jamais de message ou de contenu privé.
+ */
+export async function getJardinPouls(viewerId: number): Promise<JardinPouls> {
+  const pool = getPool()
+  const tRosee = table('fleur_rosee_events')
+  const tPollen = table('fleur_pollen')
+  const tRes = table('fleur_amour_results')
+  const tUsers = table('users')
+  const tMeta = table('usermeta')
+
+  await touchSocialPresence(pool, viewerId)
+
+  let arrosagesToday = 0
+  let pollensToday = 0
+  let fleursWeek = 0
+  let jardiniersPublicTotal = 0
+  let jardiniersOnline = 0
+  let dominantPetalToday: string | null = null
+  let recentEclosions: JardinPouls['recentEclosions'] = []
+
+  try {
+    const [r] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS c FROM ${tRosee} WHERE DATE(created_at) = CURDATE()`
+    )
+    arrosagesToday = Number(r?.[0]?.c ?? 0)
+  } catch {
+    /* ignore */
+  }
+  try {
+    const [r] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS c FROM ${tPollen} WHERE DATE(created_at) = CURDATE()`
+    )
+    pollensToday = Number(r?.[0]?.c ?? 0)
+  } catch {
+    /* ignore */
+  }
+  try {
+    const [r] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS c FROM ${tRes} WHERE (parent_id IS NULL OR parent_id = 0) AND created_at >= (NOW() - INTERVAL 7 DAY)`
+    )
+    fleursWeek = Number(r?.[0]?.c ?? 0)
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT u.ID, COALESCE(ump.meta_value, '') AS pseudo, COALESCE(ums.meta_value, '') AS last_seen
+       FROM ${tUsers} u
+       INNER JOIN ${tMeta} um_pub ON um_pub.user_id = u.ID AND um_pub.meta_key = 'fleur_profile_public' AND um_pub.meta_value = '1'
+       LEFT JOIN ${tMeta} ump ON ump.user_id = u.ID AND ump.meta_key = 'fleur_pseudo'
+       LEFT JOIN ${tMeta} ums ON ums.user_id = u.ID AND ums.meta_key = 'fleur_social_last_seen_at'`
+    )
+    jardiniersPublicTotal = rows.length
+    for (const r of rows) {
+      const v = String(r.last_seen ?? '').trim()
+      if (v && isOnlineFromLastSeen(v)) jardiniersOnline += 1
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const [petalRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT
+        AVG(agape) AS agape, AVG(philautia) AS philautia, AVG(mania) AS mania,
+        AVG(storge) AS storge, AVG(pragma) AS pragma, AVG(philia) AS philia,
+        AVG(ludus) AS ludus, AVG(eros) AS eros
+       FROM ${tRes}
+       WHERE (parent_id IS NULL OR parent_id = 0) AND created_at >= (NOW() - INTERVAL 7 DAY)`
+    )
+    const avg = petalRows?.[0]
+    if (avg) {
+      let best: string | null = null
+      let bestVal = -Infinity
+      for (const p of PETALS) {
+        const v = Number(avg[p] ?? 0)
+        if (v > bestVal) {
+          bestVal = v
+          best = p
+        }
+      }
+      dominantPetalToday = best
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const [eRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT r.user_id, r.created_at,
+              COALESCE(ump.meta_value, '') AS pseudo,
+              COALESCE(ume.meta_value, '🌸') AS avatar_emoji,
+              u.display_name
+       FROM ${tRes} r
+       INNER JOIN ${tUsers} u ON u.ID = r.user_id
+       INNER JOIN ${tMeta} um_pub ON um_pub.user_id = u.ID AND um_pub.meta_key = 'fleur_profile_public' AND um_pub.meta_value = '1'
+       LEFT JOIN ${tMeta} ump ON ump.user_id = u.ID AND ump.meta_key = 'fleur_pseudo'
+       LEFT JOIN ${tMeta} ume ON ume.user_id = u.ID AND ume.meta_key = 'fleur_avatar_emoji'
+       WHERE (r.parent_id IS NULL OR r.parent_id = 0) AND r.created_at >= (NOW() - INTERVAL 14 DAY)
+       ORDER BY r.created_at DESC
+       LIMIT 5`
+    )
+    recentEclosions = (eRows ?? []).map((r) => ({
+      userId: Number(r.user_id),
+      pseudo:
+        String(r.pseudo ?? '').trim() ||
+        String(r.display_name ?? '').trim() ||
+        `jardinier_${Buffer.from(String(r.user_id)).toString('hex').slice(0, 6)}`,
+      avatarEmoji: String(r.avatar_emoji ?? '🌸').trim() || '🌸',
+      createdAt: String(r.created_at ?? ''),
+    }))
+  } catch {
+    /* ignore */
+  }
+
+  let semisToday = 0
+  try {
+    semisToday = await countSemisToday()
+  } catch {
+    /* ignore */
+  }
+
+  return {
+    arrosagesToday,
+    pollensToday,
+    jardiniersOnline,
+    jardiniersPublicTotal,
+    fleursWeek,
+    dominantPetalToday,
+    recentEclosions,
+    semisToday,
+  }
 }
 
 /** Admin : force la visibilité Prairie d'un utilisateur par email */

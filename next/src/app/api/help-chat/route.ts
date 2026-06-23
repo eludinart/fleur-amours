@@ -3,21 +3,25 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { openrouterCall } from '@/lib/openrouter'
-import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
+import { isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
+import { buildSystemPrompt } from '@/lib/ai-system-prompt'
+import { AiAccessDeniedError, aiAccessErrorResponse, guardedLlmCall } from '@/lib/ai-guard'
 
 export const dynamic = 'force-dynamic'
 
 const HELP_SYSTEM = `Tu es l'assistant du Jardin Fleur d'AmOurs. Tu réponds de façon courte et utile aux questions sur l'application.`
 
 export async function POST(req: NextRequest) {
+  let userId: string
   try {
-    await requireAuth(req)
+    ;({ userId } = await requireAuth(req))
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json({ error: e.message ?? 'Authentification requise' }, { status: e.status ?? 401 })
   }
+  const uid = parseInt(userId, 10)
+
   try {
     const body = await req.json().catch(() => ({}))
     const message = String(body.message ?? '').trim()
@@ -28,7 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply: '' })
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!(await isLlmConfigured())) {
       return NextResponse.json({
         reply: "L'assistant n'est pas configuré. Contactez l'équipe.",
       })
@@ -45,18 +49,19 @@ export async function POST(req: NextRequest) {
       content: message + getLangInstruction(locale),
     })
 
-    const result = await openrouterCall(
-      appendManuelReferenceToSystem(HELP_SYSTEM, {
-        retrievalQuery: message,
-        maxChars: 10_000,
-        locale,
-      }),
+    const system = await buildSystemPrompt({
+      taskId: 'help-chat',
+      basePrompt: HELP_SYSTEM,
+      locale,
+    })
+
+    const { result } = await guardedLlmCall({
+      taskId: 'help-chat',
+      userId: uid,
+      system,
       messages,
-      {
-        maxTokens: 600,
-        rawText: true,
-      },
-    )
+      options: { maxTokens: 600, rawText: true },
+    })
 
     const reply =
       typeof result === 'string' && result.trim()
@@ -64,7 +69,8 @@ export async function POST(req: NextRequest) {
         : "Je n'ai pas pu générer une réponse. Réessayez."
 
     return NextResponse.json({ reply })
-  } catch {
+  } catch (e: unknown) {
+    if (e instanceof AiAccessDeniedError) return aiAccessErrorResponse(e.result)
     return NextResponse.json({ reply: 'Erreur serveur.' })
   }
 }

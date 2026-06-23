@@ -6,6 +6,7 @@ export type TimelineEventDTO = {
   source:
     | 'session'
     | 'tirage'
+    | 'paper_draw'
     | 'fleur'
     | 'checkin'
     | 'dyad'

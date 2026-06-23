@@ -13,6 +13,7 @@ import { exec, getPool, isDbConfigured, table } from './db'
 export type TimelineSource =
   | 'session'
   | 'tirage'
+  | 'paper_draw'
   | 'fleur'
   | 'checkin'
   | 'dyad'

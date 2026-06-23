@@ -5,8 +5,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
 import { getCardInfo } from '@/lib/card-info'
-import { openrouterCall } from '@/lib/openrouter'
+import { getLlmMeta, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
+import { buildSystemPrompt } from '@/lib/ai-system-prompt'
+import { AiAccessDeniedError, aiAccessErrorResponse, guardedLlmCall } from '@/lib/ai-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,12 +17,15 @@ function getLocale(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  let userId: string
   try {
-    await requireAuth(req)
+    ;({ userId } = await requireAuth(req))
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json({ error: e.message }, { status: e.status || 401 })
   }
+
+  const uid = parseInt(userId, 10)
 
   let body: {
     card_name?: string
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest) {
     (cardDesc ? `« ${cardDesc.split('\n')[0].trim().slice(0, 200)} » — qu’est-ce que cela réveille en vous ?` : '') ||
     "Qu'est-ce que cette carte vous inspire en ce moment ?"
 
-  if (process.env.OPENROUTER_API_KEY?.trim()) {
+  if ((await isLlmConfigured())) {
     const history = Array.isArray(body.history) ? body.history : []
     const tail = history
       .slice(-4)
@@ -74,21 +79,32 @@ export async function POST(req: NextRequest) {
       `\nRéponds UNIQUEMENT en JSON {"response_a":"string courte (1–2 phrases, accueil du tirage)","question":"string une seule question ouverte du Tuteur maïeutique"}.` +
       getLangInstruction(locale)
 
-    const raw = await openrouterCall(
-      'Tu es le Tuteur maïeutique Fleur d’AmOurs. JSON strict, deux clés uniquement.',
-      [{ role: 'user', content: userContent }],
-      { maxTokens: 500, responseFormatJson: true }
-    )
+    const system = await buildSystemPrompt({
+      taskId: 'card-question',
+      basePrompt: "Tu es le Tuteur maïeutique Fleur d'AmOurs. JSON strict, deux clés uniquement.",
+      locale,
+    })
+    try {
+      const { result: raw } = await guardedLlmCall({
+        taskId: 'card-question',
+        userId: uid,
+        system,
+        messages: [{ role: 'user', content: userContent }],
+        options: { maxTokens: 500, responseFormatJson: true },
+      })
 
-    if (raw && typeof raw === 'object') {
-      const r = raw as Record<string, unknown>
-      const ra = String(r.response_a ?? '').trim()
-      const q = String(r.question ?? '').trim()
-      if (q.length > 5) {
-        response_a = ra.length > 3 ? ra.slice(0, 500) : response_a
-        question = q.slice(0, 800)
-        return NextResponse.json({ response_a, question, provider: 'openrouter' })
+      if (raw && typeof raw === 'object') {
+        const r = raw as Record<string, unknown>
+        const ra = String(r.response_a ?? '').trim()
+        const q = String(r.question ?? '').trim()
+        if (q.length > 5) {
+          response_a = ra.length > 3 ? ra.slice(0, 500) : response_a
+          question = q.slice(0, 800)
+          return NextResponse.json({ response_a, question, provider: (await getLlmMeta('light')).provider })
+        }
       }
+    } catch (e: unknown) {
+      if (e instanceof AiAccessDeniedError) return aiAccessErrorResponse(e.result)
     }
   }
 

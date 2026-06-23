@@ -1,8 +1,37 @@
 'use client'
 
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import { setLocale as setI18nLocale } from '@/i18n'
+import type { ViewMode } from '@/lib/view-modes'
+
+/** Évite le crash « Unexpected end of JSON input » si localStorage est corrompu ou vide. */
+function createSafeLocalStorage(): StateStorage {
+  return {
+    getItem: (name) => {
+      if (typeof window === 'undefined') return null
+      const raw = localStorage.getItem(name)
+      if (!raw?.trim()) return null
+      try {
+        JSON.parse(raw)
+        return raw
+      } catch {
+        try {
+          localStorage.removeItem(name)
+        } catch {
+          /* ignore */
+        }
+        return null
+      }
+    },
+    setItem: (name, value) => {
+      if (typeof window !== 'undefined') localStorage.setItem(name, value)
+    },
+    removeItem: (name) => {
+      if (typeof window !== 'undefined') localStorage.removeItem(name)
+    },
+  }
+}
 
 type Card = { name?: string; slug?: string; tags?: string[] }
 type HistoryItem = { slug: string; name: string; at: number }
@@ -49,6 +78,16 @@ interface StoreState {
   coachRequestModalOpen: boolean
   openCoachRequestModal: () => void
   closeCoachRequestModal: () => void
+  /**
+   * Mode d'affichage actif : masque côté UI qui filtre les sections du menu.
+   * Permet à un utilisateur multi-rôles (ex. admin) de simuler la vue d'un rôle plus restreint
+   * ('lambda', 'coach', 'rh'). La résolution finale est faite via `resolveViewMode()` selon les droits réels.
+   */
+  viewMode: ViewMode
+  setViewMode: (v: ViewMode) => void
+  /** Fonctions expérimentales (Fleur Beta, etc.) — opt-in dans /account. */
+  experimentalFeaturesEnabled: boolean
+  setExperimentalFeaturesEnabled: (v: boolean) => void
 }
 
 export const useStore = create<StoreState>()(
@@ -121,10 +160,15 @@ export const useStore = create<StoreState>()(
       coachRequestModalOpen: false,
       openCoachRequestModal: () => set({ coachRequestModalOpen: true }),
       closeCoachRequestModal: () => set({ coachRequestModalOpen: false }),
+      viewMode: 'admin',
+      setViewMode: (v) => set({ viewMode: v }),
+      experimentalFeaturesEnabled: false,
+      setExperimentalFeaturesEnabled: (v) => set({ experimentalFeaturesEnabled: !!v }),
     }),
     {
       name: 'fleur-amours-store',
-      version: 8,
+      storage: createJSONStorage(() => createSafeLocalStorage()),
+      version: 10,
       onRehydrateStorage: () => (state) => {
         if (state?.locale) setI18nLocale(String(state.locale))
       },
@@ -146,6 +190,22 @@ export const useStore = create<StoreState>()(
           dismissedContextualHints: Array.isArray(s.dismissedContextualHints)
             ? s.dismissedContextualHints
             : [],
+          /**
+           * Migration v9 → v10 : ancien champ `adminViewMode: 'admin' | 'lambda'` est remplacé
+           * par `viewMode: ViewMode` (lambda/coach/rh/admin). On préserve l'intention de l'utilisateur :
+           *   - 'lambda' reste 'lambda'
+           *   - 'admin' (ou absent) devient 'admin' par défaut ; la résolution finale est faite côté UI
+           *     via `resolveViewMode()` selon les droits réels (un non-admin sera ramené à son défaut naturel).
+           */
+          viewMode: ((): ViewMode => {
+            const candidate = (s.viewMode ?? s.adminViewMode) as string | undefined
+            const allowed: ViewMode[] = ['lambda', 'coach', 'rh', 'admin']
+            if (candidate && (allowed as string[]).includes(candidate)) {
+              return candidate as ViewMode
+            }
+            return 'admin'
+          })(),
+          experimentalFeaturesEnabled: !!s.experimentalFeaturesEnabled,
         }
       },
       partialize: (state) => ({
@@ -161,6 +221,8 @@ export const useStore = create<StoreState>()(
         fontSizePreference: state.fontSizePreference,
         locale: state.locale,
         dismissedContextualHints: state.dismissedContextualHints,
+        viewMode: state.viewMode,
+        experimentalFeaturesEnabled: state.experimentalFeaturesEnabled,
       }),
     }
   )

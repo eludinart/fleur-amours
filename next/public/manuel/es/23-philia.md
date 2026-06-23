@@ -1,0 +1,17 @@
+# PHILIA
+
+> Páginas del libro (tabla de contenido): 50–51 · p. PDF 50–51 (estimado a partir del texto extraído)
+
+Descripción ampliada: La amistad como arte del alma. Philia es el amor del vínculo justo, de la ternura humana, de la confianza tejida a lo largo del tiempo. Es la dulzura de la presencia compartida, la alegría simple de estar juntos sin poseer nada. Representa el espacio del corazón donde el otro se convierte en compañero, cómplice, espejo benévolo. En el tarot, Philia es el aliento del vínculo, esa respiración invisible que une las almas a través del respeto, la escucha y la palabra sincera. Es la expresión del amor social, comunitario, aquel que construye el mundo vivo a través de la fraternidad.
+Palabras clave de luz: Amistad, confianza, reciprocidad, lealtad, apoyo mutuo, fraternidad, ternura, cooperación.
+Sombra: La dependencia o la traición del vínculo. Cuando Philia se desajusta, el vínculo se convierte en apego, expectativa, herida. La amistad se carga de necesidad, la confianza se resquebraja, la comunicación se encierra. Es el amor que quiere agradar, que busca la validación, que se petrifica en el miedo a perder. La sombra de Philia también puede ser la superficialidad de las relaciones, la palabra vacía, la promesa sin presencia. Nos enseña a no confundir vínculo y atadura, a dejar circular el aire en la relación. PHILIA Encarna la amistad profunda y el afecto entre iguales. Es el amor basado en el respeto mutuo, los valores compartidos y la camaradería. Esta carta representa la fraternidad, la lealtad elegida y la comunión de almas.
+Palabras clave de sombra: Expectativa, traición, dependencia afectiva, no dichos, aislamiento, desacuerdo, olvido de uno mismo.
+Caminos de integración: Aprender a decir y a escuchar al mismo tiempo. Tejer vínculos basados en la libertad y no en la necesidad. Reconocer el valor del vínculo humano como vía espiritual. Hacer de la palabra un puente entre los mundos. En una tirada, Philia llama a reparar o celebrar la relación, a volver a la verdad del corazón compartido.
+Resonancia del alma: Philia es el arquetipo del vínculo espejo consciente. Indica que el proceso de individuación (Jung) requiere un feedback social: los amigos sirven de testigos y guías para la integración de nuevas facetas de la personalidad. La resonancia del alma plantea la pregunta del «vínculo justo»: ¿estoy en una relación de alma a alma, o en un apego basado en el miedo?
+Correspondencias energéticas:
+Elemento: Aire
+Polaridad: Equilibrada (relacional, recíproca, armonizante)
+Correspondencias simbólicas: Hojas unidas por la savia, aliento compartido, vínculo vivo entre seres
+En resonancia: Aire (El Eco), Vida (La Danza del Mundo), Tierra (El Humus)
+Pregunta raíz: «En esta relación, ¿me siento escuchado·a tanto como escucho?»
+Ejercicio / Meditación: Siéntate frente a un amigo o imagina una persona querida. Respirad juntos, lentamente, en silencio. Siente cómo vuestra respiración se convierte en un mismo viento suave. Agradece este vínculo invisible que os une sin esfuerzo. Philia es el aliento de amistad de lo vivo, esa fuerza discreta que une los corazones sin apego. Enseña que el amor también se cultiva en los gestos cotidianos, en la palabra clara, en la presencia simple. En el gran ciclo del Tarot Fleur d'ÅmÔurs, representa el viento suave de la fraternidad, aquel que hace vibrar el pétalo de Agapè y atiza el fuego de Éros sin consumirlos. Philia es el hilo de aire que une las almas a través de las edades.

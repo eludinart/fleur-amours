@@ -341,11 +341,37 @@ const DEMO_SYNTHESIS = {
   provider: 'demo',
 }
 
+async function markDemoAccount(pool, prefix, userId) {
+  const metaTbl = `${prefix}usermeta`
+  const key = 'fleur_demo_account'
+  try {
+    await pool.execute(
+      `INSERT INTO ${metaTbl} (user_id, meta_key, meta_value) VALUES (?, ?, '1')
+       ON DUPLICATE KEY UPDATE meta_value = '1'`,
+      [userId, key]
+    )
+  } catch {
+    const [existing] = await pool.execute(`SELECT umeta_id FROM ${metaTbl} WHERE user_id = ? AND meta_key = ? LIMIT 1`, [
+      userId,
+      key,
+    ])
+    if (existing.length) {
+      await pool.execute(`UPDATE ${metaTbl} SET meta_value = '1' WHERE user_id = ? AND meta_key = ?`, [userId, key])
+    } else {
+      await pool.execute(`INSERT INTO ${metaTbl} (user_id, meta_key, meta_value) VALUES (?, ?, '1')`, [userId, key])
+    }
+  }
+}
+
 async function ensureUser(pool, prefix, email, displayName, passwordHash) {
   const usersTbl = `${prefix}users`
   const metaTbl = `${prefix}usermeta`
   const [rows] = await pool.execute(`SELECT ID FROM ${usersTbl} WHERE user_email = ? LIMIT 1`, [email])
-  if (rows.length) return Number(rows[0].ID)
+  if (rows.length) {
+    const userId = Number(rows[0].ID)
+    await markDemoAccount(pool, prefix, userId)
+    return userId
+  }
 
   const baseLogin = email.split('@')[0].replace(/[^a-z0-9._-]/gi, '').slice(0, 40)
   let userLogin = baseLogin
@@ -377,6 +403,7 @@ async function ensureUser(pool, prefix, email, displayName, passwordHash) {
     'fleur_profile_public',
     '1',
   ])
+  await markDemoAccount(pool, prefix, userId)
   return userId
 }
 
@@ -683,6 +710,13 @@ async function main() {
      ON DUPLICATE KEY UPDATE synthesis_json = VALUES(synthesis_json)`,
     [orgId, 'demo_v1', JSON.stringify(DEMO_SYNTHESIS)]
   )
+
+  const [domainUsers] = await pool.execute(`SELECT ID FROM ${prefix}users WHERE user_email LIKE ?`, [
+    `%@${DEMO_EMAIL_DOMAIN}`,
+  ])
+  for (const row of domainUsers) {
+    await markDemoAccount(pool, prefix, Number(row.ID))
+  }
 
   console.log('\n✅ Jeu de données Mycelium créé\n')
   console.log(`Organisation : ${DEMO_ORG_NAME} (id=${orgId})`)

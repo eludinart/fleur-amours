@@ -2,6 +2,7 @@ import { api } from '@/lib/api-client'
 import { fleurApi } from './fleur'
 import { fleurBetaApi } from './fleur-beta'
 import { tarotReadingsApi } from './tarotReadings'
+import { paperDrawApi } from './paperDraw'
 import { sessionsApi } from './sessions'
 import { billingApi } from './billing'
 import { dreamscapeApi } from './dreamscape'
@@ -9,7 +10,9 @@ import { prairieApi } from './prairie'
 import { isSessionMantraEcho } from '@/lib/session-mantra-echo'
 import {
   buildDreamscapeChronicleSummary,
+  buildFleurChronicleSummary,
   buildReadingChronicleSummary,
+  buildPaperDrawChronicleSummary,
   buildSessionChronicleSummary,
 } from '@/lib/chronicle-summary'
 import {
@@ -19,6 +22,11 @@ import {
 } from '@/lib/petal-shadow'
 
 const PETAL_IDS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
+
+/** Nombre max d'entrées journal / frise temporelle sur le dashboard. */
+const CHRONICLE_MAX = 50
+const TIMELINE_SNAPSHOT_MAX = 20
+const DASHBOARD_SESSIONS_LIMIT = 50
 
 const CARD_TO_PETAL: Record<string, string> = {
   Agapè: 'agape',
@@ -79,6 +87,26 @@ function readingPetals01(r: Record<string, unknown>): Record<string, number> | n
     if (name && CARD_TO_PETAL[name]) normalized[CARD_TO_PETAL[name]] = 0.55
   }
   return Object.values(normalized).some((v) => v > 0) ? normalized : null
+}
+
+function paperDrawPetals01(r: Record<string, unknown>): Record<string, number> | null {
+  const cards = (r.cards as Array<{ name?: string }> | undefined) ?? []
+  if (!cards.length) return null
+  const normalized: Record<string, number> = Object.fromEntries(PETAL_IDS.map((id) => [id, 0]))
+  let hits = 0
+  for (const c of cards) {
+    const name = c?.name
+    if (name && CARD_TO_PETAL[name]) {
+      normalized[CARD_TO_PETAL[name]] += 0.55
+      hits++
+    }
+  }
+  if (!hits) return null
+  const scale = Math.max(1, hits * 0.35)
+  PETAL_IDS.forEach((id) => {
+    normalized[id] = Math.min(1, normalized[id] / scale)
+  })
+  return normalized
 }
 
 function inferChronicleTone(
@@ -144,7 +172,7 @@ function inferChronicleTone(
   ]
   const sh = shadowKw.some((k) => s.includes(k))
   const li = lightKw.some((k) => s.includes(k))
-  if (type === 'tirage' || type === 'session' || type === 'session_anchor') {
+  if (type === 'tirage' || type === 'paper_draw' || type === 'session' || type === 'session_anchor') {
     if (sh && !li) return 'shadow'
     if (li && !sh) return 'light'
   }
@@ -180,17 +208,19 @@ const EMPTY_STATS = {
   fleur_solo_count: 0,
   fleur_duo_count: 0,
   readings_count: 0,
+  paper_draw_count: 0,
   dreamscape_count: 0,
 }
 
 export async function fetchDashboardData() {
   try {
-  const [accessRes, sessionsRes, fleurRes, readingsRes, dreamscapeRes, prairieRes] =
+  const [accessRes, sessionsRes, fleurRes, readingsRes, paperDrawsRes, dreamscapeRes, prairieRes] =
     await Promise.allSettled([
       billingApi.getAccess(),
-      sessionsApi.my(),
+      sessionsApi.my(undefined, DASHBOARD_SESSIONS_LIMIT),
       fleurApi.getMyResults(),
       tarotReadingsApi.my(),
+      paperDrawApi.my(),
       dreamscapeApi.my(),
       prairieApi.getFleurs(),
     ])
@@ -199,6 +229,8 @@ export async function fetchDashboardData() {
   const sessions = sessionsRes.status === 'fulfilled' ? (sessionsRes.value as { items?: unknown[] })?.items ?? [] : []
   const fleurItems = fleurRes.status === 'fulfilled' ? (fleurRes.value as { items?: unknown[] })?.items ?? [] : []
   const readings = readingsRes.status === 'fulfilled' ? (readingsRes.value as { items?: unknown[] })?.items ?? [] : []
+  const paperDraws =
+    paperDrawsRes.status === 'fulfilled' ? (paperDrawsRes.value as { items?: unknown[] })?.items ?? [] : []
   const dreamscapeItems = dreamscapeRes.status === 'fulfilled' ? (dreamscapeRes.value as { items?: unknown[] })?.items ?? [] : []
   const prairieData = prairieRes.status === 'fulfilled' ? prairieRes.value : null
   const prairieFleurs = (prairieData as { fleurs?: unknown[] })?.fleurs ?? []
@@ -207,7 +239,7 @@ export async function fetchDashboardData() {
 
   // Scores Fleur : renvoyés par GET /api/fleur/my-results (évite N appels getResult / getDuoResult).
   // Fallback réseau uniquement pour les entrées sans scores (ex. fleur-beta ou ancien client).
-  const fleurSlice = (fleurItems as Record<string, unknown>[]).slice(0, 20)
+  const fleurSlice = (fleurItems as Record<string, unknown>[]).slice(0, 50)
 
   function hasServerScores(item: Record<string, unknown>): boolean {
     const s = item.scores
@@ -278,6 +310,10 @@ export async function fetchDashboardData() {
       if (r.cards) return acc + (r.cards as unknown[]).length
       if (r.card) return acc + 1
       return acc
+    }, 0) +
+    (paperDraws as { cards?: unknown[] }[]).reduce((acc, r) => {
+      const cards = (r.cards as unknown[]) ?? []
+      return acc + (Array.isArray(cards) ? cards.length : 0)
     }, 0)
 
   const fleurSoloCount = (fleurItems as { type?: string }[]).filter((f) => f.type !== 'duo').length
@@ -292,7 +328,8 @@ export async function fetchDashboardData() {
     fleur_count: (fleurItems as unknown[]).length,
     fleur_solo_count: fleurSoloCount,
     fleur_duo_count: fleurDuoCount,
-    readings_count: (readings as unknown[]).length,
+    readings_count: (readings as unknown[]).length + (paperDraws as unknown[]).length,
+    paper_draw_count: (paperDraws as unknown[]).length,
     dreamscape_count: (dreamscapeItems as unknown[]).length,
   }
 
@@ -311,8 +348,6 @@ export async function fetchDashboardData() {
   }
 
   for (const s of sessions as Record<string, unknown>[]) {
-    const createdAt = s.created_at ? new Date(s.created_at as string).getTime() : 0
-    if (createdAt < thirtyDaysAgo) continue
     const plan = (s.step_data as Record<string, unknown>)?.plan14j ?? s.plan14j
     const planSynthesis =
       (plan as Record<string, unknown>)?.synthesis || (plan as Record<string, unknown>)?.synthesis_suggestion
@@ -336,8 +371,6 @@ export async function fetchDashboardData() {
     })
   }
   for (const r of readings as Record<string, unknown>[]) {
-    const createdAt = r.createdAt ? new Date(r.createdAt as string).getTime() : 0
-    if (createdAt < thirtyDaysAgo) continue
     const line = buildReadingChronicleSummary(r)
     if (line) {
       chronicle.push({
@@ -349,9 +382,19 @@ export async function fetchDashboardData() {
       })
     }
   }
+  for (const r of paperDraws as Record<string, unknown>[]) {
+    const line = buildPaperDrawChronicleSummary(r)
+    if (line) {
+      chronicle.push({
+        type: 'paper_draw',
+        id: r.id,
+        synthesis: line,
+        created_at: r.createdAt ?? r.created_at,
+        tone: inferChronicleTone('paper_draw', line),
+      })
+    }
+  }
   for (const d of dreamscapeItems as Record<string, unknown>[]) {
-    const createdAt = d.savedAt ? new Date(d.savedAt as string).getTime() : 0
-    if (createdAt < thirtyDaysAgo) continue
     const line = buildDreamscapeChronicleSummary(d)
     chronicle.push({
       type: 'dreamscape',
@@ -359,6 +402,17 @@ export async function fetchDashboardData() {
       synthesis: line,
       created_at: d.savedAt,
       tone: inferChronicleTone('dreamscape', line),
+    })
+  }
+  for (const fr of fleurResultsWithScores) {
+    const line = buildFleurChronicleSummary(fr)
+    chronicle.push({
+      type: fr.type === 'duo' ? 'fleur_duo' : fr.type === 'fleur-beta' ? 'fleur_beta' : 'fleur',
+      id: fr.id,
+      token: fr.token,
+      synthesis: line,
+      created_at: fr.created_at,
+      tone: 'neutral',
     })
   }
   chronicle.sort((a, b) => new Date((b.created_at as string) || 0).getTime() - new Date((a.created_at as string) || 0).getTime())
@@ -396,6 +450,16 @@ export async function fetchDashboardData() {
     if (name && CARD_TO_PETAL[name]) {
       petalsAggregate[CARD_TO_PETAL[name]] += 0.5
       petalsCount++
+    }
+  }
+  for (const r of paperDraws as Record<string, unknown>[]) {
+    const cards = (r.cards as Array<{ name?: string }> | undefined) ?? []
+    for (const c of cards) {
+      const name = c?.name
+      if (name && CARD_TO_PETAL[name]) {
+        petalsAggregate[CARD_TO_PETAL[name]] += 0.35
+        petalsCount++
+      }
     }
   }
   for (const d of dreamscapeItems as Record<string, unknown>[]) {
@@ -470,6 +534,19 @@ export async function fetchDashboardData() {
       type: 'tirage',
     })
   }
+  for (const r of paperDraws as Record<string, unknown>[]) {
+    const petals = paperDrawPetals01(r)
+    const summary = buildPaperDrawChronicleSummary(r)
+    if (!summary) continue
+    timeline.push({
+      id: r.id,
+      date: r.createdAt ?? r.created_at,
+      label: shortTimelineLabel(summary, 'Tirage papier', 56),
+      summary,
+      petals: petals ?? Object.fromEntries(PETAL_IDS.map((id) => [id, 0])),
+      type: 'paper_draw',
+    })
+  }
   for (const fr of fleurResultsWithScores) {
     const scores = fr.scores as Record<string, number> | undefined
     if (scores) {
@@ -507,7 +584,7 @@ export async function fetchDashboardData() {
   }
   timeline.sort((a, b) => new Date((b.date as string) || 0).getTime() - new Date((a.date as string) || 0).getTime())
 
-  const last5Snapshots = timeline.slice(0, 5)
+  const last5Snapshots = timeline.slice(0, TIMELINE_SNAPSHOT_MAX)
   const sessionMantra = extractSessionMantra((sessions as Record<string, unknown>[])[0])
 
   const petals_deficit_aggregate = aggregateSessionDeficits(sessions as Record<string, unknown>[])
@@ -524,7 +601,8 @@ export async function fetchDashboardData() {
     fleurResults: fleurResultsWithScores,
     fleurItems,
     readings,
-    chronicle: chronicle.slice(0, 20),
+    paperDraws,
+    chronicle: chronicle.slice(0, CHRONICLE_MAX),
     access,
     petals_aggregate,
     petals_avg_30d,
@@ -547,6 +625,7 @@ export async function fetchDashboardData() {
       fleurResults: [],
       fleurItems: [],
       readings: [],
+      paperDraws: [],
       chronicle: [],
       access: null,
       petals_aggregate: {} as Record<string, number>,

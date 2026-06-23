@@ -588,7 +588,8 @@ export async function inviteDuoPartner(params: {
   if (!partnerEmail || !partnerEmail.includes('@')) throw new Error('Email partenaire invalide')
 
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, user_id, token FROM ${tRes} WHERE token = ? AND (parent_id IS NULL OR parent_id = 0) LIMIT 1`,
+    `SELECT id, user_id, token, agape, philautia, mania, storge, pragma, philia, ludus, eros
+     FROM ${tRes} WHERE token = ? AND (parent_id IS NULL OR parent_id = 0) LIMIT 1`,
     [token]
   )
   const root = rows[0]
@@ -606,12 +607,37 @@ export async function inviteDuoPartner(params: {
   await pool.execute(`UPDATE ${tRes} SET invited_email = ? WHERE id = ?`, [partnerEmail, Number(root.id)])
 
   const inviter = params.inviterName?.trim() || "Quelqu'un"
-  const { sendInviteEmail } = await import('./email')
-  const result = await sendInviteEmail({
+  const scores = rowScores(root as Record<string, unknown>)
+  let inviterDisplay = inviter
+  if (ownerId) {
+    try {
+      const tblUsers = table('users')
+      const tblMeta = table('usermeta')
+      const [uRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT display_name FROM ${tblUsers} WHERE ID = ? LIMIT 1`,
+        [ownerId]
+      )
+      const [pRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT meta_value FROM ${tblMeta} WHERE user_id = ? AND meta_key = 'fleur_pseudo' LIMIT 1`,
+        [ownerId]
+      )
+      inviterDisplay =
+        (pRows[0]?.meta_value ? String(pRows[0].meta_value).trim() : '') ||
+        (uRows[0]?.display_name ? String(uRows[0].display_name).trim() : '') ||
+        inviter
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const { sendDuoInviteEmail } = await import('./email')
+  const result = await sendDuoInviteEmail({
     to: partnerEmail,
-    subject: `${inviter} vous invite à un questionnaire Duo`,
-    intro: `${inviter} vous invite à compléter votre partie du questionnaire Fleur d'AmOurs en duo. Cliquez ci-dessous pour rejoindre.`,
+    inviterName: inviter,
+    inviterDisplayName: inviterDisplay,
     inviteUrl: params.inviteUrl,
+    scores,
+    kind: 'duo_classic',
     ctaLabel: 'Rejoindre le Duo',
   })
 

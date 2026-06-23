@@ -24,8 +24,13 @@ export function manuelChapterBaseName(file: string): string {
   return file.replace(/\.md$/i, '')
 }
 
-export function getManuelAssetUrl(path: string): string {
+export function getManuelAssetUrl(path: string, locale = 'fr'): string {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
   const p = path.startsWith('/') ? path : `/${path}`
-  return `${base}${MANUEL_PUBLIC_PREFIX}${p}`
+  const loc = locale === 'fr' ? '' : `/${locale}`
+  // Évite /manuel/en/en/… si path inclut déjà la locale.
+  if (loc && p.startsWith(`${loc}/`)) {
+    return `${base}${MANUEL_PUBLIC_PREFIX}${p}`
+  }
+  return `${base}${MANUEL_PUBLIC_PREFIX}${loc}${p}`
 }

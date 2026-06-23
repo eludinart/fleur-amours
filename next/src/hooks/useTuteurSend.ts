@@ -38,6 +38,7 @@ type TuteurResponse = {
   next_door_suggestion?: { door: string; reason?: string }
   explore_petal?: string | null
   shadow_detected?: boolean
+  _ai_error?: string
   _openrouter_error?: string
 }
 

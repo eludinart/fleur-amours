@@ -7,9 +7,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/api-auth'
 import { isDbConfigured } from '@/lib/db'
 import { getById, update } from '@/lib/db-sessions'
-import { openrouterCall } from '@/lib/openrouter'
+import { getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getCoachPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction } from '@/lib/prompts'
+import { buildSystemPrompt } from '@/lib/ai-system-prompt'
+import { guardedLlmCall, logAiCacheHit } from '@/lib/ai-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +48,7 @@ export async function POST(req: NextRequest) {
 
     const existing = stepData.coach_snapshot
     if (existing && !body?.force) {
+      void logAiCacheHit('coach-fiche', null, JSON.stringify(existing).length)
       return NextResponse.json({ coach_snapshot: existing, cached: true })
     }
 
@@ -74,10 +77,15 @@ export async function POST(req: NextRequest) {
       language: locale,
     }
 
-    const system = `${coachPrompt}\n\n${getLangInstruction(locale)}`
+    const system = `${await buildSystemPrompt({
+      taskId: 'coach-fiche',
+      basePrompt: coachPrompt,
+      locale,
+      manuelQuery: JSON.stringify(userMsg).slice(0, 4_000),
+    })}\n\n${getLangInstruction(locale)}`
 
     // Fallback si aucun provider n'est dispo
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!(await isLlmConfigured())) {
       const topPetal = Object.entries(petalsDeficit).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] ?? null
       const topVal = topPetal ? Number(petalsDeficit[topPetal] ?? 0) : 0
       const snapshot = {
@@ -103,9 +111,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ coach_snapshot: snapshot, cached: false })
     }
 
-    const result = await openrouterCall(system, [{ role: 'user', content: JSON.stringify(userMsg) }], {
-      maxTokens: 900,
-      responseFormatJson: true,
+    const { result } = await guardedLlmCall({
+      taskId: 'coach-fiche',
+      userId: null,
+      isAdmin: true,
+      system,
+      messages: [{ role: 'user', content: JSON.stringify(userMsg) }],
+      options: { maxTokens: 900, responseFormatJson: true },
+      force: !!body?.force,
     })
 
     if (!result || typeof result !== 'object' || Array.isArray(result)) {
@@ -115,7 +128,7 @@ export async function POST(req: NextRequest) {
     const snapshot = {
       ...(result as Record<string, unknown>),
       cached_at: new Date().toISOString(),
-      provider: 'openrouter',
+      provider: (await getLlmMetaForTask('coach-fiche')).provider,
     }
 
     await update({ id: sessionId, step_data: { ...stepData, coach_snapshot: snapshot } })

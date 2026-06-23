@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminOrCoach } from '@/lib/api-auth'
 import { isDbConfigured, getPool, table } from '@/lib/db'
 import type { RowDataPacket } from 'mysql2'
-import { openrouterCall } from '@/lib/openrouter'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getCoachPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction } from '@/lib/prompts'
 import { getCoachPatientSnapshot, upsertCoachPatientSnapshot } from '@/lib/db-coach-patient-fiches'
@@ -220,7 +220,7 @@ export async function POST(req: NextRequest) {
     const system = `${coachPrompt}\n\n${getLangInstruction(getLocale(req))}`
 
     // Si pas de clé : fallback déterministe
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!(await isLlmConfigured())) {
       const topDef = Object.entries(avg_deficit).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] as string | undefined
       const topDefVal = Number(topDef ? avg_deficit[topDef] ?? 0 : 0) || 0
       const snapshot = {
@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const result = await openrouterCall(
+    const result = await llmCallForTask('coach-patient-fiche', 
       system,
       [{ role: 'user', content: JSON.stringify(payloadForAI) }],
       { maxTokens: 900, responseFormatJson: true }
@@ -265,7 +265,7 @@ export async function POST(req: NextRequest) {
     const snapshot = {
       ...(result as Record<string, unknown>),
       cached_at: new Date().toISOString(),
-      provider: 'openrouter',
+      provider: (await getLlmMetaForTask('coach-patient-fiche')).provider,
     }
 
     await upsertCoachPatientSnapshot({ coachUserId: targetCoachUserId, patientEmail, snapshot })

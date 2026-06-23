@@ -348,9 +348,10 @@ export function useAiSession({
         }
 
         // Diagnostic : OpenRouter a échoué, on utilise le mock
-        if (res._openrouter_error && !window.__fleurOpenRouterWarned) {
+        const aiErr = res._ai_error ?? res._openrouter_error
+        if (aiErr && !window.__fleurOpenRouterWarned) {
           window.__fleurOpenRouterWarned = true
-          toast(`IA : OpenRouter indisponible (${res._openrouter_error}). Mode dégradé actif.`, 'error')
+          toast(`IA indisponible (${aiErr}). Mode dégradé actif.`, 'error')
         }
 
         setLoading(false)

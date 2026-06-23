@@ -125,10 +125,15 @@ function safeJson<T>(raw: unknown, fallback: T): T {
   }
 }
 
-export async function my(email: string, status?: string): Promise<{ items: Record<string, unknown>[] }> {
+export async function my(
+  email: string,
+  status?: string,
+  limit = 10
+): Promise<{ items: Record<string, unknown>[] }> {
   const pool = getPool()
   await ensureTable()
   const t = tbl()
+  const safeLimit = Math.min(Math.max(parseInt(String(limit), 10) || 10, 1), 100)
   let sql = `SELECT id, email, first_words, door_suggested, petals_json, history_json, cards_json, anchors_json, step_data_json, doors_locked, turn_count, status, duration_seconds, created_at
      FROM ${t} WHERE email = ?`
   const params: (string | number)[] = [email]
@@ -136,7 +141,7 @@ export async function my(email: string, status?: string): Promise<{ items: Recor
     sql += ' AND status = ?'
     params.push(status)
   }
-  sql += ' ORDER BY created_at DESC LIMIT 10'
+  sql += ` ORDER BY created_at DESC LIMIT ${safeLimit}`
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params)
   const items = rows.map((r) => {
     const cardsRaw = safeJson<unknown>(r.cards_json, [])

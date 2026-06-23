@@ -1,4 +1,4 @@
-import { openrouterCall } from './openrouter'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from './llm'
 import { getLangInstruction } from './prompts'
 import { getScienceConfig, getScienceEvidence, getScienceProfile, upsertScienceEvidence, upsertScienceProfile } from './science-db'
 import { getMyConversations, getMessages } from './db-chat'
@@ -124,7 +124,7 @@ ${params.previousResume ? params.previousResume : '(aucun)'}
 ` + getLangInstruction(safeLocale(params.locale)),
   }
 
-  const result = await openrouterCall(
+  const result = await llmCallForTask('science-rebuild', 
     sys,
     [{ role: 'user', content: user.content }],
     { maxTokens: 260, responseFormatJson: true, timeoutMs: 20_000, maxAttempts: 1 }
@@ -346,7 +346,7 @@ ${getLangInstruction(locale)}`
     user += `\n\n${manuelStrings.scienceReferenceLabel}\n${manuelCtx}`
   }
 
-  const result = await openrouterCall(sys, [{ role: 'user', content: user }], {
+  const result = await llmCallForTask('science-rebuild', sys, [{ role: 'user', content: user }], {
     maxTokens: 280,
     responseFormatJson: true,
     timeoutMs: 20_000,

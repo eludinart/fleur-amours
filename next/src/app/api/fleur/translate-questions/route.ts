@@ -1,51 +1,34 @@
 /**
  * POST /api/fleur/translate-questions
- * Traduit les questions QCM Fleur (label_en, label_es) via OpenRouter.
+ * Traduit les questions QCM Fleur (label_en, label_es) via le provider IA actif.
  * MariaDB : ritual_questions, ritual_question_choices
  */
 import { NextRequest, NextResponse } from 'next/server'
 import type { RowDataPacket } from 'mysql2'
 import { requireAdmin } from '@/lib/api-auth'
 import { getPool, table, isDbConfigured } from '@/lib/db'
-import { getOpenRouterModel } from '@/lib/openrouter-config'
+import { llmCallForTask, isLlmConfigured } from '@/lib/llm'
 
 export const dynamic = 'force-dynamic'
 
 async function translateBatch(texts: string[], targetLang: 'en' | 'es'): Promise<string[]> {
-  const apiKey = process.env.OPENROUTER_API_KEY
-  if (!apiKey || texts.length === 0) return []
+  if (!(await isLlmConfigured()) || texts.length === 0) return []
 
   const langName = targetLang === 'en' ? 'English' : 'Spanish'
   const numbered = texts.map((t, i) => `${i + 1}. ${t}`).join('\n')
-  const model = getOpenRouterModel()
 
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: 'system',
-          content: `Translate the following numbered list from French to ${langName}. Return ONLY a JSON array of translated strings, same order. Example: ["tr1","tr2"]`,
-        },
-        { role: 'user', content: numbered },
-      ],
-      max_tokens: 2000,
-    }),
-  })
+  const result = await llmCallForTask('translate-questions', 
+    `Translate the following numbered list from French to ${langName}. Return ONLY a JSON array of translated strings, same order. Example: ["tr1","tr2"]`,
+    [{ role: 'user', content: numbered }],
+    { maxTokens: 2000, rawText: true }
+  )
 
-  if (!res.ok) return []
-  const data = await res.json()
-  const raw = data?.choices?.[0]?.message?.content?.trim() || ''
+  const raw = typeof result === 'string' ? result.trim() : ''
+  if (!raw) return []
   const cleaned = raw.replace(/^```\w*\s*/i, '').replace(/\s*```$/, '')
   try {
     const arr = JSON.parse(cleaned)
-    return Array.isArray(arr) ? arr : []
+    return Array.isArray(arr) ? arr.map(String) : []
   } catch {
     return []
   }

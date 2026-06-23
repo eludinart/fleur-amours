@@ -4,7 +4,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { openrouterCall } from '@/lib/openrouter'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
 
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
 
   const messages = [...oaiMessages, { role: 'user' as const, content: userContent }]
 
-  if (process.env.OPENROUTER_API_KEY?.trim()) {
+  if ((await isLlmConfigured())) {
     const tail = oaiMessages
       .slice(-8)
       .map((m) => m.content)
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
       maxChars: 10_000,
       locale,
     })
-    const result = await openrouterCall(doorSystem, messages, {
+    const result = await llmCallForTask('extract-door-summary', doorSystem, messages, {
       maxTokens: 1200,
       responseFormatJson: true,
     })
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
     if (result && typeof result === 'object') {
       const preview = normalizePreview(result as Record<string, unknown>)
       if (hasAnyText(preview)) {
-        return NextResponse.json({ ...preview, provider: 'openrouter' })
+        return NextResponse.json({ ...preview, provider: (await getLlmMetaForTask('extract-door-summary')).provider })
       }
     }
   }

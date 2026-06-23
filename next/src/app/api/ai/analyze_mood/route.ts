@@ -5,7 +5,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { openrouterCall } from '@/lib/openrouter'
+import { getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
+import { AiAccessDeniedError, aiAccessErrorResponse, guardedLlmCall } from '@/lib/ai-guard'
 import { getAnalyzeMoodPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction, isValidPetal, isValidCard } from '@/lib/prompts'
 import { parseDreamscapeConfigFromPrompt } from '@/lib/dreamscape-config'
@@ -43,14 +44,16 @@ const MOCK_RESPONSE = {
 }
 
 export async function POST(req: NextRequest) {
+  let userId: string
   try {
-    await requireAuth(req)
+    ;({ userId } = await requireAuth(req))
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json({ error: e.message ?? 'Authentification requise' }, { status: e.status ?? 401 })
   }
+  const uid = parseInt(userId, 10)
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(await isLlmConfigured())) {
     return NextResponse.json(MOCK_RESPONSE)
   }
 
@@ -111,11 +114,20 @@ export async function POST(req: NextRequest) {
 
   const systemPrompt = await getAnalyzeMoodPrompt()
   const dreamscapeConfig = parseDreamscapeConfigFromPrompt(systemPrompt)
-  const result = await openrouterCall(
-    systemPrompt,
-    messages.map((m) => ({ role: m.role, content: m.content })),
-    { maxTokens: dreamscapeConfig.max_tokens ?? 300 }
-  )
+  let result: Record<string, unknown> | string | null = null
+  try {
+    const guarded = await guardedLlmCall({
+      taskId: 'analyze-mood',
+      userId: uid,
+      system: systemPrompt,
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      options: { maxTokens: dreamscapeConfig.max_tokens ?? 300 },
+    })
+    result = guarded.result
+  } catch (e: unknown) {
+    if (e instanceof AiAccessDeniedError) return aiAccessErrorResponse(e.result)
+    return NextResponse.json(MOCK_RESPONSE)
+  }
 
   if (
     result &&
@@ -204,7 +216,7 @@ export async function POST(req: NextRequest) {
       shadow_card: shadowCard,
       propose_close: !!r.propose_close,
       propose_close_actions: proposeCloseActions,
-      provider: 'openrouter',
+      provider: (await getLlmMetaForTask('analyze-mood')).provider,
     })
   }
 

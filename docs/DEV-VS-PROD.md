@@ -26,12 +26,12 @@ Les références `wordpress` / `wp_` visibles dans le code/doc sont des artefact
 
 1. **Tunnel SSH** : Vérifier la connexion `ssh root@$SSH_VPS_HOST`
 2. **Relais socat** : Sur le VPS, `scripts/setup-mariadb-tunnel-vps.sh` doit exposer MariaDB
-3. **Variables** : `.env` avec `USE_NODE_API=true`, `LOCAL_*`, `MARIADB_*` (injectés par dev-vps)
+3. **Variables** : `.env` avec `USE_NODE_API=true`, `LOCAL_*`, `MARIADB_*`, et clé IA (`OPENROUTER_API_KEY` ou `MISTRAL_API_KEY`)
 
 ## Checklist prod legacy (Coolify)
 
 1. **MariaDB** : Ressource Coolify connectée au réseau du service Next.js
-2. **Variables** : `MARIADB_HOST`, `JWT_SECRET`, `OPENROUTER_API_KEY`
+2. **Variables** : `MARIADB_HOST`, `JWT_SECRET`, clé IA (`OPENROUTER_API_KEY` ou `MISTRAL_API_KEY` selon provider admin)
 3. **NEXT_PUBLIC_API_URL** : Vide ou absent → requêtes en même origine
 
 ## Smoke tests & pré-déploiement public

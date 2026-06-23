@@ -1,7 +1,7 @@
 /**
  * IA entretien bien-être Mycelium — posture prévention RPS / QVT.
  */
-import { openrouterCall } from './openrouter'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from './llm'
 import { getLangInstruction } from './prompts'
 import {
   getInterviewTopic,
@@ -120,7 +120,7 @@ export async function generateInterviewTurn(params: {
   const turn = userTurnCount + 1
   const maxTurns = MYCELIUM_INTERVIEW_MAX_TURNS
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(await isLlmConfigured())) {
     return fallbackTurn(topic, userTurnCount, params.userMessage)
   }
 
@@ -133,7 +133,7 @@ export async function generateInterviewTurn(params: {
     `[Tour ${turn}/${maxTurns}] Thématique: ${topic.labelFr}\n` +
     `Message du salarié:\n${params.userMessage}`
 
-  const result = await openrouterCall(
+  const result = await llmCallForTask('mycelium-interview',
     buildSystemPrompt(topic, params.locale, params.orgName),
     [...history, { role: 'user', content: userPayload }],
     { responseFormatJson: true, maxTokens: 650, timeoutMs: 28000 }
@@ -158,7 +158,7 @@ export async function generateInterviewTurn(params: {
       : topic.dimensions,
     turn,
     maxTurns,
-    provider: 'openrouter',
+    provider: (await getLlmMetaForTask('mycelium-interview')).provider,
   }
 }
 

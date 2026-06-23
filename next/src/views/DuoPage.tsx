@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { fleurApi, getDuoInviteUrl } from '@/api/fleur'
 import { useAuth } from '@/contexts/AuthContext'
@@ -406,6 +406,27 @@ export default function DuoPage() {
 
   const inviteUserId = searchParams.get('invite_user_id')
   const invitePseudo = decodeURIComponent(searchParams.get('invite_pseudo') || '')
+  const autoInviteUserDone = useRef(false)
+
+  // Invitation automatique depuis la Prairie (utilisateur connu)
+  useEffect(() => {
+    if (step !== STEP.SOLO_RESULT || !token || !inviteUserId || inviteSent || autoInviteUserDone.current) return
+    autoInviteUserDone.current = true
+    void sendInviteByUserId()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, token, inviteUserId, inviteSent])
+
+  // Envoi automatique par e-mail (questionnaire Duo classique)
+  useEffect(() => {
+    if (step !== STEP.SOLO_RESULT || !token || inviteUserId || inviteSent || inviteLoading) return
+    const email = partnerEmail.trim()
+    if (!email || !email.includes('@') || email.indexOf('@') < 1) return
+    const timer = setTimeout(() => {
+      tryAutoSendInvite()
+    }, 1000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partnerEmail, step, token, inviteUserId, inviteSent, inviteLoading])
 
   // Si URL contient ?token=xxx → charger le résultat ou afficher le questionnaire partenaire B
   useEffect(() => {
@@ -467,7 +488,7 @@ export default function DuoPage() {
   }
 
   async function sendInvite() {
-    if (!partnerEmail.trim() || !token) return
+    if (!partnerEmail.trim() || !token || inviteSent || inviteLoading) return
     setInviteLoading(true); setError('')
     try {
       const res = await fleurApi.invitePartner(partnerEmail.trim(), token)
@@ -480,6 +501,12 @@ export default function DuoPage() {
       const detail = e?.response?.data?.detail ?? e?.message
       setError(typeof detail === 'string' ? detail : t('duo.inviteError'))
     } finally { setInviteLoading(false) }
+  }
+
+  function tryAutoSendInvite() {
+    const email = partnerEmail.trim()
+    if (!email || !email.includes('@') || inviteSent || inviteLoading || !token) return
+    void sendInvite()
   }
 
   async function sendInviteByUserId() {
@@ -622,20 +649,14 @@ export default function DuoPage() {
 
           <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 p-5 space-y-3">
             <h3 className="font-semibold text-sm text-emerald-700 dark:text-emerald-300">{t('duo.inviteByEmail')}</h3>
-            {inviteUserId && !inviteSent && (
-              <div className="pb-3 border-b border-emerald-200 dark:border-emerald-800">
-                <button
-                  onClick={sendInviteByUserId}
-                  disabled={inviteLoading}
-                  className="w-full py-2.5 bg-violet-500 text-white rounded-xl text-sm font-semibold hover:bg-violet-600 disabled:opacity-50 transition-colors"
-                >
-                  💕 {inviteLoading ? '…' : t('duo.inviteFromPrairie', { pseudo: invitePseudo || t('duo.personBInvited') })}
-                </button>
-              </div>
+            {inviteUserId && inviteLoading && !inviteSent && (
+              <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                {t('duo.inviteFromPrairie', { pseudo: invitePseudo || t('duo.personBInvited') })}…
+              </p>
             )}
             {inviteSent ? (
               <div className="space-y-3">
-                <p className="text-sm text-emerald-700 dark:text-emerald-300">{t('duo.inviteSentTo', { email: partnerEmail })}</p>
+                <p className="text-sm text-emerald-700 dark:text-emerald-300">{t('duo.inviteSentTo', { email: partnerEmail || invitePseudo })}</p>
                 <p className="text-xs text-emerald-600 dark:text-emerald-400">{t('duo.inviteHint')}</p>
                 <button onClick={checkDuo} disabled={checkLoading}
                   className="w-full py-2.5 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent-hover disabled:opacity-50 transition-colors">
@@ -644,16 +665,23 @@ export default function DuoPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex gap-2">
-                  <input type="email"
-                    className="flex-1 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
-                    placeholder={t('duo.partnerEmailPlaceholder')}
-                    value={partnerEmail} onChange={e => { setPartnerEmail(e.target.value); setError('') }} />
-                  <button onClick={sendInvite} disabled={inviteLoading || !partnerEmail.trim()}
-                    className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-colors">
-                    {inviteLoading ? '…' : t('duo.send')}
-                  </button>
-                </div>
+                {!inviteUserId && (
+                  <>
+                    <input
+                      type="email"
+                      className="w-full px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                      placeholder={t('duo.partnerEmailPlaceholder')}
+                      value={partnerEmail}
+                      onChange={(e) => { setPartnerEmail(e.target.value); setError('') }}
+                      onBlur={tryAutoSendInvite}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); tryAutoSendInvite() } }}
+                    />
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">{t('aDeux.multiInviteHint')}</p>
+                  </>
+                )}
+                {inviteLoading && (
+                  <p className="text-sm text-emerald-700 dark:text-emerald-300">…</p>
+                )}
                 <button onClick={copyLink} disabled={!token}
                   className="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors">
                   {t('duo.copyLink')}

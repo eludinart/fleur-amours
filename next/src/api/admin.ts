@@ -16,6 +16,13 @@ export type SystemStatus = {
     host: string | null
     from: string | null
   }
+  ai?: {
+    provider: string
+    provider_label: string
+    model: string
+    configured: boolean
+    source: string
+  }
   coolify: {
     configured: boolean
     servers: Array<{ name: string; ip: string; uuid: string; unreachable?: boolean }>
@@ -73,4 +80,15 @@ export const adminApi = {
   saveScienceConfig: (config: Record<string, unknown>) => api.post('/api/admin/science/config', config),
   rebuildScienceProfile: (params: { user_id: number; locale?: string; petals?: Record<string, number> }) =>
     api.post('/api/admin/science/rebuild', params),
+
+  getAiConfig: () => api.get('/api/admin/ai/config'),
+  saveAiConfig: (config: {
+    provider: string
+    openrouter_model?: string | null
+    mistral_model?: string | null
+    openrouter_models?: Partial<Record<'light' | 'standard' | 'premium', string | null>>
+    mistral_models?: Partial<Record<'light' | 'standard' | 'premium', string | null>>
+  }) => api.post('/api/admin/ai/config', config),
+  testAi: () => api.get('/api/admin/ai/test'),
+  getAiUsage: (days = 7) => api.get(`/api/admin/ai/usage?days=${days}`),
 }

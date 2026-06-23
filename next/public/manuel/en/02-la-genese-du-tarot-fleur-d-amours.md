@@ -1,0 +1,5 @@
+# The Genesis of the Fleur d'ÅmÔurs Tarot
+
+> Book pages (table of contents): 9–9 · PDF p. 6–6 (estimated from extracted text)
+
+The Genesis of the Fleur d'ÅmÔurs Tarot In the beginning, I needed something very simple: to be able to talk about love with others without getting lost in misunderstandings. I could see that everyone put different realities behind this word, and that it complicated exchanges as much as it nourished them. So I sought to establish a common language, a foundation on which very different people could understand each other. From this research emerged eight words, eight ways of entering into a relationship with love, eight words like eight petals: Agapè, love that gives without calculation. Eros, the impulse of desire, the fire that sets in motion. Philia, the joy of chosen connection, the fraternity of hearts. Storge, quiet attachment, woven by familiarity. Pragma, love that is built, day after day. Ludus, playfulness, lightness, the pleasure of meeting. Mania, love that overflows, intense, sometimes dizzying. Philautia, the relationship with oneself, the way one loves oneself. It is from these eight forms of love that everything began.

@@ -1621,9 +1621,10 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
         setPendingSugg(res.suggest_card)
       }
       // Diagnostic : OpenRouter a échoué, on utilise le mock (afficher une fois)
-      if (res._openrouter_error && !window.__fleurOpenRouterWarned) {
+      const aiErr = res._ai_error ?? res._openrouter_error
+      if (aiErr && !window.__fleurOpenRouterWarned) {
         window.__fleurOpenRouterWarned = true
-        toast(`IA : OpenRouter indisponible (${res._openrouter_error}). Mode dégradé actif.`, 'warning')
+        toast(`IA indisponible (${aiErr}). Mode dégradé actif.`, 'warning')
       }
 
         setLoading(false)

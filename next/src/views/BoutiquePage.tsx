@@ -222,7 +222,7 @@ export default function BoutiquePage() {
             <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 p-6">
               <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-2">🌱 Graines à venir</h2>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                La Boutique des Saisons proposera bientôt des Graines à échanger contre votre Sève : thèmes visuels, effets cosmétiques pour la Prairie, et plus encore. Restez à l&apos;écoute !
+                La Boutique proposera bientôt des Graines à échanger contre votre Sève : thèmes visuels, effets cosmétiques pour la Prairie, et plus encore. Restez à l&apos;écoute !
               </p>
               <div className="mt-4 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/50 border border-dashed border-slate-300 dark:border-slate-600">
                 <p className="text-xs text-slate-500 dark:text-slate-400 italic">

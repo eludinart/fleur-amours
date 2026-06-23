@@ -23,8 +23,7 @@ import {
   listRituals,
   userInDyad,
 } from '@/lib/db-dyads'
-import { openrouterCall } from '@/lib/openrouter'
-import { getOpenRouterModel } from '@/lib/openrouter-config'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 
 export const dynamic = 'force-dynamic'
@@ -200,7 +199,7 @@ export async function POST(req: NextRequest) {
       'Tu es un coach relationnel pragmatique pour un couple dans l’app Fleur d’AmOurs. À partir des données (fleurs individuelles, fleur de couple, rituels, fil partagé), produis un RÉSUMÉ OPÉRATIONNEL : concret, bienveillant, jamais clinique ni accusateur. Réponds UNIQUEMENT en JSON avec les clés : headline (vue d’ensemble, 1 phrase), climate (climat actuel du lien), alignments (ressources / points d’accord observables), gaps (écarts ou zones de vigilance sans jugement), nextStep (un geste concret à deux cette semaine). Chaque champ < 280 caractères.' +
       getLangInstruction(locale)
 
-    const result = await openrouterCall(
+    const result = await llmCallForTask('dyad-summary', 
       system,
       [{ role: 'user', content: condensed }],
       { responseFormatJson: true, maxTokens: 700 }
@@ -220,7 +219,7 @@ export async function POST(req: NextRequest) {
         locale,
         signature: ctx.signature,
         summary,
-        provider: getOpenRouterModel(),
+        provider: (await getLlmMetaForTask('dyad-summary')).provider,
       })
       recordId = inserted.id
     } catch (persistErr: unknown) {

@@ -17,6 +17,8 @@ import { JardinPhaser } from '@/components/JardinPhaser'
 import { PETAL_DEFS, PETAL_BY_ID } from '@/lib/petal-theme'
 import { dominantPetalId } from '@/lib/petal-tarot'
 import { AstrolabeOverlay } from '@/components/AstrolabeOverlay'
+import DemoAccountBadge from '@/components/DemoAccountBadge'
+import { CommunityMeteoStrip } from '@/components/social/CommunityMeteoStrip'
 import { loadGalaxieView, resonanceBetween } from '@/lib/grand-jardin-view'
 
 const GrandJardinGalaxie = dynamic(
@@ -504,6 +506,9 @@ export default function PrairiePage() {
           {t('prairie.grandJardin')}
         </h1>
         <div className="flex items-center gap-2">
+          <div className="hidden sm:block max-w-[14rem]">
+            <CommunityMeteoStrip variant="compact" />
+          </div>
           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
           <button
             type="button"
@@ -622,6 +627,8 @@ export default function PrairiePage() {
                     { id: 'contacts', label: t('prairie.filterContacts') },
                     { id: 'online', label: t('prairie.filterOnline') },
                     { id: 'neighborhood', label: t('prairie.filterNeighborhood') },
+                    { id: 'mirror', label: t('boussole.filterMirror') },
+                    { id: 'complement', label: t('boussole.filterComplement') },
                   ].map((opt) => (
                     <button
                       key={opt.id}
@@ -666,6 +673,9 @@ export default function PrairiePage() {
                     ↺
                   </button>
                 </div>
+                <div className="sm:hidden">
+                  <CommunityMeteoStrip variant="compact" />
+                </div>
                 <div className="flex gap-1.5 p-2 rounded-xl border border-slate-600/40 bg-slate-950/72 backdrop-blur-md shadow-lg">
                   <input
                     type="search"
@@ -707,6 +717,13 @@ export default function PrairiePage() {
               const relation = profilePreview?.relationStatusWithVisitor
                 || (isLinkedWithSelected ? 'accepted' : 'none')
               const social = selectedFleur.social ?? profilePreview?.social
+              const resonancePct = Math.round((profilePreview?.resonanceWithVisitor ?? 0) * 100)
+              const complementPct = Math.round((profilePreview?.complementarityWithVisitor ?? 0) * 100)
+              const complementDef = profilePreview?.complementPetal
+                ? PETAL_BY_ID[profilePreview.complementPetal]
+                : null
+              const targetMeteo = profilePreview?.meteoPetal ?? selectedFleur.meteo_petal
+              const targetFocus = (profilePreview?.socialMode ?? selectedFleur.social_mode) === 'focus'
               const openLisiere = () => router.push(`/lisiere/${selectedFleur.user_id}`)
 
               return (
@@ -744,6 +761,9 @@ export default function PrairiePage() {
                 </button>
 
                 <div className="flex flex-wrap gap-1 mb-2.5">
+                  {selectedFleur.is_demo && (
+                    <DemoAccountBadge title="Personnage virtuel — démo Mycelium" />
+                  )}
                   {isOnline ? (
                     <span className="px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
                       ● {t('prairie.profileOnline')}
@@ -780,6 +800,23 @@ export default function PrairiePage() {
                       {t('social.graineTAttend')}
                     </span>
                   )}
+                  {targetMeteo && PETAL_BY_ID[targetMeteo] && (
+                    <span
+                      className="px-1.5 py-0.5 rounded-md text-[9px] font-medium border"
+                      style={{
+                        color: PETAL_BY_ID[targetMeteo].color,
+                        borderColor: `${PETAL_BY_ID[targetMeteo].color}55`,
+                        backgroundColor: `${PETAL_BY_ID[targetMeteo].color}15`,
+                      }}
+                    >
+                      {t('meteo.badge', { petal: PETAL_BY_ID[targetMeteo].name })}
+                    </span>
+                  )}
+                  {targetFocus && (
+                    <span className="px-1.5 py-0.5 rounded-md text-[9px] text-violet-300 border border-violet-500/30">
+                      {t('meteo.focusBadge')}
+                    </span>
+                  )}
                 </div>
 
                 {profilePreviewLoading ? (
@@ -813,6 +850,19 @@ export default function PrairiePage() {
                         {' · '}
                         🌸 {social.pollen_received_total ?? 0}
                       </p>
+                    )}
+                    {(resonancePct > 0 || complementPct > 0) && (
+                      <div className="flex flex-wrap gap-2 pt-0.5">
+                        <span className="text-[10px] text-slate-400">
+                          {t('boussole.mirror')}:{' '}
+                          <span className="text-cyan-300 font-medium">{resonancePct}%</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {t('boussole.complement')}:{' '}
+                          <span className="text-amber-300 font-medium">{complementPct}%</span>
+                          {complementDef ? ` · ${complementDef.name}` : ''}
+                        </span>
+                      </div>
                     )}
                   </div>
                 )}

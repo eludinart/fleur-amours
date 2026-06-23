@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { RowDataPacket } from 'mysql2'
 import { requireAdmin } from '@/lib/api-auth'
 import { getPool, isDbConfigured, table } from '@/lib/db'
+import { isDemoAccount } from '@/lib/demo-accounts'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,8 +39,10 @@ export async function GET(req: NextRequest) {
       where.push(`COALESCE(ar.app_role, '') = 'admin'`)
     }
 
+    const tMeta = table('usermeta')
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT u.ID as id, u.user_email as email, u.display_name as name, COALESCE(ar.app_role, 'user') as app_role
+      `SELECT u.ID as id, u.user_email as email, u.display_name as name, COALESCE(ar.app_role, 'user') as app_role,
+              (SELECT meta_value FROM ${tMeta} WHERE user_id = u.ID AND meta_key = 'fleur_demo_account' LIMIT 1) as demo_meta
        FROM ${tUsers} u
        LEFT JOIN ${tRoles} ar ON ar.user_id = u.ID
        WHERE ${where.join(' AND ')}
@@ -53,6 +56,7 @@ export async function GET(req: NextRequest) {
       email: String(r.email ?? ''),
       name: r.name ? String(r.name) : '',
       app_role: String(r.app_role ?? 'user'),
+      is_demo: isDemoAccount({ email: String(r.email ?? ''), demoMeta: r.demo_meta }),
     }))
     return NextResponse.json({ items })
   } catch (err: unknown) {

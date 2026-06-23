@@ -5,7 +5,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, ApiError } from '@/lib/api-auth'
-import { openrouterCall } from '@/lib/openrouter'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Authentification requise' }, { status: 401 })
   }
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(await isLlmConfigured())) {
     return NextResponse.json({
       summary: 'Aucun échange à résumer.',
     })
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
     locale: getLocale(req),
   })
 
-  const result = await openrouterCall(
+  const result = await llmCallForTask('dreamscape-summarize', 
     dreamscapeSystem,
     [{ role: 'user', content: userContent }],
     { maxTokens: 1800, responseFormatJson: true },

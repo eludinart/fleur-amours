@@ -4,10 +4,11 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
-import { openrouterCall } from '@/lib/openrouter'
+import { getLlmMeta, isLlmConfigured } from '@/lib/llm'
 import { getThresholdPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction } from '@/lib/prompts'
-import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
+import { buildSystemPrompt } from '@/lib/ai-system-prompt'
+import { AiAccessDeniedError, aiAccessErrorResponse, guardedLlmCall } from '@/lib/ai-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,28 +24,24 @@ const doorLabels: Record<string, string> = {
 }
 
 export async function POST(req: NextRequest) {
+  let userId: string
   try {
-    await requireAuth(req)
+    ;({ userId } = await requireAuth(req))
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json({ error: e.message ?? 'Authentification requise' }, { status: e.status ?? 401 })
   }
+  const uid = parseInt(userId, 10)
 
   let body: { first_words?: string }
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json(
-      { error: 'Corps JSON invalide' },
-      { status: 422 }
-    )
+    return NextResponse.json({ error: 'Corps JSON invalide' }, { status: 422 })
   }
   const firstWords = String(body.first_words ?? '').trim()
   if (!firstWords) {
-    return NextResponse.json(
-      { error: 'Les premiers mots ne peuvent pas être vides.' },
-      { status: 422 }
-    )
+    return NextResponse.json({ error: 'Les premiers mots ne peuvent pas être vides.' }, { status: 422 })
   }
 
   const locale = getLocale(req)
@@ -52,31 +49,36 @@ export async function POST(req: NextRequest) {
     `Voici ce que la personne a exprimé comme première parole :\n"${firstWords}"\n\nIdentifie la porte d'entrée et formule la première question selon les instructions.` +
     getLangInstruction(locale)
 
-  if (process.env.OPENROUTER_API_KEY) {
-    const systemPrompt = appendManuelReferenceToSystem(await getThresholdPrompt(), {
-      retrievalQuery: firstWords,
-      maxChars: 8_000,
-      locale,
-    })
-    const result = await openrouterCall(
-      systemPrompt,
-      [{ role: 'user', content: msg }],
-      { maxTokens: 400 }
-    )
-    if (
-      result &&
-      typeof result === 'object' &&
-      result.door_suggested &&
-      result.first_question
-    ) {
-      return NextResponse.json({
-        ...result,
-        provider: 'openrouter',
+  if (await isLlmConfigured()) {
+    try {
+      const systemPrompt = await buildSystemPrompt({
+        taskId: 'threshold',
+        basePrompt: await getThresholdPrompt(),
+        locale,
       })
+      const { result } = await guardedLlmCall({
+        taskId: 'threshold',
+        userId: uid,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: msg }],
+        options: { maxTokens: 400 },
+      })
+      if (
+        result &&
+        typeof result === 'object' &&
+        (result as Record<string, unknown>).door_suggested &&
+        (result as Record<string, unknown>).first_question
+      ) {
+        return NextResponse.json({
+          ...result,
+          provider: (await getLlmMeta('light')).provider,
+        })
+      }
+    } catch (e: unknown) {
+      if (e instanceof AiAccessDeniedError) return aiAccessErrorResponse(e.result)
     }
   }
 
-  // Fallback mock
   const norm = firstWords
     .toLowerCase()
     .normalize('NFD')

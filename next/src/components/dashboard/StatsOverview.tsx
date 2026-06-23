@@ -23,7 +23,9 @@ const item = {
 
 const cards = [
   { key: 'sessions', labelKey: 'statsOverview.sessions', valueKey: 'sessions_count', icon: '⏳', gradient: 'from-cyan-500/20 to-blue-600/20', border: 'border-cyan-200/60 dark:border-cyan-800/60', iconBg: 'bg-cyan-500/20', to: '/session#section-sessions' },
-  { key: 'cards', labelKey: 'statsOverview.cardsRevealed', valueKey: 'cards_revealed', icon: '🎴', gradient: 'from-rose-500/20 to-pink-600/20', border: 'border-rose-200/60 dark:border-rose-800/60', iconBg: 'bg-rose-500/20', to: `${basePath}/tirage?tab=list#section-tirages` },
+  { key: 'readings', labelKey: 'statsOverview.readings', valueKey: 'readings_count', icon: '🎴', gradient: 'from-sky-500/20 to-blue-600/20', border: 'border-sky-200/60 dark:border-sky-800/60', iconBg: 'bg-sky-500/20', to: `${basePath}/tirage?tab=list#section-tirages` },
+  { key: 'paper', labelKey: 'statsOverview.paperDraw', valueKey: 'paper_draw_count', icon: '📷', gradient: 'from-amber-500/20 to-orange-600/20', border: 'border-amber-200/60 dark:border-amber-800/60', iconBg: 'bg-amber-500/20', to: `${basePath}/tirage-papier?tab=history` },
+  { key: 'cards', labelKey: 'statsOverview.cardsRevealed', valueKey: 'cards_revealed', icon: '🃏', gradient: 'from-rose-500/20 to-pink-600/20', border: 'border-rose-200/60 dark:border-rose-800/60', iconBg: 'bg-rose-500/20', to: `${basePath}/tirage?tab=list#section-tirages` },
   { key: 'ma_fleur', labelKey: 'statsOverview.maFleur', valueKey: 'fleur_solo_count', icon: '🌸', gradient: 'from-violet-500/20 to-fuchsia-600/20', border: 'border-violet-200/60 dark:border-violet-800/60', iconBg: 'bg-violet-500/20', to: '/mes-fleurs#section-fleurs' },
   { key: 'duo', labelKey: 'statsOverview.duo', valueKey: 'fleur_duo_count', icon: '💕', gradient: 'from-rose-500/20 to-pink-600/20', border: 'border-rose-200/60 dark:border-rose-800/60', iconBg: 'bg-rose-500/20', to: '/mes-fleurs#section-fleurs' },
   { key: 'dreamscape', labelKey: 'statsOverview.dreamscape', valueKey: 'dreamscape_count', icon: '🌙', gradient: 'from-indigo-500/20 to-violet-600/20', border: 'border-indigo-200/60 dark:border-indigo-800/60', iconBg: 'bg-indigo-500/20', to: '/dreamscape/historique' },
@@ -65,7 +67,7 @@ export function StatsOverview({
           </div>
         </motion.div>
       ) : null}
-    <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+    <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
       {cards.map((c) => (
         <Link key={c.key} href={c.to} className="block min-w-0">
           <motion.div

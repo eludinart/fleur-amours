@@ -108,6 +108,23 @@ export function useSpeech({
     setSupported(!!(win && (win.SpeechRecognition || win.webkitSpeechRecognition)))
   }, [])
 
+  /** Demande l'autorisation micro via la boîte de dialogue native du navigateur. */
+  async function requestMicrophoneAccess(): Promise<void> {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      throw new Error('not-allowed')
+    }
+    try {
+      const perm = await navigator.permissions.query({ name: 'microphone' as PermissionName })
+      if (perm.state === 'granted') return
+      if (perm.state === 'denied') throw new Error('not-allowed')
+    } catch (e) {
+      if ((e as Error)?.message === 'not-allowed') throw e
+      // Permissions API indisponible ou sans support « microphone » — on tente getUserMedia.
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    stream.getTracks().forEach((t) => t.stop())
+  }
+
   function humanizeSpeechError(codeOrMsg: string): string {
     const c = String(codeOrMsg || '').toLowerCase().trim()
     if (!c) return 'Erreur micro.'
@@ -122,11 +139,12 @@ export function useSpeech({
     return `Erreur dictée: ${codeOrMsg}`
   }
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     setTranscript('')
     setInterimText('')
     setError(null)
     try {
+      await requestMicrophoneAccess()
       // Best-effort: stop any previous provider before starting a new one.
       providerRef.current?.stop()
       providerRef.current = new WebSpeechProvider({
@@ -149,8 +167,10 @@ export function useSpeech({
       providerRef.current.start()
       // listening=true will be set by onstart
     } catch (e) {
-      const msg = (e as Error)?.message ?? String(e)
+      const dom = e as DOMException
+      const msg = dom?.name || (e as Error)?.message || String(e)
       setError(humanizeSpeechError(msg))
+      setListening(false)
       // Don't flip supported to false on transient start errors.
     }
   }, [lang, onResult])

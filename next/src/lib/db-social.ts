@@ -3,8 +3,10 @@
  */
 import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { exec, getPool, table } from './db'
-import { resonanceBetween } from './grand-jardin-view'
+import { resonanceBetween, complementarityBetween, weakestPetals } from './grand-jardin-view'
 import { buildLisierePublicProfile } from './lisiere-profile'
+import { getSocialMeteo } from './community-meteo'
+import { fetchMaturityStats, computeMaturityBadges, fetchMaturityStatsBatch, type MaturityBadgeId } from './community-maturity'
 
 const PRESENCE_ONLINE_SECONDS = 300
 
@@ -623,12 +625,203 @@ async function ensureSeedsAndLinksTables(pool: Awaited<ReturnType<typeof getPool
   }
 }
 
-/** Dépose une graine (demande de contact) vers un autre utilisateur */
+// ────────────────────────────────────────────────────────────────────────────
+// Modération douce : sourdines (mutes) + signalements (reports) (B5)
+// ────────────────────────────────────────────────────────────────────────────
+
+const ensureModerationTablesPromise: { value: Promise<void> | null } = { value: null }
+
+function ensureModerationTables(pool: Awaited<ReturnType<typeof getPool>>): Promise<void> {
+  if (ensureModerationTablesPromise.value) return ensureModerationTablesPromise.value
+  const tMutes = table('fleur_social_mutes')
+  const tReports = table('fleur_social_reports')
+  ensureModerationTablesPromise.value = (async () => {
+    try {
+      await pool.execute(`
+        CREATE TABLE IF NOT EXISTS ${tMutes} (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          muted_user_id INT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE KEY uk_pair (user_id, muted_user_id),
+          INDEX idx_user (user_id),
+          INDEX idx_muted (muted_user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+      `)
+    } catch { /* exists */ }
+    try {
+      await pool.execute(`
+        CREATE TABLE IF NOT EXISTS ${tReports} (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          from_user_id INT NOT NULL,
+          target_user_id INT NOT NULL,
+          reason VARCHAR(64) NOT NULL,
+          detail TEXT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'open',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_target (target_user_id, status),
+          INDEX idx_from (from_user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+      `)
+    } catch { /* exists */ }
+  })().catch(() => {
+    ensureModerationTablesPromise.value = null
+  })
+  return ensureModerationTablesPromise.value as Promise<void>
+}
+
+/** Récupère l'ensemble des utilisateurs mis en sourdine par `userId`. */
+export async function getMutedUserIds(userId: number): Promise<Set<number>> {
+  const pool = getPool()
+  await ensureModerationTables(pool)
+  const tMutes = table('fleur_social_mutes')
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT muted_user_id FROM ${tMutes} WHERE user_id = ?`,
+      [userId]
+    )
+    return new Set(rows.map((r) => Number(r.muted_user_id)))
+  } catch {
+    return new Set()
+  }
+}
+
+/** Active ou retire une sourdine. */
+export async function setMute(
+  userId: number,
+  targetUserId: number,
+  mute: boolean
+): Promise<{ muted: boolean }> {
+  if (userId === targetUserId) throw new Error('Impossible de se mettre soi-même en sourdine')
+  const pool = getPool()
+  await ensureModerationTables(pool)
+  const tMutes = table('fleur_social_mutes')
+  if (mute) {
+    try {
+      await pool.execute(
+        `INSERT IGNORE INTO ${tMutes} (user_id, muted_user_id) VALUES (?, ?)`,
+        [userId, targetUserId]
+      )
+    } catch {
+      /* ignore unique constraint */
+    }
+    return { muted: true }
+  }
+  try {
+    await pool.execute(
+      `DELETE FROM ${tMutes} WHERE user_id = ? AND muted_user_id = ?`,
+      [userId, targetUserId]
+    )
+  } catch {
+    /* ignore */
+  }
+  return { muted: false }
+}
+
+/** Crée un signalement (motif simple). Garde la trace pour modération admin ultérieure. */
+export async function reportUser(
+  fromUserId: number,
+  targetUserId: number,
+  reason: string,
+  detail?: string
+): Promise<{ reportId: number }> {
+  if (fromUserId === targetUserId) throw new Error('Impossible de se signaler soi-même')
+  const trimmedReason = (reason ?? '').trim().slice(0, 64)
+  if (!trimmedReason) throw new Error('Motif requis')
+  const pool = getPool()
+  await ensureModerationTables(pool)
+  const tReports = table('fleur_social_reports')
+  const [res] = await pool.execute<ResultSetHeader>(
+    `INSERT INTO ${tReports} (from_user_id, target_user_id, reason, detail) VALUES (?, ?, ?, ?)`,
+    [fromUserId, targetUserId, trimmedReason, detail ? String(detail).slice(0, 1000) : null]
+  )
+  // Mettre automatiquement en sourdine la cible signalée (UX naturelle).
+  await setMute(fromUserId, targetUserId, true)
+  return { reportId: Number(res.insertId) }
+}
+
+/**
+ * Vérifie si une paire d'utilisateurs est en période de retenue (cooldown 7 j)
+ * après un refus ou un report. Évite les Graines insistantes côté receveur.
+ */
+async function isSeedCooldownActive(
+  pool: Awaited<ReturnType<typeof getPool>>,
+  fromUserId: number,
+  toUserId: number
+): Promise<boolean> {
+  const tSeeds = table('fleur_social_seeds')
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT updated_at, status FROM ${tSeeds}
+       WHERE from_user_id = ? AND to_user_id = ? AND status IN ('rejected', 'snoozed')
+       ORDER BY updated_at DESC LIMIT 1`,
+      [fromUserId, toUserId]
+    )
+    const row = rows?.[0]
+    if (!row?.updated_at) return false
+    const ts = new Date(String(row.updated_at).replace(' ', 'T') + 'Z').getTime()
+    if (!Number.isFinite(ts)) return false
+    const days = (Date.now() - ts) / 86400000
+    return days < 7
+  } catch {
+    return false
+  }
+}
+
+/** Indique si l'utilisateur a déjà utilisé sa Graine offerte (1ʳᵉ gratuite). */
+export async function hasUsedFirstSeed(userId: number): Promise<boolean> {
+  const pool = getPool()
+  const tMeta = table('usermeta')
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_first_seed_used' LIMIT 1`,
+      [userId]
+    )
+    return String(rows?.[0]?.meta_value ?? '') === '1'
+  } catch {
+    return false
+  }
+}
+
+async function markFirstSeedUsed(
+  pool: Awaited<ReturnType<typeof getPool>>,
+  userId: number
+): Promise<void> {
+  const tMeta = table('usermeta')
+  try {
+    const [existing] = await pool.execute<RowDataPacket[]>(
+      `SELECT umeta_id FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_first_seed_used'`,
+      [userId]
+    )
+    if (existing.length > 0) {
+      await pool.execute(
+        `UPDATE ${tMeta} SET meta_value = '1' WHERE user_id = ? AND meta_key = 'fleur_first_seed_used'`,
+        [userId]
+      )
+    } else {
+      await pool.execute(
+        `INSERT INTO ${tMeta} (user_id, meta_key, meta_value) VALUES (?, 'fleur_first_seed_used', '1')`,
+        [userId]
+      )
+    }
+  } catch {
+    /* meta non bloquante */
+  }
+}
+
+/**
+ * Dépose une graine (demande de contact) vers un autre utilisateur.
+ *
+ * Politique d'accueil :
+ *  - 1ʳᵉ Graine du jardinier = gratuite (`fleur_first_seed_used` non posé),
+ *  - cooldown 7 j si la cible a refusé ou mis en sommeil la précédente Graine,
+ *  - une seule Graine pending par paire à la fois.
+ */
 export async function sendSeed(
   fromUserId: number,
   toUserId: number,
   intentionId: string
-): Promise<{ seedId: number }> {
+): Promise<{ seedId: number; firstFree: boolean }> {
   const pool = getPool()
   if (fromUserId === toUserId) throw new Error('Impossible de déposer une graine pour soi-même')
   if (!intentionId?.trim()) throw new Error('intentionId requis')
@@ -642,11 +835,29 @@ export async function sendSeed(
   )
   if (existing.length > 0) throw new Error('Une graine est déjà en attente pour ce jardinier')
 
+  if (await isSeedCooldownActive(pool, fromUserId, toUserId)) {
+    const err = new Error('Ce jardinier souhaite une pause. Réessayez dans quelques jours.') as Error & { code?: string }
+    err.code = 'seed_cooldown'
+    throw err
+  }
+
+  const targetMeteo = await getSocialMeteo(toUserId)
+  if (targetMeteo.socialMode === 'focus') {
+    const err = new Error('Ce jardinier est en intériorisation — pas de nouvelle graine pour le moment.') as Error & {
+      code?: string
+    }
+    err.code = 'social_focus'
+    throw err
+  }
+
+  const firstFree = !(await hasUsedFirstSeed(fromUserId))
+
   const [inserted] = await pool.execute<ResultSetHeader>(
     `INSERT INTO ${tSeeds} (from_user_id, to_user_id, intention_id, status, sap_spent) VALUES (?, ?, ?, 'pending', 0)`,
     [fromUserId, toUserId, intentionId.trim()]
   )
   const seedId = Number(inserted.insertId ?? 0)
+  if (seedId && firstFree) await markFirstSeedUsed(pool, fromUserId)
   if (!seedId) throw new Error('Impossible de récupérer l\'id de la graine')
 
   void (async () => {
@@ -686,7 +897,32 @@ export async function sendSeed(
     }
   })()
 
-  return { seedId }
+  return { seedId, firstFree }
+}
+
+/**
+ * Met en sommeil une Graine reçue (« peut-être plus tard »).
+ * Crée un cooldown de 7 j sans signifier de refus à l'envoyeur.
+ */
+export async function snoozeSeedConnection(params: {
+  seedId: number
+  snoozerUserId: number
+}): Promise<void> {
+  const seedId = Number(params.seedId)
+  const snoozer = Number(params.snoozerUserId)
+  if (!seedId || !snoozer) throw new Error('seedId et snoozerUserId requis')
+  const pool = getPool()
+  await ensureSeedsAndLinksTables(pool)
+  const tSeeds = table('fleur_social_seeds')
+  const [seedRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id, to_user_id, status FROM ${tSeeds} WHERE id = ?`,
+    [seedId]
+  )
+  const seed = seedRows?.[0]
+  if (!seed) throw new Error('Graine introuvable')
+  if (Number(seed.to_user_id) !== snoozer) throw new Error('Seul le destinataire peut mettre la graine en sommeil')
+  if (String(seed.status) !== 'pending') throw new Error('Cette graine a déjà été traitée')
+  await pool.execute(`UPDATE ${tSeeds} SET status = 'snoozed', updated_at = NOW() WHERE id = ?`, [seedId])
 }
 
 /** Accepte une graine, crée le lien et le canal, retourne channelId */
@@ -811,12 +1047,20 @@ export async function visitLisiere(
   topPetals: Array<{ id: string; name: string; value: number; color: string }>
   echoInflorescence: string
   resonanceWithVisitor: number
+  complementarityWithVisitor?: number
+  complementPetal?: string
+  petalComparison?: Array<{ id: string; visitor: number; target: number }>
+  meteoPetal?: string | null
+  socialMode?: string
+  maturityBadges?: MaturityBadgeId[]
   fleurMoyenne: { petals: number[]; lastUpdated?: string }
   relationStatusWithVisitor: 'none' | 'pending_out' | 'pending_in' | 'accepted'
   hasDuoLink: boolean
   presence?: { is_online: boolean; last_seen_at: string | null }
   lastActivityAt?: string | null
   social?: { rosee_received_total: number; rosee_received_today: number; pollen_received_total: number; pollen_received_today: number }
+  recentArrosages?: Array<{ from_user_id: number; from_pseudo: string; avatar_emoji: string; created_at: string }>
+  incomingSeedId?: number | null
 }> {
   const pool = getPool()
   if (visitorUserId === targetUserId) throw new Error('user_id doit être différent du visiteur')
@@ -902,6 +1146,21 @@ export async function visitLisiere(
 
   const profile = buildLisierePublicProfile(scores, bio)
   const resonanceWithVisitor = resonanceBetween(visitorScores, scores)
+  const complementPetal = weakestPetals(visitorScores, 1)[0] ?? profile.dominantPetal
+  const complementarityWithVisitor = complementarityBetween(visitorScores, scores, complementPetal)
+  const petalComparison = petals.map((id) => ({
+    id,
+    visitor: Number(visitorScores?.[id] ?? 0),
+    target: Number(scores[id] ?? 0),
+  }))
+
+  let targetMeteo: { meteoPetal: string | null; socialMode: string } = { meteoPetal: null, socialMode: 'open' }
+  try {
+    const m = await getSocialMeteo(targetUserId)
+    targetMeteo = { meteoPetal: m.meteoPetal, socialMode: m.socialMode }
+  } catch {
+    /* ignore */
+  }
 
   let social: { rosee_received_total: number; rosee_received_today: number; pollen_received_total: number; pollen_received_today: number } | undefined
   try {
@@ -963,6 +1222,57 @@ export async function visitLisiere(
     /* ignore */
   }
 
+  // Derniers arrosages reçus (max 5, sur 14 jours) — alimente le « ils m'ont arrosé récemment »
+  let recentArrosages: Array<{ from_user_id: number; from_pseudo: string; avatar_emoji: string; created_at: string }> = []
+  try {
+    const [arrRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT r.from_user_id, r.created_at,
+              u.display_name,
+              COALESCE(ump.meta_value, '') AS pseudo,
+              COALESCE(ume.meta_value, '🌸') AS avatar_emoji
+       FROM ${tRosee} r
+       LEFT JOIN ${tUsers} u ON u.ID = r.from_user_id
+       LEFT JOIN ${tMeta} ump ON ump.user_id = r.from_user_id AND ump.meta_key = 'fleur_pseudo'
+       LEFT JOIN ${tMeta} ume ON ume.user_id = r.from_user_id AND ume.meta_key = 'fleur_avatar_emoji'
+       WHERE r.to_user_id = ? AND r.created_at >= (NOW() - INTERVAL 14 DAY)
+       ORDER BY r.created_at DESC
+       LIMIT 5`,
+      [targetUserId]
+    )
+    recentArrosages = (arrRows ?? []).map((r) => ({
+      from_user_id: Number(r.from_user_id),
+      from_pseudo:
+        String(r.pseudo ?? '').trim() ||
+        String(r.display_name ?? '').trim() ||
+        `jardinier_${Buffer.from(String(r.from_user_id)).toString('hex').slice(0, 6)}`,
+      avatar_emoji: String(r.avatar_emoji ?? '🌸').trim() || '🌸',
+      created_at: String(r.created_at ?? ''),
+    }))
+  } catch {
+    /* table peut ne pas exister */
+  }
+
+  // Détecte la Graine entrante (visiteur → cible) pour récupérer son seedId
+  // (utile au receveur pour les actions Accueillir/Snoozer côté Lisière du sender).
+  let incomingSeedId: number | null = null
+  try {
+    const [seedIncoming] = await pool.execute<RowDataPacket[]>(
+      `SELECT id FROM ${tSeeds} WHERE from_user_id = ? AND to_user_id = ? AND status = 'pending' LIMIT 1`,
+      [targetUserId, visitorUserId]
+    )
+    incomingSeedId = seedIncoming?.[0]?.id ? Number(seedIncoming[0].id) : null
+  } catch {
+    /* ignore */
+  }
+
+  let maturityBadges: MaturityBadgeId[] = []
+  try {
+    const mStats = await fetchMaturityStats(targetUserId)
+    maturityBadges = computeMaturityBadges(mStats)
+  } catch {
+    /* ignore */
+  }
+
   return {
     userId: String(targetUserId),
     pseudo,
@@ -982,5 +1292,370 @@ export async function visitLisiere(
     presence,
     lastActivityAt,
     social,
+    recentArrosages,
+    incomingSeedId,
+    complementarityWithVisitor,
+    complementPetal,
+    petalComparison,
+    meteoPetal: targetMeteo.meteoPetal,
+    socialMode: targetMeteo.socialMode,
+    maturityBadges,
+  }
+}
+
+// ── Mes Liens : agrégat des relations d'un jardinier ────────────────────────
+
+export type LienItem = {
+  userId: number
+  pseudo: string
+  avatarEmoji: string
+  isOnline: boolean
+  lastSeenAt: string | null
+  channelId: number | null
+  unreadCount: number
+  relation: 'pending_in' | 'pending_out' | 'accepted' | 'arrosage_recent' | 'pollen_recent'
+  lastSignalAt: string | null
+  signalKind: 'message' | 'rosee' | 'pollen' | 'seed' | 'link'
+  seedId: number | null
+  intentionId: string | null
+  maturityBadges?: MaturityBadgeId[]
+}
+
+/**
+ * Récupère et agrège tous les liens du jardinier (graines, canaux, arrosages, pollens).
+ * Une seule entrée par autre utilisateur ; la priorité de relation suit la hiérarchie :
+ *   pending_in > pending_out > accepted > arrosage_recent > pollen_recent.
+ */
+export async function getMyLiens(userId: string): Promise<{ liens: LienItem[] }> {
+  const pool = getPool()
+  const uid = parseInt(userId, 10)
+  if (!uid) throw new Error('user_id requis')
+
+  await ensureSeedsAndLinksTables(pool)
+  await ensureMessagesTable(pool)
+  const mutedIds = await getMutedUserIds(uid)
+
+  const tSeeds = table('fleur_social_seeds')
+  const tCh = table('fleur_chat_channels')
+  const tMsg = table(P2P_MESSAGES_TABLE)
+  const tRosee = table('fleur_rosee_events')
+  const tPollen = table('fleur_pollen')
+  const tUsers = table('users')
+  const tMeta = table('usermeta')
+
+  // 1) Canaux acceptés (Clairière) + dernier message + non lus
+  const acceptedChannels = new Map<
+    number,
+    { channelId: number; lastAt: string | null; unread: number }
+  >()
+  try {
+    const [chRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT c.id AS channel_id, c.user_a, c.user_b,
+              (SELECT MAX(m.created_at) FROM ${tMsg} m WHERE m.channel_id = c.id) AS last_at,
+              (SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = CONCAT('${CHANNEL_READ_META_PREFIX}', c.id, '_last_read_at') LIMIT 1) AS last_read
+       FROM ${tCh} c
+       WHERE c.user_a = ? OR c.user_b = ?`,
+      [uid, uid, uid]
+    )
+    for (const r of chRows) {
+      const ua = Number(r.user_a)
+      const ub = Number(r.user_b)
+      const otherId = ua === uid ? ub : ua
+      const channelId = Number(r.channel_id)
+      const lastAt = r.last_at ? String(r.last_at) : null
+      const lastRead = r.last_read ? String(r.last_read) : null
+      let unread = 0
+      try {
+        const [cRows] = await pool.execute<RowDataPacket[]>(
+          `SELECT COUNT(*) AS c FROM ${tMsg} WHERE channel_id = ? AND sender_id = ? ${
+            lastRead ? 'AND created_at > ?' : ''
+          }`,
+          lastRead ? [channelId, otherId, lastRead] : [channelId, otherId]
+        )
+        unread = Number(cRows?.[0]?.c ?? 0)
+      } catch {
+        /* ignore */
+      }
+      acceptedChannels.set(otherId, { channelId, lastAt, unread })
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 2) Graines pending (entrantes + sortantes)
+  const pendingIn = new Map<number, { seedId: number; intentionId: string; at: string }>()
+  const pendingOut = new Map<number, { seedId: number; intentionId: string; at: string }>()
+  try {
+    const [seedRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT id, from_user_id, to_user_id, intention_id, created_at
+       FROM ${tSeeds}
+       WHERE status = 'pending' AND (from_user_id = ? OR to_user_id = ?)`,
+      [uid, uid]
+    )
+    for (const r of seedRows) {
+      const from = Number(r.from_user_id)
+      const to = Number(r.to_user_id)
+      const seedId = Number(r.id)
+      const intentionId = String(r.intention_id ?? '')
+      const at = String(r.created_at ?? '')
+      if (from === uid) pendingOut.set(to, { seedId, intentionId, at })
+      else pendingIn.set(from, { seedId, intentionId, at })
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 3) Arrosages reçus / envoyés récents (sur 30 j)
+  const arrosageBy = new Map<number, string>()
+  try {
+    const [arrRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT other_id, MAX(created_at) AS mx FROM (
+         SELECT from_user_id AS other_id, created_at FROM ${tRosee}
+           WHERE to_user_id = ? AND created_at >= (NOW() - INTERVAL 30 DAY)
+         UNION ALL
+         SELECT to_user_id AS other_id, created_at FROM ${tRosee}
+           WHERE from_user_id = ? AND created_at >= (NOW() - INTERVAL 30 DAY)
+       ) t
+       WHERE other_id != ?
+       GROUP BY other_id`,
+      [uid, uid, uid]
+    )
+    for (const r of arrRows) arrosageBy.set(Number(r.other_id), String(r.mx ?? ''))
+  } catch {
+    /* ignore */
+  }
+
+  // 4) Pollens récents
+  const pollenBy = new Map<number, string>()
+  try {
+    const [polRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT other_id, MAX(created_at) AS mx FROM (
+         SELECT from_user_id AS other_id, created_at FROM ${tPollen}
+           WHERE to_user_id = ? AND created_at >= (NOW() - INTERVAL 30 DAY)
+         UNION ALL
+         SELECT to_user_id AS other_id, created_at FROM ${tPollen}
+           WHERE from_user_id = ? AND created_at >= (NOW() - INTERVAL 30 DAY)
+       ) t
+       WHERE other_id != ?
+       GROUP BY other_id`,
+      [uid, uid, uid]
+    )
+    for (const r of polRows) pollenBy.set(Number(r.other_id), String(r.mx ?? ''))
+  } catch {
+    /* ignore */
+  }
+
+  // 5) Assembler la liste, en suivant la hiérarchie de relation
+  const allIds = new Set<number>()
+  for (const k of acceptedChannels.keys()) allIds.add(k)
+  for (const k of pendingIn.keys()) allIds.add(k)
+  for (const k of pendingOut.keys()) allIds.add(k)
+  for (const k of arrosageBy.keys()) allIds.add(k)
+  for (const k of pollenBy.keys()) allIds.add(k)
+  allIds.delete(uid)
+  // Filtrage doux : on retire les sourdines de la liste agrégée (les Clairière acceptées
+  // restent atteignables par URL directe, c'est juste l'affichage par défaut qui les ignore).
+  for (const m of mutedIds) allIds.delete(m)
+
+  if (allIds.size === 0) return { liens: [] }
+
+  // Profils + présence en batch
+  const idList = Array.from(allIds)
+  const placeholders = idList.map(() => '?').join(',')
+  const profileById = new Map<
+    number,
+    { pseudo: string; avatarEmoji: string; lastSeenAt: string | null; displayName: string }
+  >()
+  try {
+    const [uRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT u.ID, u.display_name,
+              COALESCE(ump.meta_value, '') AS pseudo,
+              COALESCE(ume.meta_value, '🌸') AS avatar_emoji,
+              COALESCE(ums.meta_value, '') AS last_seen
+       FROM ${tUsers} u
+       LEFT JOIN ${tMeta} ump ON ump.user_id = u.ID AND ump.meta_key = 'fleur_pseudo'
+       LEFT JOIN ${tMeta} ume ON ume.user_id = u.ID AND ume.meta_key = 'fleur_avatar_emoji'
+       LEFT JOIN ${tMeta} ums ON ums.user_id = u.ID AND ums.meta_key = 'fleur_social_last_seen_at'
+       WHERE u.ID IN (${placeholders})`,
+      idList
+    )
+    for (const r of uRows) {
+      const id = Number(r.ID)
+      profileById.set(id, {
+        pseudo: String(r.pseudo ?? '').trim(),
+        avatarEmoji: String(r.avatar_emoji ?? '🌸').trim() || '🌸',
+        lastSeenAt: String(r.last_seen ?? '').trim() || null,
+        displayName: String(r.display_name ?? '').trim(),
+      })
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const liens: LienItem[] = []
+  for (const otherId of idList) {
+    const prof = profileById.get(otherId)
+    const pseudo =
+      prof?.pseudo ||
+      prof?.displayName ||
+      `jardinier_${Buffer.from(String(otherId)).toString('hex').slice(0, 6)}`
+    const avatarEmoji = prof?.avatarEmoji ?? '🌸'
+    const lastSeenAt = prof?.lastSeenAt ?? null
+    const isOnline = lastSeenAt ? isOnlineFromLastSeen(lastSeenAt) : false
+
+    // Hiérarchie : pending_in > pending_out > accepted > arrosage_recent > pollen_recent
+    if (pendingIn.has(otherId)) {
+      const s = pendingIn.get(otherId)!
+      liens.push({
+        userId: otherId,
+        pseudo,
+        avatarEmoji,
+        isOnline,
+        lastSeenAt,
+        channelId: null,
+        unreadCount: 0,
+        relation: 'pending_in',
+        lastSignalAt: s.at,
+        signalKind: 'seed',
+        seedId: s.seedId,
+        intentionId: s.intentionId,
+      })
+      continue
+    }
+    if (pendingOut.has(otherId)) {
+      const s = pendingOut.get(otherId)!
+      liens.push({
+        userId: otherId,
+        pseudo,
+        avatarEmoji,
+        isOnline,
+        lastSeenAt,
+        channelId: null,
+        unreadCount: 0,
+        relation: 'pending_out',
+        lastSignalAt: s.at,
+        signalKind: 'seed',
+        seedId: s.seedId,
+        intentionId: s.intentionId,
+      })
+      continue
+    }
+    if (acceptedChannels.has(otherId)) {
+      const c = acceptedChannels.get(otherId)!
+      liens.push({
+        userId: otherId,
+        pseudo,
+        avatarEmoji,
+        isOnline,
+        lastSeenAt,
+        channelId: c.channelId,
+        unreadCount: c.unread,
+        relation: 'accepted',
+        lastSignalAt: c.lastAt,
+        signalKind: c.lastAt ? 'message' : 'link',
+        seedId: null,
+        intentionId: null,
+      })
+      continue
+    }
+    if (arrosageBy.has(otherId)) {
+      liens.push({
+        userId: otherId,
+        pseudo,
+        avatarEmoji,
+        isOnline,
+        lastSeenAt,
+        channelId: null,
+        unreadCount: 0,
+        relation: 'arrosage_recent',
+        lastSignalAt: arrosageBy.get(otherId)!,
+        signalKind: 'rosee',
+        seedId: null,
+        intentionId: null,
+      })
+      continue
+    }
+    if (pollenBy.has(otherId)) {
+      liens.push({
+        userId: otherId,
+        pseudo,
+        avatarEmoji,
+        isOnline,
+        lastSeenAt,
+        channelId: null,
+        unreadCount: 0,
+        relation: 'pollen_recent',
+        lastSignalAt: pollenBy.get(otherId)!,
+        signalKind: 'pollen',
+        seedId: null,
+        intentionId: null,
+      })
+    }
+  }
+
+  // Tri : non lus, puis pending_in, puis activité décroissante
+  liens.sort((a, b) => {
+    if (a.unreadCount !== b.unreadCount) return b.unreadCount - a.unreadCount
+    if (a.relation === 'pending_in' && b.relation !== 'pending_in') return -1
+    if (b.relation === 'pending_in' && a.relation !== 'pending_in') return 1
+    const at = a.lastSignalAt ? new Date(a.lastSignalAt).getTime() : 0
+    const bt = b.lastSignalAt ? new Date(b.lastSignalAt).getTime() : 0
+    return bt - at
+  })
+
+  const badgeMap = await fetchMaturityStatsBatch(liens.map((l) => l.userId))
+  for (const lien of liens) {
+    lien.maturityBadges = badgeMap.get(lien.userId) ?? []
+  }
+
+  await touchSocialPresence(pool, uid)
+  return { liens }
+}
+
+// ── Onboarding communautaire (1ʳᵉ visite) ───────────────────────────────────
+
+export async function getCommunityOnboardingStatus(
+  userId: number
+): Promise<{ done: boolean; firstSeedUsed: boolean }> {
+  const pool = getPool()
+  const tMeta = table('usermeta')
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT meta_key, meta_value FROM ${tMeta}
+       WHERE user_id = ? AND meta_key IN ('fleur_community_onboarding_done', 'fleur_first_seed_used')`,
+      [userId]
+    )
+    const map: Record<string, string> = {}
+    for (const r of rows) map[String(r.meta_key)] = String(r.meta_value ?? '')
+    return {
+      done: (map.fleur_community_onboarding_done ?? '') === '1',
+      firstSeedUsed: (map.fleur_first_seed_used ?? '') === '1',
+    }
+  } catch {
+    return { done: false, firstSeedUsed: false }
+  }
+}
+
+export async function markCommunityOnboardingDone(userId: number): Promise<void> {
+  const pool = getPool()
+  const tMeta = table('usermeta')
+  try {
+    const [existing] = await pool.execute<RowDataPacket[]>(
+      `SELECT umeta_id FROM ${tMeta} WHERE user_id = ? AND meta_key = 'fleur_community_onboarding_done'`,
+      [userId]
+    )
+    if (existing.length > 0) {
+      await pool.execute(
+        `UPDATE ${tMeta} SET meta_value = '1' WHERE user_id = ? AND meta_key = 'fleur_community_onboarding_done'`,
+        [userId]
+      )
+    } else {
+      await pool.execute(
+        `INSERT INTO ${tMeta} (user_id, meta_key, meta_value) VALUES (?, 'fleur_community_onboarding_done', '1')`,
+        [userId]
+      )
+    }
+  } catch {
+    /* non bloquant */
   }
 }

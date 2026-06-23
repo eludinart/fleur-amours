@@ -15,8 +15,7 @@ import {
 } from '@/lib/db-timeline'
 import { syncUserTimeline } from '@/lib/db-timeline-sync'
 import { authMe } from '@/lib/db-auth'
-import { openrouterCall } from '@/lib/openrouter'
-import { getOpenRouterModel } from '@/lib/openrouter-config'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 
 export const dynamic = 'force-dynamic'
@@ -92,7 +91,7 @@ export async function POST(req: NextRequest) {
       'Tu es un guide relationnel bienveillant. À partir de la liste chronologique des étapes d\'une personne (sessions, tirages, explorations Fleur, conversations intérieures, questionnaires, check-ins), résume son évolution. Réponds UNIQUEMENT en JSON avec les clés : headline, movement, focus, encouragement. Chaque champ < 240 caractères, ton soutenant, jamais clinique.' +
       getLangInstruction(locale)
 
-    const result = await openrouterCall(
+    const result = await llmCallForTask('timeline-narrative', 
       system,
       [{ role: 'user', content: condensed }],
       { responseFormatJson: true, maxTokens: 600 }
@@ -108,7 +107,8 @@ export async function POST(req: NextRequest) {
         encouragement: String(r.encouragement ?? '').slice(0, 240),
       }
       // 3) Persister le résultat (cache).
-      await setCachedNarrative(uid, locale, signature, narrative as unknown as Record<string, unknown>, getOpenRouterModel()).catch(() => {})
+      const { model } = await getLlmMetaForTask('timeline-narrative')
+      await setCachedNarrative(uid, locale, signature, narrative as unknown as Record<string, unknown>, model).catch(() => {})
       return NextResponse.json({ narrative, cached: false })
     }
 

@@ -6,12 +6,13 @@ import type { EditorRef } from 'react-email-editor'
 import { toast } from '@/hooks/useToast'
 import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/lib/api-client'
+import DemoAccountBadge from '@/components/DemoAccountBadge'
 
 const EmailEditor = dynamic(() => import('react-email-editor'), { ssr: false })
 
 type AudienceMode = 'all' | 'users' | 'coaches' | 'admins' | 'selected'
 
-type UserRow = { id: number; email: string; name: string; app_role: string }
+type UserRow = { id: number; email: string; name: string; app_role: string; is_demo?: boolean }
 
 type BroadcastRow = { id: number; title: string; status: string; created_at?: string | null }
 
@@ -442,7 +443,10 @@ export default function AdminEmailsPage() {
                           onChange={() => toggleUser(u.id)}
                         />
                         <span className="flex-1 min-w-0">
-                          <span className="font-medium block truncate">{u.name || u.email}</span>
+                          <span className="font-medium flex items-center gap-1.5 flex-wrap">
+                            <span className="truncate">{u.name || u.email}</span>
+                            {u.is_demo ? <DemoAccountBadge /> : null}
+                          </span>
                           <span className="text-xs text-slate-500">{u.email} · {u.app_role}</span>
                         </span>
                       </label>

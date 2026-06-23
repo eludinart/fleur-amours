@@ -7,7 +7,7 @@ import { isDbConfigured } from '@/lib/db'
 import { requireAuth } from '@/lib/api-auth'
 import { getFleurBetaResult, saveFleurBetaInterpretation } from '@/lib/db-fleur-beta'
 import { FLEUR_BETA_QUESTION_BANK } from '@/lib/fleur-beta-data'
-import { openrouterCall } from '@/lib/openrouter'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 
 export const dynamic = 'force-dynamic'
@@ -110,7 +110,7 @@ ${dominantLine ? `\n${dominantLine}\n` : ''}
 ${qaBlock}
 ${getLangInstruction(locale)}`
 
-    const raw = await openrouterCall(
+    const raw = await llmCallForTask('fleur-beta-interpretation', 
       system,
       [{ role: 'user', content: userContent }],
       { maxTokens: 1400, responseFormatJson: true }
@@ -133,7 +133,7 @@ ${getLangInstruction(locale)}`
       summary,
       insights,
       reflection,
-      provider: 'openrouter',
+      provider: (await getLlmMetaForTask('fleur-beta-interpretation')).provider,
     })
 
     return NextResponse.json({

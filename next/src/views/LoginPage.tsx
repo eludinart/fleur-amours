@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { t, setLocale as syncI18nLocale } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { markFirstExperiencePending, resolvePostRegisterPath } from '@/lib/first-experience'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
@@ -45,8 +46,9 @@ export function LoginPage() {
     try {
       if (mode === 'register') {
         await register(loginId.trim(), password, name.trim(), inviteToken || undefined)
-        setHasSeenOnboardingTour(false)
-        router.replace('/profil-onboarding')
+        setHasSeenOnboardingTour(true)
+        markFirstExperiencePending()
+        router.replace(resolvePostRegisterPath(intentParam, cardIdParam))
         return
       } else {
         await login(loginId, password)

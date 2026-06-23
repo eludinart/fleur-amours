@@ -21,6 +21,7 @@ export default function DyadePage() {
   const locale = useStore((s) => s.locale) || 'fr'
   const searchParams = useSearchParams()
   const acceptToken = searchParams?.get('token') || ''
+  const prefillEmail = searchParams?.get('invite_email') || ''
 
   const [loading, setLoading] = useState(true)
   const [dyad, setDyad] = useState<DyadDTO | null>(null)
@@ -84,6 +85,10 @@ export default function DyadePage() {
         setSelectedSummaryId(null)
       })
   }
+
+  useEffect(() => {
+    if (prefillEmail) setInviteEmail(prefillEmail)
+  }, [prefillEmail])
 
   useEffect(() => {
     let cancelled = false

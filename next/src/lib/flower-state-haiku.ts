@@ -1,8 +1,10 @@
 /**
  * Mini-haïku (3 vers) pour l’état affiché sous la fleur (vue zen).
  */
-import { openrouterCall } from './openrouter'
+import { isLlmConfigured } from './llm'
 import { getLangInstruction } from './prompts'
+import { buildSystemPrompt } from './ai-system-prompt'
+import { AiAccessDeniedError, guardedLlmCall } from './ai-guard'
 
 const PETAL_IDS = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
 
@@ -93,6 +95,7 @@ export type FlowerHaikuContext = {
   mode: 'blend' | 'snapshot'
   petals: Record<string, number>
   locale: string
+  userId: number
   /** Référence stable pour cache (id timeline ou "blend"). */
   cacheKey: string
   /** Instantané : méta utile au modèle. */
@@ -144,12 +147,16 @@ export async function generateFlowerStateHaiku(ctx: FlowerHaikuContext): Promise
           .join('\n')
       : ''
 
-  const sys = `You write ONE micro-poem for a wellbeing app ("inner garden" metaphor: eight love dynamics as petals on a flower).
+  const sys = await buildSystemPrompt({
+    taskId: 'flower-state-haiku',
+    basePrompt: `You write ONE micro-poem for a wellbeing app ("inner garden" metaphor: eight love dynamics as petals on a flower).
 Output STRICT JSON with a single key: {"haiku":"..."}
 The value "haiku" must be EXACTLY 3 lines separated by a single \\n (no blank line between lines). Each line: 5–11 words, concrete images (breath, water, light, path, garden, tide, roots…), warm tone, no moral pressure.
 Do NOT output numbers, scores or percentages. Do not say "data", "score" or "algorithm".
-When naming a love form, follow the user's language: FR/ES use official name + em dash + short gloss (e.g. Philia — les liens d'amis); EN use name + gloss in parentheses (e.g. Philia (friendship)); DE/IT use the same idea with natural phrasing.
-${getLangInstruction(locale)}`
+When naming a love form, follow the user's language: FR/ES use official name + em dash + short gloss (e.g. Philia — les liens d'amis); EN use name + gloss in parentheses (e.g. Philia (friendship)); DE/IT use the same idea with natural phrasing.`,
+    locale,
+  })
+  const sysWithLang = `${sys}\n${getLangInstruction(locale)}`
 
   const user =
     ctx.mode === 'blend'
@@ -172,12 +179,25 @@ ${top}
 
 Write {"haiku":"line1\\nline2\\nline3"} in the user language. Echo the emotional tone of the moment without copying the summary verbatim.`
 
-  const result = await openrouterCall(sys, [{ role: 'user', content: user }], {
-    maxTokens: 220,
-    responseFormatJson: true,
-    timeoutMs: 20_000,
-    maxAttempts: 1,
-  })
+  let result: Record<string, unknown> | string | null = null
+  try {
+    const guarded = await guardedLlmCall({
+      taskId: 'flower-state-haiku',
+      userId: ctx.userId,
+      system: sysWithLang,
+      messages: [{ role: 'user', content: user }],
+      options: {
+        maxTokens: 220,
+        responseFormatJson: true,
+        timeoutMs: 20_000,
+        maxAttempts: 1,
+      },
+    })
+    result = guarded.result
+  } catch (e) {
+    if (e instanceof AiAccessDeniedError) return null
+    return null
+  }
   if (!result || typeof result !== 'object') return null
   const o = result as Record<string, unknown>
   let raw = String(o.haiku ?? o.poem ?? '').trim()

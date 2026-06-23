@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation'
 import { useStore } from '@/store/useStore'
 import { t, setLocale as syncI18nLocale, SUPPORTED_LOCALES } from '@/i18n'
 import { BACK_IMG, getCardImageByName, getLandingCardEntries } from '@/data/tarotCards'
+import { LANDING_INTENTION_KEY } from '@/lib/first-experience'
+import { landingReadingApi, type LandingReadingDTO } from '@/api/landingReading'
+import { LandingAiReading } from '@/components/landing/LandingAiReading'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
@@ -157,6 +160,14 @@ function CardFace({ card }: { card: ParsedCard }) {
                 {card.essence}
               </p>
             </div>
+            <div className="rounded-lg border border-amber-100/90 bg-amber-50/65 p-3 shadow-sm sm:p-3.5">
+              <span className="font-sans text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-amber-700 sm:text-xs">
+                {t('landing.lumiere')}
+              </span>
+              <p className="mt-1 font-serif text-sm leading-snug text-stone-700 sm:text-base line-clamp-2 sm:line-clamp-3">
+                {card.lumiere}
+              </p>
+            </div>
             <div className="rounded-lg border border-violet-100/90 bg-violet-50/65 p-3 shadow-sm sm:p-3.5">
               <span className="font-sans text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-violet-600 sm:text-xs">
                 {t('landing.rootQuestion')}
@@ -265,6 +276,10 @@ export function LandingPage({
   const [card, setCard] = useState<ParsedCard | null>(null)
   const [revealed, setRevealed] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [intention, setIntention] = useState('')
+  const [frozenIntention, setFrozenIntention] = useState('')
+  const [aiReading, setAiReading] = useState<LandingReadingDTO | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -278,17 +293,58 @@ export function LandingPage({
   }, [locale, revealed, card?.id])
 
   const drawCard = useCallback(() => {
+    const trimmed = intention.trim()
+    setFrozenIntention(trimmed)
+    try {
+      if (trimmed) sessionStorage.setItem(LANDING_INTENTION_KEY, trimmed)
+      else sessionStorage.removeItem(LANDING_INTENTION_KEY)
+    } catch {
+      /* ignore */
+    }
+    setAiReading(null)
+    setAiLoading(true)
     setCard(pickRandomFromLocale(locale))
     setRevealed(true)
-  }, [locale])
+  }, [locale, intention])
+
+  useEffect(() => {
+    if (!revealed || !card?.id) return
+    let cancelled = false
+    setAiLoading(true)
+    landingReadingApi
+      .generate({
+        cardName: card.id,
+        essence: card.essence,
+        lumiere: card.lumiere,
+        rootQuestion: card.rootQuestion,
+        intention: frozenIntention,
+        locale: locale || 'fr',
+      })
+      .then((r) => {
+        if (!cancelled) setAiReading(r)
+      })
+      .catch(() => {
+        if (!cancelled) setAiReading(null)
+      })
+      .finally(() => {
+        if (!cancelled) setAiLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [revealed, card?.id, card?.essence, card?.lumiere, card?.rootQuestion, frozenIntention, locale])
 
   const redraw = useCallback(() => {
+    const trimmed = intention.trim()
+    setFrozenIntention(trimmed)
+    setAiReading(null)
+    setAiLoading(true)
     setRevealed(false)
     setTimeout(() => {
       setCard(pickRandomFromLocale(locale))
       setRevealed(true)
     }, FLIP_REDRAW_MS)
-  }, [locale])
+  }, [locale, intention])
 
   const goRegister = useCallback(
     (cardId?: string) => {
@@ -419,16 +475,76 @@ export function LandingPage({
               animate={{ opacity: 1, y: 0 }}
               className="mx-auto mt-6 max-w-4xl font-serif text-[2.125rem] font-semibold leading-[1.12] tracking-tight text-stone-900 sm:text-4xl sm:leading-[1.1] md:text-5xl"
             >
-              {t('landing.heroTitle')}
+              {showIndividualSection ? t('landing.ritualHeroTitle') : t('landing.heroTitle')}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="mx-auto mt-5 max-w-3xl font-sans text-base leading-relaxed text-stone-700 sm:text-lg"
             >
-              {t('landing.heroSubtitle')}
+              {showIndividualSection ? t('landing.ritualHeroSubtitle') : t('landing.heroSubtitle')}
             </motion.p>
           </div>
+
+          {showIndividualSection ? (
+            <section className="mt-8 sm:mt-10" aria-labelledby="landing-individual-heading">
+            <h2 id="landing-individual-heading" className="sr-only">
+              {t('landing.ritualSection')}
+            </h2>
+
+            <div className="mx-auto max-w-4xl rounded-[1.75rem] border border-white/80 bg-gradient-to-b from-white/50 to-amber-50/25 p-6 shadow-[0_24px_60px_-20px_rgba(120,60,80,0.18)] backdrop-blur-md sm:p-10">
+              <div className="flex flex-col items-center gap-6 sm:gap-7">
+                {!revealed ? (
+                  <div className="w-full max-w-md space-y-2">
+                    <label htmlFor="landing-intention" className="block text-sm font-medium text-stone-700 text-center sm:text-left">
+                      {t('landing.intentionLabel')}
+                    </label>
+                    <textarea
+                      id="landing-intention"
+                      value={intention}
+                      onChange={(e) => setIntention(e.target.value)}
+                      placeholder={t('landing.intentionPlaceholder')}
+                      rows={2}
+                      className="w-full rounded-xl border border-amber-200/80 bg-white/90 px-4 py-3 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-none"
+                    />
+                    <p className="text-[11px] text-stone-500 text-center sm:text-left">{t('landing.intentionHint')}</p>
+                  </div>
+                ) : null}
+                <CardFlipRitual
+                  revealed={revealed}
+                  card={card}
+                  mounted={mounted}
+                  onBackClick={drawCard}
+                />
+                {revealed ? (
+                  <LandingAiReading loading={aiLoading} reading={aiReading} intention={frozenIntention} />
+                ) : null}
+                <div className="flex w-full flex-col items-stretch gap-3 sm:mx-auto sm:max-w-lg">
+                  {!revealed ? (
+                    <motion.button type="button" onClick={drawCard} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={primaryBtn + ' w-full'}>
+                      <span className="mr-2 opacity-90">✦</span>
+                      {t('landing.ctaDraw')}
+                    </motion.button>
+                  ) : (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
+                      <button
+                        type="button"
+                        onClick={redraw}
+                        className="rounded-full border border-stone-200/90 bg-white/80 px-6 py-3 font-sans text-base font-medium text-stone-600 shadow-sm transition hover:border-stone-300 hover:bg-white sm:text-lg"
+                      >
+                        ↺ {t('landing.redraw')}
+                      </button>
+                      <button type="button" onClick={() => goRegister(card?.id)} className={`${primaryBtn} w-full sm:w-auto`}>
+                        {t('landing.fullAnalysis')} →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <p className="mt-4 text-center font-sans text-xs text-stone-500 sm:text-sm">{t('landing.trustLine')}</p>
+          </section>
+          ) : null}
 
           {showAccessSection ? (
             <section className="mt-10" aria-labelledby="landing-access-heading">
@@ -468,50 +584,6 @@ export function LandingPage({
                 </article>
               </div>
             </section>
-          ) : null}
-
-          {showIndividualSection ? (
-            <section className="mt-14 border-t border-amber-200/50 pt-12 sm:mt-16 sm:pt-14" aria-labelledby="landing-individual-heading">
-            <h2 id="landing-individual-heading" className="text-center font-serif text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
-              {t('landing.individualSectionTitle')}
-            </h2>
-            <p className="mx-auto mt-3 max-w-3xl text-center font-sans text-sm leading-relaxed text-stone-600 sm:text-base">
-              {t('landing.individualSectionLead')}
-            </p>
-
-            <div className="mx-auto mt-8 max-w-4xl rounded-[1.75rem] border border-white/80 bg-gradient-to-b from-white/50 to-amber-50/25 p-6 shadow-[0_24px_60px_-20px_rgba(120,60,80,0.18)] backdrop-blur-md sm:p-10">
-              <div className="flex flex-col items-center gap-6 sm:gap-7">
-                <CardFlipRitual
-                  revealed={revealed}
-                  card={card}
-                  mounted={mounted}
-                  onBackClick={drawCard}
-                />
-                <div className="flex w-full flex-col items-stretch gap-3 sm:mx-auto sm:max-w-lg">
-                  {!revealed ? (
-                    <motion.button type="button" onClick={drawCard} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={primaryBtn + ' w-full'}>
-                      <span className="mr-2 opacity-90">✦</span>
-                      {t('landing.ctaDraw')}
-                    </motion.button>
-                  ) : (
-                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
-                      <button
-                        type="button"
-                        onClick={redraw}
-                        className="rounded-full border border-stone-200/90 bg-white/80 px-6 py-3 font-sans text-base font-medium text-stone-600 shadow-sm transition hover:border-stone-300 hover:bg-white sm:text-lg"
-                      >
-                        ↺ {t('landing.redraw')}
-                      </button>
-                      <button type="button" onClick={() => goRegister(card?.id)} className={`${primaryBtn} w-full sm:w-auto`}>
-                        {t('landing.fullAnalysis')} →
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <p className="mt-4 text-center font-sans text-xs text-stone-500 sm:text-sm">{t('landing.trustLine')}</p>
-          </section>
           ) : null}
 
           <section

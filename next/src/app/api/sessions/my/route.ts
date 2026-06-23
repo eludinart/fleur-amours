@@ -29,12 +29,14 @@ export async function GET(req: NextRequest) {
       email = user.email || ''
     }
     const status = req.nextUrl.searchParams.get('status') || undefined
+    const limitRaw = req.nextUrl.searchParams.get('limit')
+    const limit = limitRaw ? parseInt(limitRaw, 10) : undefined
 
-    const cacheKey = `sessions_my:${email}:${status ?? ''}`
+    const cacheKey = `sessions_my:${email}:${status ?? ''}:${limit ?? ''}`
     const cached = cacheGet<object>(cacheKey)
     if (cached) return NextResponse.json(cached)
 
-    const data = await my(email, status)
+    const data = await my(email, status, limit)
     cacheSet(cacheKey, data, TTL_MS)
     return NextResponse.json(data)
   } catch (err: unknown) {

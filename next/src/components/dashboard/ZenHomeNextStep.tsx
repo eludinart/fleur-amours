@@ -30,7 +30,7 @@ export function ZenHomeNextStep({
   if (!hasPetals && chronicleCount === 0) {
     return (
       <Link
-        href="/fleur"
+        href="/a-deux/par-une-porte?welcome=1"
         className="block mb-5 rounded-2xl border-2 border-rose-500/35 bg-rose-950/30 hover:border-rose-400/50 px-4 py-4 transition-colors"
       >
         <p className="text-xs font-medium text-rose-300/90">👉 {t('dashboard.startHere')}</p>

@@ -32,6 +32,13 @@ export interface LisiereData {
   presence?: { is_online: boolean; last_seen_at: string | null }
   lastActivityAt?: string | null
   social?: Record<string, number>
+  recentArrosages?: Array<{
+    from_user_id: number
+    from_pseudo: string
+    avatar_emoji: string
+    created_at: string
+  }>
+  incomingSeedId?: number | null
 }
 
 export interface SocialStoreState {
@@ -96,7 +103,10 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
   },
 
   sendSeed: async (targetUserId, intentionId) => {
-    const result = (await socialApi.sendSeed(String(targetUserId), String(intentionId))) as { seedId: number }
+    const result = (await socialApi.sendSeed(
+      String(targetUserId),
+      String(intentionId)
+    )) as { seedId: number; firstFree?: boolean }
     set((s) => ({
       pendingSeeds: { ...s.pendingSeeds, [String(targetUserId)]: { seedId: result.seedId, targetUserId } },
       relations: { ...s.relations, [String(targetUserId)]: 'pending_out' },

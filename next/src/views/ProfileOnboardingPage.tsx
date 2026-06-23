@@ -7,10 +7,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/api/auth'
 import { FleurSociale } from '@/components/FleurSociale'
 import { FLOWER_EMOJIS, JARDIN_INTENTION_IDS } from '@/lib/profile-constants'
-import { isValidAge, isValidPseudo, needsProfileOnboarding } from '@/lib/profile-onboarding'
+import { isValidPseudo, needsProfileOnboarding } from '@/lib/profile-onboarding'
 import { t } from '@/i18n'
 
-const STEPS = 7
+const STEPS = 3
 
 type FormState = {
   name: string
@@ -80,18 +80,11 @@ export default function ProfileOnboardingPage() {
   function validateStep(): string | null {
     if (step === 1) {
       if (!form.name.trim()) return t('profileOnboarding.errorName')
-    }
-    if (step === 2) {
       const pseudo = form.pseudo.trim().toLowerCase()
       if (!pseudo) return t('profileOnboarding.errorPseudo')
       if (!isValidPseudo(pseudo)) return t('profileOnboarding.errorPseudoFormat')
     }
-    if (step === 3) {
-      const n = parseInt(form.age, 10)
-      if (!form.age.trim()) return t('profileOnboarding.errorAge')
-      if (!isValidAge(n)) return t('profileOnboarding.errorAgeRange')
-    }
-    if (step === 4) {
+    if (step === 2) {
       if (!form.avatar_emoji) return t('profileOnboarding.errorEmoji')
     }
     return null
@@ -121,11 +114,9 @@ export default function ProfileOnboardingPage() {
       if (!skipped) {
         payload.name = form.name.trim()
         payload.pseudo = form.pseudo.trim().toLowerCase()
-        payload.age = parseInt(form.age, 10)
         payload.avatar_emoji = form.avatar_emoji
-        payload.bio = form.bio.trim()
-        payload.jardin_intention = form.jardin_intention
         payload.profile_public = form.profile_public
+        payload.jardin_intention = form.jardin_intention || 'resonance'
       }
       await authApi.updateMyProfile(payload)
       await refreshUser()
@@ -213,7 +204,7 @@ export default function ProfileOnboardingPage() {
               {step === 1 && (
                 <>
                   <h2 className="text-xl font-bold text-amber-50">{t('profileOnboarding.nameTitle')}</h2>
-                  <p className="text-sm text-slate-400">{t('profileOnboarding.nameHint')}</p>
+                  <p className="text-sm text-slate-400">{t('profileOnboarding.quickProfileHint')}</p>
                   <input
                     type="text"
                     value={form.name}
@@ -222,46 +213,18 @@ export default function ProfileOnboardingPage() {
                     autoFocus
                     className="w-full px-4 py-3 rounded-xl border border-slate-600/60 bg-slate-900/70 text-amber-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                   />
-                </>
-              )}
-
-              {step === 2 && (
-                <>
-                  <h2 className="text-xl font-bold text-amber-50">{t('profileOnboarding.pseudoTitle')}</h2>
-                  <p className="text-sm text-slate-400">{t('profileOnboarding.pseudoHint')}</p>
                   <input
                     type="text"
                     value={form.pseudo}
                     onChange={(e) => patch('pseudo', e.target.value.replace(/\s/g, '').toLowerCase())}
                     placeholder={t('profileOnboarding.pseudoPlaceholder')}
-                    autoFocus
                     className="w-full px-4 py-3 rounded-xl border border-slate-600/60 bg-slate-900/70 text-amber-50 font-mono placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                   />
                   <p className="text-[11px] text-slate-500">{t('profileOnboarding.pseudoFormat')}</p>
                 </>
               )}
 
-              {step === 3 && (
-                <>
-                  <h2 className="text-xl font-bold text-amber-50">{t('profileOnboarding.ageTitle')}</h2>
-                  <p className="text-sm text-slate-400">{t('profileOnboarding.ageHint')}</p>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min={16}
-                      max={120}
-                      value={form.age}
-                      onChange={(e) => patch('age', e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
-                      placeholder="32"
-                      autoFocus
-                      className="w-28 px-4 py-3 rounded-xl border border-slate-600/60 bg-slate-900/70 text-amber-50 text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-                    />
-                    <span className="text-slate-400 text-sm">{t('profileOnboarding.ageUnit')}</span>
-                  </div>
-                </>
-              )}
-
-              {step === 4 && (
+              {step === 2 && (
                 <>
                   <h2 className="text-xl font-bold text-amber-50">{t('profileOnboarding.emojiTitle')}</h2>
                   <p className="text-sm text-slate-400">{t('profileOnboarding.emojiHint')}</p>
@@ -290,46 +253,7 @@ export default function ProfileOnboardingPage() {
                       </button>
                     ))}
                   </div>
-                </>
-              )}
-
-              {step === 5 && (
-                <>
-                  <h2 className="text-xl font-bold text-amber-50">{t('profileOnboarding.bioTitle')}</h2>
-                  <p className="text-sm text-slate-400">{t('profileOnboarding.bioHint')}</p>
-                  <textarea
-                    value={form.bio}
-                    onChange={(e) => patch('bio', e.target.value.slice(0, 500))}
-                    rows={5}
-                    placeholder={t('profileOnboarding.bioPlaceholder')}
-                    autoFocus
-                    className="w-full px-4 py-3 rounded-xl border border-slate-600/60 bg-slate-900/70 text-amber-50 placeholder:text-slate-500 leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-                  />
-                  <p className="text-[11px] text-slate-500 text-right">{form.bio.length}/500</p>
-                </>
-              )}
-
-              {step === 6 && (
-                <>
-                  <h2 className="text-xl font-bold text-amber-50">{t('profileOnboarding.intentionTitle')}</h2>
-                  <p className="text-sm text-slate-400">{t('profileOnboarding.intentionHint')}</p>
-                  <div className="space-y-2">
-                    {JARDIN_INTENTION_IDS.map((id) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => patch('jardin_intention', id)}
-                        className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
-                          form.jardin_intention === id
-                            ? 'border-violet-500/70 bg-violet-950/40 text-violet-100'
-                            : 'border-slate-600/50 bg-slate-900/40 text-slate-300 hover:border-slate-500/70'
-                        }`}
-                      >
-                        {t(`profileOnboarding.intention.${id}`)}
-                      </button>
-                    ))}
-                  </div>
-                  <label className="flex items-start gap-3 mt-4 p-4 rounded-xl border border-emerald-700/35 bg-emerald-950/20 cursor-pointer">
+                  <label className="flex items-start gap-3 mt-2 p-4 rounded-xl border border-emerald-700/35 bg-emerald-950/20 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={form.profile_public}

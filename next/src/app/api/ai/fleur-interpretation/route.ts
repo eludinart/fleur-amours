@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isDbConfigured } from '@/lib/db'
 import { requireAuth } from '@/lib/api-auth'
 import { getResult, saveFleurAmourInterpretation } from '@/lib/db-fleur'
-import { openrouterCall } from '@/lib/openrouter'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 
 export const dynamic = 'force-dynamic'
@@ -35,8 +35,8 @@ function hasAnyScore(scores: Record<string, number>): boolean {
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth(req)
-    if (!process.env.OPENROUTER_API_KEY?.trim()) {
-      return NextResponse.json({ error: 'Interprétation IA non configurée (OPENROUTER_API_KEY)' }, { status: 503 })
+    if (!(await isLlmConfigured())) {
+      return NextResponse.json({ error: 'Interprétation IA non configurée (clé API du provider actif)' }, { status: 503 })
     }
 
     const body = (await req.json().catch(() => ({}))) as {
@@ -126,7 +126,7 @@ Réponses (extrait des choix) :
 ${answerLines}
 ${getLangInstruction(locale)}`
 
-    const raw = await openrouterCall(
+    const raw = await llmCallForTask('fleur-interpretation', 
       system,
       [{ role: 'user', content: userContent }],
       { maxTokens: 1400, responseFormatJson: true }

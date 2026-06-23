@@ -15,6 +15,7 @@ const LABELS: Record<string, string> = {
   [`${basePath}/duo`]: 'nav.duo',
   [`${basePath}/mes-fleurs`]: 'nav.mesFleurs',
   [`${basePath}/tirage`]: 'nav.tirages',
+  [`${basePath}/tirage-papier`]: 'nav.paperDraw',
   [`${basePath}/dreamscape`]: 'dreamscape',
   [`${basePath}/dreamscape/historique`]: 'dreamscapeHistorique.history',
   [`${basePath}/coaches`]: 'nav.coachesDirectory',

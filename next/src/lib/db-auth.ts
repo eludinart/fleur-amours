@@ -5,6 +5,7 @@ import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getPool, table } from './db'
 import { verifyWordPressPassword } from './auth-wordpress'
 import { hash } from 'bcryptjs'
+import { parseSocialMeteoFromMeta } from './community-meteo'
 
 export type UserRecord = {
   id: number
@@ -102,6 +103,11 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
     'fleur_age',
     'fleur_jardin_intention',
     'fleur_profile_onboarding_done',
+    'fleur_community_onboarding_done',
+    'fleur_first_seed_used',
+    'fleur_meteo_petal',
+    'fleur_meteo_date',
+    'fleur_social_mode',
     'fleur_points_de_rosee',
     'fleur_avatar_graine_id',
     'fleur_coach_headline',
@@ -137,6 +143,11 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
   ;(out as Record<string, unknown>).age = !isNaN(ageRaw) && ageRaw >= 16 && ageRaw <= 120 ? ageRaw : null
   ;(out as Record<string, unknown>).jardin_intention = meta.fleur_jardin_intention || null
   ;(out as Record<string, unknown>).profile_onboarding_done = (meta.fleur_profile_onboarding_done ?? '') === '1'
+  ;(out as Record<string, unknown>).community_onboarding_done = (meta.fleur_community_onboarding_done ?? '') === '1'
+  ;(out as Record<string, unknown>).first_seed_used = (meta.fleur_first_seed_used ?? '') === '1'
+  const meteo = parseSocialMeteoFromMeta(meta)
+  ;(out as Record<string, unknown>).meteo_petal = meteo.meteoPetal
+  ;(out as Record<string, unknown>).social_mode = meteo.socialMode
   ;(out as Record<string, unknown>).points_de_rosee = parseInt(meta.fleur_points_de_rosee ?? '5', 10)
   ;(out as Record<string, unknown>).avatar_graine_id = meta.fleur_avatar_graine_id || null
   ;(out as Record<string, unknown>).coach_headline = meta.fleur_coach_headline || null

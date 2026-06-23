@@ -1,0 +1,17 @@
+# MANÍA
+
+> Páginas libro (índice): 58–59 · p. PDF 58–59 (estimado a partir del texto extraído)
+
+Descripción ampliada: La pasión como vía de revelación. Manía es el amor que consume las máscaras. Surge como una ola de fuego, desgarrando las ilusiones para exponer la verdad desnuda del corazón. En su forma luminosa, revela el poder del deseo espiritual, el abandono total a la vida, el éxtasis místico. Es la llama que impulsa al ser a superarse, a fundirse en el otro para tocar lo infinito. En el tarot, Manía evoca la transmutación por la intensidad: el ardor necesario para la metamorfosis. Enseña que la pasión, vivida en conciencia, se convierte en fuego alquímico.
+Palabras clave de luz: Transformación, intensidad, revelación, pasión sagrada, trascendencia, coraje emocional, verdad del corazón.
+Sombra: El amor que devora. Bajo su sombra, Manía se convierte en dependencia, obsesión, vértigo. El otro se convierte en espejo de nuestras carencias, devorado por la necesidad de existir a través de él. La pasión se convierte en drama, la emoción en tormenta. Es la caída en el fuego, la fusión que niega la individualidad. Manía es la memoria de todos los ÅmÔurs que hieren para despertar. Nos confronta con nuestras partes más ardientes: miedo al vacío, deseo de control, rechazo de la soledad. Su enseñanza: amar no es perderse, es revelarse. MANÍA Encarna el amor obsesivo y devorador. Es la pasión que se convierte en posesión, los celos y el apego excesivo. Esta carta representa el amor que pierde el equilibrio y habla de los peligros del amor fusional.
+Palabras clave de sombra: Obsesión, celos, dependencia, pérdida de sí mismo, exceso, caos emocional, apego destructivo.
+Caminos de integración: Reconocer la fuerza vital detrás del caos amoroso. Transformar la pasión en poder creativo. Aprender a respirar en el corazón de la tormenta. Dejar que el fuego purifique sin quemarlo todo. En una tirada, Manía señala un período de trastorno emocional, amor intenso o crisis necesaria para la liberación.
+Resonancia del alma: Manía es la señal de una proyección no integrada. La energía caótica de esta carta revela que el consultante ha depositado su propio poder o su propia plenitud en una persona o situación exterior. Esta forma de amor invita a una regresión de la sombra (Jung): el trabajo no consiste en romper el apego, sino en recuperar la parte del Yo que ha sido abandonada y busca desesperadamente ser encontrada desde el exterior.
+Correspondencias energéticas:
+Elemento: Fuego y Agua
+Polaridad: Extrema, oscilando entre la fusión y la destrucción
+Correspondencias simbólicas: Tormenta, Vórtice, Corazón incandescente
+En resonancia: Fuego (El Volcán), Agua (El Océano), Aire (El Viento Solar), Éter (El Silencio Estrellado)
+Pregunta raíz: «¿Dónde se sitúa la frontera exacta entre mi pasión y mi sufrimiento?»
+Ejercicio / Meditación: Cierra los ojos y visualiza un fuego que arde en tu vientre. Observa sus llamas sin intentar apagarlas. Déjalas danzar, luego vélas transformarse en luz dorada que asciende hacia tu corazón. Respira. Siente la paz en el centro del brasero. Manía es el amor iniciático, aquel que conduce al alma a reconocerse en el exceso mismo de su deseo. Arde para purificar, destruye para revelar, se sumerge para resurgir más clara. En el gran ciclo del Tarot Fleur d'ÅmÔurs, Manía es la llama del paso, la muerte y el renacimiento del amor humano hacia su forma divina. Enseña que la pasión no es un peligro si uno se atreve a ver en ella el camino del fuego interior.

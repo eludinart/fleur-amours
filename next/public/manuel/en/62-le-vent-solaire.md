@@ -1,0 +1,16 @@
+# THE SOLAR WIND
+
+> Book pages (table of contents): 128–129 · PDF p. 128–129 (estimated from extracted text)
+
+Extended description: The breath of the Sun and the transmission of divine energy. The Solar Wind is the breath of the stars, light in transit. It symbolizes cosmic consciousness in motion, the radiance that travels through space to awaken matter. In the tarot, it represents direct inspiration, inner guidance, the divine breath that illuminates thought and action. It is the card of luminous wind, of the solar spirit that animates souls and carries ideas toward their manifestation. It teaches conscious vitality, the circulation of light through speech and gaze. The Solar Wind is the song of the Sun in the flesh.
+Light keywords: Inspiration, energy, illumination, transmission, vitality, cosmic consciousness, divine breath, guidance, clarity of mind.
+Shadow: Dispersion or burning of the mind. Under its shadow, the Solar Wind becomes a storm. It is the card of mental overload, energetic confusion, or spiritual pride that wants to shine too brightly. The wind runs wild, the light becomes a blinding glare, the heat turns into an exhausting fire. It warns that clarity needs grounding, radiance needs silence. Without a center, even light gets lost. THE SOLAR WIND Represents cosmic energy and invisible influence. The anthropomorphic sun exhaling its rays evokes the force that animates all life, the cosmic breath that traverses the universe. This card speaks of subtle energies, celestial influences, and the connection between macrocosm and microcosm.
+Shadow keywords: Agitation, nervousness, dispersion, mental overheating, lack of grounding, spiritual arrogance, loss of calm.
+Integration paths: Learning to channel the fire of the sky without being overwhelmed. Finding calm in radiance, humility in light. Allowing solar energy to diffuse with benevolence. Remembering that inspiration cannot be forced: it descends when the heart is open. In a reading, the Solar Wind evokes great clarity, guidance, inner illumination, or a connection to cosmic energy. But it calls for remaining centered in the body so as not to get lost in abstraction.
+Soul resonance: The Solar Wind is the breath of the stars through the worlds. It teaches that light is alive, that it moves within everyone like a golden breath. In the grand Fleur d'ÅmÔurs Tarot, it represents divine inspiration, the communion between the cosmos and the human heart. It reminds us that every idea, every emotion, every breath is a solar spark traveling in the space of the living. To be crossed by the Solar Wind is to remember that thought, when loving, becomes light in motion.
+Energy correspondences: Element: Air and Fire
+Polarity: Expansive Masculine (dynamic, inspiring, radiant)
+Symbolic correspondences: Cosmic energy, Transmission, Illumination in motion
+In resonance: Fire (The Inner Sun), Water (The Ocean), Air (The Messenger)
+Root question: "What great vision inspires and frightens me at the same time?"
+Exercise / Meditation: Standing, eyes closed, imagine a warm, golden wind coming from the Sun. Let it pass through your body from the crown of your head to the soles of your feet. With each breath, it cleanses, illuminates, and revitalizes your cells. Feel the calm joy of being permeated by light.

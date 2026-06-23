@@ -13,10 +13,12 @@ import {
   TUTEUR_SAP_COST,
   SapError,
 } from '@/lib/db-sap'
-import { openrouterCall } from '@/lib/openrouter'
+import { getLlmMeta, isLlmConfigured } from '@/lib/llm'
 import { getTuteurPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction } from '@/lib/prompts'
-import { appendManuelReferenceToSystem } from '@/lib/manuel-ai-corpus'
+import { buildSystemPrompt } from '@/lib/ai-system-prompt'
+import { guardedLlmCall } from '@/lib/ai-guard'
+import { resolveAiAccess } from '@/lib/ai-access'
 import { getCardInfo } from '@/lib/card-info'
 import { isValidCard } from '@/lib/prompts'
 
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e.message }, { status: e.status || 401 })
   }
   const uid = parseInt(userId, 10)
-  const billTuteurSap = isDbConfigured() && !!process.env.OPENROUTER_API_KEY
+  const billTuteurSap = isDbConfigured() && !!(await isLlmConfigured())
 
   let body: {
     transcript?: string
@@ -147,12 +149,19 @@ export async function POST(req: NextRequest) {
   }
   oaiMessages.push({ role: 'user', content: userContent })
 
-  const systemPrompt = appendManuelReferenceToSystem(await getTuteurPrompt(), {
-    retrievalQuery: `${cardName}\n${transcript}`.slice(0, 6_000),
+  const systemPrompt = await buildSystemPrompt({
+    taskId: 'tuteur',
+    basePrompt: await getTuteurPrompt(),
     locale,
+    manuelQuery: `${cardName}\n${transcript}`.slice(0, 6_000),
+    manuelMaxChars: 12_000,
   })
 
-  if (billTuteurSap && uid > 0) {
+  const access = await resolveAiAccess(uid, 'tuteur')
+  const billTuteurSapEffective =
+    billTuteurSap && uid > 0 && access.billingMode !== 'full_access' && access.billingMode !== 'admin'
+
+  if (billTuteurSapEffective) {
     const bal = await getSapBalance(uid)
     if (bal < TUTEUR_SAP_COST) {
       return NextResponse.json(
@@ -165,7 +174,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(await isLlmConfigured())) {
     return NextResponse.json({
       response_a: 'Je vous reçois.',
       response_b: '',
@@ -182,14 +191,19 @@ export async function POST(req: NextRequest) {
       door_summary_preview: null,
       explore_petal: null,
       suggest_card: null,
-      _openrouter_error: 'OPENROUTER_API_KEY non configurée',
+      _ai_error: 'Clé API IA non configurée',
+      _openrouter_error: 'Clé API IA non configurée',
       provider: 'node-no-key',
     })
   }
 
-  const result = await openrouterCall(systemPrompt, oaiMessages, {
-    maxTokens: 1200,
-    responseFormatJson: true,
+  const { result } = await guardedLlmCall({
+    taskId: 'tuteur',
+    userId: uid,
+    system: systemPrompt,
+    messages: oaiMessages,
+    options: { maxTokens: 1200, responseFormatJson: true },
+    skipAccessCheck: true,
   })
   const question = (result && typeof result === 'object' && (result.question ?? result.first_question)) as string | undefined
 
@@ -220,7 +234,7 @@ export async function POST(req: NextRequest) {
           }
         : null
 
-    if (billTuteurSap && uid > 0) {
+    if (billTuteurSapEffective && uid > 0) {
       // Idempotence : si la clé de tour est connue, on ne débite qu'une seule fois
       // même en cas de retry réseau côté client.
       const alreadyDebited = idempotencyKey
@@ -274,7 +288,7 @@ export async function POST(req: NextRequest) {
         (result as Record<string, unknown>).suggest_card,
         cardGroup
       ),
-      provider: 'openrouter',
+      provider: (await getLlmMeta('premium')).provider,
     })
   }
 
@@ -294,7 +308,8 @@ export async function POST(req: NextRequest) {
     door_summary_preview: null,
     explore_petal: null,
     suggest_card: null,
-    _openrouter_error: 'OpenRouter indisponible ou réponse non-JSON',
+    _ai_error: 'IA indisponible ou réponse non-JSON',
+    _openrouter_error: 'IA indisponible ou réponse non-JSON',
     provider: 'node-fallback',
   })
 }

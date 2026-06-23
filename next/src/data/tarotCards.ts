@@ -166,6 +166,12 @@ export function getLandingCardEntries(locale: string | undefined): [string, Land
   if (loc === 'es') {
     return Object.entries((esCards as { cards: Record<string, LandingCardText> }).cards)
   }
+  if (loc === 'it') {
+    return Object.entries((itCards as { cards: Record<string, LandingCardText> }).cards)
+  }
+  if (loc === 'de') {
+    return Object.entries((deCards as { cards: Record<string, LandingCardText> }).cards)
+  }
   return ALL_CARDS.map((c) => [c.name, { desc: c.desc ?? '', synth: c.synth ?? '' }])
 }
 

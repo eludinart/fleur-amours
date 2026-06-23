@@ -16,6 +16,14 @@ export const SAP_ACTION_COSTS: Record<string, number> = {
   tuteur_turn: TUTEUR_SAP_COST,
   draw_card: 5,
   open_door: 15,
+  ai_plan14j: 10,
+  ai_fleur_interpretation: 8,
+  ai_zen_brief: 5,
+  ai_dyad_summary: 6,
+  ai_mycelium_synthesis: 10,
+  ai_dreamscape: 5,
+  ai_timeline: 5,
+  ai_mediation: 8,
 }
 
 const TBL_WALLET = () => table('fleur_sap_wallets')

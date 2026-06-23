@@ -6,6 +6,7 @@ import { isDbConfigured } from '@/lib/db'
 import { requireAdmin } from '@/lib/api-auth'
 import type { RowDataPacket } from 'mysql2'
 import { getPool, table } from '@/lib/db'
+import { isDemoAccount } from '@/lib/demo-accounts'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,7 +58,8 @@ export async function GET(req: NextRequest) {
               a.token_balance as token_balance,
               a.eternal_sap as eternal_sap,
               (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = ? LIMIT 1) as caps,
-              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = 'fleur_last_login' LIMIT 1) as last_login
+              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = 'fleur_last_login' LIMIT 1) as last_login,
+              (SELECT meta_value FROM ${metaTbl} WHERE user_id = u.ID AND meta_key = 'fleur_demo_account' LIMIT 1) as demo_meta
        FROM ${usersTbl} u
        LEFT JOIN ${rolesTbl} r ON r.user_id = u.ID
        LEFT JOIN ${accessTbl} a ON a.user_id = u.ID
@@ -79,6 +81,7 @@ export async function GET(req: NextRequest) {
         token_balance: r.token_balance != null ? Number(r.token_balance) || 0 : 0,
         eternal_sap: r.eternal_sap != null ? Number(r.eternal_sap) || 0 : 0,
         credits: 0,
+        is_demo: isDemoAccount({ email: r.email ? String(r.email) : '', demoMeta: r.demo_meta }),
       }
     })
     return NextResponse.json({ items, total: items.length })

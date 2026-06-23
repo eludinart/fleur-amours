@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAuth(req)
+    const { userId } = await requireAuth(req)
+    const uid = parseInt(userId, 10)
     const body = (await req.json().catch(() => ({}))) as {
       mode?: string
       petals?: Record<string, number>
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
       mode,
       petals,
       locale,
+      userId: uid,
       cacheKey,
       snapshotMeta:
         mode === 'snapshot' && body.snapshotMeta && typeof body.snapshotMeta === 'object'

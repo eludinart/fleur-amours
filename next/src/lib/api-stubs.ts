@@ -28,7 +28,7 @@ export const stubResponses = {
     myChannels: () => NextResponse.json({ channels: [] }),
     channelMessages: () => NextResponse.json({ messages: [] }),
     sendMessage: () => NextResponse.json({ ok: true }),
-    presenceHeartbeat: () => NextResponse.json({ ok: true }),
+    presenceHeartbeat: () => NextResponse.json({ ok: true, meteoPetal: null, socialMode: 'open' }),
   },
   sessions: {
     list: () => NextResponse.json({ items: [], total: 0 }),

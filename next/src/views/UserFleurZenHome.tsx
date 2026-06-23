@@ -58,6 +58,8 @@ export function UserFleurZenHome() {
   const [autoTimePlay, setAutoTimePlay] = useState(true)
   const [whisper, setWhisper] = useState('')
 
+  const celebrate = searchParams?.get('celebrate') === '1'
+
   useEffect(() => {
     setLoading(true)
     setError(null)
@@ -219,6 +221,12 @@ export function UserFleurZenHome() {
         <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-6 sm:py-8 pb-28 sm:pb-32">
           <header className="text-center xl:text-left space-y-2 mb-4 sm:mb-5">
             <Breadcrumbs />
+            {celebrate && hasPetals ? (
+              <div className="rounded-2xl border border-emerald-400/30 bg-emerald-950/30 px-4 py-3 mb-3 text-center xl:text-left">
+                <p className="text-sm font-semibold text-emerald-100">{t('fleurZen.celebrateTitle')}</p>
+                <p className="text-xs text-emerald-200/80 mt-1">{t('fleurZen.celebrateBody')}</p>
+              </div>
+            ) : null}
             <h1 className="text-xl sm:text-2xl font-light tracking-[0.2em] uppercase text-white/90">{t('fleurZen.title')}</h1>
             <p className="text-xs sm:text-[13px] text-white/50 font-light tracking-wide max-w-2xl mx-auto xl:mx-0">
               {t('fleurZen.subtitle')}
@@ -315,7 +323,7 @@ export function UserFleurZenHome() {
                     snapshots={timeSnapshots}
                     selectedIndex={timeIndex}
                     onSelect={handleManualTimeSelect}
-                    variant="sliderOnly"
+                    variant="full"
                     showResumeAuto={!autoTimePlay && !reduceMotion}
                     onResumeAuto={() => setAutoTimePlay(true)}
                     className="!max-w-none w-full"
@@ -345,7 +353,7 @@ export function UserFleurZenHome() {
             <section className="xl:col-span-7 w-full min-w-0">
               {chronicle.length > 0 ? (
                 <ChronicleList
-                  chronicle={chronicle.slice(0, 12)}
+                  chronicle={chronicle.slice(0, 30)}
                   layout="grid"
                   journalTitle
                   journalTitleKey="fleurZen.journalTitleZen"

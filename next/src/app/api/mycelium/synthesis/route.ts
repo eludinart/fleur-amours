@@ -9,7 +9,7 @@ import { getClimateDashboard } from '@/lib/db-aggregates'
 import { countMembers, listTeams } from '@/lib/db-organisations'
 import { getCachedSynthesis, getOrgAdoptionStats, saveSynthesisCache } from '@/lib/db-mycelium'
 import { buildDimensionAlerts, petalLabel, PETAL_IDS_ORDER } from '@/lib/mycelium-lexicon'
-import { openrouterCall } from '@/lib/openrouter'
+import { llmCallForTask, getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
 import { getLangInstruction } from '@/lib/prompts'
 
 export const dynamic = 'force-dynamic'
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!(await isLlmConfigured())) {
       const fallback = buildFallbackSynthesis(org.name, dashboard, alerts, adoption)
       return NextResponse.json({ synthesis: fallback, cached: false, mock: true })
     }
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       alertes: alerts.map((a) => `${a.label} (${a.delta})`),
     })
 
-    const result = await openrouterCall(system, [{ role: 'user', content: userContent }], {
+    const result = await llmCallForTask('mycelium-synthesis', system, [{ role: 'user', content: userContent }], {
       responseFormatJson: true,
       maxTokens: 700,
       timeoutMs: 25000,
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
       summary,
       actions,
       cached_at: new Date().toISOString(),
-      provider: 'openrouter',
+      provider: (await getLlmMetaForTask('mycelium-synthesis')).provider,
     }
     await saveSynthesisCache({ orgId: org.id, teamId, windowDays, signature, synthesis })
     return NextResponse.json({ synthesis, cached: false })

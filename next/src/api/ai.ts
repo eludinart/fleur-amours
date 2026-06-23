@@ -3,6 +3,7 @@ import { api } from '@/lib/api-client'
 export const aiApi = {
   status: () => api.get('/api/ai/status'),
   testOpenRouter: () => api.get('/api/ai/test'),
+  testAi: () => api.get('/api/ai/test'),
   threshold: (payload: { first_words: string }) =>
     api.post('/api/ai/threshold', payload),
   tuteur: (payload: Record<string, unknown>) =>
