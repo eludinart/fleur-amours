@@ -1732,7 +1732,32 @@
     "registerOnboardingTitle": "Creando il tuo account",
     "registerOnboarding1": "Accedi al questionario Il mio Fiore, alle sessioni guidate, alle letture e alla chat con un accompagnatore.",
     "registerOnboarding2": "I tuoi dati rimangono privati; gestisci la visibilità Prateria nel tuo account.",
-    "registerOnboarding3": "Dopo la registrazione, una breve guida spiega la navigazione e la Linfa — puoi saltarla se preferisci."
+    "registerOnboarding3": "Dopo la registrazione, una breve guida spiega la navigazione e la Linfa — puoi saltarla se preferisci.",
+    "forgotPassword": "Password dimenticata?"
+  },
+  "forgotPassword": {
+    "title": "Password dimenticata",
+    "subtitle": "Inserisci la tua email per ricevere un link di reimpostazione",
+    "emailLabel": "Email",
+    "emailPlaceholder": "tua@email.com",
+    "submit": "Invia link",
+    "sending": "Invio…",
+    "success": "Se esiste un account per questo indirizzo, riceverai un'email con un link per reimpostare la password. Controlla anche la cartella spam.",
+    "backToLogin": "Torna all'accesso"
+  },
+  "resetPassword": {
+    "title": "Nuova password",
+    "subtitle": "Scegli una nuova password per il tuo account",
+    "newPasswordLabel": "Nuova password",
+    "confirmLabel": "Conferma password",
+    "submit": "Reimposta",
+    "saving": "Salvataggio…",
+    "success": "La tua password è stata reimpostata. Ora puoi accedere.",
+    "goToLogin": "Accedi",
+    "tooShort": "La password deve contenere almeno 6 caratteri",
+    "mismatch": "Le password non corrispondono",
+    "invalidLink": "Questo link non è valido o è scaduto.",
+    "requestNew": "Richiedi un nuovo link"
   },
   "notification": {
     "justNow": "adesso"
@@ -2203,6 +2228,15 @@
     },
     "invite": {
       "ctaDefault": "Accetta invito"
+    },
+    "passwordReset": {
+      "subject": "Reimposta la tua password — Fleur d'AmOurs",
+      "title": "Reimposta la tua password",
+      "greeting": "Ciao {{name}},",
+      "greetingGeneric": "Ciao,",
+      "body": "Hai richiesto di reimpostare la password. Clicca sul pulsante qui sotto per sceglierne una nuova.",
+      "expiry": "Questo link è valido per 1 ora. Se non hai effettuato questa richiesta, ignora questa email: la tua password resterà invariata.",
+      "cta": "Reimposta la mia password"
     },
     "mycelium": {
       "inviteSubject": "{{inviter}} ti invita su Mycélium",

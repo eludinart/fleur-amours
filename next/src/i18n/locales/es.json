@@ -1692,7 +1692,32 @@
     "registerOnboardingTitle": "Al crear tu cuenta",
     "registerOnboarding1": "Accedes al cuestionario Mi Flor, sesiones guiadas, tiradas y chat con un acompañante.",
     "registerOnboarding2": "Tus datos son privados; controlas la visibilidad en la Pradera desde Mi cuenta.",
-    "registerOnboarding3": "Tras el registro, una guía breve explica la navegación y la Savia — puedes omitirla si quieres."
+    "registerOnboarding3": "Tras el registro, una guía breve explica la navegación y la Savia — puedes omitirla si quieres.",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
+  },
+  "forgotPassword": {
+    "title": "Contraseña olvidada",
+    "subtitle": "Introduce tu correo para recibir un enlace de restablecimiento",
+    "emailLabel": "Correo",
+    "emailPlaceholder": "tu@email.com",
+    "submit": "Enviar enlace",
+    "sending": "Enviando…",
+    "success": "Si existe una cuenta con esta dirección, recibirás un correo con un enlace para restablecer tu contraseña. No olvides revisar la carpeta de spam.",
+    "backToLogin": "Volver al inicio de sesión"
+  },
+  "resetPassword": {
+    "title": "Nueva contraseña",
+    "subtitle": "Elige una nueva contraseña para tu cuenta",
+    "newPasswordLabel": "Nueva contraseña",
+    "confirmLabel": "Confirmar contraseña",
+    "submit": "Restablecer",
+    "saving": "Guardando…",
+    "success": "Tu contraseña se ha restablecido. Ya puedes iniciar sesión.",
+    "goToLogin": "Iniciar sesión",
+    "tooShort": "La contraseña debe tener al menos 6 caracteres",
+    "mismatch": "Las contraseñas no coinciden",
+    "invalidLink": "Este enlace no es válido o ha caducado.",
+    "requestNew": "Solicitar un nuevo enlace"
   },
   "notification": {
     "justNow": "ahora mismo"
@@ -2203,6 +2228,15 @@
     },
     "invite": {
       "ctaDefault": "Aceptar invitación"
+    },
+    "passwordReset": {
+      "subject": "Restablece tu contraseña — Fleur d'AmOurs",
+      "title": "Restablece tu contraseña",
+      "greeting": "Hola {{name}},",
+      "greetingGeneric": "Hola,",
+      "body": "Has solicitado restablecer tu contraseña. Haz clic en el botón de abajo para elegir una nueva.",
+      "expiry": "Este enlace es válido durante 1 hora. Si no fuiste tú quien lo solicitó, ignora este correo: tu contraseña no cambiará.",
+      "cta": "Restablecer mi contraseña"
     },
     "mycelium": {
       "inviteSubject": "{{inviter}} te invita a Mycélium",

@@ -8,6 +8,10 @@ export const authApi = {
       token: string
       user: Record<string, unknown>
     }>,
+  forgotPassword: (email: string) =>
+    api.post('/api/auth/forgot-password', { email }) as Promise<{ ok: boolean }>,
+  resetPassword: (token: string, password: string) =>
+    api.post('/api/auth/reset-password', { token, password }) as Promise<{ ok: boolean }>,
   refresh: () => api.post('/api/auth/refresh', {}) as Promise<{ token: string }>,
   logout: () => api.post('/api/auth/logout', {}) as Promise<{ ok: boolean }>,
   me: () => api.get('/api/auth/me') as Promise<Record<string, unknown>>,

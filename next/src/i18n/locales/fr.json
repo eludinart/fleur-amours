@@ -2054,7 +2054,32 @@
     "registerOnboardingTitle": "En créant ton compte",
     "registerOnboarding1": "Tu accèdes tout de suite à ta Fleur, aux tirages et aux sessions guidées.",
     "registerOnboarding2": "Tes données restent privées ; le profil social se complète quand tu le souhaites.",
-    "registerOnboarding3": "Après l'inscription : révélation de ta Fleur en ~10 minutes — pas de formulaire avant l'expérience."
+    "registerOnboarding3": "Après l'inscription : révélation de ta Fleur en ~10 minutes — pas de formulaire avant l'expérience.",
+    "forgotPassword": "Mot de passe oublié ?"
+  },
+  "forgotPassword": {
+    "title": "Mot de passe oublié",
+    "subtitle": "Saisissez votre e-mail pour recevoir un lien de réinitialisation",
+    "emailLabel": "Email",
+    "emailPlaceholder": "votre@email.com",
+    "submit": "Envoyer le lien",
+    "sending": "Envoi…",
+    "success": "Si un compte existe pour cette adresse, vous recevrez un e-mail avec un lien pour réinitialiser votre mot de passe. Pensez à vérifier vos spams.",
+    "backToLogin": "Retour à la connexion"
+  },
+  "resetPassword": {
+    "title": "Nouveau mot de passe",
+    "subtitle": "Choisissez un nouveau mot de passe pour votre compte",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "confirmLabel": "Confirmer le mot de passe",
+    "submit": "Réinitialiser",
+    "saving": "Enregistrement…",
+    "success": "Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter.",
+    "goToLogin": "Se connecter",
+    "tooShort": "Le mot de passe doit contenir au moins 6 caractères",
+    "mismatch": "Les mots de passe ne correspondent pas",
+    "invalidLink": "Ce lien est invalide ou a expiré.",
+    "requestNew": "Demander un nouveau lien"
   },
   "notification": {
     "justNow": "à l'instant"
@@ -2575,6 +2600,15 @@
     },
     "invite": {
       "ctaDefault": "Accepter l'invitation"
+    },
+    "passwordReset": {
+      "subject": "Réinitialisation de votre mot de passe — Fleur d'AmOurs",
+      "title": "Réinitialisation de votre mot de passe",
+      "greeting": "Bonjour {{name}},",
+      "greetingGeneric": "Bonjour,",
+      "body": "Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour en choisir un nouveau.",
+      "expiry": "Ce lien est valable 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe reste inchangé.",
+      "cta": "Réinitialiser mon mot de passe"
     },
     "mycelium": {
       "inviteSubject": "{{inviter}} vous invite sur Mycélium",

@@ -1732,7 +1732,32 @@
     "registerOnboardingTitle": "Wenn du dein Konto erstellst",
     "registerOnboarding1": "Du erhältst Zugang zu Meine Blume, geführten Sitzungen, Lesungen und Chat mit einem Begleiter.",
     "registerOnboarding2": "Deine Daten bleiben privat; du verwaltest die Wiesensichtbarkeit in Mein Konto.",
-    "registerOnboarding3": "Nach der Registrierung erklärt dir eine kurze Anleitung die Navigation und den Saft — du kannst sie überspringen, wenn du möchtest."
+    "registerOnboarding3": "Nach der Registrierung erklärt dir eine kurze Anleitung die Navigation und den Saft — du kannst sie überspringen, wenn du möchtest.",
+    "forgotPassword": "Passwort vergessen?"
+  },
+  "forgotPassword": {
+    "title": "Passwort vergessen",
+    "subtitle": "Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen zu erhalten",
+    "emailLabel": "E-Mail",
+    "emailPlaceholder": "deine@email.com",
+    "submit": "Link senden",
+    "sending": "Senden…",
+    "success": "Falls ein Konto für diese Adresse existiert, erhältst du eine E-Mail mit einem Link zum Zurücksetzen deines Passworts. Bitte prüfe auch deinen Spam-Ordner.",
+    "backToLogin": "Zurück zur Anmeldung"
+  },
+  "resetPassword": {
+    "title": "Neues Passwort",
+    "subtitle": "Wähle ein neues Passwort für dein Konto",
+    "newPasswordLabel": "Neues Passwort",
+    "confirmLabel": "Passwort bestätigen",
+    "submit": "Zurücksetzen",
+    "saving": "Speichern…",
+    "success": "Dein Passwort wurde zurückgesetzt. Du kannst dich jetzt anmelden.",
+    "goToLogin": "Anmelden",
+    "tooShort": "Das Passwort muss mindestens 6 Zeichen lang sein",
+    "mismatch": "Die Passwörter stimmen nicht überein",
+    "invalidLink": "Dieser Link ist ungültig oder abgelaufen.",
+    "requestNew": "Neuen Link anfordern"
   },
   "notification": {
     "justNow": "gerade eben"
@@ -2203,6 +2228,15 @@
     },
     "invite": {
       "ctaDefault": "Einladung annehmen"
+    },
+    "passwordReset": {
+      "subject": "Setze dein Passwort zurück — Fleur d'AmOurs",
+      "title": "Setze dein Passwort zurück",
+      "greeting": "Hallo {{name}},",
+      "greetingGeneric": "Hallo,",
+      "body": "Du hast angefordert, dein Passwort zurückzusetzen. Klicke auf die Schaltfläche unten, um ein neues zu wählen.",
+      "expiry": "Dieser Link ist 1 Stunde gültig. Falls du das nicht angefordert hast, ignoriere diese E-Mail einfach: Dein Passwort bleibt unverändert.",
+      "cta": "Mein Passwort zurücksetzen"
     },
     "mycelium": {
       "inviteSubject": "{{inviter}} lädt dich zu Mycélium ein",

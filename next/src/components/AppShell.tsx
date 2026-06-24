@@ -9,6 +9,8 @@ import { setLocaleForRequests, isCapacitor } from '@/lib/api-client'
 import { useStore } from '@/store/useStore'
 import { Layout } from '@/components/layout/Layout'
 import { LoginPage } from '@/views/LoginPage'
+import { ForgotPasswordPage } from '@/views/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/views/ResetPasswordPage'
 import { LandingPage } from '@/views/LandingPage'
 import { CoachLandingPage } from '@/views/CoachLandingPage'
 import { MyceliumLandingPage } from '@/views/MyceliumLandingPage'
@@ -284,6 +286,22 @@ function AppRoutes() {
   if (route === 'login' || route === 'register') {
     if (user) return <RedirectHome />
     return <LoginPage />
+  }
+
+  // Mot de passe oublié / réinitialisation - pages publiques (accessibles même via lien e-mail).
+  if (route === 'forgot-password') {
+    return (
+      <Suspense fallback={null}>
+        <ForgotPasswordPage />
+      </Suspense>
+    )
+  }
+  if (route === 'reset-password') {
+    return (
+      <Suspense fallback={null}>
+        <ResetPasswordPage />
+      </Suspense>
+    )
   }
 
   /* Pages publiques tirage/partage et dreamscape/partage : app/tirage/partage/[id] et app/dreamscape/partage/[token] */

@@ -223,9 +223,21 @@ export function LoginPage() {
             )}
           </button>
 
-          <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-3">
-            {mode === 'register' ? t('login.registerHint') : t('login.loginHint')}
-          </p>
+          {mode === 'login' && (
+            <button
+              type="button"
+              onClick={() => router.push('/forgot-password')}
+              className="w-full -mt-1 py-1 text-xs text-violet-600 dark:text-violet-400 hover:underline"
+            >
+              {t('login.forgotPassword')}
+            </button>
+          )}
+
+          {mode === 'register' && (
+            <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-3">
+              {t('login.registerHint')}
+            </p>
+          )}
 
           <button
             type="button"

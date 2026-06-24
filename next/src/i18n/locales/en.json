@@ -1852,7 +1852,32 @@
     "registerOnboardingTitle": "When you create your account",
     "registerOnboarding1": "You get My Flower, guided sessions, readings and chat with a coach.",
     "registerOnboarding2": "Your data stays private; you control Prairie visibility in My account.",
-    "registerOnboarding3": "After sign-up, a short guide explains navigation and Sap — you can skip it if you prefer."
+    "registerOnboarding3": "After sign-up, a short guide explains navigation and Sap — you can skip it if you prefer.",
+    "forgotPassword": "Forgot your password?"
+  },
+  "forgotPassword": {
+    "title": "Forgot password",
+    "subtitle": "Enter your email to receive a reset link",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@email.com",
+    "submit": "Send link",
+    "sending": "Sending…",
+    "success": "If an account exists for this address, you'll receive an email with a link to reset your password. Don't forget to check your spam folder.",
+    "backToLogin": "Back to login"
+  },
+  "resetPassword": {
+    "title": "New password",
+    "subtitle": "Choose a new password for your account",
+    "newPasswordLabel": "New password",
+    "confirmLabel": "Confirm password",
+    "submit": "Reset",
+    "saving": "Saving…",
+    "success": "Your password has been reset. You can now log in.",
+    "goToLogin": "Log in",
+    "tooShort": "Password must be at least 6 characters",
+    "mismatch": "Passwords do not match",
+    "invalidLink": "This link is invalid or has expired.",
+    "requestNew": "Request a new link"
   },
   "notification": {
     "justNow": "just now"
@@ -2483,6 +2508,15 @@
     },
     "invite": {
       "ctaDefault": "Accept invitation"
+    },
+    "passwordReset": {
+      "subject": "Reset your password — Fleur d'AmOurs",
+      "title": "Reset your password",
+      "greeting": "Hello {{name}},",
+      "greetingGeneric": "Hello,",
+      "body": "You requested to reset your password. Click the button below to choose a new one.",
+      "expiry": "This link is valid for 1 hour. If you didn't request this, just ignore this email: your password stays unchanged.",
+      "cta": "Reset my password"
     },
     "mycelium": {
       "inviteSubject": "{{inviter}} invites you to Mycelium",
