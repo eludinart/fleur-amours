@@ -6,7 +6,11 @@ import { isDbConfigured } from '@/lib/db'
 import { findEngagementCandidates } from '@/lib/db-engagement'
 import { loadEngagementPersonalization } from '@/lib/engagement-context'
 import { sendEngagementNotification } from '@/lib/send-engagement-notification'
-import { isNotificationOutboundRestricted } from '@/lib/notification-outbound'
+import {
+  canSendEngagementRemindToEmail,
+  isEngagementRemindAllowlistActive,
+  isNotificationOutboundRestricted,
+} from '@/lib/notification-outbound'
 
 export type EngagementRemindInput = {
   limit?: number
@@ -48,15 +52,21 @@ export async function runEngagementRemind(
   })
 
   if (body.dryRun) {
+    const wouldSend = candidates.filter(
+      (c) => c.email && canSendEngagementRemindToEmail(c.email)
+    )
     return {
       dryRun: true,
       devRestricted: isNotificationOutboundRestricted(),
+      allowlistActive: isEngagementRemindAllowlistActive(),
       candidates: candidates.length,
-      sample: candidates.slice(0, 15).map((c) => ({
+      wouldSend: wouldSend.length,
+      sample: wouldSend.slice(0, 15).map((c) => ({
         userId: c.userId,
+        email: c.email,
         campaignId: c.campaignId,
         vars: c.vars,
-      })) as Array<Pick<EngagementCandidate, 'userId' | 'campaignId' | 'vars'>>,
+      })) as Array<Pick<EngagementCandidate, 'userId' | 'campaignId' | 'vars'> & { email: string | null }>,
     }
   }
 
@@ -87,5 +97,6 @@ export async function runEngagementRemind(
     sent,
     byCampaign,
     devRestricted: isNotificationOutboundRestricted(),
+    allowlistActive: isEngagementRemindAllowlistActive(),
   }
 }

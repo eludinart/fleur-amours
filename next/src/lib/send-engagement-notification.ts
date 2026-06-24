@@ -3,7 +3,7 @@
  */
 import { createNotification } from './db-notifications'
 import { dispatchNotificationEmails } from './email'
-import { canSendOutboundToEmail } from './notification-outbound'
+import { canSendEngagementRemindToEmail } from './notification-outbound'
 import type { EngagementCampaignId } from './engagement-templates'
 import {
   buildEngagementTemplate,
@@ -39,7 +39,7 @@ export async function sendEngagementNotification(
   )
 
   const email = String(input.email ?? '').trim()
-  if (!email || !canSendOutboundToEmail(email, { skipDevGuard: input.skipDevGuard })) {
+  if (!email || !canSendEngagementRemindToEmail(email, { skipDevGuard: input.skipDevGuard })) {
     return { sent: false }
   }
 

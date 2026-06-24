@@ -62,6 +62,8 @@ services:
       SMTP_REPLY_TO: ${SMTP_REPLY_TO:-}
       CRON_SECRET: ${CRON_SECRET:-}
       NOTIFICATIONS_DEV_ONLY: ${NOTIFICATIONS_DEV_ONLY:-false}
+      # Relances engagement : si défini, seules ces adresses reçoivent les e-mails (phases de test prod)
+      ENGAGEMENT_REMIND_ALLOWLIST: ${ENGAGEMENT_REMIND_ALLOWLIST:-}
 
 networks:
   coolify:
