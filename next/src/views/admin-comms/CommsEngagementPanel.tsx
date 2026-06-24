@@ -98,15 +98,6 @@ export function CommsEngagementPanel() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-violet-200/80 dark:border-violet-800/60 bg-gradient-to-br from-violet-50/90 to-indigo-50/50 dark:from-violet-950/40 dark:to-indigo-950/20 p-5 text-sm">
-        <p className="font-semibold text-violet-900 dark:text-violet-100 mb-1">Relances automatiques d&apos;engagement</p>
-        <p className="text-violet-700 dark:text-violet-300 text-xs leading-relaxed">
-          Cron : <code className="font-mono text-[11px]">POST /api/engagement/remind</code> — 1 rappel max / utilisateur /
-          ~20 h. Priorité : plan 14j → check-in → Fleur → tirage → session → conversation intérieure. Expiration 36 h. En dev :
-          envois limités à <strong>eludinart@gmail.com</strong>.
-        </p>
-      </div>
-
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4">
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Tester une relance</h3>
         <div className="flex flex-wrap gap-3 items-end">

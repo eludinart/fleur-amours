@@ -12,7 +12,22 @@ import { platform } from 'os'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 const NEXT_DIR = resolve(ROOT, 'next')
-const PORTS = [3001, 3307]
+const PORTS = [3001, 3307, 3098, 3099]
+
+/** Arrête les serveurs next start / standalone laissés par des tests smoke locaux. */
+function killStrayNextServers() {
+  if (platform() !== 'win32') return
+  const ps = spawnSync(
+    'powershell',
+    [
+      '-NoProfile',
+      '-Command',
+      `Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object { $_.CommandLine -match 'standalone[/\\\\]server\\.js|next[/\\\\]dist[/\\\\]bin[/\\\\]next.*start' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
+    ],
+    { stdio: 'ignore' }
+  )
+  if (ps.status !== 0) return
+}
 
 function killPortWin(port) {
   const r = spawnSync('cmd', ['/c', 'netstat -ano'], { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 })
@@ -40,8 +55,9 @@ function killPorts() {
 function removeNextCache() {
   const nextCache = resolve(NEXT_DIR, '.next')
   if (!existsSync(nextCache)) return
+  killStrayNextServers()
   try {
-    rmSync(nextCache, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
+    rmSync(nextCache, { recursive: true, force: true, maxRetries: 8, retryDelay: 400 })
     console.log('   Cache next/.next supprimé')
     return
   } catch (err) {
@@ -53,8 +69,16 @@ function removeNextCache() {
       { stdio: 'pipe', encoding: 'utf8' }
     )
     if (ps.status !== 0) {
-      console.error(ps.stderr || ps.stdout || String(err))
-      throw err
+      killStrayNextServers()
+      const retry = spawnSync(
+        'powershell',
+        ['-NoProfile', '-Command', `Remove-Item -LiteralPath '${nextCache.replace(/'/g, "''")}' -Recurse -Force -ErrorAction Stop`],
+        { stdio: 'pipe', encoding: 'utf8' }
+      )
+      if (retry.status !== 0) {
+        console.error(retry.stderr || retry.stdout || ps.stderr || ps.stdout || String(err))
+        throw err
+      }
     }
     console.log('   Cache next/.next supprimé (PowerShell)')
   }
