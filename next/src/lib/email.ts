@@ -4,9 +4,10 @@
 import type { RowDataPacket } from 'mysql2'
 import { getPool, isDbConfigured, table } from './db'
 import { buildFleurEmailLayout } from './email-layout'
+import { resolveHeroInlineAttachments, type EmailInlineAttachment } from './email-inline-attachments'
+import { loadEngagementPersonalization, type EngagementPersonalization } from './engagement-context'
 import { buildJourneyChips, resolveEmailHero, campaignIdFromNotificationType } from './email-journey'
 import type { EngagementCampaignId } from './engagement-templates'
-import type { EngagementPersonalization } from './engagement-context'
 import { tServer } from './i18n-server'
 import { canSendOutboundToEmail } from './notification-outbound'
 import { isSmtpConfigured, trySendSmtpMail } from './smtp'
@@ -86,7 +87,7 @@ async function shouldSendInstantEmail(userId: number): Promise<boolean> {
   return true
 }
 
-export function buildNotificationEmailHtml(params: {
+export async function buildNotificationEmailHtml(params: {
   title: string
   body?: string | null
   actionUrl?: string | null
@@ -101,7 +102,7 @@ export function buildNotificationEmailHtml(params: {
   subtitle?: string | null
   badge?: string | null
   campaignId?: EngagementCampaignId
-}): { html: string; text: string } {
+}): Promise<{ html: string; text: string; inlineImages?: EmailInlineAttachment[] }> {
   const locale = params.locale ?? 'fr'
   const title = String(params.title ?? '').trim()
   const body = params.body ? String(params.body).trim() : ''
@@ -113,10 +114,18 @@ export function buildNotificationEmailHtml(params: {
 
   const p = params.personalization
   const showGarden = params.showGarden !== false && mode === 'user' && !!p
-  const hero = showGarden && p ? resolveEmailHero(p) : mode === 'admin' ? { type: 'none' as const } : { type: 'logo' as const }
+  let hero =
+    showGarden && p ? resolveEmailHero(p) : mode === 'admin' ? { type: 'none' as const } : { type: 'logo' as const }
   const journeyChips = showGarden && p ? buildJourneyChips(p.locale, p, params.campaignId) : undefined
 
-  return buildFleurEmailLayout({
+  const inlineImages: EmailInlineAttachment[] = []
+  if (hero.type === 'flower' || hero.type === 'logo') {
+    const resolved = await resolveHeroInlineAttachments(hero)
+    hero = resolved.hero
+    inlineImages.push(...resolved.attachments)
+  }
+
+  const layout = buildFleurEmailLayout({
     locale,
     preheader: params.preheader ?? highlight ?? body.slice(0, 100),
     mode,
@@ -133,6 +142,11 @@ export function buildNotificationEmailHtml(params: {
         ? { label: actionLabel, url: actionPath }
         : null,
   })
+
+  return {
+    ...layout,
+    inlineImages: inlineImages.length ? inlineImages : undefined,
+  }
 }
 
 export async function sendTransactionalEmail(params: {
@@ -145,6 +159,7 @@ export async function sendTransactionalEmail(params: {
   skipDevGuard?: boolean
   replyTo?: string
   headers?: Record<string, string>
+  inlineImages?: EmailInlineAttachment[]
 }): Promise<{ sent: boolean; error?: string; messageId?: string }> {
   const to = normalizeEmail(params.to)
   if (!to || !to.includes('@')) return { sent: false, error: 'Email destinataire invalide' }
@@ -162,6 +177,7 @@ export async function sendTransactionalEmail(params: {
     text: params.text,
     replyTo: params.replyTo,
     headers: params.headers,
+    attachments: params.inlineImages,
   })
   if (!result.ok) return { sent: false, error: result.error }
   return { sent: true, messageId: result.messageId }
@@ -199,15 +215,16 @@ export async function sendAdminAlertEmail(params: {
 
   const title = params.title ?? params.subject
   const bodyText = params.body ?? params.text ?? ''
-  const { html, text } =
+  const built =
     params.html && !params.body
       ? { html: params.html, text: params.text ?? '' }
-      : buildNotificationEmailHtml({
+      : await buildNotificationEmailHtml({
           title,
           body: bodyText,
           mode: 'admin',
           locale: 'fr',
         })
+  const { html, text } = built
 
   let sent = 0
   const errors: string[] = []
@@ -264,16 +281,20 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
       'fr'
 
     const campaignId = input.campaignId ?? campaignIdFromNotificationType(input.type ?? '')
+    const engagement = isEngagementType(input.type)
+    const personalization = r.user_id
+      ? await resolveRecipientPersonalization(r.user_id, email, input.personalization, engagement)
+      : input.personalization
 
-    const { html, text } = buildNotificationEmailHtml({
+    const { html, text, inlineImages } = await buildNotificationEmailHtml({
       title: input.title,
       body: input.body,
       actionUrl: input.actionUrl,
       actionLabel: input.actionLabel ?? undefined,
       locale,
       highlight: input.highlight,
-      personalization: input.personalization,
-      showGarden: isEngagementType(input.type) || !!input.personalization,
+      personalization,
+      showGarden: engagement || !!personalization,
       campaignId,
     })
 
@@ -285,6 +306,7 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
       text,
       headers,
       skipDevGuard: input.skipDevGuard,
+      inlineImages,
     })
   }
 
@@ -293,7 +315,7 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
     if (!email || seen.has(email)) continue
     seen.add(email)
     const locale = input.locale ?? 'fr'
-    const { html, text } = buildNotificationEmailHtml({
+    const { html, text, inlineImages } = await buildNotificationEmailHtml({
       title: input.title,
       body: input.body,
       actionUrl: input.actionUrl,
@@ -310,8 +332,37 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
       skipPrefs: true,
       skipDevGuard: input.skipDevGuard,
       headers,
+      inlineImages,
     })
   }
+}
+
+function mergeEngagementPersonalization(
+  input: EngagementPersonalization | null | undefined,
+  loaded: EngagementPersonalization
+): EngagementPersonalization {
+  if (!input) return loaded
+  return {
+    ...loaded,
+    ...input,
+    petalScores: input.petalScores ?? loaded.petalScores,
+    hasFleurProfile: input.hasFleurProfile ?? loaded.hasFleurProfile,
+    dominantPetalId: input.dominantPetalId ?? loaded.dominantPetalId,
+    dominantPetalName: input.dominantPetalName ?? loaded.dominantPetalName,
+    plan14j: input.plan14j ?? loaded.plan14j,
+    locale: input.locale ?? loaded.locale,
+  }
+}
+
+async function resolveRecipientPersonalization(
+  userId: number,
+  email: string,
+  input: EngagementPersonalization | null | undefined,
+  engagement: boolean
+): Promise<EngagementPersonalization | null | undefined> {
+  if (!engagement) return input
+  const loaded = await loadEngagementPersonalization(userId, email)
+  return mergeEngagementPersonalization(input, loaded)
 }
 
 function isEngagementType(type: string): boolean {
@@ -332,7 +383,7 @@ export async function sendInviteEmail(params: {
 }): Promise<{ sent: boolean; error?: string }> {
   const locale = params.locale ?? 'fr'
   const cta = params.ctaLabel ?? tServer(locale, 'email.invite.ctaDefault')
-  const { html, text } = buildNotificationEmailHtml({
+  const { html, text, inlineImages } = await buildNotificationEmailHtml({
     title: params.subject,
     body: params.intro,
     actionUrl: params.inviteUrl,
@@ -346,6 +397,7 @@ export async function sendInviteEmail(params: {
     html,
     text,
     skipPrefs: true,
+    inlineImages,
   })
 }
 
@@ -365,13 +417,14 @@ export async function sendDuoInviteEmail(params: {
   const { buildDuoInviteEmailContent } = await import('./email-duo-invite')
   const locale =
     params.locale ?? (await resolveEmailLocale({ userId: params.inviterUserId }))
-  const { html, text, subject } = buildDuoInviteEmailContent({ ...params, locale })
+  const { html, text, subject, inlineImages } = await buildDuoInviteEmailContent({ ...params, locale })
   return sendTransactionalEmail({
     to: params.to,
     subject: params.subject ?? subject,
     html,
     text,
     skipPrefs: true,
+    inlineImages,
   })
 }
 
@@ -385,7 +438,7 @@ export async function sendContactConfirmationEmail(params: {
     ? tServer(locale, 'email.contact.replyGreeting', { name: params.name.trim() })
     : tServer(locale, 'email.contact.replyGreetingGeneric')
   const body = `${greeting}\n\n${tServer(locale, 'email.contact.confirmBody')}`
-  const { html, text } = buildNotificationEmailHtml({
+  const { html, text, inlineImages } = await buildNotificationEmailHtml({
     title: tServer(locale, 'email.contact.confirmTitle'),
     body,
     actionUrl: '/',
@@ -400,6 +453,7 @@ export async function sendContactConfirmationEmail(params: {
     text,
     userId: params.userId,
     skipPrefs: true,
+    inlineImages,
   })
 }
 

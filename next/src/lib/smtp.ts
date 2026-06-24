@@ -12,6 +12,13 @@
  */
 import nodemailer from 'nodemailer'
 
+export type SmtpInlineAttachment = {
+  cid: string
+  filename: string
+  content: Buffer
+  contentType?: string
+}
+
 export type SmtpMessage = {
   to: string
   subject: string
@@ -20,6 +27,7 @@ export type SmtpMessage = {
   from?: string
   replyTo?: string
   headers?: Record<string, string>
+  attachments?: SmtpInlineAttachment[]
 }
 
 function envBool(v: string | undefined, fallback: boolean): boolean {
@@ -73,6 +81,12 @@ export async function sendSmtpMail(msg: SmtpMessage): Promise<{ messageId: strin
     text: msg.text,
     replyTo,
     headers: msg.headers,
+    attachments: msg.attachments?.map((a) => ({
+      filename: a.filename,
+      content: a.content,
+      cid: a.cid,
+      contentType: a.contentType ?? 'application/octet-stream',
+    })),
   })
   return { messageId: String(info.messageId ?? '') }
 }

@@ -3,6 +3,7 @@
  * 5 langues, contenu enrichi et personnalisé selon le profil utilisateur.
  */
 import { buildNotificationEmailHtml } from './email'
+import { embedInlineImagesForPreview } from './email-inline-attachments'
 import { tServer } from './i18n-server'
 import type { ServerLocale } from './i18n-server'
 import type { EngagementPersonalization } from './engagement-context'
@@ -186,13 +187,13 @@ export function buildEngagementTemplate(
   }
 }
 
-export function buildEngagementEmailPreview(
+export async function buildEngagementEmailPreview(
   campaignId: EngagementCampaignId,
   locale?: string,
   vars: EngagementTemplateVars = {}
-): { subject: string; html: string; text: string; template: EngagementTemplate } {
+): Promise<{ subject: string; html: string; text: string; template: EngagementTemplate }> {
   const template = buildEngagementTemplate(campaignId, locale, vars)
-  const { html, text } = buildNotificationEmailHtml({
+  const { html, text, inlineImages } = await buildNotificationEmailHtml({
     title: template.title,
     body: template.body,
     actionUrl: template.action_url,
@@ -203,7 +204,12 @@ export function buildEngagementEmailPreview(
     preheader: template.emailHighlight ?? template.body.slice(0, 120),
     campaignId,
   })
-  return { subject: template.emailSubject, html, text, template }
+  return {
+    subject: template.emailSubject,
+    html: inlineImages ? embedInlineImagesForPreview(html, inlineImages) : html,
+    text,
+    template,
+  }
 }
 
 /** Exemple plan 14j pour démo / preview admin */

@@ -37,29 +37,31 @@ export async function GET(req: NextRequest) {
     const campaigns = campaignParam && isCampaignId(campaignParam) ? [campaignParam] : ALL_CAMPAIGNS
     const personalization = PREVIEW_PERSONALIZATIONS[locale] ?? PREVIEW_PERSONALIZATIONS.fr
 
-    const previews = campaigns.map((id) => {
-      const vars =
-        id === 'plan14j'
-          ? { ...PLAN14J_PREVIEW_VARS, personalization }
-          : { personalization }
-      const email = buildEngagementEmailPreview(id, locale, vars)
-      return {
-        campaignId: id,
-        notification: {
-          type: email.template.type,
-          title: email.template.title,
-          body: email.template.body,
-          action_url: email.template.action_url,
-          action_label: email.template.action_label,
-          priority: email.template.priority,
-        },
-        email: {
-          subject: email.subject,
-          html: email.html,
-          text: email.text,
-        },
-      }
-    })
+    const previews = await Promise.all(
+      campaigns.map(async (id) => {
+        const vars =
+          id === 'plan14j'
+            ? { ...PLAN14J_PREVIEW_VARS, personalization }
+            : { personalization }
+        const email = await buildEngagementEmailPreview(id, locale, vars)
+        return {
+          campaignId: id,
+          notification: {
+            type: email.template.type,
+            title: email.template.title,
+            body: email.template.body,
+            action_url: email.template.action_url,
+            action_label: email.template.action_label,
+            priority: email.template.priority,
+          },
+          email: {
+            subject: email.subject,
+            html: email.html,
+            text: email.text,
+          },
+        }
+      })
+    )
 
     return NextResponse.json({
       locale,

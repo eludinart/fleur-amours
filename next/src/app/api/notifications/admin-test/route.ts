@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const preview = buildEngagementEmailPreview(campaign, personalization.locale, vars)
+    const preview = await buildEngagementEmailPreview(campaign, personalization.locale, vars)
     let notificationId: number | undefined
 
     if (sendNotification) {
@@ -133,6 +133,8 @@ export async function POST(req: NextRequest) {
         actionLabel: preview.template.action_label,
         locale: preview.template.locale,
         highlight: preview.template.emailHighlight,
+        personalization,
+        campaignId: campaign,
         recipients: [{ user_id: adminUserId, email }],
         skipDevGuard: true,
       })

@@ -2,21 +2,40 @@
  * Coquille HTML unique pour tous les e-mails Fleur d'AmOurs (tables, i18n, CTA).
  */
 import { absolutePublicAppUrl, CANONICAL_JARDIN_ORIGIN, withPublicBasePath } from './app-public-url'
-import { buildEmailFlowerSvg, dominantPetalFromScores } from './email-flower-svg'
+import { dominantPetalFromScores } from './email-flower-svg'
 import { injectEmailPreheader } from './email-html-utils'
 import { tServer, type ServerLocale } from './i18n-server'
 import { PETAL_BY_ID } from './petal-theme'
 
 const LOGO_SIZE = 80
-const FLOWER_SIZE = 200
+const FLOWER_SIZE = 280
 const MAX_BODY_IMAGE_HEIGHT = 280
+
+/** Image centrée (tables + attributs HTML — fiable Gmail/Outlook). */
+function buildCenteredEmailImg(
+  src: string,
+  size: number,
+  opts?: { alt?: string; glow?: boolean }
+): string {
+  const alt = opts?.alt ?? ''
+  const cellStyle = opts?.glow
+    ? 'text-align:center;background:radial-gradient(circle at 50% 55%,#fff5f7 0%,#ffffff 72%);border-radius:50%;padding:14px;line-height:0;'
+    : 'text-align:center;line-height:0;'
+  return (
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto">` +
+    `<tr><td align="center" style="${cellStyle}">` +
+    `<img src="${escapeEmailHtml(src)}" alt="${escapeEmailHtml(alt)}" width="${size}" height="${size}" border="0" ` +
+    `style="display:block;width:${size}px;height:${size}px;max-width:${size}px;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"/>` +
+    `</td></tr></table>`
+  )
+}
 
 export type FleurEmailMode = 'user' | 'admin' | 'marketing'
 
 export type FleurEmailHero =
   | { type: 'none' }
-  | { type: 'logo' }
-  | { type: 'flower'; scores: Record<string, number>; caption?: string }
+  | { type: 'logo'; cid?: string }
+  | { type: 'flower'; scores: Record<string, number>; caption?: string; cid?: string }
   | { type: 'image'; src: string; alt: string; width?: number }
 
 export type FleurEmailLayoutParams = {
@@ -75,10 +94,10 @@ function bodyTextToHtml(body: string): string {
 function buildHeroBlock(hero: FleurEmailHero, locale: ServerLocale): string {
   if (hero.type === 'none') return ''
   if (hero.type === 'logo') {
-    const src = logoUrl()
+    const src = hero.cid ? `cid:${hero.cid}` : logoUrl()
     return (
-      `<tr><td style="padding:24px 28px 8px;text-align:center">` +
-      `<img src="${escapeEmailHtml(src)}" alt="${escapeEmailHtml(tServer(locale, 'email.shell.appName'))}" width="${LOGO_SIZE}" height="${LOGO_SIZE}" style="display:block;margin:0 auto;width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;object-fit:contain"/>` +
+      `<tr><td align="center" style="padding:24px 28px 8px;text-align:center">` +
+      buildCenteredEmailImg(src, LOGO_SIZE, { alt: tServer(locale, 'email.shell.appName') }) +
       `</td></tr>`
     )
   }
@@ -91,21 +110,17 @@ function buildHeroBlock(hero: FleurEmailHero, locale: ServerLocale): string {
     )
   }
   if (hero.type === 'flower') {
-    const flowerSvg = buildEmailFlowerSvg(hero.scores, FLOWER_SIZE)
     const dominant = dominantPetalFromScores(hero.scores)
     const caption = hero.caption ?? tServer(locale, 'email.journey.yourFlowerToday')
     const petalColor = dominant ? PETAL_BY_ID[dominant.id]?.color ?? '#7c3aed' : '#7c3aed'
     const dominantLine = dominant
       ? `<p style="margin:14px 0 0;font-size:14px;line-height:1.5;color:#64748b;font-family:system-ui,-apple-system,sans-serif">${escapeEmailHtml(tServer(locale, 'email.journey.dominantPetalPrefix'))} <strong style="color:${petalColor}">${escapeEmailHtml(dominant.name)}</strong></p>`
       : ''
-    const logoFallback = logoUrl()
+    const imgSrc = hero.cid ? `cid:${hero.cid}` : logoUrl()
     return (
-      `<tr><td style="padding:24px 28px 8px;text-align:center">` +
-      `<p style="margin:0 0 12px;font-size:12px;font-family:system-ui,-apple-system,sans-serif;color:#7c3aed;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">${escapeEmailHtml(caption)}</p>` +
-      `<!--[if mso]><img src="${escapeEmailHtml(logoFallback)}" alt="" width="${FLOWER_SIZE}" height="${FLOWER_SIZE}" style="display:block;margin:0 auto;width:${FLOWER_SIZE}px;height:${FLOWER_SIZE}px"/><![endif]-->` +
-      `<!--[if !mso]><!-->` +
-      `<div style="display:inline-block;background:radial-gradient(circle at 50% 55%,#fff5f7 0%,#ffffff 72%);border-radius:50%;padding:8px;line-height:0">${flowerSvg}</div>` +
-      `<!--<![endif]-->` +
+      `<tr><td align="center" style="padding:24px 28px 8px;text-align:center">` +
+      `<p style="margin:0 0 16px;font-size:12px;font-family:system-ui,-apple-system,sans-serif;color:#7c3aed;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">${escapeEmailHtml(caption)}</p>` +
+      buildCenteredEmailImg(imgSrc, FLOWER_SIZE, { glow: true }) +
       dominantLine +
       `</td></tr>`
     )

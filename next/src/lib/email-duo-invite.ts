@@ -4,10 +4,13 @@
 import { PETAL_DEFS, PETAL_BY_ID } from './petal-theme'
 import { buildFleurEmailLayout, escapeEmailHtml } from './email-layout'
 import {
-  buildEmailFlowerSvg,
-  dominantPetalFromScores,
-  normalizePetalsForEmail,
-} from './email-flower-svg'
+  buildFlowerInlineAttachment,
+  emailFlowerImgTag,
+  EMAIL_FLOWER_CID,
+  type EmailInlineAttachment,
+} from './email-inline-attachments'
+import { EMAIL_FLOWER_DISPLAY_SIZE } from './email-flower-png'
+import { dominantPetalFromScores, normalizePetalsForEmail } from './email-flower-svg'
 import { tServer, type ServerLocale } from './i18n-server'
 
 export type DuoInviteEmailKind = 'a_deux_porte' | 'a_deux_complet' | 'duo_classic' | 'couple_garden'
@@ -126,9 +129,9 @@ function kindMeta(
   }
 }
 
-export function buildDuoInviteEmailContent(
+export async function buildDuoInviteEmailContent(
   params: DuoInviteEmailContentParams
-): { html: string; text: string; subject: string } {
+): Promise<{ html: string; text: string; subject: string; inlineImages?: EmailInlineAttachment[] }> {
   const locale = (params.locale ?? 'fr') as ServerLocale
   const inviter = params.inviterName.trim() || '…'
   const display = params.inviterDisplayName?.trim() || inviter
@@ -157,10 +160,12 @@ export function buildDuoInviteEmailContent(
         ? `${tServer(locale, 'email.duo.subjectGarden', { inviter })} 🌸`
         : `${tServer(locale, 'email.duo.subjectPorte', { inviter })} 🌸`
 
+  const flowerAttachment = await buildFlowerInlineAttachment(params.scores)
+
   const flowerBlock =
     `<p style="margin:0 0 12px;font-size:12px;font-family:system-ui,sans-serif;color:#7c3aed;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;text-align:center">${escapeEmailHtml(tServer(locale, 'email.duo.flowerOf', { name: display }))}</p>` +
     `<div style="text-align:center;margin-bottom:8px">` +
-  `<div style="display:inline-block;background:radial-gradient(circle at 50% 55%,#fff5f7 0%,#ffffff 72%);border-radius:50%;padding:6px;line-height:0">${buildEmailFlowerSvg(params.scores, 200)}</div>` +
+    emailFlowerImgTag(EMAIL_FLOWER_CID, EMAIL_FLOWER_DISPLAY_SIZE) +
     `</div>` +
     (dominant
       ? `<p style="margin:0 0 8px;font-size:14px;color:#64748b;font-family:system-ui,sans-serif;text-align:center">${escapeEmailHtml(tServer(locale, 'email.journey.dominantPetalPrefix'))} <strong style="color:${PETAL_BY_ID[dominant.id]?.color ?? '#7c3aed'}">${escapeEmailHtml(dominant.name)}</strong></p>`
@@ -211,5 +216,5 @@ export function buildDuoInviteEmailContent(
     .filter(Boolean)
     .join('\n')
 
-  return { html, text, subject }
+  return { html, text, subject, inlineImages: [flowerAttachment] }
 }

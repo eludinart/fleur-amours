@@ -60,6 +60,8 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
       SMTP_REPLY_TO: ${SMTP_REPLY_TO:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      NOTIFICATIONS_DEV_ONLY: ${NOTIFICATIONS_DEV_ONLY:-false}
 
 networks:
   coolify:

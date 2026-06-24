@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     const locale = await getUserLocale(uid)
-    const { html, text } = buildNotificationEmailHtml({
+    const { html, text, inlineImages } = await buildNotificationEmailHtml({
       title: tServer(locale, 'email.smtpTest.subject'),
       body: tServer(locale, 'email.smtpTest.body'),
       locale,
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       subject: tServer(locale, 'email.smtpTest.subject'),
       text,
       html,
+      attachments: inlineImages,
     })
 
     if (!result.ok) {

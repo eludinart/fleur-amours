@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       ? tServer(locale, 'email.contact.replyGreeting', { name: String(msg.name) })
       : tServer(locale, 'email.contact.replyGreetingGeneric')
     const fullBody = `${greeting}\n\n${reply}\n\n${tServer(locale, 'email.contact.replySignoff')}`
-    const { html, text } = buildNotificationEmailHtml({
+    const { html, text, inlineImages } = await buildNotificationEmailHtml({
       title: tServer(locale, 'email.contact.replyNotifTitle'),
       body: fullBody,
       actionUrl: '/contact',
@@ -67,6 +67,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       userId: recipientUserId,
       skipPrefs: !recipientUserId,
       replyTo: process.env.SMTP_REPLY_TO?.trim() || undefined,
+      inlineImages,
     })
 
     if (!sent.sent) {
