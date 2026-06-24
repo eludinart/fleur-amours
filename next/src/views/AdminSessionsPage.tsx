@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { sessionsApi } from '@/api/sessions'
 import { aiApi } from '@/api/ai'
 import { parseLever } from '@/utils/levers'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
 import { FOUR_DOORS } from '@/data/tarotCards'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 type Card = { name: string; img?: string }
 type DoorGroup = { key: string; group: Card[] }
@@ -898,6 +900,24 @@ export default function AdminSessionsPage() {
 
   const topDoor = stats?.door_distribution?.[0]
 
+  const sessionSortAccessors = useMemo(
+    () => ({
+      created_at: (s: SessionListItem) => s.created_at || '',
+      email: (s: SessionListItem) => (s.email || '').toLowerCase(),
+      door_suggested: (s: SessionListItem) => s.door_suggested || '',
+      turn_count: (s: SessionListItem) => s.turn_count ?? 0,
+      duration_seconds: (s: SessionListItem) => s.duration_seconds ?? 0,
+      status: (s: SessionListItem) => s.status || '',
+    }),
+    [],
+  )
+
+  const { sortedItems: sortedSessions, sortKey, sortDir, toggleSort } = useTableSort(
+    sessions?.items,
+    sessionSortAccessors,
+    { defaultKey: 'created_at', defaultDir: 'desc' },
+  )
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-rose-500 bg-clip-text text-transparent">
@@ -1054,20 +1074,17 @@ export default function AdminSessionsPage() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800">
-                {['Date', 'Email', 'Porte', 'Tours', 'Duree', 'Status', ''].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                <SortableTh columnKey="created_at" label="Date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                <SortableTh columnKey="email" label="Email" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                <SortableTh columnKey="door_suggested" label="Porte" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                <SortableTh columnKey="turn_count" label="Tours" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                <SortableTh columnKey="duration_seconds" label="Duree" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                <SortableTh columnKey="status" label="Status" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest"></th>
               </tr>
             </thead>
             <tbody>
-              {sessions?.items?.map((s) => {
+              {sortedSessions.map((s) => {
                 const shadowLvl = s.max_shadow_level ?? 0
                 const shadowBadge =
                   shadowLvl >= 4

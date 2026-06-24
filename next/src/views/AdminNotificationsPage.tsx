@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { notificationsApi } from '@/api/notifications'
 import { useAuth } from '@/contexts/AuthContext'
 import { useNotifications } from '@/contexts/NotificationContext'
 import { toast } from '@/hooks/useToast'
 import { api } from '@/lib/api-client'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 const TYPES = [
   { value: '', label: 'Tous les types' },
@@ -33,6 +35,26 @@ const PRIORITIES = [
 function formatDate(d: string | null | undefined): string {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+type NotificationRow = {
+  id: number
+  created_at?: string
+  type?: string
+  title?: string
+  recipient_type?: string
+  recipient_role?: string
+  recipient_email?: string
+  recipient_id?: number
+  priority?: string
+  read_count?: number
+  delivery_count?: number
+}
+
+function recipientSortLabel(n: NotificationRow): string {
+  if (n.recipient_type === 'all') return 'Tous'
+  if (n.recipient_type === 'role') return `Rôle: ${n.recipient_role}`
+  return n.recipient_email || `#${n.recipient_id}`
 }
 
 function StatCard({ label, value, color = 'text-slate-800 dark:text-slate-100' }: { label: string; value?: number; color?: string }) {
@@ -213,7 +235,23 @@ export default function AdminNotificationsPage() {
     setTestBusy(null)
   }
 
-  const items = (list?.items ?? []) as { id: number }[]
+  const items = (list?.items ?? []) as NotificationRow[]
+  const notificationSortAccessors = useMemo(
+    () => ({
+      created_at: (n: NotificationRow) => n.created_at || '',
+      type: (n: NotificationRow) => n.type || '',
+      title: (n: NotificationRow) => (n.title || '').toLowerCase(),
+      recipient: (n: NotificationRow) => recipientSortLabel(n).toLowerCase(),
+      priority: (n: NotificationRow) => n.priority || '',
+      reads: (n: NotificationRow) => n.read_count ?? 0,
+    }),
+    [],
+  )
+  const { sortedItems: sortedNotifications, sortKey, sortDir, toggleSort } = useTableSort(
+    items,
+    notificationSortAccessors,
+    { defaultKey: 'created_at', defaultDir: 'desc' },
+  )
   const allOnPageSelected = items.length > 0 && items.every((n) => selectedIds.has(n.id))
   const someOnPageSelected = items.some((n) => selectedIds.has(n.id))
   const someSelected = selectedIds.size > 0
@@ -409,12 +447,12 @@ export default function AdminNotificationsPage() {
                       title="Tout sélectionner (page)"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Date</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Type</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Titre</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Cible</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Priorité</th>
-                  <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Lues/Envoyées</th>
+                  <SortableTh columnKey="created_at" label="Date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh columnKey="type" label="Type" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh columnKey="title" label="Titre" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh columnKey="recipient" label="Cible" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh columnKey="priority" label="Priorité" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh columnKey="reads" label="Lues/Envoyées" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="right" />
                 </tr>
               </thead>
               <tbody>
@@ -422,7 +460,7 @@ export default function AdminNotificationsPage() {
                   <tr><td colSpan={7} className="px-4 py-8 text-center">
                     <span className="inline-block w-6 h-6 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
                   </td></tr>
-                ) : items.length > 0 ? items.map((n: { id: number; created_at?: string; type?: string; title?: string; recipient_type?: string; recipient_role?: string; recipient_email?: string; recipient_id?: number; priority?: string; read_count?: number; delivery_count?: number }) => {
+                ) : sortedNotifications.length > 0 ? sortedNotifications.map((n) => {
                   const prio = PRIORITIES.find((p) => p.value === n.priority) || PRIORITIES[1]
                   const typeLabel = TYPES.find((t) => t.value === n.type)?.label || n.type
                   return (

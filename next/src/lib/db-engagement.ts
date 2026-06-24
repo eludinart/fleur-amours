@@ -5,6 +5,7 @@
 import type { RowDataPacket } from 'mysql2/promise'
 import { getPool, isDbConfigured, table } from './db'
 import { findCheckinReminderCandidates } from './db-checkins'
+import { ensureNotificationsTables } from './db-notifications'
 import { findPlan14jReminderCandidates } from './db-plan14j-remind'
 import type { EngagementCampaignId } from './engagement-templates'
 
@@ -29,6 +30,7 @@ export type EngagementCandidate = {
 /** Utilisateurs ayant reçu une relance d'engagement récemment. */
 export async function findRecentlyNudgedUserIds(cooldownHours: number): Promise<Set<number>> {
   if (!isDbConfigured()) return new Set()
+  await ensureNotificationsTables()
   const pool = getPool()
   const hours = Math.min(Math.max(cooldownHours, 1), 168)
   const placeholders = ENGAGEMENT_TYPES.map(() => '?').join(', ')
@@ -36,7 +38,7 @@ export async function findRecentlyNudgedUserIds(cooldownHours: number): Promise<
     `SELECT DISTINCT d.user_id AS user_id
        FROM ${table('fleur_notification_deliveries')} d
        INNER JOIN ${table('fleur_notifications')} n ON n.id = d.notification_id
-      WHERE d.delivered_at >= (NOW() - INTERVAL ? HOUR)
+      WHERE n.created_at >= (NOW() - INTERVAL ? HOUR)
         AND n.type IN (${placeholders})`,
     [hours, ...ENGAGEMENT_TYPES]
   )

@@ -6,14 +6,12 @@
  */
 const dryRun = process.argv.includes('--dry-run')
 const secret = process.env.CRON_SECRET || ''
-const base = process.env.APP_PUBLIC_URL?.replace(/\/$/, '')
+const base =
+  process.env.APP_PUBLIC_URL?.replace(/\/$/, '') ||
+  'https://app-fleurdamours.eludein.art/jardin'
 
 if (!secret) {
-  console.error('CRON_SECRET manquant — ajoutez-le dans Coolify puis redéployez.')
-  process.exit(1)
-}
-if (!base) {
-  console.error('APP_PUBLIC_URL manquant — ex. https://app-fleurdamours.eludein.art/jardin')
+  console.error('CRON_SECRET manquant — Coolify → Environment Variables → redéployer.')
   process.exit(1)
 }
 
@@ -41,5 +39,6 @@ try {
 }
 
 const text = await res.text()
+console.log('url:', url)
 console.log(res.status, text)
 if (!res.ok) process.exit(1)

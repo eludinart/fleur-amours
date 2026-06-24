@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { authApi } from '@/api/auth'
 import { billingApi } from '@/api/billing'
 import { isCapacitor } from '@/lib/api-client'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 const APP_ROLES = ['user', 'admin', 'coach'] as const
 
@@ -1060,6 +1062,29 @@ export default function AdminUsersPage() {
   const total = users?.total ?? 0
   const pages = users?.pages ?? 1
 
+  const userSortAccessors = useMemo(
+    () => ({
+      name: (u: User) => (u.name || u.login || '').toLowerCase(),
+      email: (u: User) => (u.email || '').toLowerCase(),
+      wp_role: (u: User) => u.wp_role || '',
+      app_role: (u: User) => u.app_role || '',
+      access: (u: User) => (getRedemption(u.id)?.active ? 1 : 0),
+      tokens: (u: User) => u.token_balance ?? u.credits ?? 0,
+      last_login: (u: User) => u.last_login || '',
+      registered: (u: User) => u.registered || '',
+    }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- getRedemption dépend de redemptions
+    [redemptions],
+  )
+
+  const { sortedItems: sortedUsers, sortKey, sortDir, toggleSort } = useTableSort(
+    users?.items,
+    userSortAccessors,
+    { defaultKey: 'registered', defaultDir: 'desc' },
+  )
+
+  const userThClass = 'px-3 py-2.5 whitespace-nowrap text-xs text-slate-500 uppercase'
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-rose-500 bg-clip-text text-transparent">
@@ -1144,15 +1169,15 @@ export default function AdminUsersPage() {
               <col className="w-[10%]" />
             </colgroup>
             <thead>
-              <tr className="border-b border-slate-200/60 dark:border-slate-700/60 text-left text-xs text-slate-500 uppercase">
-                <th className="px-3 py-2.5">Utilisateur</th>
-                <th className="px-3 py-2.5">Email</th>
-                <th className="px-3 py-2.5 whitespace-nowrap">Role WP</th>
-                <th className="px-3 py-2.5 whitespace-nowrap">Role App</th>
-                <th className="px-3 py-2.5">Accès</th>
-                <th className="px-3 py-2.5 whitespace-nowrap">Tokens</th>
-                <th className="px-3 py-2.5 whitespace-nowrap">Dernière conn.</th>
-                <th className="px-3 py-2.5 whitespace-nowrap">Inscrit le</th>
+              <tr className="border-b border-slate-200/60 dark:border-slate-700/60 text-left">
+                <SortableTh columnKey="name" label="Utilisateur" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={userThClass} />
+                <SortableTh columnKey="email" label="Email" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={userThClass} />
+                <SortableTh columnKey="wp_role" label="Role WP" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={userThClass} />
+                <SortableTh columnKey="app_role" label="Role App" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={userThClass} />
+                <SortableTh columnKey="access" label="Accès" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={userThClass} />
+                <SortableTh columnKey="tokens" label="Tokens" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={userThClass} />
+                <SortableTh columnKey="last_login" label="Dernière conn." sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={userThClass} />
+                <SortableTh columnKey="registered" label="Inscrit le" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={userThClass} />
                 <th className="px-3 py-2.5 w-20"></th>
               </tr>
             </thead>
@@ -1171,7 +1196,7 @@ export default function AdminUsersPage() {
                   </td>
                 </tr>
               )}
-              {users?.items?.map((u) => {
+              {sortedUsers.map((u) => {
                 const redemption = getRedemption(u.id)
                 return (
                   <tr

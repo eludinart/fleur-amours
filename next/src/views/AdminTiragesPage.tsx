@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { tarotReadingsApi } from '@/api/tarotReadings'
 import { TranslatableContent } from '@/components/TranslatableContent'
 import { useDebounce } from '@/hooks/useDebounce'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '-'
@@ -149,6 +151,22 @@ export default function AdminTiragesPage() {
     return '—'
   }
 
+  const tirageSortAccessors = useMemo(
+    () => ({
+      createdAt: (r: Reading) => r.createdAt || '',
+      email: (r: Reading) => (r.email || '').toLowerCase(),
+      type: (r: Reading) => r.type || '',
+      summary: (r: Reading) => summary(r).toLowerCase(),
+    }),
+    [],
+  )
+
+  const { sortedItems: sortedTirages, sortKey, sortDir, toggleSort } = useTableSort(
+    list?.items,
+    tirageSortAccessors,
+    { defaultKey: 'createdAt', defaultDir: 'desc' },
+  )
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-rose-500 bg-clip-text text-transparent">
@@ -189,10 +207,10 @@ export default function AdminTiragesPage() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800">
-                <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Date</th>
-                <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Email</th>
-                <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Type</th>
-                <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Résumé</th>
+                <SortableTh columnKey="createdAt" label="Date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                <SortableTh columnKey="email" label="Email" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                <SortableTh columnKey="type" label="Type" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                <SortableTh columnKey="summary" label="Résumé" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                 <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-400 uppercase tracking-widest"></th>
               </tr>
             </thead>
@@ -204,8 +222,8 @@ export default function AdminTiragesPage() {
                     <p className="text-sm text-slate-400 mt-2">Chargement…</p>
                   </td>
                 </tr>
-              ) : list?.items?.length ? (
-                list.items.map((r) => (
+              ) : sortedTirages.length ? (
+                sortedTirages.map((r) => (
                   <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                     <td className="px-4 py-3 text-xs text-slate-500">{formatDate(r.createdAt)}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{r.email || '—'}</td>
