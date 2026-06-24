@@ -259,7 +259,21 @@ export type NotificationEmailDispatchInput = {
 }
 
 export async function dispatchNotificationEmails(input: NotificationEmailDispatchInput): Promise<void> {
-  if (!isSmtpConfigured()) return
+  const { markDeliveryEmailStatus } = await import('./db-notifications')
+  if (!isSmtpConfigured()) {
+    if (input.notificationId) {
+      for (const r of input.recipients) {
+        if (!r.user_id) continue
+        await markDeliveryEmailStatus({
+          notificationId: input.notificationId,
+          userId: r.user_id,
+          sent: false,
+          error: 'SMTP non configuré',
+        })
+      }
+    }
+    return
+  }
   const subject = (input.title || '').slice(0, 200)
   const headers: Record<string, string> = {}
   if (input.notificationId) headers['X-Fleur-Notification-Id'] = String(input.notificationId)
@@ -298,7 +312,7 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
       campaignId,
     })
 
-    await sendTransactionalEmail({
+    const result = await sendTransactionalEmail({
       to: email,
       userId: r.user_id,
       subject,
@@ -308,6 +322,15 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
       skipDevGuard: input.skipDevGuard,
       inlineImages,
     })
+
+    if (input.notificationId && r.user_id) {
+      await markDeliveryEmailStatus({
+        notificationId: input.notificationId,
+        userId: r.user_id,
+        sent: result.sent,
+        error: result.error,
+      })
+    }
   }
 
   for (const raw of input.extraEmails ?? []) {

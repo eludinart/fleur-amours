@@ -14,6 +14,12 @@ const TYPES = [
   { value: 'chat_new_message', label: 'Chat (user→coach)' },
   { value: 'contact_reply', label: 'Réponse contact' },
   { value: 'system', label: 'Système' },
+  { value: 'checkin_reminder', label: 'Relance check-in' },
+  { value: 'plan14j_reminder', label: 'Relance plan 14j' },
+  { value: 'engagement_tirage', label: 'Relance tirage' },
+  { value: 'engagement_fleur', label: 'Relance Fleur' },
+  { value: 'engagement_session', label: 'Relance session' },
+  { value: 'engagement_dreamscape', label: 'Relance dreamscape' },
 ]
 
 const PRIORITIES = [
@@ -46,6 +52,53 @@ type NotificationRow = {
   priority?: string
   read_count?: number
   delivery_count?: number
+  channels?: { inapp?: boolean; email?: boolean }
+  send_status?: 'ok' | 'partial' | 'error' | 'pending' | 'inapp_only' | 'untracked'
+  email_sent_count?: number
+  email_failed_count?: number
+  email_error?: string | null
+}
+
+function channelLabel(n: NotificationRow): string {
+  const inapp = n.channels?.inapp !== false
+  const email = !!n.channels?.email
+  if (email && inapp) return 'E-mail + notif'
+  if (email) return 'E-mail'
+  if (inapp) return 'Notification'
+  return '—'
+}
+
+const SEND_STATUS_STYLES: Record<string, string> = {
+  ok: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  inapp_only: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  partial: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  error: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  pending: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+  untracked: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+}
+
+function sendStatusLabel(n: NotificationRow): string {
+  const st = n.send_status ?? 'inapp_only'
+  const inapp = n.channels?.inapp !== false
+  const email = !!n.channels?.email
+  if (st === 'ok') {
+    if (email && inapp) return 'Envoyé'
+    if (email) return 'E-mail OK'
+    return 'Notif OK'
+  }
+  if (st === 'inapp_only') return 'Notif OK'
+  if (st === 'partial') return `Partiel (${n.email_failed_count ?? 0} err.)`
+  if (st === 'error') return 'Erreur'
+  if (st === 'pending') return 'En attente'
+  if (st === 'untracked') return inapp ? 'Notif OK · e-mail non tracé' : 'Non tracé'
+  return '—'
+}
+
+function sendStatusTitle(n: NotificationRow): string | undefined {
+  if (n.email_error) return n.email_error
+  if (n.send_status === 'untracked') return 'Envoi antérieur à la journalisation e-mail'
+  if (n.send_status === 'pending') return 'E-mail en cours ou non encore journalisé'
+  return undefined
 }
 
 function recipientSortLabel(n: NotificationRow): string {
@@ -98,6 +151,8 @@ export function CommsNotificationRegistry({ onStatsChange }: Props) {
       title: (n: NotificationRow) => (n.title || '').toLowerCase(),
       recipient: (n: NotificationRow) => recipientSortLabel(n).toLowerCase(),
       priority: (n: NotificationRow) => n.priority || '',
+      channel: (n: NotificationRow) => channelLabel(n).toLowerCase(),
+      send_status: (n: NotificationRow) => n.send_status || '',
       reads: (n: NotificationRow) => n.read_count ?? 0,
     }),
     [],
@@ -178,7 +233,7 @@ export function CommsNotificationRegistry({ onStatsChange }: Props) {
       <div className="p-4 border-b border-slate-100 dark:border-slate-800">
         <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Registre des notifications</h2>
         <p className="text-xs text-slate-500 mt-0.5">
-          Journal détaillé avec taux de lecture — annonces, chats, relances système
+          Journal détaillé — canal (e-mail / notification), statut d&apos;envoi et taux de lecture
         </p>
       </div>
       <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-3">
@@ -234,16 +289,18 @@ export function CommsNotificationRegistry({ onStatsChange }: Props) {
               </th>
               <SortableTh columnKey="created_at" label="Date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
               <SortableTh columnKey="type" label="Type" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+              <SortableTh columnKey="channel" label="Canal" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
               <SortableTh columnKey="title" label="Titre" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
               <SortableTh columnKey="recipient" label="Cible" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
               <SortableTh columnKey="priority" label="Priorité" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+              <SortableTh columnKey="send_status" label="Envoi" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
               <SortableTh columnKey="reads" label="Lues/Envoyées" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="right" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center">
+                <td colSpan={9} className="px-4 py-8 text-center">
                   <span className="inline-block w-6 h-6 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
                 </td>
               </tr>
@@ -252,6 +309,8 @@ export function CommsNotificationRegistry({ onStatsChange }: Props) {
                 (n) => {
                   const prio = PRIORITIES.find((p) => p.value === n.priority) || PRIORITIES[1]
                   const typeLabel = TYPES.find((t) => t.value === n.type)?.label || n.type
+                  const statusKey = n.send_status ?? 'inapp_only'
+                  const statusStyle = SEND_STATUS_STYLES[statusKey] ?? SEND_STATUS_STYLES.pending
                   return (
                     <tr key={n.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                       <td className="px-4 py-3 w-10">
@@ -268,6 +327,9 @@ export function CommsNotificationRegistry({ onStatsChange }: Props) {
                           {typeLabel}
                         </span>
                       </td>
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                        {channelLabel(n)}
+                      </td>
                       <td className="px-4 py-3 text-slate-700 dark:text-slate-200 truncate max-w-[200px]">{n.title || '—'}</td>
                       <td className="px-4 py-3 text-xs text-slate-500">
                         {n.recipient_type === 'all'
@@ -279,6 +341,14 @@ export function CommsNotificationRegistry({ onStatsChange }: Props) {
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${prio.color}`}>{prio.label}</span>
                       </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${statusStyle}`}
+                          title={sendStatusTitle(n)}
+                        >
+                          {sendStatusLabel(n)}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-right text-xs">
                         <span className="text-emerald-600 font-medium">{n.read_count}</span>
                         <span className="text-slate-400">/{n.delivery_count}</span>
@@ -289,7 +359,7 @@ export function CommsNotificationRegistry({ onStatsChange }: Props) {
               )
             ) : (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-400 italic">
+                <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-400 italic">
                   Aucune notification
                 </td>
               </tr>

@@ -33,6 +33,7 @@ export function SortableTh({
       className={`${className ?? DEFAULT_CLASS} ${alignClass} cursor-pointer select-none hover:text-slate-600 dark:hover:text-slate-200 transition-colors`}
       onClick={() => onSort(columnKey)}
       aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      title={active ? (sortDir === 'asc' ? 'Tri croissant — cliquer pour décroissant' : 'Tri décroissant — cliquer pour annuler') : 'Cliquer pour trier'}
       scope="col"
     >
       <span
@@ -40,7 +41,7 @@ export function SortableTh({
       >
         {label}
         <span
-          className={`text-[9px] leading-none ${active ? 'text-violet-500 opacity-100' : 'opacity-40'}`}
+          className={`text-[9px] leading-none tabular-nums ${active ? 'text-violet-500 opacity-100' : 'opacity-40'}`}
           aria-hidden
         >
           {active ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}

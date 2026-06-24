@@ -95,10 +95,14 @@ async function _doEnsureNotificationsTables(): Promise<void> {
     `ALTER TABLE ${tD} ADD COLUMN IF NOT EXISTS user_email VARCHAR(255) DEFAULT NULL`,
     `ALTER TABLE ${tD} ADD COLUMN IF NOT EXISTS channel_id INT DEFAULT NULL`,
     `ALTER TABLE ${tD} ADD COLUMN IF NOT EXISTS delivered_at DATETIME DEFAULT NULL`,
+    `ALTER TABLE ${tD} ADD COLUMN IF NOT EXISTS email_status VARCHAR(20) DEFAULT NULL`,
+    `ALTER TABLE ${tD} ADD COLUMN IF NOT EXISTS email_error VARCHAR(500) DEFAULT NULL`,
+    `ALTER TABLE ${tD} ADD COLUMN IF NOT EXISTS email_sent_at DATETIME DEFAULT NULL`,
     `ALTER TABLE ${tN} ADD COLUMN IF NOT EXISTS channel_id INT DEFAULT NULL`,
     `ALTER TABLE ${tN} ADD COLUMN IF NOT EXISTS expires_at DATETIME DEFAULT NULL`,
     `ALTER TABLE ${tN} ADD COLUMN IF NOT EXISTS source_type VARCHAR(40) DEFAULT NULL`,
     `ALTER TABLE ${tN} ADD COLUMN IF NOT EXISTS source_id INT DEFAULT NULL`,
+    `ALTER TABLE ${tN} ADD COLUMN IF NOT EXISTS channels_json VARCHAR(120) DEFAULT NULL`,
   ]
   for (const sql of migrations) {
     await pool.execute(sql).catch(() => {/* ignorer si colonne déjà présente */})
@@ -107,6 +111,50 @@ async function _doEnsureNotificationsTables(): Promise<void> {
 
 function normalizeEmail(v: unknown): string {
   return String(v ?? '').trim().toLowerCase()
+}
+
+export type NotificationChannels = { inapp: boolean; email: boolean }
+
+function channelsJson(channels: NotificationChannels): string {
+  return JSON.stringify(channels)
+}
+
+function parseChannelsJson(raw: unknown): NotificationChannels {
+  if (!raw) return { inapp: true, email: false }
+  try {
+    const o = typeof raw === 'string' ? JSON.parse(raw) : raw
+    return {
+      inapp: (o as NotificationChannels).inapp !== false,
+      email: !!(o as NotificationChannels).email,
+    }
+  } catch {
+    return { inapp: true, email: false }
+  }
+}
+
+/** Met à jour le statut e-mail d'une livraison (appelé après dispatch SMTP). */
+export async function markDeliveryEmailStatus(params: {
+  notificationId: number
+  userId: number
+  sent: boolean
+  error?: string | null
+}): Promise<void> {
+  if (!isDbConfigured()) return
+  await ensureNotificationsTables()
+  const pool = getPool()
+  const tD = T_DELIV()
+  const tN = T_NOTIF()
+  const status = params.sent ? 'sent' : params.error ? 'failed' : 'skipped'
+  await pool.execute(
+    `UPDATE ${tD}
+        SET email_status = ?, email_error = ?, email_sent_at = IF(?, NOW(), NULL)
+      WHERE notification_id = ? AND user_id = ?`,
+    [status, params.error ? String(params.error).slice(0, 500) : null, params.sent ? 1 : 0, params.notificationId, params.userId]
+  )
+  await pool.execute(
+    `UPDATE ${tN} SET channels_json = ? WHERE id = ?`,
+    [channelsJson({ inapp: true, email: true }), params.notificationId]
+  )
 }
 
 export type NotificationCreateInput = {
@@ -199,10 +247,15 @@ export async function createNotification(input: NotificationCreateInput): Promis
     expiresAt = engagementExpiresAt()
   }
 
+  const channels: NotificationChannels = {
+    inapp: true,
+    email: !input.skip_email,
+  }
+
   const [insRes] = await pool.execute(
     `INSERT INTO ${tN}
-      (type, title, body, action_url, action_label, recipient_type, recipient_id, recipient_role, priority, source_type, source_id, channel_id, created_by, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (type, title, body, action_url, action_label, recipient_type, recipient_id, recipient_role, priority, source_type, source_id, channel_id, created_by, expires_at, channels_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       type,
       title,
@@ -218,6 +271,7 @@ export async function createNotification(input: NotificationCreateInput): Promis
       input.channel_id ?? null,
       createdBy,
       expiresAt,
+      channelsJson(channels),
     ]
   )
   const notificationId = Number((insRes as ResultSetHeader).insertId)
@@ -380,8 +434,13 @@ export async function adminList(params: { page?: number; per_page?: number; type
         n.recipient_role,
         n.recipient_id,
         n.priority,
+        n.channels_json,
         (SELECT COUNT(*) FROM ${tD} d WHERE d.notification_id = n.id) as delivery_count,
-        (SELECT COUNT(*) FROM ${tD} d WHERE d.notification_id = n.id AND d.read_at IS NOT NULL) as read_count
+        (SELECT COUNT(*) FROM ${tD} d WHERE d.notification_id = n.id AND d.read_at IS NOT NULL) as read_count,
+        (SELECT COUNT(*) FROM ${tD} d WHERE d.notification_id = n.id AND d.email_status = 'sent') as email_sent_count,
+        (SELECT COUNT(*) FROM ${tD} d WHERE d.notification_id = n.id AND d.email_status IN ('failed', 'skipped')) as email_failed_count,
+        (SELECT COUNT(*) FROM ${tD} d WHERE d.notification_id = n.id AND d.email_status IS NOT NULL) as email_attempted_count,
+        (SELECT d.email_error FROM ${tD} d WHERE d.notification_id = n.id AND d.email_error IS NOT NULL LIMIT 1) as email_error_sample
      FROM ${tN} n
      ${where}
      ORDER BY n.created_at DESC
@@ -389,18 +448,46 @@ export async function adminList(params: { page?: number; per_page?: number; type
     [...values, perPage, offset]
   )
   const rows = (rowsRes[0] ?? []) as RowDataPacket[]
-  const items = rows.map((r) => ({
-    id: Number(r.id),
-    created_at: r.created_at ? new Date(r.created_at).toISOString() : null,
-    type: String(r.type ?? ''),
-    title: String(r.title ?? ''),
-    recipient_type: String(r.recipient_type ?? ''),
-    recipient_role: r.recipient_role ?? null,
-    recipient_id: r.recipient_id != null ? Number(r.recipient_id) : null,
-    priority: String(r.priority ?? 'normal'),
-    delivery_count: Number(r.delivery_count ?? 0),
-    read_count: Number(r.read_count ?? 0),
-  }))
+  const items = rows.map((r) => {
+    const channels = parseChannelsJson(r.channels_json)
+    const type = String(r.type ?? '')
+    const isEngagement = isEngagementNotificationType(type)
+    const deliveryCount = Number(r.delivery_count ?? 0)
+    const emailSent = Number(r.email_sent_count ?? 0)
+    const emailFailed = Number(r.email_failed_count ?? 0)
+    const emailAttempted = Number(r.email_attempted_count ?? 0)
+    const inappOk = deliveryCount > 0
+    const emailPlanned = isEngagement || channels.email || emailAttempted > 0
+    let send_status: 'ok' | 'partial' | 'error' | 'pending' | 'inapp_only' | 'untracked' = 'inapp_only'
+    if (emailPlanned) {
+      if (emailAttempted === 0) send_status = isEngagement ? 'untracked' : 'pending'
+      else if (emailFailed > 0 && emailSent === 0) send_status = 'error'
+      else if (emailFailed > 0) send_status = 'partial'
+      else send_status = 'ok'
+    } else if (inappOk) {
+      send_status = 'ok'
+    }
+    return {
+      id: Number(r.id),
+      created_at: r.created_at ? new Date(r.created_at).toISOString() : null,
+      type,
+      title: String(r.title ?? ''),
+      recipient_type: String(r.recipient_type ?? ''),
+      recipient_role: r.recipient_role ?? null,
+      recipient_id: r.recipient_id != null ? Number(r.recipient_id) : null,
+      priority: String(r.priority ?? 'normal'),
+      delivery_count: deliveryCount,
+      read_count: Number(r.read_count ?? 0),
+      channels: {
+        inapp: inappOk,
+        email: emailPlanned,
+      },
+      send_status,
+      email_sent_count: emailSent,
+      email_failed_count: emailFailed,
+      email_error: r.email_error_sample ? String(r.email_error_sample) : null,
+    }
+  })
   return { items, total, pages }
 }
 
