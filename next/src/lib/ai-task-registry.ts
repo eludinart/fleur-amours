@@ -34,6 +34,7 @@ export type AiTaskId =
   | 'paper-draw-recognize'
   | 'paper-draw-interpret'
   | 'paper-draw-dialogue'
+  | 'checkin-echo'
   | 'admin-test'
 
 export type AiTaskDef = {
@@ -59,7 +60,7 @@ const LIGHT_DEFAULTS = {
   freeTierAllowed: true,
   cacheReadable: true,
   hourlyLimit: 30,
-  monthlyFreeQuota: 80,
+  monthlyFreeQuota: 40,
 } as const
 
 const PREMIUM_DEFAULTS = {
@@ -308,6 +309,16 @@ export const AI_TASK_REGISTRY: Record<AiTaskId, AiTaskDef> = {
     cacheReadable: true,
     sapCost: 2,
     hourlyLimit: 40,
+    monthlyFreeQuota: 60,
+  },
+  'checkin-echo': {
+    id: 'checkin-echo',
+    tier: 'light',
+    outputMode: 'json',
+    domain: 'fleur',
+    ...LIGHT_DEFAULTS,
+    sapCost: 0,
+    hourlyLimit: 20,
     monthlyFreeQuota: 60,
   },
   'admin-test': {

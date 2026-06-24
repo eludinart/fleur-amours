@@ -4,7 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
 import { ApiError } from '@/lib/api-auth'
-import { SAP_ACTION_COSTS, transactionalSapUpdate, SapError } from '@/lib/db-sap'
+import { SAP_ACTION_COSTS, transactionalSapUpdate, SapError, getSapBalance } from '@/lib/db-sap'
+import { invalidateUserAccessCache, readBillingBypass } from '@/lib/user-billing'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +24,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: `Action inconnue: ${action}` }, { status: 422 })
     }
 
+    if (await readBillingBypass(uid)) {
+      const balance = await getSapBalance(uid)
+      return NextResponse.json({
+        success: true,
+        data: { action, debited: 0, balance, billing_bypass: true },
+      })
+    }
+
     const { balance } = await transactionalSapUpdate(uid, cost, action, 'usage')
+    invalidateUserAccessCache(uid)
     return NextResponse.json({
       success: true,
       data: { action, debited: cost, balance },

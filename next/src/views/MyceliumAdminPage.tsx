@@ -6,6 +6,8 @@ import { myceliumApi, type OrgDTO, type TeamDTO, type OrgInviteDTO, type Adoptio
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { invalidateMyceliumAccessCache } from '@/hooks/useMyceliumAccess'
+import DemoAccountBadge from '@/components/DemoAccountBadge'
+import { isDemoEmail } from '@/lib/demo-accounts'
 
 export default function MyceliumAdminPage() {
   useStore((s) => s.locale)
@@ -242,6 +244,11 @@ export default function MyceliumAdminPage() {
               />
             </section>
 
+            <p className="rounded-lg border border-dashed border-sky-300/70 bg-sky-50/50 px-3 py-2 text-xs text-sky-800 dark:border-sky-600/40 dark:bg-sky-950/20 dark:text-sky-200">
+              Les comptes <span className="font-mono">@demo-littoral.eludein.art</span> sont des personnages virtuels
+              réservés à la démo Mycelium — ils n&apos;apparaissent pas dans la Prairie ni le social Fleur d&apos;Amour.
+            </p>
+
             {adoption && (
               <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                 <h2 className="font-semibold text-slate-900 dark:text-slate-100">{t('mycelium.adoptionTitle')}</h2>
@@ -395,8 +402,10 @@ export default function MyceliumAdminPage() {
                 <div className="mt-4 space-y-1">
                   <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t('mycelium.inviteCreated')}</p>
                   {lastInvites.map((inv) => (
-                    <p key={inv.email} className="break-all text-xs text-slate-500 dark:text-slate-400">
-                      {inv.email} — <span className="font-mono">{inv.inviteLink}</span>
+                    <p key={inv.email} className="flex flex-wrap items-center gap-1.5 break-all text-xs text-slate-500 dark:text-slate-400">
+                      <span>{inv.email}</span>
+                      {isDemoEmail(inv.email) ? <DemoAccountBadge /> : null}
+                      <span>— <span className="font-mono">{inv.inviteLink}</span></span>
                     </p>
                   ))}
                 </div>
@@ -407,8 +416,9 @@ export default function MyceliumAdminPage() {
                   <p className="mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{t('mycelium.invitePending')}</p>
                   <ul className="flex flex-wrap gap-2">
                     {invites.map((inv) => (
-                      <li key={inv.id} className="rounded-full bg-amber-100 px-3 py-1 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                      <li key={inv.id} className="flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
                         {inv.email}
+                        {isDemoEmail(inv.email) ? <DemoAccountBadge className="scale-90" /> : null}
                       </li>
                     ))}
                   </ul>

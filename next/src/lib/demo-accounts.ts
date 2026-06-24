@@ -16,3 +16,14 @@ export function isDemoAccount(params: {
   if (meta === '1' || meta.toLowerCase() === 'true') return true
   return isDemoEmail(params.email)
 }
+
+/** Fragment SQL — exclut les comptes démo Mycelium des espaces Fleur d'Amour (prairie, social, admin). */
+export function excludeDemoAccountsSql(usersAlias: string, metaTable: string): string {
+  return `AND LOWER(${usersAlias}.user_email) NOT LIKE '%@${DEMO_EMAIL_DOMAIN}'
+    AND NOT EXISTS (
+      SELECT 1 FROM ${metaTable} _dm_excl
+      WHERE _dm_excl.user_id = ${usersAlias}.ID
+        AND _dm_excl.meta_key = '${DEMO_ACCOUNT_META_KEY}'
+        AND _dm_excl.meta_value IN ('1', 'true')
+    )`
+}

@@ -361,6 +361,18 @@ async function markDemoAccount(pool, prefix, userId) {
       await pool.execute(`INSERT INTO ${metaTbl} (user_id, meta_key, meta_value) VALUES (?, ?, '1')`, [userId, key])
     }
   }
+  // Les comptes démo Mycelium ne doivent pas apparaître dans la Prairie / social Fleur d'Amour.
+  try {
+    await pool.execute(
+      `INSERT INTO ${metaTbl} (user_id, meta_key, meta_value) VALUES (?, 'fleur_profile_public', '0')
+       ON DUPLICATE KEY UPDATE meta_value = '0'`,
+      [userId]
+    )
+  } catch {
+    await pool.execute(`UPDATE ${metaTbl} SET meta_value = '0' WHERE user_id = ? AND meta_key = 'fleur_profile_public'`, [
+      userId,
+    ]).catch(() => {})
+  }
 }
 
 async function ensureUser(pool, prefix, email, displayName, passwordHash) {
@@ -397,11 +409,6 @@ async function ensureUser(pool, prefix, email, displayName, passwordHash) {
     userId,
     `${prefix}user_level`,
     '0',
-  ])
-  await pool.execute(`INSERT INTO ${metaTbl} (user_id, meta_key, meta_value) VALUES (?, ?, ?)`, [
-    userId,
-    'fleur_profile_public',
-    '1',
   ])
   await markDemoAccount(pool, prefix, userId)
   return userId

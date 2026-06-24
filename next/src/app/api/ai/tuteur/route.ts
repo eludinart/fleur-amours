@@ -19,6 +19,7 @@ import { getLangInstruction } from '@/lib/prompts'
 import { buildSystemPrompt } from '@/lib/ai-system-prompt'
 import { guardedLlmCall } from '@/lib/ai-guard'
 import { resolveAiAccess } from '@/lib/ai-access'
+import { invalidateUserAccessCache } from '@/lib/user-billing'
 import { getCardInfo } from '@/lib/card-info'
 import { isValidCard } from '@/lib/prompts'
 
@@ -159,7 +160,11 @@ export async function POST(req: NextRequest) {
 
   const access = await resolveAiAccess(uid, 'tuteur')
   const billTuteurSapEffective =
-    billTuteurSap && uid > 0 && access.billingMode !== 'full_access' && access.billingMode !== 'admin'
+    billTuteurSap &&
+    uid > 0 &&
+    access.billingMode !== 'full_access' &&
+    access.billingMode !== 'staff' &&
+    access.billingMode !== 'admin'
 
   if (billTuteurSapEffective) {
     const bal = await getSapBalance(uid)
@@ -249,6 +254,7 @@ export async function POST(req: NextRequest) {
             if (attempt > 0) await new Promise((r) => setTimeout(r, 80))
             await transactionalSapUpdate(uid, TUTEUR_SAP_COST, sapReason, 'usage')
             debitOk = true
+            invalidateUserAccessCache(uid)
           } catch (e) {
             lastDebitErr = e
             if (e instanceof SapError && e.code === 'INSUFFICIENT') {

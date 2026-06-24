@@ -10,6 +10,7 @@ import { BACK_IMG, getCardImageByName, getLandingCardEntries } from '@/data/taro
 import { LANDING_INTENTION_KEY } from '@/lib/first-experience'
 import { landingReadingApi, type LandingReadingDTO } from '@/api/landingReading'
 import { LandingAiReading } from '@/components/landing/LandingAiReading'
+import { LandingFlowerTeaser } from '@/components/landing/LandingFlowerTeaser'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
@@ -517,7 +518,10 @@ export function LandingPage({
                   onBackClick={drawCard}
                 />
                 {revealed ? (
-                  <LandingAiReading loading={aiLoading} reading={aiReading} intention={frozenIntention} />
+                  <>
+                    <LandingAiReading loading={aiLoading} reading={aiReading} intention={frozenIntention} />
+                    <LandingFlowerTeaser />
+                  </>
                 ) : null}
                 <div className="flex w-full flex-col items-stretch gap-3 sm:mx-auto sm:max-w-lg">
                   {!revealed ? (

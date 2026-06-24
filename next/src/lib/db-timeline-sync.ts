@@ -207,13 +207,22 @@ export async function syncUserTimeline(userId: number, email?: string | null): P
 
   const checkins = await getMyCheckins(userId, 100)
   for (const c of checkins) {
+    const summary =
+      c.aiResponse?.whisper?.trim() ||
+      (c.intention ? String(c.intention).slice(0, 280) : null) ||
+      (c.note ? String(c.note).slice(0, 280) : null)
+  const petalArr =
+    c.highlightPetal && PETAL_ORDER_IDS.includes(c.highlightPetal)
+      ? PETAL_ORDER_IDS.map((id) => (id === c.highlightPetal ? 0.9 : 0.15))
+      : null
     tasks.push(() =>
       recordTimelineEvent({
           userId,
           source: 'checkin',
           refId: c.id,
-          title: 'Check-in',
-          summary: c.note ? String(c.note).slice(0, 280) : null,
+          title: c.intention || c.aiResponse ? 'Écho du jour' : 'Check-in',
+          summary,
+          petals: petalArr,
           mood: c.mood,
           occurredAt: c.createdAt,
         })

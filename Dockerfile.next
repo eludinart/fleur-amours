@@ -47,6 +47,11 @@ ENV HOSTNAME="0.0.0.0"
 
 WORKDIR /app
 
+# curl pour les Scheduled Tasks Coolify (engagement/remind, etc.)
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
+
 # Copier le build standalone Next.js
 COPY --from=next-build /app/next/.next/standalone ./
 COPY --from=next-build /app/next/.next/static ./.next/static

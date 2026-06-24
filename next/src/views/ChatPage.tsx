@@ -365,7 +365,7 @@ export function ChatPage() {
         }
         if (d?.free_access || d?.has_subscription) return
         const used = d?.usage?.chat_messages_count ?? 0
-        const limit = d?.limits?.chat_messages_per_month ?? 10
+        const limit = d?.limits?.chat_messages_per_month ?? 5
         const totalSap = (d?.token_balance ?? 0) + (d?.eternal_sap ?? 0)
         if (used >= limit && totalSap < SAP_PER_MESSAGE) {
           setQuotaExceeded(true)

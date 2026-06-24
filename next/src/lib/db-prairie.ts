@@ -4,7 +4,7 @@
  */
 import type { RowDataPacket } from 'mysql2'
 import { getPool, table } from './db'
-import { isDemoAccount } from './demo-accounts'
+import { excludeDemoAccountsSql, isDemoAccount } from './demo-accounts'
 import { getSocialMeteoBatch } from './community-meteo'
 import { countSemisToday } from './db-semis'
 import { isOnlineFromLastSeen } from './social-presence'
@@ -72,8 +72,9 @@ export async function getFleurs(
   const userCols = `u.ID, u.user_email, u.display_name,
     COALESCE(um_pseudo.meta_value, '') AS pseudo,
     COALESCE(um_emoji.meta_value, '🌸') AS avatar_emoji,
-    COALESCE(um_graine.meta_value, '') AS avatar_graine_id,
-    COALESCE(um_demo.meta_value, '') AS demo_meta`
+    COALESCE(um_graine.meta_value, '') AS avatar_graine_id`
+
+  const excludeDemo = excludeDemoAccountsSql('u', tMeta)
 
   // Requête 2 : tous les utilisateurs publics (sauf moi) + moi — 2 requêtes parallèles
   const [usersResult, meResult] = await Promise.all([
@@ -84,8 +85,7 @@ export async function getFleurs(
        LEFT JOIN ${tMeta} um_pseudo ON um_pseudo.user_id = u.ID AND um_pseudo.meta_key = 'fleur_pseudo'
        LEFT JOIN ${tMeta} um_emoji  ON um_emoji.user_id  = u.ID AND um_emoji.meta_key  = 'fleur_avatar_emoji'
        LEFT JOIN ${tMeta} um_graine ON um_graine.user_id = u.ID AND um_graine.meta_key = 'fleur_avatar_graine_id'
-       LEFT JOIN ${tMeta} um_demo ON um_demo.user_id = u.ID AND um_demo.meta_key = 'fleur_demo_account'
-       WHERE u.ID != ?`,
+       WHERE u.ID != ? ${excludeDemo}`,
       [uid]
     ),
     pool.execute<RowDataPacket[]>(
@@ -95,13 +95,15 @@ export async function getFleurs(
        LEFT JOIN ${tMeta} um_pseudo ON um_pseudo.user_id = u.ID AND um_pseudo.meta_key = 'fleur_pseudo'
        LEFT JOIN ${tMeta} um_emoji  ON um_emoji.user_id  = u.ID AND um_emoji.meta_key  = 'fleur_avatar_emoji'
        LEFT JOIN ${tMeta} um_graine ON um_graine.user_id = u.ID AND um_graine.meta_key = 'fleur_avatar_graine_id'
-       LEFT JOIN ${tMeta} um_demo ON um_demo.user_id = u.ID AND um_demo.meta_key = 'fleur_demo_account'
-       WHERE u.ID = ?`,
+       WHERE u.ID = ? ${excludeDemo}`,
       [uid]
     ),
   ])
   const users = usersResult[0]
-  const uMe   = meResult[0][0] ?? null
+  let uMe: RowDataPacket | null = meResult[0][0] ?? null
+  if (uMe && isDemoAccount({ email: String(uMe.user_email ?? ''), demoMeta: null })) {
+    uMe = null
+  }
 
   const allUsers = uMe ? [...users, uMe] : users
   const allIds   = allUsers.map(u => Number(u.ID))
@@ -254,7 +256,6 @@ export async function getFleurs(
       presence: presenceByUser.get(oid) ?? { is_online: false, last_seen_at: null },
       meteo_petal: meteo.meteoPetal,
       social_mode: meteo.socialMode,
-      is_demo: isDemoAccount({ email, demoMeta: u.demo_meta }),
     }
   }
 
@@ -676,12 +677,14 @@ export async function getJardinPouls(viewerId: number): Promise<JardinPouls> {
   }
 
   try {
+    const excludeDemo = excludeDemoAccountsSql('u', tMeta)
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT u.ID, COALESCE(ump.meta_value, '') AS pseudo, COALESCE(ums.meta_value, '') AS last_seen
        FROM ${tUsers} u
        INNER JOIN ${tMeta} um_pub ON um_pub.user_id = u.ID AND um_pub.meta_key = 'fleur_profile_public' AND um_pub.meta_value = '1'
        LEFT JOIN ${tMeta} ump ON ump.user_id = u.ID AND ump.meta_key = 'fleur_pseudo'
-       LEFT JOIN ${tMeta} ums ON ums.user_id = u.ID AND ums.meta_key = 'fleur_social_last_seen_at'`
+       LEFT JOIN ${tMeta} ums ON ums.user_id = u.ID AND ums.meta_key = 'fleur_social_last_seen_at'
+       WHERE 1=1 ${excludeDemo}`
     )
     const uniquePublicIds = new Set<number>()
     const onlineIds = new Set<number>()
@@ -726,6 +729,7 @@ export async function getJardinPouls(viewerId: number): Promise<JardinPouls> {
   }
 
   try {
+    const excludeDemo = excludeDemoAccountsSql('u', tMeta)
     const [eRows] = await pool.execute<RowDataPacket[]>(
       `SELECT r.user_id, r.created_at,
               COALESCE(ump.meta_value, '') AS pseudo,
@@ -737,6 +741,7 @@ export async function getJardinPouls(viewerId: number): Promise<JardinPouls> {
        LEFT JOIN ${tMeta} ump ON ump.user_id = u.ID AND ump.meta_key = 'fleur_pseudo'
        LEFT JOIN ${tMeta} ume ON ume.user_id = u.ID AND ume.meta_key = 'fleur_avatar_emoji'
        WHERE (r.parent_id IS NULL OR r.parent_id = 0) AND r.created_at >= (NOW() - INTERVAL 14 DAY)
+         ${excludeDemo}
        ORDER BY r.created_at DESC
        LIMIT 5`
     )

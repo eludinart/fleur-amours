@@ -10,7 +10,13 @@ type SapPreviewResult = {
 }
 
 export const sapApi = {
-  deduct: (action: string) => api.post('/api/sap/deduct', { action }),
+  deduct: async (action: string) => {
+    const r = await api.post('/api/sap/deduct', { action })
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('fleur:sap-updated'))
+    }
+    return r
+  },
   balance: () =>
     api.get('/api/sap/balance') as Promise<{ success: boolean; data?: { balance: number }; error?: string }>,
   preview: async (action: string): Promise<SapPreviewResult> => {

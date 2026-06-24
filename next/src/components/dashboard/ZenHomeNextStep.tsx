@@ -8,16 +8,17 @@ export function ZenHomeNextStep({
   hasPetals,
   chronicleCount,
 }: {
-  currentSession?: { status?: string } | null
+  currentSession?: { status?: string; id?: number | string } | null
   hasPetals: boolean
   chronicleCount: number
 }) {
   const inProgress = currentSession?.status === 'in_progress'
+  const sessionHref = currentSession?.id ? `/session/${currentSession.id}` : '/session'
 
   if (inProgress) {
     return (
       <Link
-        href="/session"
+        href={sessionHref}
         className="block mb-5 rounded-2xl border-2 border-violet-500/40 bg-violet-950/40 hover:border-violet-400/60 px-4 py-4 transition-colors"
       >
         <p className="text-xs font-medium text-violet-300/90">👉 {t('dashboard.nextStep')}</p>

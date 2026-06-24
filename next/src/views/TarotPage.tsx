@@ -1845,7 +1845,7 @@ export default function TarotPage() {
         if (!d) return
         if (d.free_access || d.has_subscription) return
         const used = (d.usage as Record<string, number>)?.tirages_count ?? 0
-        const limit = (d.limits as Record<string, number>)?.tirages_per_month ?? 5
+        const limit = (d.limits as Record<string, number>)?.tirages_per_month ?? 3
         const totalSap =
           ((d.token_balance as number) ?? 0) +
           ((d.eternal_sap as number) ?? 0)

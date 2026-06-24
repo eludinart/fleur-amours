@@ -17,8 +17,8 @@ import { JardinPhaser } from '@/components/JardinPhaser'
 import { PETAL_DEFS, PETAL_BY_ID } from '@/lib/petal-theme'
 import { dominantPetalId } from '@/lib/petal-tarot'
 import { AstrolabeOverlay } from '@/components/AstrolabeOverlay'
-import DemoAccountBadge from '@/components/DemoAccountBadge'
 import { CommunityMeteoStrip } from '@/components/social/CommunityMeteoStrip'
+import { PrairieResonanceTeaser } from '@/components/prairie/PrairieResonanceTeaser'
 import { loadGalaxieView, resonanceBetween } from '@/lib/grand-jardin-view'
 
 const GrandJardinGalaxie = dynamic(
@@ -148,6 +148,19 @@ export default function PrairiePage() {
   }, [])
 
   const meId = Number(meFleur?.user_id ?? user?.id) || 0
+
+  const resonanceTeaser = useMemo(() => {
+    if (!meFleur?.scores) return null
+    const myDom = dominantPetalId(scoresToPetals(meFleur.scores))
+    if (!myDom) return null
+    let count = 0
+    for (const f of fleurs) {
+      if (!f?.scores) continue
+      if (dominantPetalId(scoresToPetals(f.scores)) === myDom) count++
+    }
+    return count > 0 ? { count, petalId: myDom } : null
+  }, [meFleur, fleurs])
+
   const renderer = (searchParams.get('renderer') || 'dom').toLowerCase()
   const usePhaser = renderer === 'phaser'
   /** Liens où je suis impliqué — ast en en-tête ; le rendu galaxie reçoit `links` complet */
@@ -527,6 +540,12 @@ export default function PrairiePage() {
         </div>
       </header>
 
+      {resonanceTeaser ? (
+        <div className="shrink-0 px-4 pt-3">
+          <PrairieResonanceTeaser count={resonanceTeaser.count} petalId={resonanceTeaser.petalId} />
+        </div>
+      ) : null}
+
       {error && (
         <div className="shrink-0 px-4 py-2 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 text-sm">
           {error}
@@ -761,9 +780,6 @@ export default function PrairiePage() {
                 </button>
 
                 <div className="flex flex-wrap gap-1 mb-2.5">
-                  {selectedFleur.is_demo && (
-                    <DemoAccountBadge title="Personnage virtuel — démo Mycelium" />
-                  )}
                   {isOnline ? (
                     <span className="px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
                       ● {t('prairie.profileOnline')}

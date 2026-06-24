@@ -7,7 +7,12 @@ import { sessionsApi } from './sessions'
 import { billingApi } from './billing'
 import { dreamscapeApi } from './dreamscape'
 import { prairieApi } from './prairie'
+import { checkinsApi } from './checkins'
+import { onboardingApi } from './onboarding'
 import { isSessionMantraEcho } from '@/lib/session-mantra-echo'
+import { findActivePlan14j } from '@/lib/plan14j-active'
+import { detectCoachGateway } from '@/lib/petal-persistence'
+import { dominantPetalId } from '@/lib/petal-tarot'
 import {
   buildDreamscapeChronicleSummary,
   buildFleurChronicleSummary,
@@ -214,7 +219,7 @@ const EMPTY_STATS = {
 
 export async function fetchDashboardData() {
   try {
-  const [accessRes, sessionsRes, fleurRes, readingsRes, paperDrawsRes, dreamscapeRes, prairieRes] =
+  const [accessRes, sessionsRes, fleurRes, readingsRes, paperDrawsRes, dreamscapeRes, prairieRes, checkinsRes, baselineRes] =
     await Promise.allSettled([
       billingApi.getAccess(),
       sessionsApi.my(undefined, DASHBOARD_SESSIONS_LIMIT),
@@ -223,6 +228,8 @@ export async function fetchDashboardData() {
       paperDrawApi.my(),
       dreamscapeApi.my(),
       prairieApi.getFleurs(),
+      checkinsApi.my(),
+      onboardingApi.getBaseline(),
     ])
 
   const access = accessRes.status === 'fulfilled' ? accessRes.value : null
@@ -236,6 +243,14 @@ export async function fetchDashboardData() {
   const prairieFleurs = (prairieData as { fleurs?: unknown[] })?.fleurs ?? []
   const prairieLinks = (prairieData as { links?: unknown[] })?.links ?? []
   const prairieMeFleur = (prairieData as { me_fleur?: unknown })?.me_fleur ?? null
+  const checkins =
+    checkinsRes.status === 'fulfilled'
+      ? ((checkinsRes.value as { checkins?: Array<{ created_at?: string; createdAt?: string }> })?.checkins ?? [])
+      : []
+  const baseline =
+    baselineRes.status === 'fulfilled'
+      ? ((baselineRes.value as { baseline?: { petals?: Record<string, number> } | null })?.baseline ?? null)
+      : null
 
   // Scores Fleur : renvoyés par GET /api/fleur/my-results (évite N appels getResult / getDuoResult).
   // Fallback réseau uniquement pour les entrées sans scores (ex. fleur-beta ou ancien client).
@@ -595,6 +610,59 @@ export async function fetchDashboardData() {
   })
   const hasChronicleShadow = chronicle.slice(0, 6).some((c) => c.tone === 'shadow')
 
+  const activePlan14j = findActivePlan14j(sessions as Record<string, unknown>[])
+
+  const lastCheckinAt =
+    checkins.length > 0
+      ? String(checkins[0]?.createdAt ?? (checkins[0] as { created_at?: string })?.created_at ?? '')
+      : null
+  const daysSinceCheckin = lastCheckinAt
+    ? Math.floor((Date.now() - new Date(lastCheckinAt).getTime()) / 86400000)
+    : null
+
+  const latestCheckin = checkins[0] as
+    | {
+        aiResponse?: { whisper?: string; echo?: string; highlight_petal?: string } | null
+        highlightPetal?: string | null
+        intention?: string | null
+      }
+    | undefined
+  const lastCheckinEcho =
+    latestCheckin?.aiResponse || latestCheckin?.intention
+      ? {
+          whisper: latestCheckin.aiResponse?.whisper ?? latestCheckin.intention ?? null,
+          echo: latestCheckin.aiResponse?.echo ?? null,
+          highlightPetal:
+            latestCheckin.highlightPetal ??
+            latestCheckin.aiResponse?.highlight_petal ??
+            null,
+        }
+      : null
+
+  const baselinePetals01 = baseline?.petals
+    ? scoresTo01(baseline.petals as Record<string, number>)
+    : null
+
+  const coachGateway = detectCoachGateway({
+    sessions: sessions as Record<string, unknown>[],
+    readings: [...(readings as Record<string, unknown>[]), ...(paperDraws as Record<string, unknown>[])],
+    shadowPetalIds: shadowZones.map((z) => z.petalId),
+  })
+
+  let prairieResonance: { count: number; petalId: string } | null = null
+  const meScores = (prairieMeFleur as { scores?: Record<string, number> } | null)?.scores
+  if (meScores && (prairieFleurs as unknown[]).length > 0) {
+    const myDom = dominantPetalId(scoresTo01(meScores))
+    if (myDom) {
+      let count = 0
+      for (const f of prairieFleurs as Array<{ scores?: Record<string, number>; user_id?: number }>) {
+        if (!f.scores) continue
+        if (dominantPetalId(scoresTo01(f.scores)) === myDom) count++
+      }
+      if (count > 0) prairieResonance = { count, petalId: myDom }
+    }
+  }
+
   return {
     stats,
     sessions,
@@ -616,6 +684,12 @@ export async function fetchDashboardData() {
     prairieLinks,
     prairieMeFleur,
     sessionMantra,
+    activePlan14j,
+    daysSinceCheckin,
+    lastCheckinEcho,
+    baselinePetals: baselinePetals01,
+    coachGateway,
+    prairieResonance,
   }
   } catch (err) {
     console.error('fetchDashboardData error:', err)
@@ -640,6 +714,12 @@ export async function fetchDashboardData() {
       prairieLinks: [],
       prairieMeFleur: null,
       sessionMantra: null,
+      activePlan14j: null,
+      daysSinceCheckin: null,
+      lastCheckinEcho: null,
+      baselinePetals: null,
+      coachGateway: null,
+      prairieResonance: null,
     }
   }
 }

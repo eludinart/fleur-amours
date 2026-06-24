@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { PETAL_DEFS } from '@/components/FlowerSVG'
 import { type ShadowZone } from '@/lib/petal-shadow'
+import type { CoachGatewayHint } from '@/lib/petal-persistence'
 import { t } from '@/i18n'
 
 function petalLabel(id: string): string {
@@ -24,11 +25,13 @@ function reasonLabel(reason: ShadowZone['reason']): string {
 export function ZenHomeShadowFocus({
   zones,
   hasChronicleShadow,
+  coachGateway,
 }: {
   zones: ShadowZone[]
   hasChronicleShadow: boolean
+  coachGateway?: CoachGatewayHint | null
 }) {
-  if (zones.length === 0 && !hasChronicleShadow) return null
+  if (zones.length === 0 && !hasChronicleShadow && !coachGateway) return null
 
   const petalNames =
     zones.length > 0
@@ -41,6 +44,8 @@ export function ZenHomeShadowFocus({
       : zones.length === 1
         ? t('fleurZen.shadowIntroSingle', { petal: petalNames })
         : t('fleurZen.shadowIntroGeneric')
+
+  const coachPetal = coachGateway ? petalLabel(coachGateway.petalId) : ''
 
   return (
     <div className="rounded-2xl border border-rose-900/45 bg-gradient-to-br from-rose-950/50 via-slate-950/80 to-slate-950/90 px-4 py-4 mb-5 space-y-4 ring-1 ring-rose-500/15">
@@ -63,6 +68,20 @@ export function ZenHomeShadowFocus({
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {coachGateway ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-950/25 px-3 py-3 space-y-2">
+          <p className="text-xs text-amber-100/90 leading-relaxed">
+            {t('dashboard.coachGatewayBody', { petal: coachPetal })}
+          </p>
+          <Link
+            href={`/coaches?petal=${encodeURIComponent(coachGateway.petalId)}`}
+            className="inline-flex rounded-xl border border-amber-400/40 bg-amber-900/40 px-4 py-2 text-xs font-semibold text-amber-100 hover:bg-amber-800/50 transition-colors"
+          >
+            {t('dashboard.coachGatewayCta')} →
+          </Link>
+        </div>
       ) : null}
 
       <div className="pt-1 border-t border-rose-500/15 space-y-2">

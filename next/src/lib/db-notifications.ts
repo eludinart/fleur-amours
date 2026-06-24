@@ -11,6 +11,8 @@
  */
 import type { RowDataPacket, ResultSetHeader } from 'mysql2'
 import { exec, getPool, isDbConfigured, table } from './db'
+import { filterOutboundRecipients } from './notification-outbound'
+import { engagementExpiresAt, isEngagementNotificationType } from './engagement-templates'
 
 const T_NOTIF = () => table('fleur_notifications')
 const T_DELIV = () => table('fleur_notification_deliveries')
@@ -124,6 +126,8 @@ export type NotificationCreateInput = {
   channel_id?: number | null
   /** Ne pas envoyer l'e-mail transactionnel (ex. campagne SMTP déjà envoyée). */
   skip_email?: boolean
+  /** Contourne le garde-fou dev (tests admin explicites). */
+  skip_dev_guard?: boolean
 }
 
 async function resolveRecipients(input: NotificationCreateInput): Promise<Array<{ user_id: number; email: string }>> {
@@ -189,7 +193,10 @@ export async function createNotification(input: NotificationCreateInput): Promis
   const recipientRole = input.recipient_role != null ? String(input.recipient_role).slice(0, 40) : null
   const priority = String(input.priority ?? 'normal').slice(0, 20)
   const createdBy = input.created_by != null ? Number(input.created_by) : null
-  const expiresAt = input.expires_at ? String(input.expires_at).replace('T', ' ').slice(0, 19) : null
+  let expiresAt = input.expires_at ? String(input.expires_at).replace('T', ' ').slice(0, 19) : null
+  if (!expiresAt && isEngagementNotificationType(type)) {
+    expiresAt = engagementExpiresAt()
+  }
 
   const [insRes] = await pool.execute(
     `INSERT INTO ${tN}
@@ -214,7 +221,12 @@ export async function createNotification(input: NotificationCreateInput): Promis
   )
   const notificationId = Number((insRes as ResultSetHeader).insertId)
 
-  const recipients = await resolveRecipients(input)
+  const recipients = filterOutboundRecipients(await resolveRecipients(input), {
+    skipDevGuard: input.skip_dev_guard,
+  })
+  if (recipients.length === 0) {
+    return { notification_id: notificationId, deliveries: 0 }
+  }
   let deliveries = 0
   for (const r of recipients) {
     const email = normalizeEmail(r.email)
@@ -237,6 +249,7 @@ export async function createNotification(input: NotificationCreateInput): Promis
         actionUrl,
         actionLabel,
         recipients,
+        skipDevGuard: input.skip_dev_guard,
       })
     })
     .catch(() => {})

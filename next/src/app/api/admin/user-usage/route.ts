@@ -10,6 +10,7 @@ import { ApiError } from '@/lib/api-auth'
 import { getPool, table } from '@/lib/db'
 import { readMonthlyUsage } from '@/lib/db-usage'
 import { readQuotaBonus } from '@/lib/db-quota-bonus'
+import { limitsForUser, resolveUserBilling, skipsSapCharges } from '@/lib/user-billing'
 
 interface AccessRow extends RowDataPacket {
   token_balance: number
@@ -59,21 +60,14 @@ export async function GET(req: NextRequest) {
     const eternalSap = row ? Number(row.eternal_sap) || 0 : 0
     const usage = await readMonthlyUsage(userId)
     const bonus = await readQuotaBonus(userId, usage.period)
+    const billing = await resolveUserBilling(userId)
 
-    // Doit matcher les valeurs UI freemium (voir AdminUsersPage / AccountPage).
-    const baseLimits = {
-      chat_messages_per_month: 10,
-      sessions_per_month: 2,
-      tirages_per_month: 5,
-      fleur_submits_per_month: 2,
-    }
-
-    const limits = {
-      chat_messages_per_month: baseLimits.chat_messages_per_month + (bonus.chat_messages_bonus ?? 0),
-      sessions_per_month: baseLimits.sessions_per_month + (bonus.sessions_bonus ?? 0),
-      tirages_per_month: baseLimits.tirages_per_month + (bonus.tirages_bonus ?? 0),
-      fleur_submits_per_month: baseLimits.fleur_submits_per_month + (bonus.fleur_submits_bonus ?? 0),
-    }
+    const limits = limitsForUser(billing, {
+      chat_messages_per_month: bonus.chat_messages_bonus ?? 0,
+      sessions_per_month: bonus.sessions_bonus ?? 0,
+      tirages_per_month: bonus.tirages_bonus ?? 0,
+      fleur_submits_per_month: bonus.fleur_submits_bonus ?? 0,
+    })
 
     return NextResponse.json({
       token_balance: tokenBalance,
@@ -81,8 +75,9 @@ export async function GET(req: NextRequest) {
       usage,
       limits,
       quota_bonus: bonus,
-      has_promo: false,
-      free_access: false,
+      has_promo: billing.hasPromoAccess,
+      billing_bypass: billing.billingBypass,
+      free_access: skipsSapCharges(billing),
     })
   } catch (err) {
     if (err instanceof ApiError) {

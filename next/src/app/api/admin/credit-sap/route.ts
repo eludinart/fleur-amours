@@ -9,6 +9,7 @@ import { requireAdmin } from '@/lib/api-auth'
 import { ApiError } from '@/lib/api-auth'
 import { getPool, isDbConfigured, table } from '@/lib/db'
 import { syncSapWalletFromAccess } from '@/lib/db-sap'
+import { invalidateUserAccessCache } from '@/lib/user-billing'
 
 interface TotalRow extends RowDataPacket {
   total_accumulated_eternal: number
@@ -113,6 +114,8 @@ export async function POST(req: NextRequest) {
         })
       }
     }
+
+    invalidateUserAccessCache(userId)
 
     return NextResponse.json({
       ok: true,

@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { useReducedMotion } from 'framer-motion'
-import { FlowerSVG, PETAL_DEFS } from '@/components/FlowerSVG'
-import { FleurTimeScroll, formatZenSnapshotDate } from '@/components/fleur/FleurTimeScroll'
+import { PETAL_DEFS } from '@/components/FlowerSVG'
+import { formatZenSnapshotDate } from '@/components/fleur/FleurTimeScroll'
 import {
   ChronicleList,
   DashboardPowerPhrase,
@@ -14,11 +14,16 @@ import {
   ZenHomeMiniStats,
   ZenPetalLegend,
   ZenHomeShadowFocus,
+  ZenHomePlan14jToday,
+  ZenHomeCheckinPrompt,
+  ZenHomeEvolutionHero,
 } from '@/components/dashboard'
 import { DashboardTuteurFab } from '@/components/dashboard/DashboardTuteurFab'
 import { fetchDashboardData, dashboardApi } from '@/api/dashboard'
 import { dominantPetalId, weakPetalsClickFilter, topPetalIds } from '@/lib/petal-tarot'
 import type { ShadowZone } from '@/lib/petal-shadow'
+import type { ActivePlan14j } from '@/lib/plan14j-active'
+import type { CoachGatewayHint } from '@/lib/petal-persistence'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -76,6 +81,15 @@ export function UserFleurZenHome() {
   const shadowZones = (data?.shadowZones ?? []) as ShadowZone[]
   const hasChronicleShadow = Boolean(data?.hasChronicleShadow)
   const currentSession = data?.currentSession ?? null
+  const activePlan14j = (data?.activePlan14j ?? null) as ActivePlan14j | null
+  const daysSinceCheckin = data?.daysSinceCheckin as number | null | undefined
+  const lastCheckinEcho = (data?.lastCheckinEcho ?? null) as {
+    whisper?: string | null
+    echo?: string | null
+    highlightPetal?: string | null
+  } | null
+  const baselinePetals = (data?.baselinePetals ?? null) as Record<string, number> | null
+  const coachGateway = (data?.coachGateway ?? null) as CoachGatewayHint | null
 
   const displayPetals = useMemo(() => {
     if (timeIndex < 0 || !last5[timeIndex]) {
@@ -238,109 +252,61 @@ export function UserFleurZenHome() {
             chronicle={chronicle as Array<Record<string, unknown>>}
           />
 
-          <ZenHomeShadowFocus zones={shadowZones} hasChronicleShadow={hasChronicleShadow} />
+          <ZenHomeShadowFocus
+            zones={shadowZones}
+            hasChronicleShadow={hasChronicleShadow}
+            coachGateway={coachGateway}
+          />
 
           <ZenHomeNextStep
-            currentSession={currentSession as { status?: string } | null}
+            currentSession={currentSession as { status?: string; id?: number | string } | null}
             hasPetals={hasPetals}
             chronicleCount={chronicle.length}
           />
 
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10 xl:items-start">
-            <section className="xl:col-span-5 flex flex-col items-center xl:items-stretch space-y-4 sm:space-y-5 min-w-0">
+          {activePlan14j ? <ZenHomePlan14jToday plan={activePlan14j} /> : null}
+
+          {hasPetals ? (
+            <ZenHomeCheckinPrompt
+              daysSinceLast={daysSinceCheckin ?? null}
+              baselinePetals={baselinePetals}
+              currentPetals={normalizePetals(aggregate as Record<string, unknown>)}
+              lastEcho={lastCheckinEcho}
+            />
+          ) : null}
+
+          <ZenHomeEvolutionHero
+            petals={displayPetals}
+            snapshots={timeSnapshots}
+            timeIndex={timeIndex}
+            onTimeSelect={handleManualTimeSelect}
+            onResumeAuto={() => setAutoTimePlay(true)}
+            autoTimePlay={autoTimePlay}
+            reduceMotion={reduceMotion}
+            whisper={whisper || null}
+            whisperSubhint={chronicleWhisperSubhint}
+            pulseId={pulseId}
+            labelAnchorIds={labelAnchorIds}
+            onPetalClick={handlePetalClick}
+            clickablePetalsFilter={clickablePetalsFilter}
+            timeStateCaption={timeStateCaption}
+            accentPetalName={accentPetalName}
+            accentPetalColor={accentPetalColor}
+            locale={locale}
+          />
+
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8">
+            <section className="xl:col-span-5 space-y-4">
               <DashboardPowerPhrase
                 petals={displayPetals}
                 variant="zen"
-                className="max-w-md xl:max-w-none w-full"
+                className="w-full"
                 labelKey="fleurZen.personalReadingLabel"
                 hintKey="fleurZen.personalReadingHint"
               />
-
-              <div className="relative flex justify-center w-full isolate [&_.flower-svg]:max-w-[min(100%,320px)]">
-                <div
-                  className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100%,300px)] aspect-square rounded-full bg-gradient-to-tr from-violet-600/30 via-teal-500/18 to-fuchsia-600/22 blur-3xl ${
-                    reduceMotion ? 'opacity-70' : 'opacity-90 motion-safe:animate-[pulse_5s_ease-in-out_infinite]'
-                  }`}
-                  aria-hidden
-                />
-                <FlowerSVG
-                  petals={displayPetals}
-                  size={300}
-                  animate
-                  showLabels
-                  showScores
-                  labelsOnHoverOnly
-                  pinnedLabelIds={labelAnchorIds}
-                  labelTheme="dark"
-                  labelPeekMs={2800}
-                  visualPreset="zen"
-                  historicalView={timeIndex >= 0}
-                  pulsePetalId={pulseId}
-                  disablePulse={!!reduceMotion}
-                  onPetalClick={handlePetalClick}
-                  clickablePetals={clickablePetalsFilter}
-                  svgClassName="relative z-[1] mx-auto"
-                />
-              </div>
-
-              <div className="w-full max-w-md xl:max-w-none mx-auto space-y-3">
-                <ZenPetalLegend petals={displayPetals} />
-
-                <div className="rounded-2xl border border-white/12 bg-white/[0.05] backdrop-blur-sm px-4 py-4">
-                  <div className="space-y-2 text-center xl:text-left">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-violet-300/75">
-                      {t('fleurZen.snapshotLabel')}
-                    </p>
-                    <div className="text-sm sm:text-base text-violet-50/95 leading-relaxed space-y-1.5" aria-live="polite">
-                      {timeStateCaption.mode === 'present' ? (
-                        <p>{timeStateCaption.text}</p>
-                      ) : timeStateCaption.mode === 'snapshot' ? (
-                        <>
-                          <p className="text-xs text-white/45 tracking-wide">{timeStateCaption.date}</p>
-                          <p>{timeStateCaption.detail}</p>
-                        </>
-                      ) : timeStateCaption.mode === 'petalOnly' ? (
-                        <p>{t('fleurZen.timeCaptionSnapshotPetal', { date: timeStateCaption.date, petal: timeStateCaption.petalName })}</p>
-                      ) : (
-                        <p>{t('fleurZen.timeCaptionSnapshotDate', { date: timeStateCaption.date })}</p>
-                      )}
-                    </div>
-                  </div>
-                  {accentPetalName ? (
-                    <div className="mt-3 pt-3 border-t border-white/10 text-center xl:text-left">
-                      <p
-                        className="text-sm font-semibold"
-                        style={accentPetalColor ? { color: accentPetalColor } : undefined}
-                      >
-                        {t('fleurZen.accentOnView', { petal: accentPetalName })}
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-
-                {timeSnapshots.length > 0 ? (
-                  <FleurTimeScroll
-                    snapshots={timeSnapshots}
-                    selectedIndex={timeIndex}
-                    onSelect={handleManualTimeSelect}
-                    variant="full"
-                    showResumeAuto={!autoTimePlay && !reduceMotion}
-                    onResumeAuto={() => setAutoTimePlay(true)}
-                    className="!max-w-none w-full"
-                  />
-                ) : null}
-
-                <div className="rounded-xl border border-white/[0.07] bg-slate-950/35 px-3.5 py-3 space-y-2 text-center xl:text-left text-[11px] sm:text-xs leading-relaxed text-white/50">
-                  <p>{t('fleurZen.zenHelpPetal')}</p>
-                  <p className="border-t border-white/[0.06] pt-2">
-                    {timeSnapshots.length > 0 ? t('fleurZen.zenHelpTime') : t('fleurZen.zenHelpTimeEmpty')}
-                  </p>
-                </div>
-
-                <ZenHomeMiniStats stats={stats as Record<string, unknown>} />
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 pt-1 w-full">
+              <ZenPetalLegend petals={displayPetals} />
+              <ZenHomeMiniStats stats={stats as Record<string, unknown>} />
+              <div className="flex justify-center xl:justify-start">
                 <Link
                   href={statsHref}
                   className="text-xs sm:text-[13px] font-medium text-teal-300/90 hover:text-teal-200 border border-teal-500/35 hover:border-teal-400/55 bg-teal-950/30 px-5 py-2.5 rounded-full transition-colors whitespace-nowrap"
@@ -358,19 +324,12 @@ export function UserFleurZenHome() {
                   journalTitle
                   journalTitleKey="fleurZen.journalTitleZen"
                   journalDescKey="fleurZen.journalDescZen"
-                  whisperLabelKey="fleurZen.trendLabel"
                   variant="zen"
                   compact
-                  whisper={whisper || null}
-                  whisperSubhint={chronicleWhisperSubhint}
                 />
-              ) : whisper ? (
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 backdrop-blur-sm space-y-2">
-                  <p className="text-[10px] uppercase tracking-widest text-violet-300/70">{t('fleurZen.trendLabel')}</p>
-                  <p className="text-[9px] uppercase tracking-wider text-violet-300/55">{chronicleWhisperSubhint}</p>
-                  <p className="text-sm sm:text-base text-violet-100/90 leading-relaxed">{whisper}</p>
-                </div>
-              ) : null}
+              ) : (
+                <p className="text-sm text-white/40 text-center py-6">{t('fleurZen.zenHelpTimeEmpty')}</p>
+              )}
             </section>
           </div>
         </div>

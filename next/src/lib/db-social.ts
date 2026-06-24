@@ -3,7 +3,10 @@
  */
 import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { exec, getPool, table } from './db'
+import { excludeDemoAccountsSql } from './demo-accounts'
+import { filterOutDemoUserIds } from './demo-accounts-filter'
 import { resonanceBetween, complementarityBetween, weakestPetals } from './grand-jardin-view'
+import { resolveProfileAge } from './profile-age'
 import { buildLisierePublicProfile } from './lisiere-profile'
 import { getSocialMeteo } from './community-meteo'
 import { fetchMaturityStats, computeMaturityBadges, fetchMaturityStatsBatch, type MaturityBadgeId } from './community-maturity'
@@ -1291,6 +1294,7 @@ export async function visitLisiere(
       COALESCE(um_pseudo.meta_value, '') AS pseudo,
       COALESCE(um_emoji.meta_value, '🌸') AS avatar_emoji,
       COALESCE(um_bio.meta_value, '') AS bio,
+      COALESCE(um_birth.meta_value, '') AS birth_date,
       COALESCE(um_age.meta_value, '') AS age,
       COALESCE(um_intention.meta_value, '') AS jardin_intention
     FROM ${tUsers} u
@@ -1298,9 +1302,10 @@ export async function visitLisiere(
     LEFT JOIN ${tMeta} um_pseudo ON um_pseudo.user_id = u.ID AND um_pseudo.meta_key = 'fleur_pseudo'
     LEFT JOIN ${tMeta} um_emoji ON um_emoji.user_id = u.ID AND um_emoji.meta_key = 'fleur_avatar_emoji'
     LEFT JOIN ${tMeta} um_bio ON um_bio.user_id = u.ID AND um_bio.meta_key = 'fleur_bio'
+    LEFT JOIN ${tMeta} um_birth ON um_birth.user_id = u.ID AND um_birth.meta_key = 'fleur_birth_date'
     LEFT JOIN ${tMeta} um_age ON um_age.user_id = u.ID AND um_age.meta_key = 'fleur_age'
     LEFT JOIN ${tMeta} um_intention ON um_intention.user_id = u.ID AND um_intention.meta_key = 'fleur_jardin_intention'
-    WHERE u.ID = ?`,
+    WHERE u.ID = ? ${excludeDemoAccountsSql('u', tMeta)}`,
     [targetUserId]
   )
   const target = userRows?.[0]
@@ -1312,8 +1317,10 @@ export async function visitLisiere(
   const avatarEmoji = String(target.avatar_emoji ?? '🌸').trim() || '🌸'
   const bioRaw = String(target.bio ?? '').trim()
   const bio = bioRaw ? bioRaw.slice(0, 320) : null
-  const ageParsed = parseInt(String(target.age ?? ''), 10)
-  const age = !isNaN(ageParsed) && ageParsed >= 16 && ageParsed <= 120 ? ageParsed : null
+  const { age } = resolveProfileAge({
+    birthDate: String(target.birth_date ?? ''),
+    legacyAge: String(target.age ?? ''),
+  })
   const jardinIntention = String(target.jardin_intention ?? '').trim() || null
 
   const petals = ['agape', 'philautia', 'mania', 'storge', 'pragma', 'philia', 'ludus', 'eros'] as const
@@ -1670,7 +1677,8 @@ export async function getMyLiens(userId: string): Promise<{ liens: LienItem[] }>
   if (allIds.size === 0) return { liens: [] }
 
   // Profils + présence en batch
-  const idList = Array.from(allIds)
+  const idList = await filterOutDemoUserIds(Array.from(allIds))
+  if (idList.length === 0) return { liens: [] }
   const placeholders = idList.map(() => '?').join(',')
   const profileById = new Map<
     number,

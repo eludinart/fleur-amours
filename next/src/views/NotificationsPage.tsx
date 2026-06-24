@@ -16,6 +16,12 @@ const ICONS: Record<string, string> = {
   targeted: '🎯',
   contact_reply: '✉️',
   system: '⚙️',
+  plan14j_reminder: '📅',
+  checkin_reminder: '🌡️',
+  engagement_tirage: '🃏',
+  engagement_fleur: '🌸',
+  engagement_session: '🚪',
+  engagement_dreamscape: '✨',
 }
 
 const PRIORITY_RING: Record<string, string> = {
@@ -44,6 +50,7 @@ type NotifItem = {
   delivery_id?: number
   read_at?: string | null
   action_url?: string | null
+  action_label?: string | null
   title?: string
   body?: string | null
   type?: string
@@ -147,13 +154,15 @@ export default function NotificationsPage() {
                   )}
                 </div>
                 {n.body && (
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{n.body}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-3 whitespace-pre-line">{n.body}</p>
+                )}
+                {n.action_url && (
+                  <span className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-violet-600 dark:text-violet-400">
+                    {n.action_label || 'Ouvrir'} →
+                  </span>
                 )}
                 <p className="text-xs text-slate-400 mt-2">{formatDate(n.created_at)}</p>
               </div>
-              {n.action_url && (
-                <span className="text-sm text-violet-500 shrink-0 self-center">→</span>
-              )}
             </button>
           ))
         )}

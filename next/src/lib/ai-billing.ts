@@ -5,6 +5,7 @@ import type { AiTaskId } from './ai-task-registry'
 import { getAiTask } from './ai-task-registry'
 import type { AiAccessResult } from './ai-access'
 import { transactionalSapUpdate } from './db-sap'
+import { invalidateUserAccessCache } from './user-billing'
 
 export async function deductSapForAiTask(
   userId: number,
@@ -19,6 +20,7 @@ export async function deductSapForAiTask(
   const reason = idempotencyKey ? `ai:${taskId}:${idempotencyKey}` : `ai:${taskId}`
   try {
     await transactionalSapUpdate(userId, cost, reason, 'usage')
+    invalidateUserAccessCache(userId)
     return true
   } catch {
     return false

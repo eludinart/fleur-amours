@@ -407,7 +407,9 @@ function AppRoutes() {
       <ProtectedLayout>
         <Layout>
           <SessionErrorBoundary>
-            <SessionPage />
+            <Suspense fallback={null}>
+              <SessionPage />
+            </Suspense>
           </SessionErrorBoundary>
         </Layout>
       </ProtectedLayout>

@@ -256,6 +256,8 @@
     "profileActivityYesterday": "Gestern",
     "profileActivityDays": "Vor {count} Tagen",
     "profileTopPetals": "Stärkste Blütenblätter",
+    "resonanceTeaser": "{count} Gärtner teilen dein Blütenblatt {petal} in der Prärie.",
+    "resonanceTeaserCta": "Prärie entdecken",
     "profileRelationDuo": "Duo-Verbindung",
     "profileRelationPending": "Einladung ausstehend",
     "filterAll": "Alle",
@@ -820,7 +822,20 @@
     "chatHistoryDesc": "Den Verlauf deiner Gespräche mit den Begleitern ansehen.",
     "coachingOpenHeading": "Offenes Gespräch — sofort fortsetzen",
     "coachingHistorySection": "Begleitungsverlauf",
-    "coachingPickerLink": "Seite zur Begleiterwahl"
+    "coachingPickerLink": "Seite zur Begleiterwahl",
+    "plan14TodayLabel": "Heute in deinem Plan",
+    "plan14TodayTitle": "Tag {day} — Mikro-Aktion",
+    "plan14TodayDone": "Für heute erledigt",
+    "plan14ViewFull": "Gesamten Plan ansehen",
+    "checkinWeeklyLabel": "Wöchentliches Ritual",
+    "checkinWeeklyBody": "30 Sekunden für Stimmung und Spannung — verankere deinen Garten in der Zeit.",
+    "checkinBaselineHint": "Seit deiner Ausgangsbasis ist {petal} im {direction}.",
+    "checkinRising": "Aufstieg",
+    "checkinFalling": "Rückzug",
+    "checkinCta": "Check-in machen",
+    "coachGatewayBody": "Bei {petal} kehrt dein Garten oft zurück — ein Begleiter kann dir behutsam helfen, tiefer zu gehen.",
+    "coachGatewayCta": "Begleiter ansehen",
+    "eclosionHubCta": "Die Geschichte meines Gartens"
   },
   "fleurZen": {
     "title": "Fleur d'ÅmÔurs",
@@ -874,6 +889,7 @@
     "personalReadingHint": "Zusammenfassung deines aktuellen Profils",
     "snapshotLabel": "Momentaufnahme",
     "trendLabel": "Jüngste Entwicklung",
+    "evolutionTitle": "Deine Bewegung in der Zeit",
     "miniStatsTitle": "Deine Aktivität",
     "petalLegendTitle": "Deine acht Blütenblätter (aktuelle Werte)",
     "journalTitleZen": "Letzte Einträge",
@@ -1605,7 +1621,10 @@
     "sessionPrevious": "Vorherige Sitzung",
     "sessionNext": "Nächste Sitzung",
     "sessionPreviewAria": "Sitzungsvorschau",
-    "anchoringFallback": "Verankerung"
+    "anchoringFallback": "Verankerung",
+    "singleDoorTitle": "Kurze Session — eine Pforte",
+    "singleDoorDesc": "Etwa 10 Minuten an einer bestimmten Pforte, ohne alle vier zu durchlaufen.",
+    "doorSingle": "Einzelne Pforte"
   },
   "chat": {
     "pickerTitle": "Deinen Begleiter wählen",
@@ -1846,8 +1865,45 @@
     "bilanPlaceholder": "Was hat sich in diesen 14 Tagen verändert?"
   },
   "checkin": {
-    "title": "Check-in heute",
-    "subtitle": "Ein Moment, um Stimmung und relationale Spannung zu verorten. Nichts wird ohne deine Zustimmung geteilt.",
+    "title": "Das Echo des Tages",
+    "eyebrow": "Tägliches Ritual",
+    "subtitle": "Setze eine Absicht oder Frage. Die Blume antwortet und hebt ein Blatt hervor — nichts wird ohne deine Zustimmung geteilt.",
+    "intentionLabel": "Deine Absicht oder Frage",
+    "intentionPlaceholder": "Was dich heute bewegt…",
+    "suggestionsLabel": "Anregungen für dich",
+    "followupBadge": "Faden ·",
+    "suggestionKind": {
+      "reading": "Deine Ziehung",
+      "paper": "Papierlegung",
+      "session": "Deine Session",
+      "followup": "Faden",
+      "shadow": "In Spannung",
+      "jardin": "Dein Garten",
+      "baseline": "Ausgangsbasis",
+      "petal": "Spur"
+    },
+    "listenCta": "Der Blume zuhören",
+    "listening": "Die Blume hört zu…",
+    "invitationLabel": "Für den Rest deines Tages",
+    "feltLabel": "Wie fühlst du dich nach diesem Echo?",
+    "feltHeavy": "Schwer",
+    "feltMixed": "Gemischt",
+    "feltBright": "Hell",
+    "feltOptional": "Optional — du kannst pflanzen ohne zu wählen",
+    "plantCta": "Dieses Echo pflanzen",
+    "planted": "Echo in deinem Garten gepflanzt",
+    "plantedHint": "Finde es in Eclosion und in Mein Garten.",
+    "back": "Umformulieren",
+    "drawLink": "Vertiefen mit einer Ziehung zu {petal} →",
+    "alreadyToday": "Dein Echo des Tages ist bereits gepflanzt.",
+    "comeBackTomorrow": "Komm morgen für ein neues Echo zurück.",
+    "todayEchoLabel": "Dein Echo von heute",
+    "limitError": "Nur ein Echo pro Tag. Komm morgen wieder.",
+    "lastEchoLabel": "Dein letztes Echo",
+    "echoError": "Die Blume konnte gerade nicht antworten. Bitte versuche es gleich erneut.",
+    "saveError": "Echo konnte nicht gepflanzt werden. Prüfe deine Verbindung und versuche es erneut.",
+    "saving": "Pflanzen…",
+    "historyTitle": "Deine letzten Echos",
     "moodLabel": "Stimmung",
     "moodLow": "Schwer",
     "moodHigh": "Hell",
@@ -1857,12 +1913,9 @@
     "noteLabel": "Eine Notiz (optional)",
     "notePlaceholder": "Was heute zählt…",
     "submit": "Speichern",
-    "saving": "Speichern…",
     "saved": "Gespeichert ✓",
-    "historyTitle": "Deine letzten Check-ins",
     "moodShort": "Stimmung",
-    "tensionShort": "Spannung",
-    "saveError": "Check-in konnte nicht gespeichert werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+    "tensionShort": "Spannung"
   },
   "eclosion": {
     "title": "Eclosion — deine Entwicklung",
@@ -1873,7 +1926,12 @@
     "narrativeHint": "Bitte um eine KI-Lesart deiner Entwicklung aus deinen erfassten Schritten.",
     "empty": "Noch keine Schritte. Starte eine Sitzung oder ziehe eine Karte, um deinen Garten zu beginnen.",
     "loadError": "Ihre Zeitleiste konnte nicht geladen werden. Prüfen Sie Ihre Verbindung und laden Sie die Seite neu.",
-    "narrativeError": "Die Erzählung ist gerade nicht verfügbar. Bitte versuchen Sie es gleich erneut."
+    "narrativeError": "Die Erzählung ist gerade nicht verfügbar. Bitte versuchen Sie es gleich erneut.",
+    "subtitleHub": "Die Geschichte deines Gartens — eine Lesart deiner Bewegung, dann die Einzelheiten deiner Schritte.",
+    "eventsTitle": "Schrittdetails",
+    "eventsShow": "Zeitleiste anzeigen",
+    "eventsHide": "Zeitleiste ausblenden",
+    "eventsCount": "{count} Schritte erfasst."
   },
   "landing": {
     "ritualSection": "Deine Lesung",
@@ -1904,6 +1962,9 @@
     "trustLine": "Sichere Verbindung · Daten werden respektiert · Keine Karte erforderlich zum Entdecken",
     "visualTeaserTitle": "Der Garten ist mehr als eine Karte",
     "visualTeaserBody": "Geführte Wege, gespeicherte Legungen, deine Blume, Traumspaziergänge und Klarheitswerkzeuge: ein voller Raum öffnet sich mit der Registrierung — kostenlos zum Start.",
+    "flowerTeaserLabel": "Dein Garten könnte werden",
+    "flowerTeaserBody": "Nach der Anmeldung offenbart deine einzigartige Blume acht Formen der Liebe — hier eine verschwommene Vorschau dessen, was dich erwartet.",
+    "flowerTeaserUnlock": "In 10 Min. enthüllen",
     "visualTeaserCta": "Konto erstellen und den Garten öffnen",
     "visualTeaserAria": "Visuelle Vorschau des Fleur-d'AmOurs-Gartens",
     "visualTeaserAlt": "App-Vorschau: Fleur d'AmOurs, acht Blütenblätter und Tagebuch von Schatten und Lichtern mit Legungsverlauf",
@@ -2055,5 +2116,65 @@
   "constellations": {
     "title": "Kleine Gruppen",
     "subtitle": "Temporäre Kreise mit 3 bis 5 Personen, für 7 Tage."
+  },
+  "engagement": {
+    "greeting": "Hallo {{name}},",
+    "greetingGeneric": "Hallo,",
+    "contextDominantPetal": "Deine Blume hebt gerade {{petal}} hervor — ein guter Faden zurück in den Garten.",
+    "emailFooter": "Du erhältst diese E-Mail, weil du Fleur d'AmOurs nutzt. Verwalte deine Benachrichtigungseinstellungen im Garten.",
+    "emailCtaDefault": "Im Garten öffnen",
+    "petals": {
+      "agape": "Agape",
+      "philautia": "Philautia",
+      "mania": "Mania",
+      "storge": "Storge",
+      "pragma": "Pragma",
+      "philia": "Philia",
+      "ludus": "Ludus",
+      "eros": "Eros"
+    },
+    "plan14j": {
+      "title": "Tag {{day}} deines Plans",
+      "body": "Du gehst deinen 14-Tage-Plan voran ({{progress}} %). Ein paar Minuten heute reichen, um den Faden zu halten.",
+      "highlight": "Mikro-Aktion des Tages: {{action}}",
+      "actionLabel": "Heutigen Plan ansehen",
+      "emailSubject": "Tag {{day}} — deine Mikro-Aktion wartet"
+    },
+    "checkin": {
+      "title": "Wie fühlst du dich heute?",
+      "body": "Nimm dir 30 Sekunden für einen Check-in: Stimmung, Beziehungsspannung, eine Notiz an dich. Dein roter Faden im Garten.",
+      "actionLabel": "Check-in machen",
+      "emailSubject": "Dein Check-in heute — 30 Sekunden"
+    },
+    "tirage": {
+      "title": "Eine Ziehung für deinen Tag",
+      "body": "Eine Karte, eine Frage — zwei Minuten, um zu benennen, was heute in deinem inneren Garten zählt.",
+      "highlightLastCard": "Deine letzte Karte war {{card}} — eine neue Perspektive wartet.",
+      "highlightPetal": "Das Blatt {{petal}} kehrt oft zurück: lass eine Karte Licht bringen.",
+      "actionLabel": "Eine Karte ziehen",
+      "emailSubject": "Deine Karte des Tages wartet"
+    },
+    "fleur": {
+      "title": "Deine Blume enthüllen — 10 Minuten",
+      "body": "Acht Blätter, acht Formen der Liebe: lege den ersten Stein deines inneren Gartens. Eine geführte Reise, in deinem Tempo.",
+      "actionLabel": "Meine Blume beginnen",
+      "emailSubject": "Deine Fleur d'AmOurs ist nur einen Schritt entfernt"
+    },
+    "session": {
+      "doorFallback": "eine Tür im Garten",
+      "title": "Eine Erkundung wartet auf dich",
+      "body": "Zehn Minuten an einer Tür im Garten — eine geführte Erkundung ohne den ganzen Weg.",
+      "bodyResume": "Du hattest eine Erkundung zu {{door}} begonnen. Ein paar Minuten reichen, um den Faden wieder aufzunehmen.",
+      "highlightPetal": "Spur des Moments: das Blatt {{petal}} taucht in deinem Weg wieder auf.",
+      "actionLabel": "Eine Tür öffnen",
+      "actionLabelResume": "Session fortsetzen",
+      "emailSubject": "Deine Session wartet im Garten"
+    },
+    "dreamscape": {
+      "title": "Ein inneres Gespräch",
+      "body": "Ein paar Minuten mit der Führung, um zu klären, was in dir kreist — ohne Urteil, in deinem Tempo.",
+      "actionLabel": "Dreamscape betreten",
+      "emailSubject": "Ein Moment innerer Klarheit"
+    }
   }
 }

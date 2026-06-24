@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
 import { ApiError } from '@/lib/api-auth'
 import { getSapBalance, SAP_ACTION_COSTS } from '@/lib/db-sap'
+import { readBillingBypass } from '@/lib/user-billing'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,10 +24,11 @@ export async function GET(req: NextRequest) {
     }
 
     const balance = await getSapBalance(uid)
-    const available = balance >= cost
+    const bypass = await readBillingBypass(uid)
+    const available = bypass || balance >= cost
     return NextResponse.json({
       success: true,
-      data: { ok: true, available, cost, balance },
+      data: { ok: true, available, cost: bypass ? 0 : cost, balance, billing_bypass: bypass },
     })
   } catch (err) {
     if (err instanceof ApiError) {

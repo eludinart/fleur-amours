@@ -21,11 +21,13 @@ export function useAiSession({
   initialState,
   onComplete,
   cardModal,
+  maxDoors = 4,
 }: {
   thresholdData: any
   initialState: any
   onComplete: (finalState: any) => void
   cardModal: null | { door: string; card: { name: string; desc?: string } }
+  maxDoors?: number
 }) {
   // ── État conversation ─────────────────────────────────────
   const [turn, setTurn] = useState(initialState?.turn ?? 0)
@@ -343,7 +345,7 @@ export function useAiSession({
         })
 
         // Proposition de carte si l'IA suggère — pour la porte courante
-        if (res.suggest_card && res.suggest_card.door === currentDoor && !currentCard && !showCardDraw && lockedDoors.length < 4) {
+        if (res.suggest_card && res.suggest_card.door === currentDoor && !currentCard && !showCardDraw && lockedDoors.length < maxDoors) {
           setPendingSugg(res.suggest_card)
         }
 
@@ -593,7 +595,7 @@ export function useAiSession({
   useEffect(() => {
     if (!doorLocked) return
 
-    if (lockedDoors.length >= 4) {
+    if (lockedDoors.length >= maxDoors) {
       onComplete({
         petals,
         petalsDeficit,

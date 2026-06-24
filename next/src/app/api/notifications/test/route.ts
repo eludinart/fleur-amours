@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
       type: 'system',
       title: 'Notification de test',
       body: 'Si vous voyez ce message, vos notifications fonctionnent.',
+      action_url: '/',
+      action_label: 'Retour au jardin',
       recipient_type: 'user',
       recipient_id: uid,
       priority: 'normal',

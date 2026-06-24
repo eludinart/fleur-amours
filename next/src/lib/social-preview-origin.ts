@@ -10,7 +10,7 @@
  * Sinon on retombe sur APP_PUBLIC_URL / NEXT_PUBLIC_APP_URL comme ailleurs dans l’app.
  */
 import { headers } from 'next/headers'
-import { getAppPublicOrigin } from '@/lib/app-public-url'
+import { CANONICAL_JARDIN_ORIGIN, getAppPublicOrigin } from '@/lib/app-public-url'
 
 function isLocalOrIpHost(host: string): boolean {
   const h = host.split(':')[0].toLowerCase()
@@ -62,5 +62,5 @@ export async function getSocialPreviewOrigin(): Promise<string> {
   const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, '')
   if (site?.startsWith('http')) return site
 
-  return 'https://www.eludein.art'
+  return CANONICAL_JARDIN_ORIGIN
 }

@@ -17,6 +17,12 @@ const ICONS: Record<string, string> = {
   targeted: '🎯',
   contact_reply: '✉️',
   system: '⚙️',
+  plan14j_reminder: '📅',
+  checkin_reminder: '🌡️',
+  engagement_tirage: '🃏',
+  engagement_fleur: '🌸',
+  engagement_session: '🚪',
+  engagement_dreamscape: '✨',
 }
 
 const PRIORITY_RING: Record<string, string> = {
@@ -35,7 +41,24 @@ function timeAgo(dateStr: string) {
   return `il y a ${days}j`
 }
 
-type NotificationItem = { id: string; read_at?: string; action_url?: string; title?: string; body?: string; created_at?: string; type?: string; priority?: string; delivery_id?: string }
+type NotificationItem = {
+  id: string
+  read_at?: string
+  action_url?: string
+  action_label?: string | null
+  title?: string
+  body?: string
+  created_at?: string
+  type?: string
+  priority?: string
+  delivery_id?: string
+}
+
+function bodyPreview(body: string, maxLen = 120): string {
+  const flat = body.replace(/\s+/g, ' ').trim()
+  if (flat.length <= maxLen) return flat
+  return `${flat.slice(0, maxLen).trim()}…`
+}
 
 export default function NotificationCenter() {
   const { unreadCount, items, loading, fetchList, markRead, markAllRead, deleteRead } =
@@ -172,8 +195,14 @@ export default function NotificationCenter() {
                           </div>
                           {(n as NotificationItem).body && (
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
-                              {(n as NotificationItem).body}
+                              {bodyPreview((n as NotificationItem).body ?? '')}
                             </p>
+                          )}
+                          {(n as NotificationItem).action_url && (
+                            <span className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-lg bg-violet-100 dark:bg-violet-950/50 text-xs font-semibold text-violet-700 dark:text-violet-300">
+                              {(n as NotificationItem).action_label || 'Ouvrir'}
+                              <span aria-hidden>→</span>
+                            </span>
                           )}
                           <p className="text-[10px] text-slate-400 mt-1">
                             {timeAgo((n as NotificationItem).created_at ?? '')}

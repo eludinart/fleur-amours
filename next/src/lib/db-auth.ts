@@ -3,9 +3,11 @@
  */
 import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getPool, table } from './db'
+import { saveUserLocale } from './user-locale'
 import { verifyWordPressPassword } from './auth-wordpress'
 import { hash } from 'bcryptjs'
 import { parseSocialMeteoFromMeta } from './community-meteo'
+import { isValidBirthDate, parseBirthDateStored, resolveProfileAge } from './profile-age'
 
 export type UserRecord = {
   id: number
@@ -39,8 +41,10 @@ export type UserRecord = {
   coach_request_status?: string | null
   coach_request_at?: string | null
   coach_request_message?: string | null
-  /** Admin qui s’affiche aussi comme accompagnant (annuaire coach). */
+  /** Admin qui s'affiche aussi comme accompagnant (annuaire coach). */
   admin_is_coach?: boolean
+  /** Exemption facturation (test staff / développeur) — case admin, pas liée au rôle. */
+  billing_bypass?: boolean
 }
 
 async function getWpRole(userId: number): Promise<string> {
@@ -103,6 +107,7 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
     'fleur_avatar_emoji',
     'fleur_profile_public',
     'fleur_age',
+    'fleur_birth_date',
     'fleur_jardin_intention',
     'fleur_profile_onboarding_done',
     'fleur_community_onboarding_done',
@@ -127,6 +132,7 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
     'fleur_coach_request_at',
     'fleur_coach_request_message',
     'fleur_admin_is_coach',
+    'fleur_billing_bypass',
   ]
   const placeholders = keys.map(() => '?').join(', ')
   const [rows] = await pool.execute<RowDataPacket[]>(
@@ -142,8 +148,12 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
   ;(out as Record<string, unknown>).avatar = meta.fleur_avatar || null
   ;(out as Record<string, unknown>).avatar_emoji = meta.fleur_avatar_emoji || null
   ;(out as Record<string, unknown>).profile_public = (meta.fleur_profile_public ?? '') === '1'
-  const ageRaw = parseInt(meta.fleur_age ?? '', 10)
-  ;(out as Record<string, unknown>).age = !isNaN(ageRaw) && ageRaw >= 16 && ageRaw <= 120 ? ageRaw : null
+  const resolved = resolveProfileAge({
+    birthDate: meta.fleur_birth_date,
+    legacyAge: meta.fleur_age,
+  })
+  ;(out as Record<string, unknown>).birth_date = resolved.birthDate
+  ;(out as Record<string, unknown>).age = resolved.age
   ;(out as Record<string, unknown>).jardin_intention = meta.fleur_jardin_intention || null
   ;(out as Record<string, unknown>).profile_onboarding_done = (meta.fleur_profile_onboarding_done ?? '') === '1'
   ;(out as Record<string, unknown>).community_onboarding_done = (meta.fleur_community_onboarding_done ?? '') === '1'
@@ -184,6 +194,7 @@ async function appendProfileMeta(userId: number, out: Record<string, unknown>): 
   ;(out as Record<string, unknown>).coach_request_at = meta.fleur_coach_request_at || null
   ;(out as Record<string, unknown>).coach_request_message = meta.fleur_coach_request_message || null
   ;(out as Record<string, unknown>).admin_is_coach = (meta.fleur_admin_is_coach ?? '0') === '1'
+  ;(out as Record<string, unknown>).billing_bypass = (meta.fleur_billing_bypass ?? '0') === '1'
 }
 
 export async function authLogin(login: string, password: string): Promise<UserRecord> {
@@ -483,7 +494,25 @@ export async function updateProfile(
     const pub = body.profile_public ? '1' : '0'
     await forceUsermeta(userId, 'fleur_profile_public', pub)
   }
-  if (Object.prototype.hasOwnProperty.call(body, 'age')) {
+  if (Object.prototype.hasOwnProperty.call(body, 'birth_date')) {
+    const raw = body.birth_date
+    if (raw === null || raw === '' || raw === undefined) {
+      await upsertUsermeta(userId, 'fleur_birth_date', '')
+      await upsertUsermeta(userId, 'fleur_age', '')
+    } else {
+      const iso = parseBirthDateStored(String(raw))
+      if (!iso || !isValidBirthDate(iso)) {
+        throw new Error('Date de naissance invalide : entre 16 et 120 ans')
+      }
+      await upsertUsermeta(userId, 'fleur_birth_date', iso)
+      await upsertUsermeta(userId, 'fleur_age', '')
+    }
+  }
+  // Rétrocompatibilité : ancien champ âge direct (déprécié)
+  if (
+    Object.prototype.hasOwnProperty.call(body, 'age') &&
+    !Object.prototype.hasOwnProperty.call(body, 'birth_date')
+  ) {
     const raw = body.age
     if (raw === null || raw === '' || raw === undefined) {
       await upsertUsermeta(userId, 'fleur_age', '')
@@ -560,6 +589,9 @@ export async function updateProfile(
   if (Object.prototype.hasOwnProperty.call(body, 'coach_verified')) {
     await upsertUsermeta(userId, 'fleur_coach_verified', body.coach_verified ? '1' : '0')
   }
+  if (Object.prototype.hasOwnProperty.call(body, 'locale')) {
+    await saveUserLocale(userId, String(body.locale ?? 'fr'))
+  }
   if (Object.prototype.hasOwnProperty.call(body, 'admin_is_coach')) {
     const wpRole = await getWpRole(userId)
     const appRole = await getAppRole(userId, wpRole)
@@ -621,6 +653,10 @@ export async function adminPatchUser(
       throw new Error('Seuls les administrateurs peuvent avoir le rôle « aussi coach »')
     }
     await upsertUsermeta(targetUserId, 'fleur_admin_is_coach', body.admin_is_coach ? '1' : '0')
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'billing_bypass')) {
+    await upsertUsermeta(targetUserId, 'fleur_billing_bypass', body.billing_bypass ? '1' : '0')
   }
 }
 

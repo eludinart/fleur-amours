@@ -1,12 +1,13 @@
 /**
  * Origine et chemins absolus du site (liens e-mail, invitations, FCM…).
- * Même priorité qu’ailleurs : APP_PUBLIC_URL / NEXT_PUBLIC_APP_URL puis APP_HOST.
+ * Priorité : APP_PUBLIC_URL / NEXT_PUBLIC_APP_URL puis APP_HOST.
  *
- * Les déplois Coolify / docker fixent souvent NEXT_PUBLIC_APP_URL avec le basePath
- * (ex. https://app-fleurdamours.eludein.art/jardin). On n’extrait que l’origine
- * sans /jardin, sinon withPublicBasePath retombe en double /jardin/jardin/...
+ * Origine canonique du Jardin (VPS Coolify) : app-fleurdamours.eludein.art — pas www (Hostinger).
  */
 import type { NextRequest } from 'next/server'
+
+/** Hôte public de l’application Next (/jardin) — e-mails, invitations, CTAs. */
+export const CANONICAL_JARDIN_ORIGIN = 'https://app-fleurdamours.eludein.art'
 
 function normalizedBasePathSegment(): string {
   const raw = (process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin').trim()
@@ -25,6 +26,28 @@ function originWithoutAppBasePath(full: string): string {
   return u
 }
 
+/** Hôtes vitrine / autres — les liens applicatifs pointent vers app-fleurdamours.eludein.art. */
+const NON_APP_REPLACE_HOSTS = new Set([
+  'www.eludein.art',
+  'eludein.art',
+  'legacy.eludein.art',
+  'app.eludein.art',
+])
+
+function coerceJardinAppOrigin(origin: string): string {
+  const trimmed = origin.trim().replace(/\/+$/, '')
+  if (!trimmed) return CANONICAL_JARDIN_ORIGIN
+  try {
+    const u = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`)
+    if (NON_APP_REPLACE_HOSTS.has(u.hostname.toLowerCase())) {
+      return CANONICAL_JARDIN_ORIGIN
+    }
+  } catch {
+    /* garder origin */
+  }
+  return trimmed
+}
+
 export function getAppPublicOrigin(): string {
   let raw = (process.env.APP_PUBLIC_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? '').trim()
   let appUrl = raw.replace(/\/+$/, '')
@@ -38,14 +61,17 @@ export function getAppPublicOrigin(): string {
     const h = host.replace(/^https?:\/\//, '').split('/')[0].replace(/\/$/, '')
     appUrl = h ? `https://${h}` : ''
   }
-  return appUrl
+  if (!appUrl) {
+    appUrl = CANONICAL_JARDIN_ORIGIN
+  }
+  return coerceJardinAppOrigin(appUrl)
 }
 
 /** Si les variables d’environnement manquent (ex. oubli en déploiement), déduit l’hôte depuis la requête proxy. */
 export function resolveAppPublicOrigin(req?: NextRequest): string {
   const fromEnv = getAppPublicOrigin()
   if (fromEnv) return fromEnv
-  if (!req) return ''
+  if (!req) return CANONICAL_JARDIN_ORIGIN
   const hostRaw = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? ''
   const host = hostRaw.split(',')[0].trim()
   if (!host) return ''
@@ -67,6 +93,5 @@ export function withPublicBasePath(rel: string): string {
 export function absolutePublicAppUrl(pathFromAppRoot: string, req?: NextRequest): string {
   const origin = resolveAppPublicOrigin(req)
   const path = withPublicBasePath(pathFromAppRoot)
-  if (!origin) return path
   return `${origin}${path}`
 }

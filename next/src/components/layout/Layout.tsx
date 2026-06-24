@@ -19,6 +19,7 @@ import { LanguageSelector } from './LanguageSelector'
 import { FormBackBar } from './FormBackBar'
 import { OnboardingTour } from '../OnboardingTour'
 import { CoachRequestModal } from '../CoachRequestModal'
+import { HelpChatbot } from '../HelpChatbot'
 import { clearAuthBearer } from '@/lib/api-client'
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -83,6 +84,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       if (document.visibilityState === 'visible') refresh()
     }
     document.addEventListener('visibilitychange', onVisibility)
+    const onSapUpdated = () => refresh()
+    window.addEventListener('fleur:sap-updated', onSapUpdated)
 
     // Petit polling (évite les compteurs figés en session longue)
     const interval = setInterval(() => {
@@ -92,6 +95,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('fleur:sap-updated', onSapUpdated)
     }
   }, [(user as { id?: string })?.id])
 
@@ -199,6 +203,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <ToastContainer />
       <CoachRequestModal />
       {user ? <OnboardingTour /> : null}
+      {user ? <HelpChatbot /> : null}
     </div>
   )
 }

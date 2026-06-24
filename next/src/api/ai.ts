@@ -1,4 +1,7 @@
 import { api } from '@/lib/api-client'
+import type { CheckinEchoDTO } from '@/api/checkins'
+
+export type { CheckinEchoDTO }
 
 export const aiApi = {
   status: () => api.get('/api/ai/status'),
@@ -31,6 +34,8 @@ export const aiApi = {
     all_revealed?: boolean
   }) =>
     api.post('/api/ai/analyze_mood', payload),
+  checkinEcho: (payload: { intention: string; locale?: string }) =>
+    api.post('/api/ai/checkin-echo', payload) as Promise<CheckinEchoDTO>,
   dreamscapeSummarize: (payload: {
     history: Array<{ role: string; content: string }>
     slots?: Array<{ position?: string; card?: string; faceDown?: boolean }>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { timelineApi, type TimelineEventDTO, type TimelineNarrative } from '@/api/timeline'
 import { getLocale, t } from '@/i18n'
 import { useStore } from '@/store/useStore'
@@ -32,6 +33,7 @@ export default function EclosionTimelinePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [narrativeLoading, setNarrativeLoading] = useState(false)
+  const [showEvents, setShowEvents] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -56,6 +58,26 @@ export default function EclosionTimelinePage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (loading || events.length === 0) return
+    let cancelled = false
+    setNarrativeLoading(true)
+    timelineApi
+      .narrative(locale)
+      .then((r) => {
+        if (!cancelled) setNarrative(r.narrative)
+      })
+      .catch(() => {
+        if (!cancelled) setNarrative(null)
+      })
+      .finally(() => {
+        if (!cancelled) setNarrativeLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [loading, events.length, locale])
+
   function loadNarrative() {
     setNarrativeLoading(true)
     setError('')
@@ -77,7 +99,7 @@ export default function EclosionTimelinePage() {
             {t('eclosion.title')}
           </h1>
           <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            {t('eclosion.subtitle')}
+            {t('eclosion.subtitleHub')}
           </p>
         </header>
 
@@ -87,63 +109,101 @@ export default function EclosionTimelinePage() {
           </p>
         )}
 
-        <section className="mb-8 rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm dark:border-violet-900 dark:from-violet-950/30 dark:to-slate-900">
-          <div className="flex items-center justify-between gap-3">
+        <section className="mb-8 rounded-2xl border-2 border-violet-300/80 bg-gradient-to-br from-violet-50 via-white to-rose-50/40 p-6 shadow-md dark:border-violet-800 dark:from-violet-950/40 dark:via-slate-900 dark:to-rose-950/20">
+          <div className="flex items-center justify-between gap-3 mb-2">
             <h2 className="font-semibold text-slate-900 dark:text-slate-100">{t('eclosion.narrativeTitle')}</h2>
             <button
               type="button"
               onClick={loadNarrative}
               disabled={narrativeLoading}
-              className="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60"
+              className="rounded-full border border-violet-300 bg-white px-4 py-2 text-sm font-semibold text-violet-800 transition hover:bg-violet-50 disabled:opacity-60 dark:border-violet-700 dark:bg-slate-900 dark:text-violet-200"
             >
               {narrativeLoading ? t('eclosion.narrativeLoading') : t('eclosion.narrativeCta')}
             </button>
           </div>
-          {narrative ? (
-            <div className="mt-4 space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              <p className="font-serif text-lg font-semibold text-violet-900 dark:text-violet-200">{narrative.headline}</p>
-              {narrative.movement && <p>{narrative.movement}</p>}
+          {narrativeLoading && !narrative ? (
+            <p className="text-sm text-slate-500 animate-pulse">{t('eclosion.narrativeLoading')}</p>
+          ) : narrative ? (
+            <div className="space-y-3 text-sm text-slate-700 dark:text-slate-200">
+              <p className="font-serif text-xl font-semibold text-violet-900 dark:text-violet-200">{narrative.headline}</p>
+              {narrative.movement && <p className="leading-relaxed">{narrative.movement}</p>}
               {narrative.focus && <p className="text-slate-600 dark:text-slate-300">→ {narrative.focus}</p>}
-              {narrative.encouragement && <p className="italic text-slate-500 dark:text-slate-400">{narrative.encouragement}</p>}
+              {narrative.encouragement && (
+                <p className="italic text-slate-500 dark:text-slate-400 border-t border-violet-200/60 pt-3 dark:border-violet-900">
+                  {narrative.encouragement}
+                </p>
+              )}
             </div>
           ) : (
-            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">{t('eclosion.narrativeHint')}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('eclosion.narrativeHint')}</p>
           )}
         </section>
 
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <span className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" aria-hidden />
-          </div>
-        ) : events.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
-            {t('eclosion.empty')}
-          </p>
-        ) : (
-          <ol className="relative space-y-3 border-l-2 border-slate-200 pl-5 dark:border-slate-700">
-            {events.map((e) => {
-              const meta = SOURCE_META[e.source] ?? SOURCE_META.session
-              return (
-                <li key={e.id} className="relative">
-                  <span className="absolute -left-[1.6rem] flex h-7 w-7 items-center justify-center rounded-full border bg-white text-sm dark:bg-slate-900">
-                    {meta.icon}
-                  </span>
-                  <div className={`rounded-xl border p-4 shadow-sm ${meta.tint}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">{e.title}</p>
-                      <time className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
-                        {formatDate(e.createdAt, locale)}
-                      </time>
-                    </div>
-                    {e.summary && (
-                      <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{e.summary}</p>
-                    )}
-                  </div>
-                </li>
-              )
-            })}
-          </ol>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {t('eclosion.eventsTitle')}
+          </h2>
+          <button
+            type="button"
+            onClick={() => setShowEvents((v) => !v)}
+            className="text-xs font-medium text-violet-600 hover:text-violet-800 dark:text-violet-400"
+          >
+            {showEvents ? t('eclosion.eventsHide') : t('eclosion.eventsShow')}
+          </button>
+        </div>
+
+        {showEvents && (
+          <>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <span className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" aria-hidden />
+              </div>
+            ) : events.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                {t('eclosion.empty')}
+              </p>
+            ) : (
+              <ol className="relative space-y-3 border-l-2 border-slate-200 pl-5 dark:border-slate-700">
+                {events.map((e) => {
+                  const meta = SOURCE_META[e.source] ?? SOURCE_META.session
+                  return (
+                    <li key={e.id} className="relative">
+                      <span className="absolute -left-[1.6rem] flex h-7 w-7 items-center justify-center rounded-full border bg-white text-sm dark:bg-slate-900">
+                        {meta.icon}
+                      </span>
+                      <div className={`rounded-xl border p-4 shadow-sm ${meta.tint}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-semibold text-slate-900 dark:text-slate-100">{e.title}</p>
+                          <time className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                            {formatDate(e.createdAt, locale)}
+                          </time>
+                        </div>
+                        {e.summary && (
+                          <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{e.summary}</p>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </>
         )}
+
+        {!showEvents && events.length > 0 ? (
+          <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+            {t('eclosion.eventsCount', { count: events.length })}{' '}
+            <button type="button" onClick={() => setShowEvents(true)} className="text-violet-600 underline dark:text-violet-400">
+              {t('eclosion.eventsShow')}
+            </button>
+          </p>
+        ) : null}
+
+        <div className="mt-8 text-center">
+          <Link href="/" className="text-sm text-violet-600 hover:underline dark:text-violet-400">
+            ← {t('nav.home')}
+          </Link>
+        </div>
       </div>
     </div>
   )

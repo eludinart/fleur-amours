@@ -3,7 +3,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
 import { createPortal } from 'react-dom'
@@ -492,6 +492,7 @@ function IntroStep({
   const [showOpenDoorConfirm, setShowOpenDoorConfirm] = useState(false)
   const [sapPreview, setSapPreview] = useState(null)
   const [sapConfirmLoading, setSapConfirmLoading] = useState(false)
+  const [pendingStartOpts, setPendingStartOpts] = useState({})
   const [loadingSessions, setLoadingSessions] = useState(true)
   const [completedSessions, setCompletedSessions] = useState([])
   const [loadingCompleted, setLoadingCompleted] = useState(true)
@@ -573,9 +574,10 @@ function IntroStep({
     }
   }
 
-  async function doEntrer() {
+  async function doEntrer(opts = {}) {
+    setPendingStartOpts(opts)
     if (access?.free_access) {
-      onStart()
+      onStart(opts)
       return
     }
     try {
@@ -594,12 +596,17 @@ function IntroStep({
     }
   }
 
-  async function handleEntrerClick() {
+  async function handleEntrerClick(opts = {}) {
     if (!hasSeenSessionIntro) {
+      setPendingStartOpts(opts)
       setShowSessionIntroModal(true)
       return
     }
-    await doEntrer()
+    await doEntrer(opts)
+  }
+
+  async function handleSingleDoorStart(doorKey) {
+    await handleEntrerClick({ mode: 'single', door: doorKey })
   }
 
   async function handleConfirmOpenDoor() {
@@ -608,7 +615,7 @@ function IntroStep({
       if (!access?.free_access) {
         await sapApi.deduct('open_door')
       }
-      onStart()
+      onStart(pendingStartOpts)
     } catch (e) {
       window.alert(e instanceof ApiError ? e.detail : e?.message || 'Débit SAP impossible.')
     } finally {
@@ -1070,7 +1077,7 @@ function IntroStep({
         </AlertBox>
       )}
       <button
-        onClick={quotaExceeded ? undefined : handleEntrerClick}
+        onClick={quotaExceeded ? undefined : () => handleEntrerClick({})}
         disabled={quotaExceeded}
         className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg transition-all duration-300
           ${quotaExceeded
@@ -1079,6 +1086,28 @@ function IntroStep({
         {t('session.enterGarden')}
       </button>
       <p className="text-[10px] text-slate-400 text-center">{t('session.doorsDesc')}</p>
+
+      <div className="rounded-2xl border border-violet-200/80 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/20 p-4 text-left space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold text-sm text-violet-900 dark:text-violet-100">{t('session.singleDoorTitle')}</h3>
+          <span className="text-[10px] text-violet-500 font-medium">~10 min</span>
+        </div>
+        <p className="text-xs text-violet-800/80 dark:text-violet-200/80 leading-relaxed">{t('session.singleDoorDesc')}</p>
+        <div className="grid grid-cols-2 gap-2">
+          {FOUR_DOORS.map((d) => (
+            <button
+              key={d.key}
+              type="button"
+              disabled={quotaExceeded}
+              onClick={() => !quotaExceeded && handleSingleDoorStart(d.key)}
+              className="rounded-xl border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-900 px-3 py-2.5 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-violet-400 transition-colors disabled:opacity-50"
+            >
+              <span className={`block font-bold ${d.color}`}>{getDoorLabels()[d.key] || d.key}</span>
+              <span className="block text-[10px] text-slate-500 mt-0.5 line-clamp-2">{d.subtitle}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="flex justify-center pt-4">
         <BuyTarotCTA variant="compact" />
@@ -1116,7 +1145,7 @@ function IntroStep({
               onClick={() => {
                 setHasSeenSessionIntro(true)
                 setShowSessionIntroModal(false)
-                doEntrer()
+                doEntrer(pendingStartOpts)
               }}
               className="w-full py-3 rounded-xl bg-accent text-white font-semibold hover:opacity-90 transition-opacity"
             >
@@ -1135,7 +1164,7 @@ function IntroStep({
 // ÉTAPE 2 : SEUIL (Threshold) — remplace le tirage upfront
 // ═══════════════════════════════════════════════════════════════
 
-function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded }) {
+function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded, singleDoorMode = false, preferredDoor = null }) {
   const [text, setText]     = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError]   = useState(quotaExceeded ? 'quota_exceeded' : '')
@@ -1182,7 +1211,10 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded }) {
           turn_count: 0,
           status: 'in_progress',
           duration_seconds: 0,
-          step_data: threshold_snapshot ? { threshold_snapshot } : undefined,
+          step_data: {
+            ...(threshold_snapshot ? { threshold_snapshot } : {}),
+            ...(singleDoorMode ? { single_door_mode: true, preferred_door: preferredDoor || undefined } : {}),
+          },
         })
         if (saved?.id) payload.sessionId = saved.id
       } catch (saveErr) {
@@ -2836,7 +2868,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
 // ÉTAPE 3 : SESSION — refactor IA (hook + sous-composants)
 // Note: UI simplifiée mais flux complet (tuteur, cartes, résumés).
 // ═══════════════════════════════════════════════════════════════
-function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard }) {
+function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard, maxDoors = 4 }) {
   const [cardModal, setCardModal] = useState(null)
 
   const ai = useAiSession({
@@ -2844,6 +2876,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
     initialState,
     onComplete,
     cardModal,
+    maxDoors,
   })
 
   const {
@@ -2904,6 +2937,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
     displayMessage,
   } = ai
 
+  const canOpenMoreDoors = lockedDoors.length < maxDoors
   const localeDoor = DOOR_MAP[currentDoor] ?? FOUR_DOORS[0]
 
   function SessionLeftColumn({ flowerSize = 320 }) {
@@ -2998,7 +3032,9 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
             <div className="flex items-center justify-between mb-1">
               <p className={`text-xs font-bold ${localeDoor.color}`}>{localeDoor.subtitle}</p>
               <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
-                {t('session.doorXof4', { n: lockedDoors.length + 1 })}
+                {maxDoors === 1
+                  ? t('session.doorSingle')
+                  : t('session.doorXof4', { n: lockedDoors.length + 1 })}
               </span>
             </div>
             {currentCard ? <p className="font-semibold text-sm truncate">{currentCard.name}</p> : <p className="text-xs text-slate-400 italic">Pas encore de carte</p>}
@@ -3060,7 +3096,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
           !showCardDraw &&
           !doorLocked &&
           !showSummaryPanel &&
-          lockedDoors.length < 4 && (
+          canOpenMoreDoors && (
             <div className="w-fit max-w-full self-start shrink-0 mt-4">
               <CardSuggestionPanel
                 suggestion={pendingSuggestion || fallbackSuggestion}
@@ -3097,7 +3133,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
           )}
 
         {/* Tirage */}
-        {showCardDraw && lockedDoors.length < 4 && (
+        {showCardDraw && canOpenMoreDoors && (
           <div className="w-fit max-w-full self-start shrink-0 mt-4">
             <CardDrawPanel
               door={localeDoor}
@@ -3207,7 +3243,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
         )}
 
         {/* Bouton tirer une carte */}
-        {!doorLocked && !showCardDraw && !showSummaryPanel && lockedDoors.length < 4 && !currentCard && !pendingSuggestion && doorTurn >= 6 && (
+        {!doorLocked && !showCardDraw && !showSummaryPanel && canOpenMoreDoors && !currentCard && !pendingSuggestion && doorTurn >= 6 && (
           <div className="flex gap-2 flex-wrap mt-4">
             <button
               onClick={() => setShowCardDraw(true)}
@@ -3219,10 +3255,10 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
         )}
 
         {/* Transition automatique */}
-        {doorLocked && lockedDoors.length < 4 && (
+        {doorLocked && canOpenMoreDoors && (
           <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-4 text-center mt-4">
             <p className="text-sm text-emerald-700 dark:text-emerald-300 animate-pulse">
-              {lockedDoors.length === 3 ? t('session.preparingSynthPlan') : t('session.passingToNextDoor')}
+              {lockedDoors.length >= maxDoors - 1 ? t('session.preparingSynthPlan') : t('session.passingToNextDoor')}
             </p>
           </div>
         )}
@@ -3659,6 +3695,7 @@ function StepTransition({ step, children, className = '' }) {
 export default function SessionPage() {
   const locale = useStore((s) => s.locale)
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const urlSessionId = pathname?.match(/\/session\/([^/]+)/)?.[1] ?? null
   const { user } = useAuth()
   const [step, setStep]                 = useState('intro')      // intro | threshold | session | plan
@@ -3669,7 +3706,18 @@ export default function SessionPage() {
   const [quotaExceededForSessions, setQuotaExceededForSessions] = useState(false)
   const [access, setAccess] = useState(null)
   const [autoOpenCompletedSessionId, setAutoOpenCompletedSessionId] = useState<string | null>(null)
+  const [maxDoors, setMaxDoors] = useState(4)
+  const [preferredDoor, setPreferredDoor] = useState<string | null>(null)
   const startTime                       = useRef(null)
+
+  useEffect(() => {
+    const mode = searchParams?.get('mode')
+    const door = searchParams?.get('door')
+    const openId = searchParams?.get('open')
+    if (mode === 'single') setMaxDoors(1)
+    if (door && FOUR_DOORS.some((d) => d.key === door)) setPreferredDoor(door)
+    if (openId) setAutoOpenCompletedSessionId(openId)
+  }, [searchParams])
 
   useEffect(() => {
     if (!user?.id) return
@@ -3690,14 +3738,23 @@ export default function SessionPage() {
     }
   }, [urlSessionId, user?.id])
 
-  function handleStart() {
+  function handleStart(opts = {}) {
+    if (opts.mode === 'single') {
+      setMaxDoors(1)
+      setPreferredDoor(opts.door || 'love')
+    } else {
+      setMaxDoors(4)
+      setPreferredDoor(null)
+    }
     startTime.current = Date.now()
     setInitialState(null)
     setResumeError('')
     setStep('threshold')
   }
   function handleThreshold(data) {
-    setThresholdData(data)
+    let merged = data
+    if (preferredDoor) merged = { ...merged, door_suggested: preferredDoor }
+    setThresholdData(merged)
     setInitialState(null)
     setStep('session')
   }
@@ -3748,6 +3805,9 @@ export default function SessionPage() {
         typeof a === 'object' ? a : { door: 'love', subtitle: 'Porte', synthesis: String(a), habit: '' }
       )
       const stepData = session.step_data || {}
+      const sessionMaxDoors = stepData.single_door_mode ? 1 : 4
+      setMaxDoors(sessionMaxDoors)
+      if (stepData.preferred_door) setPreferredDoor(String(stepData.preferred_door))
       const histLen = (session.history || []).length
       // Sur la 1ère porte : t = échanges totaux. Sur les portes suivantes : step_data.doorTurn ou 0
       const t = locked.length === 0 ? Math.floor(histLen / 2) : (stepData.doorTurn ?? 0)
@@ -3818,6 +3878,8 @@ export default function SessionPage() {
             onThresholdComplete={handleThreshold}
             userEmail={user?.email}
             quotaExceeded={quotaExceededForSessions}
+            singleDoorMode={maxDoors === 1}
+            preferredDoor={preferredDoor}
           />
         )}
         {step === 'session'   && (
@@ -3826,6 +3888,7 @@ export default function SessionPage() {
             initialState={initialState}
             onComplete={handleComplete}
             onBeforeDrawCard={user ? () => sapApi.deduct('draw_card') : null}
+            maxDoors={maxDoors}
           />
         )}
         {step === 'plan' && finalState && (

@@ -4,6 +4,8 @@
 import type { RowDataPacket } from 'mysql2'
 import { absolutePublicAppUrl } from './app-public-url'
 import { getPool, isDbConfigured, table } from './db'
+import { tServer } from './i18n-server'
+import { canSendOutboundToEmail } from './notification-outbound'
 import { isSmtpConfigured, trySendSmtpMail } from './smtp'
 
 const PREFS_META_KEY = 'fleur_notification_prefs'
@@ -85,30 +87,57 @@ export function buildNotificationEmailHtml(params: {
   body?: string | null
   actionUrl?: string | null
   actionLabel?: string
+  locale?: string
+  highlight?: string | null
 }): { html: string; text: string } {
+  const locale = params.locale ?? 'fr'
   const title = String(params.title ?? '').trim()
   const body = params.body ? String(params.body).trim() : ''
+  const highlight = params.highlight ? String(params.highlight).trim() : ''
   const actionPath = params.actionUrl ? String(params.actionUrl).trim() : ''
   const actionAbs = actionPath
     ? actionPath.startsWith('http')
       ? actionPath
       : absolutePublicAppUrl(actionPath)
     : ''
-  const actionLabel = params.actionLabel ?? 'Ouvrir dans le Jardin'
-  const textParts = [title, body, actionAbs ? `${actionLabel} : ${actionAbs}` : ''].filter(Boolean)
+  const actionLabel =
+    params.actionLabel ?? tServer(locale, 'engagement.emailCtaDefault')
+  const footer = tServer(locale, 'engagement.emailFooter')
+  const textParts = [title, body, highlight, actionAbs ? `${actionLabel} : ${actionAbs}` : ''].filter(Boolean)
   const text = textParts.join('\n\n')
+  const bodyHtml = body
+    ? body
+        .split(/\n\n+/)
+        .map(
+          (p) =>
+            `<p style="margin:0 0 12px;color:#334155;font-size:15px;line-height:1.6">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`
+        )
+        .join('')
+    : ''
   const html = `<!DOCTYPE html>
-<html lang="fr">
-<body style="font-family:Georgia,serif;line-height:1.5;color:#1e293b;max-width:560px;margin:0 auto;padding:24px">
-  <p style="color:#7c3aed;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px">${APP_NAME}</p>
-  <h1 style="font-size:20px;margin:0 0 12px">${escapeHtml(title)}</h1>
-  ${body ? `<p style="margin:0 0 16px">${escapeHtml(body).replace(/\n/g, '<br>')}</p>` : ''}
-  ${
-    actionAbs
-      ? `<p style="margin:24px 0"><a href="${escapeHtml(actionAbs)}" style="display:inline-block;background:#7c3aed;color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px;font-weight:600">${escapeHtml(actionLabel)}</a></p>`
-      : ''
-  }
-  <p style="font-size:12px;color:#64748b;margin-top:32px">Vous recevez cet e-mail car vous utilisez ${APP_NAME}. Gérez vos préférences dans le Jardin.</p>
+<html lang="${escapeHtml(locale)}">
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
+</head>
+<body style="font-family:Georgia,serif;line-height:1.55;color:#1e293b;max-width:560px;margin:0 auto;padding:24px;background:#fafafa">
+  <div style="background:#ffffff;border-radius:16px;padding:28px;border:1px solid #e2e8f0;color:#334155">
+    <p style="color:#7c3aed;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 12px">${APP_NAME}</p>
+    <h1 style="font-size:22px;margin:0 0 16px;line-height:1.3;color:#0f172a">${escapeHtml(title)}</h1>
+    ${bodyHtml}
+    ${
+      highlight
+        ? `<div style="margin:16px 0;padding:14px 16px;background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:8px;font-size:15px;line-height:1.5;color:#4c1d95">${escapeHtml(highlight)}</div>`
+        : ''
+    }
+    ${
+      actionAbs
+        ? `<p style="margin:28px 0 8px"><a href="${escapeHtml(actionAbs)}" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:12px;font-weight:600;font-size:15px">${escapeHtml(actionLabel)}</a></p>`
+        : ''
+    }
+  </div>
+  <p style="font-size:12px;color:#64748b;margin-top:24px;text-align:center;line-height:1.5">${escapeHtml(footer)}</p>
 </body>
 </html>`
   return { html, text }
@@ -129,11 +158,15 @@ export async function sendTransactionalEmail(params: {
   text?: string
   userId?: number | null
   skipPrefs?: boolean
+  skipDevGuard?: boolean
   replyTo?: string
   headers?: Record<string, string>
 }): Promise<{ sent: boolean; error?: string; messageId?: string }> {
   const to = normalizeEmail(params.to)
   if (!to || !to.includes('@')) return { sent: false, error: 'Email destinataire invalide' }
+  if (!canSendOutboundToEmail(to, { skipDevGuard: params.skipDevGuard })) {
+    return { sent: false, error: 'Environnement dev : envoi limité à eludinart@gmail.com' }
+  }
   if (!params.skipPrefs && params.userId) {
     const ok = await shouldSendInstantEmail(params.userId)
     if (!ok) return { sent: false, error: 'Préférences utilisateur : e-mail désactivé ou hors instantané' }
@@ -200,8 +233,11 @@ export type NotificationEmailDispatchInput = {
   body?: string | null
   actionUrl?: string | null
   actionLabel?: string | null
+  locale?: string
+  highlight?: string | null
   recipients: Array<{ user_id: number; email: string }>
   extraEmails?: string[]
+  skipDevGuard?: boolean
 }
 
 export async function dispatchNotificationEmails(input: NotificationEmailDispatchInput): Promise<void> {
@@ -211,8 +247,10 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
     body: input.body,
     actionUrl: input.actionUrl,
     actionLabel: input.actionLabel ?? undefined,
+    locale: input.locale,
+    highlight: input.highlight,
   })
-  const subject = input.title.slice(0, 200)
+  const subject = (input.title || '').slice(0, 200)
   const headers: Record<string, string> = {}
   if (input.notificationId) headers['X-Fleur-Notification-Id'] = String(input.notificationId)
   if (input.type) headers['X-Fleur-Notification-Type'] = input.type
@@ -229,6 +267,7 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
       html,
       text,
       headers,
+      skipDevGuard: input.skipDevGuard,
     })
   }
   for (const raw of input.extraEmails ?? []) {
@@ -241,6 +280,7 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
       html,
       text,
       skipPrefs: true,
+      skipDevGuard: input.skipDevGuard,
       headers,
     })
   }

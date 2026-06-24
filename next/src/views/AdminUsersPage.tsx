@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { authApi } from '@/api/auth'
 import { billingApi } from '@/api/billing'
 import { isCapacitor } from '@/lib/api-client'
-import DemoAccountBadge from '@/components/DemoAccountBadge'
 
 const APP_ROLES = ['user', 'admin', 'coach'] as const
 
@@ -44,8 +43,8 @@ type User = {
   credits?: number
   token_balance?: number
   eternal_sap?: number
-  is_demo?: boolean
   admin_is_coach?: boolean
+  billing_bypass?: boolean
   coach_verified?: boolean
 }
 
@@ -111,12 +110,14 @@ function UserEditPanel({
 }) {
   const [appRole, setAppRole] = useState(user.app_role || 'user')
   const [adminIsCoach, setAdminIsCoach] = useState(!!user.admin_is_coach)
+  const [billingBypass, setBillingBypass] = useState(!!user.billing_bypass)
   const [coachVerified, setCoachVerified] = useState(!!user.coach_verified)
   useEffect(() => {
     setAppRole(user.app_role || 'user')
     setAdminIsCoach(!!user.admin_is_coach)
+    setBillingBypass(!!user.billing_bypass)
     setCoachVerified(!!user.coach_verified)
-  }, [user.app_role, user.admin_is_coach, user.coach_verified])
+  }, [user.app_role, user.admin_is_coach, user.billing_bypass, user.coach_verified])
   const [roleSaving, setRoleSaving] = useState(false)
   const [roleMsg, setRoleMsg] = useState<{ text: string; type: string } | null>(null)
   const [redemptions, setRedemptions] = useState<Redemption[] | null>(null)
@@ -178,6 +179,7 @@ function UserEditPanel({
       if (willBeAdmin) {
         payload.admin_is_coach = adminIsCoach
       }
+      payload.billing_bypass = billingBypass
       if (showCoachVerified) {
         payload.coach_verified = coachVerified
       }
@@ -328,7 +330,6 @@ function UserEditPanel({
           <div className="flex-1 min-w-0">
             <p className="font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5 flex-wrap">
               <span className="truncate">{user.name || user.login}</span>
-              {user.is_demo ? <DemoAccountBadge /> : null}
             </p>
             <p className="text-xs text-slate-400 truncate">{user.email}</p>
             {user.last_login && (
@@ -390,6 +391,28 @@ function UserEditPanel({
                 {roleMsg.text}
               </p>
             )}
+          </section>
+
+          <section className="rounded-xl border border-sky-300/70 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/20 p-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={billingBypass}
+                onChange={(e) => setBillingBypass(e.target.checked)}
+                className="mt-1 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus:ring-sky-400"
+              />
+              <div>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Exemption facturation (staff / test)
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Aucun débit de Sève ni blocage quota — pour tester l&apos;app comme développeur. À activer sur votre compte uniquement en prod.
+                </p>
+              </div>
+            </label>
+            <p className="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+              Enregistrez avec le bouton « Enregistrer » de la section Rôle ci-dessus.
+            </p>
           </section>
 
           {showAccompagnementSection && (
@@ -515,7 +538,7 @@ function UserEditPanel({
                   {
                     label: 'Messages chat',
                     key: 'chat_messages_count',
-                    limit: usageData?.limits?.chat_messages_per_month ?? 10,
+                    limit: usageData?.limits?.chat_messages_per_month ?? 5,
                     icon: '💬',
                   },
                   {
@@ -527,7 +550,7 @@ function UserEditPanel({
                   {
                     label: 'Tirages',
                     key: 'tirages_count',
-                    limit: usageData?.limits?.tirages_per_month ?? 5,
+                    limit: usageData?.limits?.tirages_per_month ?? 3,
                     icon: '🎴',
                   },
                   {
@@ -1019,6 +1042,7 @@ export default function AdminUsersPage() {
         (fresh.app_role !== editing.app_role ||
           fresh.wp_role !== editing.wp_role ||
           fresh.admin_is_coach !== editing.admin_is_coach ||
+          fresh.billing_bypass !== editing.billing_bypass ||
           fresh.coach_verified !== editing.coach_verified)
       ) {
         setEditing(fresh)
@@ -1061,12 +1085,6 @@ export default function AdminUsersPage() {
               {users.items?.filter((u) => u.app_role === 'coach').length ?? 0}
             </p>
             <p className="text-xs text-slate-500">Coachs</p>
-          </div>
-          <div className="rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-white/40 dark:border-slate-700/60 p-4">
-            <p className="text-2xl font-bold text-sky-500">
-              {users.items?.filter((u) => u.is_demo).length ?? 0}
-            </p>
-            <p className="text-xs text-slate-500">Comptes virtuels (démo)</p>
           </div>
           <div className="rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-white/40 dark:border-slate-700/60 p-4">
             <p className="text-2xl font-bold text-emerald-500">
@@ -1174,7 +1192,6 @@ export default function AdminUsersPage() {
                         <div className="min-w-0 truncate">
                           <p className="font-medium text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5 flex-wrap">
                             <span className="truncate">{u.name || u.login}</span>
-                            {u.is_demo ? <DemoAccountBadge /> : null}
                           </p>
                           <p className="text-[10px] text-slate-400 truncate">{u.login}</p>
                         </div>

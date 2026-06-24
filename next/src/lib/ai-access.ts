@@ -8,7 +8,7 @@ import { loadUserAiProfile, type UserAiProfile } from './ai-user-profile'
 import { readMonthlyUsage, incrementUsage, type UsageKey } from './db-usage'
 import { checkAiRateLimit } from './ai-rate-limit'
 
-export type AiBillingMode = 'free' | 'full_access' | 'sap' | 'admin' | 'denied'
+export type AiBillingMode = 'free' | 'full_access' | 'sap' | 'admin' | 'staff' | 'denied'
 
 export type AiAccessResult = {
   allowed: boolean
@@ -54,16 +54,20 @@ export async function resolveAiAccess(
     return { ...base, code: 'ADMIN_ONLY', reason: 'Réservé aux administrateurs.' }
   }
 
-  if (opts.isAdmin) {
-    return { ...base, allowed: true, billingMode: 'admin' }
-  }
-
   if (userId == null) {
     return { ...base, code: 'PREMIUM_LOCKED', reason: 'Authentification requise.' }
   }
 
   const profile = await loadUserAiProfile(userId)
   const withProfile = { ...base, profile }
+
+  if (profile.billingBypass) {
+    return { ...withProfile, allowed: true, billingMode: 'staff' }
+  }
+
+  if (opts.isAdmin && task.adminOnly) {
+    return { ...withProfile, allowed: true, billingMode: 'admin' }
+  }
 
   if (profile.hasFullAccess) {
     return { ...withProfile, allowed: true, billingMode: 'full_access' }
