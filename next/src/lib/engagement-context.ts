@@ -135,6 +135,76 @@ export async function loadEngagementPersonalization(
   }
 }
 
+const EMPTY_PERSONALIZATION_FIELDS = {
+  pseudo: null,
+  dominantPetalId: null,
+  dominantPetalName: null,
+  shadowPetalName: null,
+  lastCardName: null,
+  inProgressSessionId: null,
+  inProgressDoor: null,
+  petalScores: null,
+  hasFleurProfile: false,
+  plan14j: null,
+  plan14jSessionId: null,
+  daysSinceCheckin: null,
+} as const
+
+/** Personnalisation minimale pour l’aperçu admin (évite N× requêtes lourdes). */
+export function emptyEngagementPersonalization(
+  locale: ServerLocale,
+  displayName = ''
+): EngagementPersonalization {
+  return { locale, displayName, ...EMPTY_PERSONALIZATION_FIELDS }
+}
+
+/** Lot léger : locale + nom pour la liste des destinataires admin. */
+export async function loadEngagementAudiencePersonalizationsBatch(
+  users: Array<{ userId: number }>
+): Promise<Map<number, EngagementPersonalization>> {
+  const out = new Map<number, EngagementPersonalization>()
+  if (users.length === 0) return out
+
+  const userIds = [...new Set(users.map((u) => u.userId).filter(Boolean))]
+  const localeMap = await getUserLocalesBatch(userIds)
+
+  if (!isDbConfigured()) {
+    for (const id of userIds) {
+      out.set(id, emptyEngagementPersonalization(localeMap.get(id) ?? 'fr'))
+    }
+    return out
+  }
+
+  const pool = getPool()
+  const tUsers = table('users')
+  const tMeta = table('usermeta')
+  const placeholders = userIds.map(() => '?').join(',')
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT u.ID AS user_id, u.display_name AS display_name,
+            (SELECT meta_value FROM ${tMeta} pm
+              WHERE pm.user_id = u.ID AND pm.meta_key = 'fleur_pseudo' LIMIT 1) AS pseudo
+       FROM ${tUsers} u
+      WHERE u.ID IN (${placeholders})`,
+    userIds
+  )
+
+  for (const r of rows) {
+    const userId = Number(r.user_id)
+    if (!userId) continue
+    const locale = localeMap.get(userId) ?? 'fr'
+    const pseudo = String(r.pseudo ?? '').trim() || null
+    const displayName = pseudo || String(r.display_name ?? '').trim() || ''
+    out.set(userId, emptyEngagementPersonalization(locale, displayName))
+  }
+
+  for (const id of userIds) {
+    if (!out.has(id)) {
+      out.set(id, emptyEngagementPersonalization(localeMap.get(id) ?? 'fr'))
+    }
+  }
+  return out
+}
+
 export async function loadEngagementPersonalizationsBatch(
   users: Array<{ userId: number; email: string | null }>
 ): Promise<Map<number, EngagementPersonalization>> {

@@ -7,6 +7,7 @@ import { requireAdmin, ApiError } from '@/lib/api-auth'
 import { previewEngagementAudience } from '@/lib/engagement-remind-run'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 function parseIntParam(raw: string | null, fallback: number, min: number, max: number): number {
   const n = raw ? Number(raw) : fallback

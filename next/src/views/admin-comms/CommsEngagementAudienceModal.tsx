@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { api } from '@/lib/api-client'
 import { toast } from '@/hooks/useToast'
@@ -87,24 +87,51 @@ export function CommsEngagementAudienceModal({ open, onClose }: Props) {
   const [filterCampaign, setFilterCampaign] = useState('all')
   const [deliveryFilter, setDeliveryFilter] = useState<DeliveryFilter>('all')
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const loadSeq = useRef(0)
 
   useEffect(() => setMounted(true), [])
 
-  const fetchAudience = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = (await api.get('/api/engagement/audience')) as AudienceData
-      setData(res)
-      setExpandedId(null)
-    } catch {
-      toast('Impossible de charger les destinataires', 'error')
-    }
-    setLoading(false)
-  }, [])
-
   useEffect(() => {
-    if (open) void fetchAudience()
-  }, [open, fetchAudience])
+    if (!open) return
+    const seq = ++loadSeq.current
+    setLoading(true)
+    setData(null)
+    void api
+      .get('/api/engagement/audience')
+      .then((res) => {
+        if (seq !== loadSeq.current) return
+        setData(res as AudienceData)
+        setExpandedId(null)
+      })
+      .catch((err: unknown) => {
+        if (seq !== loadSeq.current) return
+        const msg = (err as { message?: string })?.message
+        toast(msg || 'Impossible de charger les destinataires', 'error')
+      })
+      .finally(() => {
+        if (seq === loadSeq.current) setLoading(false)
+      })
+  }, [open])
+
+  const reload = () => {
+    const seq = ++loadSeq.current
+    setLoading(true)
+    void api
+      .get('/api/engagement/audience')
+      .then((res) => {
+        if (seq !== loadSeq.current) return
+        setData(res as AudienceData)
+        setExpandedId(null)
+      })
+      .catch((err: unknown) => {
+        if (seq !== loadSeq.current) return
+        const msg = (err as { message?: string })?.message
+        toast(msg || 'Impossible de charger les destinataires', 'error')
+      })
+      .finally(() => {
+        if (seq === loadSeq.current) setLoading(false)
+      })
+  }
 
   const filtered = useMemo(() => {
     if (!data) return []
@@ -141,7 +168,7 @@ export function CommsEngagementAudienceModal({ open, onClose }: Props) {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => void fetchAudience()}
+              onClick={reload}
               disabled={loading}
               className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
             >

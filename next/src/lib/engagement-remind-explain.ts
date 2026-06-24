@@ -53,8 +53,13 @@ export async function checkEngagementEmailPrefs(userId: number): Promise<{ ok: b
     [userId]
   )
   if (!rows[0]?.preferences_json) return { ok: true }
+  return parseEmailPrefsRow(rows[0].preferences_json)
+}
+
+function parseEmailPrefsRow(preferencesJson: unknown): { ok: boolean; reason?: string } {
+  if (!preferencesJson) return { ok: true }
   try {
-    const prefs = JSON.parse(String(rows[0].preferences_json)) as {
+    const prefs = JSON.parse(String(preferencesJson)) as {
       email_enabled?: boolean
       email_digest?: string
     }
@@ -68,6 +73,35 @@ export async function checkEngagementEmailPrefs(userId: number): Promise<{ ok: b
   } catch {
     return { ok: true }
   }
+}
+
+export async function checkEngagementEmailPrefsBatch(
+  userIds: number[]
+): Promise<Map<number, { ok: boolean; reason?: string }>> {
+  const out = new Map<number, { ok: boolean; reason?: string }>()
+  if (userIds.length === 0) return out
+  if (!isDbConfigured()) {
+    for (const id of userIds) out.set(id, { ok: false, reason: 'db_non_configuree' })
+    return out
+  }
+  const pool = getPool()
+  const tPref = table('fleur_notification_preferences')
+  const placeholders = userIds.map(() => '?').join(',')
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT user_id, preferences_json FROM ${tPref} WHERE user_id IN (${placeholders})`,
+    userIds
+  )
+  const withPrefs = new Set<number>()
+  for (const r of rows) {
+    const userId = Number(r.user_id)
+    if (!userId) continue
+    withPrefs.add(userId)
+    out.set(userId, parseEmailPrefsRow(r.preferences_json))
+  }
+  for (const id of userIds) {
+    if (!out.has(id)) out.set(id, { ok: true })
+  }
+  return out
 }
 
 function findInCandidates(

@@ -4,7 +4,7 @@
 import type { EngagementCandidate } from '@/lib/db-engagement'
 import { isDbConfigured } from '@/lib/db'
 import { findAllowlistPilotCandidates, findEngagementCandidates, findRecentlyNudgedUserIds, countInactiveUsers } from '@/lib/db-engagement'
-import { loadEngagementPersonalization } from '@/lib/engagement-context'
+import { loadEngagementAudiencePersonalizationsBatch, loadEngagementPersonalization, emptyEngagementPersonalization } from '@/lib/engagement-context'
 import { sendEngagementNotification } from '@/lib/send-engagement-notification'
 import {
   canSendEngagementRemindToEmail,
@@ -17,7 +17,7 @@ import { isVirtualAccount } from '@/lib/demo-accounts'
 import { isSmtpConfigured } from '@/lib/smtp'
 import {
   allowlistEmailsMissingFromDatabase,
-  checkEngagementEmailPrefs,
+  checkEngagementEmailPrefsBatch,
   explainEngagementRemind,
 } from '@/lib/engagement-remind-explain'
 import { buildEngagementTemplate, type EngagementCampaignId } from '@/lib/engagement-templates'
@@ -33,7 +33,8 @@ export type EngagementRemindInput = {
 }
 
 async function describeDeliverability(
-  c: EngagementCandidate
+  c: EngagementCandidate,
+  realUserIds?: Set<number>
 ): Promise<{ deliverable: boolean; skipReasons: string[] }> {
   const skipReasons: string[] = []
   if (!c.email?.trim()) {
@@ -44,8 +45,9 @@ async function describeDeliverability(
     skipReasons.push('compte_virtuel')
     return { deliverable: false, skipReasons }
   }
-  const realIds = await filterOutDemoUserIds([c.userId])
-  if (realIds.length === 0) {
+  const isReal =
+    realUserIds != null ? realUserIds.has(c.userId) : (await filterOutDemoUserIds([c.userId])).length > 0
+  if (!isReal) {
     skipReasons.push('compte_demo')
     return { deliverable: false, skipReasons }
   }
@@ -181,64 +183,76 @@ export async function previewEngagementAudience(
   const recentlyNudged = await findRecentlyNudgedUserIds(cooldownHours)
   const inactiveUsersTotal = await countInactiveUsers(inactiveDays)
 
+  const userIds = candidates.map((c) => c.userId)
+  const realUserIds = new Set(await filterOutDemoUserIds(userIds))
+  const [personalizations, emailPrefs] = await Promise.all([
+    loadEngagementAudiencePersonalizationsBatch(candidates.map((c) => ({ userId: c.userId }))),
+    checkEngagementEmailPrefsBatch(userIds),
+  ])
+
   const recipients: EngagementRecipientPreview[] = []
   const byCampaign: Record<string, number> = {}
   let wouldDeliverCount = 0
 
   for (const c of candidates) {
-    const { deliverable, skipReasons } = await describeDeliverability(c)
-    if (deliverable) wouldDeliverCount++
+    try {
+      const { deliverable, skipReasons } = await describeDeliverability(c, realUserIds)
+      if (deliverable) wouldDeliverCount++
 
-    const email = String(c.email ?? '').trim()
-    const personalization = await loadEngagementPersonalization(c.userId, email)
-    const vars = {
-      ...(c.vars ?? {}),
-      personalization,
-      ...(c.campaignId === 'plan14j' && c.source_id ? { sessionId: c.source_id } : {}),
-    }
-    const template = buildEngagementTemplate(c.campaignId, personalization.locale, vars)
-
-    const emailSkipReasons: string[] = []
-    let emailChannel = false
-    if (!deliverable) {
-      emailSkipReasons.push(...skipReasons)
-    } else if (!isSmtpConfigured()) {
-      emailSkipReasons.push('smtp_non_configure')
-    } else {
-      const prefs = await checkEngagementEmailPrefs(c.userId)
-      if (prefs.ok) {
-        emailChannel = true
-      } else if (prefs.reason) {
-        emailSkipReasons.push(prefs.reason)
+      const email = String(c.email ?? '').trim()
+      const personalization =
+        personalizations.get(c.userId) ?? emptyEngagementPersonalization('fr')
+      const vars = {
+        ...(c.vars ?? {}),
+        personalization,
+        ...(c.campaignId === 'plan14j' && c.source_id ? { sessionId: c.source_id } : {}),
       }
+      const template = buildEngagementTemplate(c.campaignId, personalization.locale, vars)
+
+      const emailSkipReasons: string[] = []
+      let emailChannel = false
+      if (!deliverable) {
+        emailSkipReasons.push(...skipReasons)
+      } else if (!isSmtpConfigured()) {
+        emailSkipReasons.push('smtp_non_configure')
+      } else {
+        const prefs = emailPrefs.get(c.userId) ?? { ok: true }
+        if (prefs.ok) {
+          emailChannel = true
+        } else if (prefs.reason) {
+          emailSkipReasons.push(prefs.reason)
+        }
+      }
+
+      const source: 'natural' | 'pilot' = naturalUserIds.has(c.userId) ? 'natural' : 'pilot'
+      byCampaign[c.campaignId] = (byCampaign[c.campaignId] ?? 0) + 1
+
+      recipients.push({
+        userId: c.userId,
+        email,
+        displayName: personalization.displayName || personalization.pseudo || null,
+        locale: template.locale,
+        campaignId: c.campaignId,
+        source,
+        inApp: deliverable,
+        willSendEmail: deliverable && emailChannel,
+        wouldDeliver: deliverable,
+        skipReasons,
+        emailSkipReasons,
+        notification: {
+          type: template.type,
+          title: template.title,
+          body: template.body,
+          action_label: template.action_label,
+          action_url: template.action_url,
+        },
+        emailPreview: {
+          subject: template.emailSubject,
+        },
+      })
+    } catch {
+      /* ignorer un profil corrompu sans bloquer toute la liste */
     }
-
-    const source: 'natural' | 'pilot' = naturalUserIds.has(c.userId) ? 'natural' : 'pilot'
-    byCampaign[c.campaignId] = (byCampaign[c.campaignId] ?? 0) + 1
-
-    recipients.push({
-      userId: c.userId,
-      email,
-      displayName: personalization.displayName || personalization.pseudo || null,
-      locale: template.locale,
-      campaignId: c.campaignId,
-      source,
-      inApp: deliverable,
-      willSendEmail: deliverable && emailChannel,
-      wouldDeliver: deliverable,
-      skipReasons,
-      emailSkipReasons,
-      notification: {
-        type: template.type,
-        title: template.title,
-        body: template.body,
-        action_label: template.action_label,
-        action_url: template.action_url,
-      },
-      emailPreview: {
-        subject: template.emailSubject,
-      },
-    })
   }
 
   return {
