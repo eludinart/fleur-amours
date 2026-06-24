@@ -28,6 +28,9 @@ export async function sendEngagementNotification(
   const vars: EngagementTemplateVars = {
     ...(input.vars ?? {}),
     personalization: input.personalization,
+    ...(input.campaignId === 'plan14j' && input.source_id
+      ? { sessionId: input.source_id }
+      : {}),
   }
   const template = buildEngagementTemplate(
     input.campaignId,

@@ -350,6 +350,7 @@ function mergeEngagementPersonalization(
     dominantPetalId: input.dominantPetalId ?? loaded.dominantPetalId,
     dominantPetalName: input.dominantPetalName ?? loaded.dominantPetalName,
     plan14j: input.plan14j ?? loaded.plan14j,
+    plan14jSessionId: input.plan14jSessionId ?? loaded.plan14jSessionId,
     locale: input.locale ?? loaded.locale,
   }
 }

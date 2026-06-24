@@ -32,6 +32,8 @@ export type EngagementTemplateVars = {
   day?: number
   action?: string
   planProgressPct?: number
+  /** Session terminée portant le plan 14j en cours (relance plan14j). */
+  sessionId?: number
   personalization?: EngagementPersonalization
 }
 
@@ -66,8 +68,11 @@ function resolveActionUrl(
 ): string {
   const p = vars.personalization
   switch (campaignId) {
-    case 'plan14j':
-      return '/'
+    case 'plan14j': {
+      const sessionId = vars.sessionId ?? p?.plan14jSessionId
+      if (sessionId) return `/session?open=${sessionId}`
+      return '/session'
+    }
     case 'checkin':
       return '/checkin'
     case 'tirage':
@@ -239,6 +244,7 @@ export const PLAN14J_PREVIEW_VARS: EngagementTemplateVars = {
     },
     hasFleurProfile: true,
     plan14j: { currentDay: 3, progressPct: 21 },
+    plan14jSessionId: 1,
     daysSinceCheckin: 2,
   },
 }

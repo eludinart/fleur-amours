@@ -27,6 +27,7 @@ export type EngagementPersonalization = {
   petalScores: Record<string, number> | null
   hasFleurProfile: boolean
   plan14j: { currentDay: number; progressPct: number } | null
+  plan14jSessionId: number | null
   daysSinceCheckin: number | null
 }
 
@@ -89,6 +90,7 @@ export async function loadEngagementPersonalization(
   let inProgressDoor: string | null = null
   let sessions: Array<Record<string, unknown>> = []
   let plan14j: EngagementPersonalization['plan14j'] = null
+  let plan14jSessionId: number | null = null
   if (userEmail) {
     const { items } = await listByEmailForTimeline(userEmail, 15)
     sessions = items
@@ -103,6 +105,7 @@ export async function loadEngagementPersonalization(
     const activePlan = findActivePlan14j(items as Array<Record<string, unknown>>)
     if (activePlan) {
       plan14j = { currentDay: activePlan.currentDay, progressPct: activePlan.progressPct }
+      plan14jSessionId = Number(activePlan.sessionId) || null
     }
   }
 
@@ -127,6 +130,7 @@ export async function loadEngagementPersonalization(
     petalScores,
     hasFleurProfile,
     plan14j,
+    plan14jSessionId,
     daysSinceCheckin,
   }
 }
