@@ -1,8 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from '@/hooks/useToast'
 import { api } from '@/lib/api-client'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 type BroadcastRow = {
   id: number
@@ -56,6 +58,23 @@ export function CommsBroadcastHistory() {
     refresh()
   }, [refresh])
 
+  const broadcastSortAccessors = useMemo(
+    () => ({
+      id: (b: BroadcastRow) => b.id,
+      title: (b: BroadcastRow) => (b.title || '').toLowerCase(),
+      channel: (b: BroadcastRow) => channelLabel(b).toLowerCase(),
+      status: (b: BroadcastRow) => b.status || '',
+      created_at: (b: BroadcastRow) => b.created_at || '',
+    }),
+    [],
+  )
+
+  const { sortedItems: sortedHistory, sortKey, sortDir, toggleSort } = useTableSort(
+    history?.items,
+    broadcastSortAccessors,
+    { defaultKey: 'created_at', defaultDir: 'desc' },
+  )
+
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
       <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
@@ -78,11 +97,11 @@ export function CommsBroadcastHistory() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800/80">
             <tr>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">ID</th>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Titre</th>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Canal</th>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Statut</th>
-              <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Créée</th>
+              <SortableTh columnKey="id" label="ID" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+              <SortableTh columnKey="title" label="Titre" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+              <SortableTh columnKey="channel" label="Canal" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+              <SortableTh columnKey="status" label="Statut" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+              <SortableTh columnKey="created_at" label="Créée" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
             </tr>
           </thead>
           <tbody>
@@ -92,8 +111,8 @@ export function CommsBroadcastHistory() {
                   Chargement…
                 </td>
               </tr>
-            ) : (history?.items.length ?? 0) > 0 ? (
-              history!.items.map((b) => (
+            ) : (sortedHistory.length ?? 0) > 0 ? (
+              sortedHistory.map((b) => (
                 <tr key={b.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                   <td className="px-4 py-3 font-mono text-xs text-slate-500">{b.id}</td>
                   <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{b.title}</td>

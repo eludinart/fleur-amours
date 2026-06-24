@@ -2,7 +2,7 @@
  * Candidats à une relance plan 14 jours (notification matinale).
  */
 import type { RowDataPacket } from 'mysql2/promise'
-import { getPool, isDbConfigured, table } from './db'
+import { getPool, isDbConfigured, sqlEmailEq, table } from './db'
 import { findActivePlan14j, type Plan14jDay } from './plan14j-active'
 
 const TBL_SESSIONS = () => table('fleur_sessions')
@@ -34,7 +34,7 @@ export async function findPlan14jReminderCandidates(limit = 80): Promise<Plan14j
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT s.id, s.email, s.status, s.plan14j_json, s.step_data_json, s.created_at, u.ID as user_id
      FROM ${TBL_SESSIONS()} s
-     INNER JOIN ${table('users')} u ON LOWER(u.user_email) = LOWER(s.email)
+     INNER JOIN ${table('users')} u ON ${sqlEmailEq('u.user_email', 's.email')}
      WHERE s.plan14j_json IS NOT NULL AND s.plan14j_json != 'null' AND s.plan14j_json != ''
        AND s.status IN ('completed', 'done', 'finished', 'closed', 'terminated')
      ORDER BY s.created_at DESC

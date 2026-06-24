@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useStore } from '@/store/useStore'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 type Card = { slug?: string; name?: string; sections?: unknown[]; info?: Record<string, unknown>; [k: string]: unknown }
 
@@ -11,6 +13,33 @@ export default function MatrixPage() {
   const [built, setBuilt] = useState(false)
 
   function build() { setBuilt(true) }
+
+  const matrixSortAccessors = useMemo(
+    () => ({
+      slug: (c: Card) => (c.slug || '').toLowerCase(),
+      name: (c: Card) => (c.name || '').toLowerCase(),
+      sections: (c: Card) =>
+        Array.isArray(c.sections)
+          ? c.sections.length
+          : c.info?.sections
+            ? (c.info.sections as unknown[]).length
+            : 0,
+      value: (c: Card) => {
+        if (!key) return ''
+        const raw = c[key] !== undefined ? c[key] : c.info?.[key] ?? ''
+        return isNaN(Number(raw)) ? String(raw) : Number(raw)
+      },
+    }),
+    [key],
+  )
+
+  const { sortedItems: sortedCards, sortKey, sortDir, toggleSort } = useTableSort(
+    built ? cards : [],
+    matrixSortAccessors,
+    { defaultKey: 'slug', defaultDir: 'asc' },
+  )
+
+  const matrixThClass = 'px-4 py-2 text-left font-semibold text-slate-600 dark:text-slate-300'
 
   return (
     <div className="space-y-4">
@@ -38,13 +67,14 @@ export default function MatrixPage() {
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 dark:bg-slate-800">
               <tr>
-                {['slug', 'nom', 'sections', key || 'valeur'].map((h) => (
-                  <th key={h} className="px-4 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">{h}</th>
-                ))}
+                <SortableTh columnKey="slug" label="slug" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={matrixThClass} />
+                <SortableTh columnKey="name" label="nom" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={matrixThClass} />
+                <SortableTh columnKey="sections" label="sections" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={matrixThClass} />
+                <SortableTh columnKey="value" label={key || 'valeur'} sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={matrixThClass} />
               </tr>
             </thead>
             <tbody>
-              {cards.map((c) => {
+              {sortedCards.map((c) => {
                 const secs = Array.isArray(c.sections) ? c.sections.length
                   : (c.info?.sections ? (c.info.sections as unknown[]).length : 0)
                 const raw = key ? (c[key] !== undefined ? c[key] : c.info?.[key] ?? '') : ''

@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { telemetryApi, type TelemetryEventItem } from '@/api/telemetry'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 function isoDaysAgo(days: number): string {
   const d = new Date()
@@ -356,6 +358,55 @@ export default function AdminTelemetryPage() {
       .slice(0, 12)
   }, [items])
 
+  type TopErrorRow = {
+    key: string
+    kind: 'api_error' | 'client_exception' | 'ui_error_shown' | 'unhandled_rejection'
+    count: number
+    last_ts: string
+    sample_path?: string | null
+    status?: number
+    code?: string | null
+    message?: string
+  }
+
+  const errorSortAccessors = useMemo(
+    () => ({
+      kind: (r: TopErrorRow) => r.kind,
+      message: (r: TopErrorRow) => r.message || '',
+      count: (r: TopErrorRow) => r.count,
+      last_ts: (r: TopErrorRow) => r.last_ts,
+      sample_path: (r: TopErrorRow) => r.sample_path || '',
+    }),
+    [],
+  )
+
+  const eventSortAccessors = useMemo(
+    () => ({
+      ts: (it: TelemetryEventItem) => it.ts || '',
+      env: (it: TelemetryEventItem) => it.env || '',
+      name: (it: TelemetryEventItem) => it.name || '',
+      feature: (it: TelemetryEventItem) => String((it.properties as { feature?: string } | undefined)?.feature || ''),
+      path: (it: TelemetryEventItem) => it.path || '',
+      user_id: (it: TelemetryEventItem) => it.user_id ?? 0,
+      anon_id: (it: TelemetryEventItem) => it.anon_id || '',
+    }),
+    [],
+  )
+
+  const { sortedItems: sortedTopErrors, sortKey: errorSortKey, sortDir: errorSortDir, toggleSort: toggleErrorSort } = useTableSort(
+    topErrors as TopErrorRow[],
+    errorSortAccessors,
+    { defaultKey: 'count', defaultDir: 'desc' },
+  )
+
+  const { sortedItems: sortedVisibleItems, sortKey: eventSortKey, sortDir: eventSortDir, toggleSort: toggleEventSort } = useTableSort(
+    visibleItems,
+    eventSortAccessors,
+    { defaultKey: 'ts', defaultDir: 'desc' },
+  )
+
+  const telemetryThClass = 'px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest'
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -644,18 +695,16 @@ export default function AdminTelemetryPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800">
-                  {['Type', 'Message', 'Count', 'Dernière', 'Path', ''].map((h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  <SortableTh columnKey="kind" label="Type" sortKey={errorSortKey} sortDir={errorSortDir} onSort={toggleErrorSort} className={telemetryThClass} />
+                  <SortableTh columnKey="message" label="Message" sortKey={errorSortKey} sortDir={errorSortDir} onSort={toggleErrorSort} className={telemetryThClass} />
+                  <SortableTh columnKey="count" label="Count" sortKey={errorSortKey} sortDir={errorSortDir} onSort={toggleErrorSort} className={telemetryThClass} />
+                  <SortableTh columnKey="last_ts" label="Dernière" sortKey={errorSortKey} sortDir={errorSortDir} onSort={toggleErrorSort} className={telemetryThClass} />
+                  <SortableTh columnKey="sample_path" label="Path" sortKey={errorSortKey} sortDir={errorSortDir} onSort={toggleErrorSort} className={telemetryThClass} />
+                  <th className={telemetryThClass}></th>
                 </tr>
               </thead>
               <tbody>
-                {topErrors.map((r) => (
+                {sortedTopErrors.map((r) => (
                   <tr
                     key={r.key}
                     className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
@@ -709,18 +758,19 @@ export default function AdminTelemetryPage() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800">
-                {['Date', 'Env', 'Event', 'Flags', 'Feature', 'Path', 'user_id', 'anon_id', ''].map((h) => (
-                  <th
-                    key={h}
-                    className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest"
-                  >
-                    {h}
-                  </th>
-                ))}
+                <SortableTh columnKey="ts" label="Date" sortKey={eventSortKey} sortDir={eventSortDir} onSort={toggleEventSort} className={telemetryThClass} />
+                <SortableTh columnKey="env" label="Env" sortKey={eventSortKey} sortDir={eventSortDir} onSort={toggleEventSort} className={telemetryThClass} />
+                <SortableTh columnKey="name" label="Event" sortKey={eventSortKey} sortDir={eventSortDir} onSort={toggleEventSort} className={telemetryThClass} />
+                <th className={telemetryThClass}>Flags</th>
+                <SortableTh columnKey="feature" label="Feature" sortKey={eventSortKey} sortDir={eventSortDir} onSort={toggleEventSort} className={telemetryThClass} />
+                <SortableTh columnKey="path" label="Path" sortKey={eventSortKey} sortDir={eventSortDir} onSort={toggleEventSort} className={telemetryThClass} />
+                <SortableTh columnKey="user_id" label="user_id" sortKey={eventSortKey} sortDir={eventSortDir} onSort={toggleEventSort} className={telemetryThClass} />
+                <SortableTh columnKey="anon_id" label="anon_id" sortKey={eventSortKey} sortDir={eventSortDir} onSort={toggleEventSort} className={telemetryThClass} />
+                <th className={telemetryThClass}></th>
               </tr>
             </thead>
             <tbody>
-              {visibleItems.map((it) => {
+              {sortedVisibleItems.map((it) => {
                 const flags = computeFlags(it)
                 const tone = rowTone(flags)
                 return (
@@ -779,7 +829,7 @@ export default function AdminTelemetryPage() {
                   </td>
                 </tr>
               )})}
-              {visibleItems.length === 0 && !loading && (
+              {sortedVisibleItems.length === 0 && !loading && (
                 <tr>
                   <td colSpan={9} className="px-4 py-10 text-center text-sm text-slate-400 italic">
                     Aucun événement pour ces filtres.

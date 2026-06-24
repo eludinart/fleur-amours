@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from '@/hooks/useToast'
 import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/lib/api-client'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 import {
   ADMIN_NOTIFICATION_DEST_CUSTOM,
   groupAdminNotificationDestinations,
@@ -169,6 +171,22 @@ export default function AdminBroadcastsPage() {
     setSending(false)
   }
 
+  const broadcastSortAccessors = useMemo(
+    () => ({
+      id: (b: BroadcastListItem) => b.id,
+      title: (b: BroadcastListItem) => (b.title || '').toLowerCase(),
+      status: (b: BroadcastListItem) => b.status || '',
+      created_at: (b: BroadcastListItem) => b.created_at || '',
+    }),
+    [],
+  )
+
+  const { sortedItems: sortedList, sortKey, sortDir, toggleSort } = useTableSort(
+    list?.items,
+    broadcastSortAccessors,
+    { defaultKey: 'created_at', defaultDir: 'desc' },
+  )
+
   return (
     <div className="w-full min-w-0 space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -214,17 +232,17 @@ export default function AdminBroadcastsPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 dark:bg-slate-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">ID</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Titre</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Statut</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Créée</th>
+                  <SortableTh columnKey="id" label="ID" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh columnKey="title" label="Titre" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh columnKey="status" label="Statut" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh columnKey="created_at" label="Créée" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400">Chargement…</td></tr>
-                ) : (list?.items?.length ?? 0) > 0 ? (
-                  list!.items.map((b) => (
+                ) : sortedList.length > 0 ? (
+                  sortedList.map((b) => (
                     <tr key={b.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                       <td className="px-4 py-3 font-mono text-xs">{b.id}</td>
                       <td className="px-4 py-3">{b.title}</td>

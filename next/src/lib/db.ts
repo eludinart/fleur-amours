@@ -100,6 +100,19 @@ export function table(name: string): string {
   return `${DB_PREFIX}${name}`
 }
 
+/** Collation neutre pour comparer des colonnes WordPress (unicode_520) et Fleur (uca1400). */
+export const SQL_TEXT_COLLATE = 'utf8mb4_unicode_ci'
+
+/** Égalité texte sans erreur « Illegal mix of collations ». */
+export function sqlTextEq(leftExpr: string, rightExpr: string): string {
+  return `(${leftExpr}) COLLATE ${SQL_TEXT_COLLATE} = (${rightExpr}) COLLATE ${SQL_TEXT_COLLATE}`
+}
+
+/** Comparaison d'e-mails entre tables (insensible à la casse). */
+export function sqlEmailEq(leftCol: string, rightCol: string): string {
+  return sqlTextEq(`LOWER(${leftCol})`, `LOWER(${rightCol})`)
+}
+
 export function isDbConfigured(): boolean {
   return !!(DB_HOST && DB_NAME && DB_USER && DB_PASSWORD)
 }

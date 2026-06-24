@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { statsApi } from '@/api/stats'
 import { toast } from '@/hooks/useToast'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
 import { FLEUR_INTRO, FLEUR_COMMENT_LIRE, PETAL_INTERPRETATIONS, FLEUR_CONSEIL } from '@/data/fleurInterpretation'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 const PETAL_LABELS: Record<string, string> = { agape:'Agapè', philautia:'Philautia', mania:'Mania', storge:'Storgè', pragma:'Pragma', philia:'Philia', ludus:'Ludus', eros:'Éros' }
 
@@ -114,6 +116,24 @@ export default function StatsPage() {
     }
   }
 
+  const resultSortAccessors = useMemo(
+    () => ({
+      id: (r: ResultItem) => r.id,
+      email: (r: ResultItem) => (r.email || '').toLowerCase(),
+      type: (r: ResultItem) => (r.is_duo ? 'duo' : 'solo'),
+      created_at: (r: ResultItem) => r.created_at || '',
+    }),
+    [],
+  )
+
+  const { sortedItems: sortedResults, sortKey, sortDir, toggleSort } = useTableSort(
+    results?.results,
+    resultSortAccessors,
+    { defaultKey: 'created_at', defaultDir: 'desc' },
+  )
+
+  const statsThClass = 'px-4 py-2 text-left font-semibold text-slate-500 text-xs uppercase tracking-wide'
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Statistiques des passations</h2>
@@ -180,13 +200,15 @@ export default function StatsPage() {
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 dark:bg-slate-800">
               <tr>
-                {['ID', 'Email', 'Type', 'Date', 'Actions'].map((h) => (
-                  <th key={h} className="px-4 py-2 text-left font-semibold text-slate-500 text-xs uppercase tracking-wide">{h}</th>
-                ))}
+                <SortableTh columnKey="id" label="ID" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={statsThClass} />
+                <SortableTh columnKey="email" label="Email" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={statsThClass} />
+                <SortableTh columnKey="type" label="Type" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={statsThClass} />
+                <SortableTh columnKey="created_at" label="Date" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={statsThClass} />
+                <th className={statsThClass}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {results?.results?.map((r) => (
+              {sortedResults.map((r) => (
                 <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                   <td className="px-4 py-2 font-mono text-xs">{r.id}</td>
                   <td className="px-4 py-2">{r.email || <span className="text-slate-400">—</span>}</td>
@@ -209,7 +231,7 @@ export default function StatsPage() {
         </div>
 
         <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-700">
-          {results?.results?.map((r) => (
+          {sortedResults.map((r) => (
             <div key={r.id} className="p-4 flex flex-col gap-2">
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">

@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { campaignsApi } from '@/api/campaigns'
 import { toast } from '@/hooks/useToast'
 import { FlowerSVG, scoresToPetals } from '@/components/FlowerSVG'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-slate-100 dark:bg-slate-800 text-slate-500',
@@ -214,6 +216,26 @@ export default function CampaignsPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / 15))
 
+  const campaignSortAccessors = useMemo(
+    () => ({
+      id: (c: Campaign) => c.id,
+      definition_id: (c: Campaign) => c.definition_id,
+      participant_count: (c: Campaign) => c.participant_count ?? 0,
+      result_count: (c: Campaign) => c.result_count ?? 0,
+      status: (c: Campaign) => c.status || '',
+      created_at: (c: Campaign) => c.created_at || '',
+    }),
+    [],
+  )
+
+  const { sortedItems: sortedCampaigns, sortKey, sortDir, toggleSort } = useTableSort(
+    campaigns,
+    campaignSortAccessors,
+    { defaultKey: 'created_at', defaultDir: 'desc' },
+  )
+
+  const campaignThClass = 'px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide'
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -230,13 +252,17 @@ export default function CampaignsPage() {
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
-              {['ID', 'Définition', 'Participants', 'Résultats', 'Statut', 'Créée', ''].map((h) => (
-                <th key={h} className="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
-              ))}
+              <SortableTh columnKey="id" label="ID" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={campaignThClass} />
+              <SortableTh columnKey="definition_id" label="Définition" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={campaignThClass} />
+              <SortableTh columnKey="participant_count" label="Participants" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={campaignThClass} />
+              <SortableTh columnKey="result_count" label="Résultats" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={campaignThClass} />
+              <SortableTh columnKey="status" label="Statut" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={campaignThClass} />
+              <SortableTh columnKey="created_at" label="Créée" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={campaignThClass} />
+              <th className={campaignThClass}></th>
             </tr>
           </thead>
           <tbody>
-            {campaigns.map((c) => (
+            {sortedCampaigns.map((c) => (
               <tr key={c.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                 <td className="px-4 py-2 font-mono text-xs">{c.id}</td>
                 <td className="px-4 py-2 text-slate-600 dark:text-slate-300">Déf. #{c.definition_id}</td>

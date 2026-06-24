@@ -3,7 +3,7 @@
  * Une seule relance par utilisateur et par fenêtre de cooldown.
  */
 import type { RowDataPacket } from 'mysql2/promise'
-import { getPool, isDbConfigured, table } from './db'
+import { getPool, isDbConfigured, sqlEmailEq, table } from './db'
 import { findCheckinReminderCandidates } from './db-checkins'
 import { ensureNotificationsTables } from './db-notifications'
 import { findPlan14jReminderCandidates } from './db-plan14j-remind'
@@ -128,7 +128,7 @@ async function findSessionMissingCandidates(
         )
         AND NOT EXISTS (
           SELECT 1 FROM ${tSess} s
-           INNER JOIN ${table('users')} u2 ON LOWER(u2.user_email) = LOWER(s.email)
+           INNER JOIN ${table('users')} u2 ON ${sqlEmailEq('u2.user_email', 's.email')}
            WHERE u2.ID = te.user_id
              AND s.status IN ('completed', 'done', 'finished', 'closed', 'terminated')
         )

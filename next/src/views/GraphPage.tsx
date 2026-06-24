@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { graphApi } from '@/api/graph'
 import { cardsApi } from '@/api/cards'
 import { cardImageUrl } from '@/lib/api-client'
 import { toast } from '@/hooks/useToast'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 const LAYOUTS = ['circle', 'concentric', 'grid', 'cose']
 
@@ -56,19 +58,39 @@ function NodeDetail({ slug, graphData }: { slug: string; graphData: GraphData | 
 
 function MatrixView({ graphData }: { graphData: GraphData }) {
   const slugToName = Object.fromEntries((graphData.nodes ?? []).map((n) => [n.id, n.label ?? n.id]))
-  const sorted = [...(graphData.edges ?? [])].sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+  const edges = graphData.edges ?? []
+
+  const edgeSortAccessors = useMemo(
+    () => ({
+      source: (e: GraphEdge) => (slugToName[e.source] ?? e.source).toLowerCase(),
+      target: (e: GraphEdge) => (slugToName[e.target] ?? e.target).toLowerCase(),
+      tags: (e: GraphEdge) => (e.tags ?? []).join(', ').toLowerCase(),
+      weight: (e: GraphEdge) => e.weight ?? 0,
+    }),
+    [slugToName],
+  )
+
+  const { sortedItems: sortedEdges, sortKey, sortDir, toggleSort } = useTableSort(
+    edges,
+    edgeSortAccessors,
+    { defaultKey: 'weight', defaultDir: 'desc' },
+  )
+
+  const graphThClass = 'px-4 py-2 text-left font-semibold text-slate-600 dark:text-slate-300'
+
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
       <table className="min-w-full text-sm">
         <thead className="bg-slate-50 dark:bg-slate-800">
           <tr>
-            {['Carte A', 'Carte B', 'Tags partagés', 'Nb'].map((h) => (
-              <th key={h} className="px-4 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">{h}</th>
-            ))}
+            <SortableTh columnKey="source" label="Carte A" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={graphThClass} />
+            <SortableTh columnKey="target" label="Carte B" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={graphThClass} />
+            <SortableTh columnKey="tags" label="Tags partagés" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={graphThClass} />
+            <SortableTh columnKey="weight" label="Nb" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={graphThClass} />
           </tr>
         </thead>
         <tbody>
-          {sorted.map((e, i) => (
+          {sortedEdges.map((e, i) => (
             <tr key={i} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
               <td className="px-4 py-2">{slugToName[e.source] ?? e.source}</td>
               <td className="px-4 py-2">{slugToName[e.target] ?? e.target}</td>
@@ -84,21 +106,47 @@ function MatrixView({ graphData }: { graphData: GraphData }) {
 
 function SimTable({ result }: { result: { slugs?: string[]; timeline?: Record<string, number>[] } }) {
   const { slugs = [], timeline = [] } = result
+
+  const timelineRows = useMemo(
+    () => timeline.map((st, index) => ({ index, values: st as Record<string, number> })),
+    [timeline],
+  )
+
+  const simSortAccessors = useMemo(() => {
+    const accessors: Record<string, (row: { index: number; values: Record<string, number> }) => unknown> = {
+      step: (row) => row.index,
+    }
+    for (const s of slugs) {
+      accessors[s] = (row) => row.values[s] ?? 0
+    }
+    return accessors
+  }, [slugs])
+
+  const { sortedItems: sortedTimeline, sortKey, sortDir, toggleSort } = useTableSort(
+    timelineRows,
+    simSortAccessors,
+    { defaultKey: 'step', defaultDir: 'asc' },
+  )
+
+  const simThClass = 'px-3 py-1.5 text-left'
+
   return (
     <div className="overflow-x-auto mt-3 rounded-xl border border-slate-200 dark:border-slate-700">
       <table className="text-xs min-w-full">
         <thead className="bg-slate-50 dark:bg-slate-800">
           <tr>
-            <th className="px-3 py-1.5 text-left">step</th>
-            {slugs.map((s) => <th key={s} className="px-3 py-1.5 text-left">{s}</th>)}
+            <SortableTh columnKey="step" label="step" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={simThClass} />
+            {slugs.map((s) => (
+              <SortableTh key={s} columnKey={s} label={s} sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={simThClass} />
+            ))}
           </tr>
         </thead>
         <tbody>
-          {timeline.map((st, i) => (
-            <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
-              <td className="px-3 py-1">{i}</td>
+          {sortedTimeline.map((st) => (
+            <tr key={st.index} className="border-t border-slate-100 dark:border-slate-800">
+              <td className="px-3 py-1">{st.index}</td>
               {slugs.map((s) => (
-                <td key={s} className="px-3 py-1 font-mono">{((st as Record<string, number>)[s] ?? 0).toFixed(3)}</td>
+                <td key={s} className="px-3 py-1 font-mono">{((st.values)[s] ?? 0).toFixed(3)}</td>
               ))}
             </tr>
           ))}

@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { billingApi } from '@/api/billing'
+import { SortableTh } from '@/components/SortableTh'
+import { useTableSort } from '@/hooks/useTableSort'
 
 const EMPTY_FORM = {
   code: '',
@@ -148,6 +150,43 @@ export default function AdminPromoPage() {
 
   function f(field: keyof typeof form, val: string) { setForm((prev) => ({ ...prev, [field]: val })) }
 
+  const promoThClass = 'px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide'
+
+  const codeSortAccessors = useMemo(
+    () => ({
+      code: (c: PromoCode) => (c.code || '').toLowerCase(),
+      duration: (c: PromoCode) => (c.unlimited_duration ? 999999 : (c.duration_days ?? 0)),
+      uses: (c: PromoCode) => c.uses_count ?? 0,
+      expires_at: (c: PromoCode) => c.expires_at || '',
+      status: (c: PromoCode) => (c.is_expired ? 'expired' : c.is_exhausted ? 'exhausted' : 'active'),
+      note: (c: PromoCode) => (c.note || '').toLowerCase(),
+    }),
+    [],
+  )
+
+  const redemptionSortAccessors = useMemo(
+    () => ({
+      user_id: (r: Redemption) => r.user_id,
+      promo_code: (r: Redemption) => (r.promo_code || '').toLowerCase(),
+      redeemed_at: (r: Redemption) => r.redeemed_at || '',
+      free_until: (r: Redemption) => r.free_until || '',
+      status: (r: Redemption) => (r.active ? 'active' : 'inactive'),
+    }),
+    [],
+  )
+
+  const { sortedItems: sortedCodes, sortKey: codeSortKey, sortDir: codeSortDir, toggleSort: toggleCodeSort } = useTableSort(
+    codes,
+    codeSortAccessors,
+    { defaultKey: 'code', defaultDir: 'asc' },
+  )
+
+  const { sortedItems: sortedRedemptions, sortKey: redemptionSortKey, sortDir: redemptionSortDir, toggleSort: toggleRedemptionSort } = useTableSort(
+    redemptions,
+    redemptionSortAccessors,
+    { defaultKey: 'redeemed_at', defaultDir: 'desc' },
+  )
+
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -193,13 +232,17 @@ export default function AdminPromoPage() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-800/50">
                   <tr>
-                    {['Code', 'Durée', 'Utilisations', 'Expire', 'Statut', 'Note', 'Actions'].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{h}</th>
-                    ))}
+                    <SortableTh columnKey="code" label="Code" sortKey={codeSortKey} sortDir={codeSortDir} onSort={toggleCodeSort} className={promoThClass} />
+                    <SortableTh columnKey="duration" label="Durée" sortKey={codeSortKey} sortDir={codeSortDir} onSort={toggleCodeSort} className={promoThClass} />
+                    <SortableTh columnKey="uses" label="Utilisations" sortKey={codeSortKey} sortDir={codeSortDir} onSort={toggleCodeSort} className={promoThClass} />
+                    <SortableTh columnKey="expires_at" label="Expire" sortKey={codeSortKey} sortDir={codeSortDir} onSort={toggleCodeSort} className={promoThClass} />
+                    <SortableTh columnKey="status" label="Statut" sortKey={codeSortKey} sortDir={codeSortDir} onSort={toggleCodeSort} className={promoThClass} />
+                    <SortableTh columnKey="note" label="Note" sortKey={codeSortKey} sortDir={codeSortDir} onSort={toggleCodeSort} className={promoThClass} />
+                    <th className={promoThClass}>Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {codes.map((code) => (
+                  {sortedCodes.map((code) => (
                     <tr key={code.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-4 py-3 font-mono font-bold text-slate-800 dark:text-slate-100">{code.code}</td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{formatDuration(code)}</td>
@@ -237,13 +280,15 @@ export default function AdminPromoPage() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-800/50">
                   <tr>
-                    {["Utilisateur", "Code", "Activé le", "Accès gratuit jusqu'au", "Statut"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{h}</th>
-                    ))}
+                    <SortableTh columnKey="user_id" label="Utilisateur" sortKey={redemptionSortKey} sortDir={redemptionSortDir} onSort={toggleRedemptionSort} className={promoThClass} />
+                    <SortableTh columnKey="promo_code" label="Code" sortKey={redemptionSortKey} sortDir={redemptionSortDir} onSort={toggleRedemptionSort} className={promoThClass} />
+                    <SortableTh columnKey="redeemed_at" label="Activé le" sortKey={redemptionSortKey} sortDir={redemptionSortDir} onSort={toggleRedemptionSort} className={promoThClass} />
+                    <SortableTh columnKey="free_until" label="Accès gratuit jusqu'au" sortKey={redemptionSortKey} sortDir={redemptionSortDir} onSort={toggleRedemptionSort} className={promoThClass} />
+                    <SortableTh columnKey="status" label="Statut" sortKey={redemptionSortKey} sortDir={redemptionSortDir} onSort={toggleRedemptionSort} className={promoThClass} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {redemptions.map((r) => (
+                  {sortedRedemptions.map((r) => (
                     <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-300 text-xs">#{r.user_id}</td>
                       <td className="px-4 py-3 font-mono font-semibold text-slate-800 dark:text-slate-100">{r.promo_code}</td>

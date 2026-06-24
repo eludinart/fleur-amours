@@ -1,17 +1,21 @@
 /**
  * Cron engagement/remind pour Coolify — client HTTP sans dépendances.
- * Appelle l'app via APP_PUBLIC_URL (le serveur Next a accès à MariaDB).
- *
  * Usage : node cron-engagement-remind.mjs [--dry-run]
  */
+const log = (...args) => console.log('[cron]', ...args)
+
 const dryRun = process.argv.includes('--dry-run')
 const secret = process.env.CRON_SECRET || ''
 const base =
   process.env.APP_PUBLIC_URL?.replace(/\/$/, '') ||
   'https://app-fleurdamours.eludein.art/jardin'
 
+log('demarrage', dryRun ? 'dry-run' : 'envoi')
+log('CRON_SECRET', secret ? 'ok' : 'MANQUANT')
+log('base URL', base)
+
 if (!secret) {
-  console.error('CRON_SECRET manquant — Coolify → Environment Variables → redéployer.')
+  log('ERREUR: CRON_SECRET manquant — Coolify → Environment Variables → redéployer')
   process.exit(1)
 }
 
@@ -21,6 +25,8 @@ const body = JSON.stringify(
     ? { dryRun: true, limit: 120, cooldownHours: 20 }
     : { limit: 120, cooldownHours: 20 }
 )
+
+log('POST', url)
 
 let res
 try {
@@ -34,11 +40,15 @@ try {
   })
 } catch (err) {
   const msg = err instanceof Error ? err.message : String(err)
-  console.error(`Échec HTTP vers ${url} :`, msg)
+  log('ERREUR HTTP:', msg)
   process.exit(1)
 }
 
 const text = await res.text()
-console.log('url:', url)
-console.log(res.status, text)
-if (!res.ok) process.exit(1)
+log('reponse', res.status, text)
+if (!res.ok) {
+  log('ERREUR: statut HTTP', res.status)
+  process.exit(1)
+}
+
+log('succes')
