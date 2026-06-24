@@ -56,7 +56,6 @@ RUN apt-get update \
 COPY --from=next-build /app/next/.next/standalone ./
 COPY --from=next-build /app/next/.next/static ./.next/static
 COPY --from=next-build /app/next/public ./public
-COPY --from=next-build /app/next/scripts/cron-engagement-remind.mjs ./cron-engagement-remind.mjs
 
 # Variables d'environnement runtime (override dans Coolify)
 ENV USE_NODE_API=true
