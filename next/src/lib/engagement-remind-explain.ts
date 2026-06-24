@@ -17,6 +17,8 @@ import {
 } from '@/lib/notification-outbound'
 import type { EngagementRemindInput } from '@/lib/engagement-remind-run'
 
+const PREFS_META_KEY = 'fleur_notification_prefs'
+
 export type EmailEngagementExplain = {
   email: string
   userId: number | null
@@ -47,13 +49,13 @@ async function lookupUserByEmail(emailNorm: string): Promise<{ userId: number; e
 export async function checkEngagementEmailPrefs(userId: number): Promise<{ ok: boolean; reason?: string }> {
   if (!isDbConfigured()) return { ok: false, reason: 'db_non_configuree' }
   const pool = getPool()
-  const tPref = table('fleur_notification_preferences')
+  const tMeta = table('usermeta')
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT preferences_json FROM ${tPref} WHERE user_id = ? LIMIT 1`,
-    [userId]
+    `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = ? LIMIT 1`,
+    [userId, PREFS_META_KEY]
   )
-  if (!rows[0]?.preferences_json) return { ok: true }
-  return parseEmailPrefsRow(rows[0].preferences_json)
+  if (!rows[0]?.meta_value) return { ok: true }
+  return parseEmailPrefsRow(rows[0].meta_value)
 }
 
 function parseEmailPrefsRow(preferencesJson: unknown): { ok: boolean; reason?: string } {
@@ -85,18 +87,17 @@ export async function checkEngagementEmailPrefsBatch(
     return out
   }
   const pool = getPool()
-  const tPref = table('fleur_notification_preferences')
+  const tMeta = table('usermeta')
   const placeholders = userIds.map(() => '?').join(',')
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT user_id, preferences_json FROM ${tPref} WHERE user_id IN (${placeholders})`,
-    userIds
+    `SELECT user_id, meta_value FROM ${tMeta}
+      WHERE meta_key = ? AND user_id IN (${placeholders})`,
+    [PREFS_META_KEY, ...userIds]
   )
-  const withPrefs = new Set<number>()
   for (const r of rows) {
     const userId = Number(r.user_id)
     if (!userId) continue
-    withPrefs.add(userId)
-    out.set(userId, parseEmailPrefsRow(r.preferences_json))
+    out.set(userId, parseEmailPrefsRow(r.meta_value))
   }
   for (const id of userIds) {
     if (!out.has(id)) out.set(id, { ok: true })

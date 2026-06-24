@@ -105,6 +105,7 @@ async function _doEnsureNotificationsTables(): Promise<void> {
     `ALTER TABLE ${tN} ADD COLUMN IF NOT EXISTS source_type VARCHAR(40) DEFAULT NULL`,
     `ALTER TABLE ${tN} ADD COLUMN IF NOT EXISTS source_id INT DEFAULT NULL`,
     `ALTER TABLE ${tN} ADD COLUMN IF NOT EXISTS channels_json VARCHAR(120) DEFAULT NULL`,
+    `ALTER TABLE ${tP} ADD COLUMN IF NOT EXISTS preferences_json TEXT`,
   ]
   for (const sql of migrations) {
     await pool.execute(sql).catch(() => {/* ignorer si colonne déjà présente */})
