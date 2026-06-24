@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       tirageStaleDays?: number
       dreamscapeStaleDays?: number
       dryRun?: boolean
+      inactiveDays?: number
     }
 
     const result = await runEngagementRemind(body)

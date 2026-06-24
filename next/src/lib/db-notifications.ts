@@ -13,6 +13,8 @@ import type { RowDataPacket, ResultSetHeader } from 'mysql2'
 import { exec, getPool, isDbConfigured, table } from './db'
 import { filterOutboundRecipients } from './notification-outbound'
 import { engagementExpiresAt, isEngagementNotificationType } from './engagement-templates'
+import { excludeDemoAccountsSql } from './demo-accounts'
+import { filterOutDemoUserIds } from './demo-accounts-filter'
 
 const T_NOTIF = () => table('fleur_notifications')
 const T_DELIV = () => table('fleur_notification_deliveries')
@@ -183,6 +185,8 @@ async function resolveRecipients(input: NotificationCreateInput): Promise<Array<
   const pool = getPool()
   const tUsers = table('users')
   const tRoles = table('fleur_app_roles')
+  const tMeta = table('usermeta')
+  const excludeDemo = excludeDemoAccountsSql('u', tMeta)
 
   const rt = input.recipient_type ?? 'all'
   if (rt === 'user') {
@@ -191,13 +195,14 @@ async function resolveRecipients(input: NotificationCreateInput): Promise<Array<
     if (!id && !email) return []
     if (id) {
       const [rows] = await pool.execute<RowDataPacket[]>(
-        `SELECT ID as user_id, user_email as email FROM ${tUsers} WHERE ID = ? LIMIT 1`,
+        `SELECT u.ID as user_id, u.user_email as email FROM ${tUsers} u WHERE u.ID = ? ${excludeDemo} LIMIT 1`,
         [id]
       )
       return rows.map((r) => ({ user_id: Number(r.user_id), email: normalizeEmail(r.email) })).filter((r) => r.email)
     }
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT ID as user_id, user_email as email FROM ${tUsers} WHERE LOWER(user_email) = ? LIMIT 1`,
+      `SELECT u.ID as user_id, u.user_email as email FROM ${tUsers} u
+       WHERE LOWER(u.user_email) = ? ${excludeDemo} LIMIT 1`,
       [email]
     )
     return rows.map((r) => ({ user_id: Number(r.user_id), email: normalizeEmail(r.email) })).filter((r) => r.email)
@@ -205,21 +210,21 @@ async function resolveRecipients(input: NotificationCreateInput): Promise<Array<
 
   if (rt === 'role') {
     const role = String(input.recipient_role ?? 'user').trim()
-    // V1: on s'appuie sur fleur_app_roles (coach/admin/user) si présent.
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT u.ID as user_id, u.user_email as email
        FROM ${tUsers} u
        WHERE u.ID IN (SELECT user_id FROM ${tRoles} WHERE app_role = ?)
-       AND u.user_email IS NOT NULL AND u.user_email != ''`,
+       AND u.user_email IS NOT NULL AND u.user_email != ''
+       ${excludeDemo}`,
       [role]
     )
     return rows.map((r) => ({ user_id: Number(r.user_id), email: normalizeEmail(r.email) })).filter((r) => r.email)
   }
 
-  // all
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT ID as user_id, user_email as email FROM ${tUsers}
-     WHERE user_email IS NOT NULL AND user_email != ''`
+    `SELECT u.ID as user_id, u.user_email as email FROM ${tUsers} u
+     WHERE u.user_email IS NOT NULL AND u.user_email != ''
+     ${excludeDemo}`
   )
   return rows.map((r) => ({ user_id: Number(r.user_id), email: normalizeEmail(r.email) })).filter((r) => r.email)
 }
@@ -279,11 +284,15 @@ export async function createNotification(input: NotificationCreateInput): Promis
   const recipients = filterOutboundRecipients(await resolveRecipients(input), {
     skipDevGuard: input.skip_dev_guard,
   })
-  if (recipients.length === 0) {
+  const realUserIds = new Set(
+    await filterOutDemoUserIds(recipients.map((r) => r.user_id))
+  )
+  const deliverable = recipients.filter((r) => realUserIds.has(r.user_id))
+  if (deliverable.length === 0) {
     return { notification_id: notificationId, deliveries: 0 }
   }
   let deliveries = 0
-  for (const r of recipients) {
+  for (const r of deliverable) {
     const email = normalizeEmail(r.email)
     if (!email) continue
     await pool.execute(
@@ -303,7 +312,7 @@ export async function createNotification(input: NotificationCreateInput): Promis
         body,
         actionUrl,
         actionLabel,
-        recipients,
+        recipients: deliverable,
         skipDevGuard: input.skip_dev_guard,
       })
     })

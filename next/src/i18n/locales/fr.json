@@ -2641,6 +2641,14 @@
       "body": "Quelques minutes avec le Tuteur pour clarifier ce qui tourne en vous — sans jugement, à votre rythme.",
       "actionLabel": "Ouvrir la conversation intérieure",
       "emailSubject": "Un moment de clarté intérieure"
+    },
+    "comeback": {
+      "title": "Le jardin vous attend",
+      "body": "Cela fait un moment que nous ne vous avons pas vu·e. Deux minutes suffisent : un tirage pour éclairer le jour, ou quelques pas pour retrouver votre profil Fleur.",
+      "highlight": "Votre pétale {{petal}} est toujours là — une carte peut rouvrir le fil.",
+      "highlightGeneric": "Un tirage, un check-in, votre Fleur : reprenez à votre rythme.",
+      "actionLabel": "Revenir dans le jardin",
+      "emailSubject": "Votre jardin Fleur d'AmOurs vous attend"
     }
   },
   "myceliumLanding": {

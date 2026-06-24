@@ -2549,6 +2549,14 @@
       "body": "A few minutes with the Guide to clarify what's turning inside you — without judgment, at your pace.",
       "actionLabel": "Open inner conversation",
       "emailSubject": "A moment of inner clarity"
+    },
+    "comeback": {
+      "title": "The garden is waiting for you",
+      "body": "It's been a while since we've seen you. Two minutes are enough: a card reading to light up your day, or a few steps to reconnect with your Flower profile.",
+      "highlight": "Your {{petal}} petal is still here — a card can reopen the thread.",
+      "highlightGeneric": "A reading, a check-in, your Flower: return at your own pace.",
+      "actionLabel": "Return to the garden",
+      "emailSubject": "Your Fleur d'AmOurs garden is waiting"
     }
   }
 }

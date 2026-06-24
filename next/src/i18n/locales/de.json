@@ -2269,6 +2269,14 @@
       "body": "Ein paar Minuten mit der Führung, um zu klären, was in dir kreist — ohne Urteil, in deinem Tempo.",
       "actionLabel": "Innere Unterhaltung öffnen",
       "emailSubject": "Ein Moment innerer Klarheit"
+    },
+    "comeback": {
+      "title": "Der Garten wartet auf dich",
+      "body": "Es ist eine Weile her, seit wir dich gesehen haben. Zwei Minuten genügen: eine Ziehung für den Tag oder ein paar Schritte zu deinem Blumenprofil.",
+      "highlight": "Dein {{petal}}-Blütenblatt ist noch da — eine Karte kann den Faden wieder öffnen.",
+      "highlightGeneric": "Eine Ziehung, ein Check-in, deine Blume: in deinem Tempo zurückkehren.",
+      "actionLabel": "Zurück in den Garten",
+      "emailSubject": "Dein Fleur-d'AmOurs-Garten wartet"
     }
   }
 }

@@ -17,6 +17,14 @@ export function isDemoAccount(params: {
   return isDemoEmail(params.email)
 }
 
+/** Compte virtuel — ne doit pas recevoir d'e-mails ni de notifications transactionnelles. */
+export function isVirtualAccount(params: {
+  email?: string | null
+  demoMeta?: string | null | undefined
+}): boolean {
+  return isDemoAccount(params)
+}
+
 /** Fragment SQL — exclut les comptes démo Mycelium des espaces Fleur d'Amour (prairie, social, admin). */
 export function excludeDemoAccountsSql(usersAlias: string, metaTable: string): string {
   return `AND LOWER(${usersAlias}.user_email) NOT LIKE '%@${DEMO_EMAIL_DOMAIN}'

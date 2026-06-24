@@ -18,6 +18,12 @@ type Props = {
 export function CommsStatusBar({ onStatsLoaded }: Props) {
   const [smtpOk, setSmtpOk] = useState<boolean | null>(null)
   const [smtpFrom, setSmtpFrom] = useState<string | null>(null)
+  const [notifGuard, setNotifGuard] = useState<{
+    devRestricted?: boolean
+    devEmail?: string
+    allowlistActive?: boolean
+    allowlist?: string[] | null
+  } | null>(null)
   const [testBusy, setTestBusy] = useState(false)
   const [stats, setStats] = useState<{
     total?: number
@@ -31,9 +37,16 @@ export function CommsStatusBar({ onStatsLoaded }: Props) {
     try {
       const data = (await api.get('/api/admin/system-status')) as {
         smtp?: { configured?: boolean; from?: string | null }
+        notifications?: {
+          devRestricted?: boolean
+          devEmail?: string
+          allowlistActive?: boolean
+          allowlist?: string[] | null
+        }
       }
       setSmtpOk(!!data.smtp?.configured)
       setSmtpFrom(data.smtp?.from ?? null)
+      setNotifGuard(data.notifications ?? null)
     } catch {
       setSmtpOk(false)
     }
@@ -117,6 +130,40 @@ export function CommsStatusBar({ onStatsLoaded }: Props) {
           </button>
         </div>
       </div>
+
+      {notifGuard?.devRestricted ? (
+        <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 dark:bg-amber-950/30 dark:border-amber-900/60 p-4 text-sm text-amber-950 dark:text-amber-100">
+          <p className="font-semibold">Mode développement — envois restreints</p>
+          <p className="text-xs mt-1 text-amber-900/90 dark:text-amber-200/90">
+            Notifications in-app et e-mails transactionnels ne sont livrés qu&apos;à{' '}
+            <strong>{notifGuard.devEmail ?? 'eludinart@gmail.com'}</strong>.
+            Pour envoyer à toute la liste en local, ajoutez{' '}
+            <code className="font-mono text-[11px]">NOTIFICATIONS_DEV_ONLY=false</code> dans{' '}
+            <code className="font-mono text-[11px]">.env</code> ou{' '}
+            <code className="font-mono text-[11px]">docker-compose.env</code>, puis redémarrez{' '}
+            <code className="font-mono text-[11px]">npm run dev.vps:clean</code>.
+            Commenter une ligne avec <code className="font-mono text-[11px]">#</code> ne suffit pas.
+          </p>
+        </div>
+      ) : null}
+
+      {notifGuard?.allowlistActive ? (
+        <div className="rounded-2xl border border-violet-200/80 bg-violet-50/90 dark:bg-violet-950/30 dark:border-violet-900/60 p-4 text-sm text-violet-950 dark:text-violet-100">
+          <p className="font-semibold">Allowlist engagement active</p>
+          <p className="text-xs mt-1 text-violet-900/90 dark:text-violet-200/90">
+            Les relances cron (check-in, plan 14j…) ne partent que vers :{' '}
+            {(notifGuard.allowlist ?? []).join(', ') || '—'}.
+            Retirez ou commentez <code className="font-mono text-[11px]">ENGAGEMENT_REMIND_ALLOWLIST</code>{' '}
+            pour désactiver ce filtre.
+          </p>
+        </div>
+      ) : null}
+
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Les comptes virtuels Mycelium (
+        <span className="font-mono">@demo-littoral.eludein.art</span>) sont toujours exclus des e-mails et
+        notifications transactionnelles.
+      </p>
 
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">

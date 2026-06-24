@@ -9,7 +9,7 @@ import { loadEngagementPersonalization, type EngagementPersonalization } from '.
 import { buildJourneyChips, resolveEmailHero, campaignIdFromNotificationType } from './email-journey'
 import type { EngagementCampaignId } from './engagement-templates'
 import { tServer } from './i18n-server'
-import { canSendOutboundToEmail } from './notification-outbound'
+import { canSendEngagementRemindToEmail, canSendOutboundToEmail } from './notification-outbound'
 import { isSmtpConfigured, trySendSmtpMail } from './smtp'
 import { getUserLocalesBatch, resolveEmailLocale } from './user-locale'
 
@@ -163,7 +163,10 @@ export async function sendTransactionalEmail(params: {
 }): Promise<{ sent: boolean; error?: string; messageId?: string }> {
   const to = normalizeEmail(params.to)
   if (!to || !to.includes('@')) return { sent: false, error: 'Email destinataire invalide' }
-  if (!canSendOutboundToEmail(to, { skipDevGuard: params.skipDevGuard })) {
+  const canSend =
+    canSendOutboundToEmail(to, { skipDevGuard: params.skipDevGuard }) ||
+    canSendEngagementRemindToEmail(to, { skipDevGuard: params.skipDevGuard })
+  if (!canSend) {
     return { sent: false, error: 'Environnement dev : envoi limité à eludinart@gmail.com' }
   }
   if (!params.skipPrefs && params.userId) {

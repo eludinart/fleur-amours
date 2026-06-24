@@ -1,6 +1,8 @@
 /**
  * Garde-fou envoi notifications / e-mails en développement.
  */
+import { isVirtualAccount } from './demo-accounts'
+
 const DEV_EMAIL = String(process.env.DEV_NOTIFICATION_EMAIL ?? 'eludinart@gmail.com')
   .trim()
   .toLowerCase()
@@ -49,17 +51,19 @@ export function canSendEngagementRemindToEmail(
   return canSendOutboundToEmail(email, options)
 }
 
-/** En dev : ne livrer qu'à l'adresse de test. */
+/** En dev : ne livrer qu'à l'adresse de test. Exclut toujours les comptes virtuels. */
 export function filterOutboundRecipients<T extends { user_id: number; email: string }>(
   recipients: T[],
   options?: { skipDevGuard?: boolean }
 ): T[] {
-  if (options?.skipDevGuard || !isNotificationOutboundRestricted()) return recipients
+  const real = recipients.filter((r) => !isVirtualAccount({ email: r.email }))
+  if (options?.skipDevGuard || !isNotificationOutboundRestricted()) return real
   const allowed = DEV_EMAIL
-  return recipients.filter((r) => normalizeOutboundEmail(r.email) === allowed)
+  return real.filter((r) => normalizeOutboundEmail(r.email) === allowed)
 }
 
 export function canSendOutboundToEmail(email: string, options?: { skipDevGuard?: boolean }): boolean {
+  if (isVirtualAccount({ email })) return false
   if (options?.skipDevGuard || !isNotificationOutboundRestricted()) return true
   return normalizeOutboundEmail(email) === DEV_EMAIL
 }

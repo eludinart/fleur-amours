@@ -20,6 +20,7 @@ const TYPES = [
   { value: 'engagement_fleur', label: 'Relance Fleur' },
   { value: 'engagement_session', label: 'Relance session' },
   { value: 'engagement_dreamscape', label: 'Relance dreamscape' },
+  { value: 'engagement_comeback', label: 'Retour au jardin (15 j)' },
 ]
 
 const PRIORITIES = [

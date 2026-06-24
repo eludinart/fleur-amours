@@ -3,7 +3,9 @@
  * Une seule relance par utilisateur et par fenêtre de cooldown.
  */
 import type { RowDataPacket } from 'mysql2/promise'
-import { getPool, isDbConfigured, sqlEmailEq, table } from './db'
+import { getPool, isDbConfigured, SQL_TEXT_COLLATE, sqlEmailEq, table } from './db'
+import { excludeDemoAccountsSql } from './demo-accounts'
+import { normalizeOutboundEmail } from './notification-outbound'
 import { findCheckinReminderCandidates } from './db-checkins'
 import { ensureNotificationsTables } from './db-notifications'
 import { findPlan14jReminderCandidates } from './db-plan14j-remind'
@@ -16,6 +18,7 @@ const ENGAGEMENT_TYPES = [
   'engagement_fleur',
   'engagement_session',
   'engagement_dreamscape',
+  'engagement_comeback',
 ] as const
 
 export type EngagementCandidate = {
@@ -45,6 +48,139 @@ export async function findRecentlyNudgedUserIds(cooldownHours: number): Promise<
   return new Set(rows.map((r) => Number(r.user_id)).filter(Boolean))
 }
 
+/** Relance « retour au jardin » déjà envoyée dans la fenêtre (défaut 15 jours). */
+export async function findRecentlyComebackNudgedUserIds(inactiveDays: number): Promise<Set<number>> {
+  if (!isDbConfigured()) return new Set()
+  await ensureNotificationsTables()
+  const pool = getPool()
+  const days = Math.min(Math.max(inactiveDays, 7), 60)
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT DISTINCT d.user_id AS user_id
+       FROM ${table('fleur_notification_deliveries')} d
+       INNER JOIN ${table('fleur_notifications')} n ON n.id = d.notification_id
+      WHERE n.created_at >= (NOW() - INTERVAL ? DAY)
+        AND n.type = 'engagement_comeback'`,
+    [days]
+  )
+  return new Set(rows.map((r) => Number(r.user_id)).filter(Boolean))
+}
+
+/**
+ * Utilisateurs peu connectés : pas de connexion depuis inactiveDays (défaut 15).
+ * Vrais comptes uniquement (hors démo Mycelium).
+ */
+async function findInactiveComebackCandidates(
+  inactiveDays: number,
+  limit: number,
+  exclude: Set<number>
+): Promise<EngagementCandidate[]> {
+  if (!isDbConfigured()) return []
+  const pool = getPool()
+  const tUsers = table('users')
+  const tMeta = table('usermeta')
+  const excludeDemo = excludeDemoAccountsSql('u', tMeta)
+  const days = Math.min(Math.max(inactiveDays, 7), 60)
+  const recentlyComeback = await findRecentlyComebackNudgedUserIds(days)
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT u.ID AS user_id, u.user_email AS email
+       FROM ${tUsers} u
+       LEFT JOIN ${tMeta} um_last
+         ON um_last.user_id = u.ID AND um_last.meta_key = 'fleur_last_login'
+      WHERE u.user_email IS NOT NULL AND TRIM(u.user_email) != ''
+        AND (
+          um_last.meta_value IS NULL
+          OR um_last.meta_value < DATE_FORMAT(DATE_SUB(NOW(), INTERVAL ? DAY), '%Y-%m-%d %H:%i:%s')
+        )
+        ${excludeDemo}
+      ORDER BY um_last.meta_value IS NULL DESC, um_last.meta_value ASC
+      LIMIT ${limit}`,
+    [days]
+  )
+
+  const out: EngagementCandidate[] = []
+  for (const r of rows) {
+    const userId = Number(r.user_id)
+    if (!userId || exclude.has(userId) || recentlyComeback.has(userId)) continue
+    exclude.add(userId)
+    out.push({
+      userId,
+      email: r.email ? String(r.email) : null,
+      locale: 'fr',
+      campaignId: 'comeback',
+    })
+    if (out.length >= limit) break
+  }
+  return out
+}
+
+/** Nombre d'utilisateurs réels inactifs depuis N jours (hors démo), sans filtre cooldown. */
+export async function countInactiveUsers(inactiveDays: number): Promise<number> {
+  if (!isDbConfigured()) return 0
+  const pool = getPool()
+  const tUsers = table('users')
+  const tMeta = table('usermeta')
+  const excludeDemo = excludeDemoAccountsSql('u', tMeta)
+  const days = Math.min(Math.max(inactiveDays, 7), 60)
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT COUNT(*) AS cnt
+       FROM ${tUsers} u
+       LEFT JOIN ${tMeta} um_last
+         ON um_last.user_id = u.ID AND um_last.meta_key = 'fleur_last_login'
+      WHERE u.user_email IS NOT NULL AND TRIM(u.user_email) != ''
+        AND (
+          um_last.meta_value IS NULL
+          OR um_last.meta_value < DATE_FORMAT(DATE_SUB(NOW(), INTERVAL ? DAY), '%Y-%m-%d %H:%i:%s')
+        )
+        ${excludeDemo}`,
+    [days]
+  )
+  return Number(rows[0]?.cnt ?? 0)
+}
+
+/**
+ * Phase pilote : utilisateurs de la allowlist absents des candidats « naturels ».
+ * Campagne check-in par défaut (relance douce testable).
+ */
+export async function findAllowlistPilotCandidates(
+  allowlist: Set<string>,
+  assigned: Set<number>,
+  cooldownHours: number
+): Promise<EngagementCandidate[]> {
+  if (!isDbConfigured() || allowlist.size === 0) return []
+  const recentlyNudged = await findRecentlyNudgedUserIds(cooldownHours)
+  const pool = getPool()
+  const tUsers = table('users')
+  const tMeta = table('usermeta')
+  const excludeDemo = excludeDemoAccountsSql('u', tMeta)
+  const out: EngagementCandidate[] = []
+
+  for (const raw of allowlist) {
+    const emailNorm = normalizeOutboundEmail(raw)
+    if (!emailNorm) continue
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT u.ID AS user_id, u.user_email AS email
+         FROM ${tUsers} u
+        WHERE LOWER(TRIM(u.user_email)) COLLATE ${SQL_TEXT_COLLATE} = ?
+        ${excludeDemo}
+        LIMIT 1`,
+      [emailNorm]
+    )
+    const row = rows[0]
+    if (!row) continue
+    const userId = Number(row.user_id)
+    if (!userId || assigned.has(userId) || recentlyNudged.has(userId)) continue
+    assigned.add(userId)
+    out.push({
+      userId,
+      email: row.email ? String(row.email) : null,
+      locale: 'fr',
+      campaignId: 'checkin',
+    })
+  }
+  return out
+}
+
 async function findFleurMissingCandidates(
   activityDays: number,
   limit: number,
@@ -52,6 +188,7 @@ async function findFleurMissingCandidates(
 ): Promise<EngagementCandidate[]> {
   if (!isDbConfigured()) return []
   const pool = getPool()
+  const excludeDemo = excludeDemoAccountsSql('u', table('usermeta'))
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT DISTINCT te.user_id AS user_id, u.user_email AS email
        FROM ${table('fleur_timeline_events')} te
@@ -61,6 +198,7 @@ async function findFleurMissingCandidates(
           SELECT 1 FROM ${table('fleur_amour_results')} r
            WHERE r.user_id = te.user_id
         )
+        ${excludeDemo}
       LIMIT ${limit}`,
     [activityDays]
   )
@@ -83,6 +221,7 @@ async function findTirageStaleCandidates(
 ): Promise<EngagementCandidate[]> {
   if (!isDbConfigured()) return []
   const pool = getPool()
+  const excludeDemo = excludeDemoAccountsSql('u', table('usermeta'))
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT DISTINCT te.user_id AS user_id, u.user_email AS email
        FROM ${table('fleur_timeline_events')} te
@@ -96,6 +235,7 @@ async function findTirageStaleCandidates(
            WHERE tr.user_id = te.user_id
              AND tr.created_at >= (NOW() - INTERVAL ? DAY)
         )
+        ${excludeDemo}
       LIMIT ${limit}`,
     [activityDays, staleDays]
   )
@@ -118,6 +258,7 @@ async function findSessionMissingCandidates(
   if (!isDbConfigured()) return []
   const pool = getPool()
   const tSess = table('fleur_sessions')
+  const excludeDemo = excludeDemoAccountsSql('u', table('usermeta'))
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT DISTINCT te.user_id AS user_id, u.user_email AS email
        FROM ${table('fleur_timeline_events')} te
@@ -132,6 +273,7 @@ async function findSessionMissingCandidates(
            WHERE u2.ID = te.user_id
              AND s.status IN ('completed', 'done', 'finished', 'closed', 'terminated')
         )
+        ${excludeDemo}
       LIMIT ${limit}`,
     [activityDays]
   )
@@ -155,6 +297,7 @@ async function findDreamscapeStaleCandidates(
   if (!isDbConfigured()) return []
   const pool = getPool()
   const tDream = table('fleur_dreamscape')
+  const excludeDemo = excludeDemoAccountsSql('u', table('usermeta'))
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT DISTINCT te.user_id AS user_id, u.user_email AS email
        FROM ${table('fleur_timeline_events')} te
@@ -168,6 +311,7 @@ async function findDreamscapeStaleCandidates(
            WHERE d.user_id = CAST(te.user_id AS CHAR)
              AND d.created_at >= (NOW() - INTERVAL ? DAY)
         )
+        ${excludeDemo}
       LIMIT ${limit}`,
     [activityDays, staleDays]
   )
@@ -184,7 +328,7 @@ async function findDreamscapeStaleCandidates(
 
 /**
  * Candidats à une relance unique, par priorité :
- * plan14j → check-in → Fleur → tirage → session → dreamscape.
+ * plan14j → check-in → Fleur → tirage → session → dreamscape → comeback (peu connectés).
  */
 export async function findEngagementCandidates(params: {
   limit?: number
@@ -192,14 +336,16 @@ export async function findEngagementCandidates(params: {
   cooldownHours?: number
   tirageStaleDays?: number
   dreamscapeStaleDays?: number
+  inactiveDays?: number
 }): Promise<EngagementCandidate[]> {
   if (!isDbConfigured()) return []
 
-  const limit = Math.min(Math.max(params.limit ?? 120, 1), 500)
+  const limit = Math.min(Math.max(params.limit ?? 250, 1), 500)
   const activityDays = Math.min(Math.max(params.activityDays ?? 30, 7), 90)
   const cooldownHours = Math.min(Math.max(params.cooldownHours ?? 20, 6), 168)
   const tirageStaleDays = Math.min(Math.max(params.tirageStaleDays ?? 4, 1), 30)
   const dreamscapeStaleDays = Math.min(Math.max(params.dreamscapeStaleDays ?? 14, 3), 60)
+  const inactiveDays = Math.min(Math.max(params.inactiveDays ?? 15, 7), 60)
 
   const recentlyNudged = await findRecentlyNudgedUserIds(cooldownHours)
   const assigned = new Set<number>(recentlyNudged)
@@ -242,6 +388,12 @@ export async function findEngagementCandidates(params: {
       push(c)
       if (out.length >= limit) return out
     }
+  }
+
+  const comeback = await findInactiveComebackCandidates(inactiveDays, limit, assigned)
+  for (const c of comeback) {
+    push(c)
+    if (out.length >= limit) return out
   }
 
   return out

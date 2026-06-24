@@ -3,7 +3,8 @@
  */
 import { createNotification } from './db-notifications'
 import { dispatchNotificationEmails } from './email'
-import { canSendEngagementRemindToEmail } from './notification-outbound'
+import { canSendEngagementRemindToEmail, isEngagementRemindAllowlistActive } from './notification-outbound'
+import { filterOutDemoUserIds } from './demo-accounts-filter'
 import type { EngagementCampaignId } from './engagement-templates'
 import {
   buildEngagementTemplate,
@@ -39,9 +40,18 @@ export async function sendEngagementNotification(
   )
 
   const email = String(input.email ?? '').trim()
-  if (!email || !canSendEngagementRemindToEmail(email, { skipDevGuard: input.skipDevGuard })) {
+  const realIds = await filterOutDemoUserIds([input.userId])
+  const allowlisted =
+    isEngagementRemindAllowlistActive() && canSendEngagementRemindToEmail(email, { skipDevGuard: true })
+  if (
+    !email ||
+    realIds.length === 0 ||
+    !canSendEngagementRemindToEmail(email, { skipDevGuard: input.skipDevGuard })
+  ) {
     return { sent: false }
   }
+
+  const skipGuard = input.skipDevGuard || allowlisted
 
   const result = await createNotification({
     type: template.type,
@@ -56,8 +66,12 @@ export async function sendEngagementNotification(
     source_id: input.source_id ?? null,
     expires_at: engagementExpiresAt(),
     skip_email: true,
-    skip_dev_guard: input.skipDevGuard,
+    skip_dev_guard: skipGuard,
   })
+
+  if (result.deliveries === 0) {
+    return { sent: false, notification_id: result.notification_id }
+  }
 
   await dispatchNotificationEmails({
     notificationId: result.notification_id,
@@ -70,9 +84,9 @@ export async function sendEngagementNotification(
     highlight: template.emailHighlight,
     personalization: input.personalization,
     recipients: [{ user_id: input.userId, email }],
-    skipDevGuard: input.skipDevGuard,
+    skipDevGuard: skipGuard,
     campaignId: input.campaignId,
   })
 
-  return { sent: true, notification_id: result.notification_id }
+  return { sent: result.deliveries > 0, notification_id: result.notification_id }
 }

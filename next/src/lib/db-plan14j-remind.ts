@@ -3,6 +3,7 @@
  */
 import type { RowDataPacket } from 'mysql2/promise'
 import { getPool, isDbConfigured, sqlEmailEq, table } from './db'
+import { excludeDemoAccountsSql } from './demo-accounts'
 import { findActivePlan14j, type Plan14jDay } from './plan14j-active'
 
 const TBL_SESSIONS = () => table('fleur_sessions')
@@ -31,12 +32,14 @@ export type Plan14jReminderCandidate = {
 export async function findPlan14jReminderCandidates(limit = 80): Promise<Plan14jReminderCandidate[]> {
   if (!isDbConfigured()) return []
   const pool = getPool()
+  const excludeDemo = excludeDemoAccountsSql('u', table('usermeta'))
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT s.id, s.email, s.status, s.plan14j_json, s.step_data_json, s.created_at, u.ID as user_id
      FROM ${TBL_SESSIONS()} s
      INNER JOIN ${table('users')} u ON ${sqlEmailEq('u.user_email', 's.email')}
      WHERE s.plan14j_json IS NOT NULL AND s.plan14j_json != 'null' AND s.plan14j_json != ''
        AND s.status IN ('completed', 'done', 'finished', 'closed', 'terminated')
+       ${excludeDemo}
      ORDER BY s.created_at DESC
      LIMIT 500`
   )

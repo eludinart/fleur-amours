@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api } from '@/lib/api-client'
 import { toast } from '@/hooks/useToast'
 import { useNotifications } from '@/contexts/NotificationContext'
+import { CommsEngagementAudienceModal } from './CommsEngagementAudienceModal'
 
 type EngagementPreview = {
   campaignId: string
@@ -25,6 +26,7 @@ const CAMPAIGN_LABELS: Record<string, string> = {
   fleur: "Fleur d'AmOurs",
   session: 'Session porte',
   dreamscape: 'Conversation intérieure',
+  comeback: 'Retour au jardin (peu connectés)',
 }
 
 export function CommsEngagementPanel() {
@@ -37,6 +39,7 @@ export function CommsEngagementPanel() {
   const [testAdmins, setTestAdmins] = useState<Array<{ id: number; email: string; name: string }>>([])
   const [testBusy, setTestBusy] = useState<'notif' | 'email' | 'both' | null>(null)
   const [useRealProfile, setUseRealProfile] = useState(true)
+  const [audienceOpen, setAudienceOpen] = useState(false)
 
   const fetchEngagementPreviews = useCallback(async () => {
     setEngagementLoading(true)
@@ -98,6 +101,24 @@ export function CommsEngagementPanel() {
 
   return (
     <div className="space-y-5">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Prochain envoi cron</h3>
+          <p className="text-xs text-slate-500 mt-1">
+            Liste des personnes qui recevraient une relance au prochain passage automatique, avec le contenu exact.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setAudienceOpen(true)}
+          className="px-4 py-2 text-sm rounded-xl bg-violet-600 text-white hover:bg-violet-700 shrink-0"
+        >
+          Voir destinataires & contenu
+        </button>
+      </div>
+
+      <CommsEngagementAudienceModal open={audienceOpen} onClose={() => setAudienceOpen(false)} />
+
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4">
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Tester une relance</h3>
         <div className="flex flex-wrap gap-3 items-end">

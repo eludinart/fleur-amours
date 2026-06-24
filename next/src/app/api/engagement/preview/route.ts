@@ -21,6 +21,7 @@ const ALL_CAMPAIGNS: EngagementCampaignId[] = [
   'fleur',
   'session',
   'dreamscape',
+  'comeback',
 ]
 
 function isCampaignId(v: string): v is EngagementCampaignId {

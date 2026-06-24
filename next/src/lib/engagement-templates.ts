@@ -15,6 +15,7 @@ export type EngagementCampaignId =
   | 'fleur'
   | 'session'
   | 'dreamscape'
+  | 'comeback'
 
 export type EngagementTemplate = {
   type: string
@@ -44,6 +45,7 @@ const ENGAGEMENT_TYPES = new Set([
   'engagement_fleur',
   'engagement_session',
   'engagement_dreamscape',
+  'engagement_comeback',
 ])
 
 export function isEngagementNotificationType(type: string): boolean {
@@ -84,6 +86,8 @@ function resolveActionUrl(
       return '/session?mode=single'
     case 'dreamscape':
       return '/dreamscape'
+    case 'comeback':
+      return '/tirage'
     default:
       return '/'
   }
@@ -150,6 +154,16 @@ function buildRichBody(
         }
       }
       return { body: lines.join('\n\n'), highlight: null }
+    }
+    case 'comeback': {
+      lines.push(tServer(locale, `${baseKey}.body`, {}))
+      if (p?.dominantPetalName) {
+        return {
+          body: lines.join('\n\n'),
+          highlight: tServer(locale, `${baseKey}.highlight`, { petal: p.dominantPetalName }),
+        }
+      }
+      return { body: lines.join('\n\n'), highlight: tServer(locale, `${baseKey}.highlightGeneric`) }
     }
     default:
       lines.push(tServer(locale, `${baseKey}.body`, {}))

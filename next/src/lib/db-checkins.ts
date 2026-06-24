@@ -6,6 +6,7 @@
  */
 import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { exec, getPool, isDbConfigured, table } from './db'
+import { excludeDemoAccountsSql } from './demo-accounts'
 import { parseStoredAiResponse, type CheckinEchoResponse } from './checkin-echo'
 
 const TBL = () => table('fleur_checkins')
@@ -184,7 +185,9 @@ export async function findCheckinReminderCandidates(params: {
   const limit = Math.min(Math.max(params.limit ?? 200, 1), 1000)
   const tTimeline = table('fleur_timeline_events')
   const tUsers = table('users')
+  const tMeta = table('usermeta')
   const tCheckins = TBL()
+  const excludeDemo = excludeDemoAccountsSql('u', tMeta)
 
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT DISTINCT te.user_id AS user_id, u.user_email AS email
@@ -196,6 +199,7 @@ export async function findCheckinReminderCandidates(params: {
            WHERE c.user_id = te.user_id
              AND c.created_at >= (NOW() - INTERVAL ? DAY)
         )
+        ${excludeDemo}
       LIMIT ${limit}`,
     [activityDays, staleDays]
   )

@@ -11,6 +11,7 @@
  */
 import type { RowDataPacket, ResultSetHeader } from 'mysql2'
 import { exec, getPool, isDbConfigured, table } from './db'
+import { excludeDemoAccountsSql } from './demo-accounts'
 import { htmlToPlainText } from './email-html-utils'
 
 const T_BROADCAST = () => table('fleur_broadcasts')
@@ -301,6 +302,7 @@ async function selectAudienceRecipients(audience: BroadcastAudience): Promise<Ar
   const tUsers = table('users')
   const tMeta = table('usermeta')
   const tRoles = table('fleur_app_roles')
+  const excludeDemo = excludeDemoAccountsSql('u', tMeta)
 
   const excludeEmails = new Set((audience.exclude_emails ?? []).map(normalizeEmail).filter(Boolean))
 
@@ -330,6 +332,7 @@ async function selectAudienceRecipients(audience: BroadcastAudience): Promise<Ar
       LEFT JOIN ${tMeta} um_listed ON um_listed.user_id = u.ID AND um_listed.meta_key = 'fleur_coach_is_listed'
       LEFT JOIN ${tRoles} ar ON ar.user_id = u.ID
       WHERE ${whereSingle.join(' AND ')}
+      ${excludeDemo}
       LIMIT 1
     `
     const resOne = await exec(pool, sqlOne, pSingle)
@@ -362,6 +365,7 @@ async function selectAudienceRecipients(audience: BroadcastAudience): Promise<Ar
       LEFT JOIN ${tRoles} ar ON ar.user_id = u.ID
       WHERE u.ID IN (${ph})
         AND u.user_email IS NOT NULL AND u.user_email != ''
+        ${excludeDemo}
     `
     const resSel = await exec(pool, sqlSel, ids)
     const rowsSel = (resSel[0] ?? []) as RowDataPacket[]
@@ -443,6 +447,7 @@ async function selectAudienceRecipients(audience: BroadcastAudience): Promise<Ar
     LEFT JOIN ${tMeta} um_optout ON um_optout.user_id = u.ID AND um_optout.meta_key = 'fleur_email_optout'
     LEFT JOIN ${tRoles} ar ON ar.user_id = u.ID
     WHERE ${whereParts.join(' AND ')}
+    ${excludeDemo}
     ORDER BY u.ID ASC
   `
   const res = await exec(pool, sql, params)

@@ -2269,6 +2269,14 @@
       "body": "Unos minutos con el Guía para aclarar lo que gira en ti — sin juicio, a tu ritmo.",
       "actionLabel": "Abrir la conversación interior",
       "emailSubject": "Un momento de claridad interior"
+    },
+    "comeback": {
+      "title": "El jardín te espera",
+      "body": "Hace tiempo que no te vemos. Dos minutos bastan: una tirada para iluminar el día, o unos pasos para retomar tu perfil Flor.",
+      "highlight": "Tu pétalo {{petal}} sigue ahí — una carta puede reabrir el hilo.",
+      "highlightGeneric": "Una tirada, un check-in, tu Flor: retoma a tu ritmo.",
+      "actionLabel": "Volver al jardín",
+      "emailSubject": "Tu jardín Fleur d'AmOurs te espera"
     }
   }
 }

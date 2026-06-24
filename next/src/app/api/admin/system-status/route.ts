@@ -5,6 +5,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/api-auth'
 import { isSmtpConfigured } from '@/lib/smtp'
+import {
+  devNotificationEmail,
+  engagementRemindAllowlist,
+  isEngagementRemindAllowlistActive,
+  isNotificationOutboundRestricted,
+} from '@/lib/notification-outbound'
 import { getAiRuntimeConfig, isActiveAiConfigured, resolveActiveModel } from '@/lib/db-ai-config'
 import { aiProviderLabel } from '@/lib/ai-providers'
 import os from 'os'
@@ -122,6 +128,14 @@ export async function GET(req: NextRequest) {
         configured: isSmtpConfigured(),
         host: process.env.SMTP_HOST?.trim() || null,
         from: process.env.SMTP_FROM?.trim() || null,
+      },
+      notifications: {
+        devRestricted: isNotificationOutboundRestricted(),
+        devEmail: devNotificationEmail(),
+        allowlistActive: isEngagementRemindAllowlistActive(),
+        allowlist: engagementRemindAllowlist()
+          ? [...engagementRemindAllowlist()!]
+          : null,
       },
       ai: {
         provider: aiCfg.provider,
