@@ -62,7 +62,7 @@ jobs:
 
       - name: Démarrer serveur + smoke + E2E public
         run: |
-          JWT_SECRET=ci-smoke-jwt-secret-minimum-32-characters PORT=3001 npm run start --prefix next &
+          JWT_SECRET=ci-smoke-jwt-secret-minimum-32-characters PORT=3001 HOSTNAME=127.0.0.1 npm run start --prefix next &
           echo $! > /tmp/next.pid
           node scripts/wait-for-health.mjs http://127.0.0.1:3001/jardin/api/health
           node scripts/smoke-api.mjs --public

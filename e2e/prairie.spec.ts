@@ -4,7 +4,7 @@ const email = process.env.SMOKE_EMAIL || process.env.SMOKE_LOGIN || ''
 const password = process.env.SMOKE_PASSWORD || ''
 
 async function loginViaApi(request: import('@playwright/test').APIRequestContext) {
-  const res = await request.post('/api/auth/login', {
+  const res = await request.post('api/auth/login', {
     data: { login: email, password },
   })
   expect(res.ok()).toBeTruthy()
@@ -17,7 +17,7 @@ test.describe('Grand Jardin / Prairie', () => {
 
   test('API prairie retourne des fleurs @auth', async ({ request }) => {
     const token = await loginViaApi(request)
-    const res = await request.get('/api/prairie/fleurs', {
+    const res = await request.get('api/prairie/fleurs', {
       headers: { Authorization: `Bearer ${token}` },
     })
     expect(res.ok()).toBeTruthy()
@@ -27,9 +27,9 @@ test.describe('Grand Jardin / Prairie', () => {
 
   test('page prairie charge la galaxie @auth', async ({ page, request }) => {
     const token = await loginViaApi(request)
-    await page.goto('/login')
+    await page.goto('login')
     await page.evaluate((t) => localStorage.setItem('auth_token', t), token)
-    await page.goto('/prairie')
+    await page.goto('prairie')
 
     await expect(page.locator('body')).toBeVisible({ timeout: 30_000 })
     const hasGalaxy = await page.locator('canvas').count()

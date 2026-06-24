@@ -1,7 +1,7 @@
 /**
  * Copie les fichiers utiles au runtime Docker dans le bundle standalone Next.js.
  */
-import { copyFileSync, existsSync } from 'fs'
+import { copyFileSync, cpSync, existsSync } from 'fs'
 
 const standaloneDir = '.next/standalone'
 if (!existsSync(standaloneDir)) {
@@ -9,5 +9,13 @@ if (!existsSync(standaloneDir)) {
   process.exit(0)
 }
 
+// Assets requis par server.js (aligné Dockerfile.next)
+if (existsSync('.next/static')) {
+  cpSync('.next/static', `${standaloneDir}/.next/static`, { recursive: true })
+}
+if (existsSync('public')) {
+  cpSync('public', `${standaloneDir}/public`, { recursive: true })
+}
+
 copyFileSync('scripts/cron-engagement-remind.mjs', `${standaloneDir}/cron-engagement-remind.mjs`)
-console.log('postbuild: cron-engagement-remind.mjs → .next/standalone/')
+console.log('postbuild: standalone prêt (static + cron)')

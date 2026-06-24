@@ -7,13 +7,13 @@ test.describe('Parcours session', () => {
   test.skip(!email || !password, 'SMOKE_EMAIL et SMOKE_PASSWORD requis')
 
   test('liste des sessions accessible @auth', async ({ request }) => {
-    const loginRes = await request.post('/api/auth/login', {
+    const loginRes = await request.post('api/auth/login', {
       data: { login: email, password },
     })
     expect(loginRes.ok()).toBeTruthy()
     const { token } = await loginRes.json()
 
-    const res = await request.get('/api/sessions/list', {
+    const res = await request.get('api/sessions/list', {
       headers: { Authorization: `Bearer ${token}` },
     })
     expect(res.ok()).toBeTruthy()
@@ -22,11 +22,11 @@ test.describe('Parcours session', () => {
   })
 
   test('statut IA accessible pour utilisateur connecté @auth', async ({ request }) => {
-    const loginRes = await request.post('/api/auth/login', {
+    const loginRes = await request.post('api/auth/login', {
       data: { login: email, password },
     })
     const { token } = await loginRes.json()
-    const res = await request.get('/api/ai/status', {
+    const res = await request.get('api/ai/status', {
       headers: { Authorization: `Bearer ${token}` },
     })
     expect(res.ok()).toBeTruthy()

@@ -9,7 +9,7 @@
     "build": "next build",
     "postbuild": "node scripts/copy-standalone-extras.mjs",
     "build:export": "next build",
-    "start": "next start",
+    "start": "node .next/standalone/server.js",
     "lint": "next lint"
   },
   "dependencies": {
