@@ -25,14 +25,19 @@ export type EngagementRemindResult =
   | {
       dryRun: true
       devRestricted: boolean
+      allowlistActive: boolean
       candidates: number
-      sample: Array<Pick<EngagementCandidate, 'userId' | 'campaignId' | 'vars'>>
+      wouldSend: number
+      sample: Array<
+        Pick<EngagementCandidate, 'userId' | 'campaignId' | 'vars'> & { email: string | null }
+      >
     }
   | {
       candidates: number
       sent: number
       byCampaign: Record<string, number>
       devRestricted: boolean
+      allowlistActive: boolean
     }
   | { error: string; status: number }
 
@@ -66,7 +71,7 @@ export async function runEngagementRemind(
         email: c.email,
         campaignId: c.campaignId,
         vars: c.vars,
-      })) as Array<Pick<EngagementCandidate, 'userId' | 'campaignId' | 'vars'> & { email: string | null }>,
+      })),
     }
   }
 
