@@ -3,7 +3,7 @@ import { isDbConfigured } from '@/lib/db'
 import { ApiError, requireAuth } from '@/lib/api-auth'
 import { authMe } from '@/lib/db-auth'
 import { submitCoachRequest } from '@/lib/db-coach-request'
-import { sendAdminAlertEmail, buildNotificationEmailHtml } from '@/lib/email'
+import { sendAdminAlertEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,14 +27,10 @@ export async function POST(req: NextRequest) {
     await submitCoachRequest(uid, message)
     const user = await authMe(uid)
     const safeMessage = message.trim().slice(0, 2000)
-    const { html, text } = buildNotificationEmailHtml({
-      title: 'Nouvelle demande accompagnant',
-      body: `Utilisateur : ${user.name || '—'} (${user.email})\nID : ${uid}\n\n${safeMessage || '(aucun message)'}`,
-    })
     void sendAdminAlertEmail({
       subject: `[Coach] Demande de ${user.email}`,
-      html,
-      text,
+      title: 'Nouvelle demande accompagnant',
+      body: `Utilisateur : ${user.name || '—'} (${user.email})\nID : ${uid}\n\n${safeMessage || '(aucun message)'}`,
       roles: ['admin'],
     }).catch(() => {})
     return NextResponse.json({ ok: true, user })

@@ -71,8 +71,7 @@ export const ADMIN_NOTIFICATION_DESTINATIONS: AdminNotificationDestination[] = [
   { id: 'coach_chat', label: 'Espace coach — messages', path: '/coach/chat', group: 'Coach' },
 
   { id: 'admin', label: 'Tableau de bord', path: '/admin', group: 'Admin' },
-  { id: 'admin_emails', label: 'Campagnes e-mail', path: '/admin/emails', group: 'Admin' },
-  { id: 'admin_broadcasts', label: 'Campagne de notification', path: '/admin/broadcasts', group: 'Admin' },
+  { id: 'admin_comms', label: 'Envois & notifications', path: '/admin/comms', group: 'Admin' },
   { id: 'admin_suivi', label: 'Suivi', path: '/admin/suivi', group: 'Admin' },
   { id: 'admin_patientele', label: 'Patientèle', path: '/admin/patientele', group: 'Admin' },
   { id: 'admin_users', label: 'Utilisateurs', path: '/admin/users', group: 'Admin' },

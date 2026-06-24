@@ -66,13 +66,11 @@ import AdminTiragesPage from '@/views/AdminTiragesPage'
 import AdminChatPage from '@/views/AdminChatPage'
 import AdminPromptsPage from '@/views/AdminPromptsPage'
 import AdminPromoPage from '@/views/AdminPromoPage'
-import AdminNotificationsPage from '@/views/AdminNotificationsPage'
+import AdminCommsPage from '@/views/admin-comms/AdminCommsPage'
 import AdminUsersPage from '@/views/AdminUsersPage'
 import AdminSessionsPage from '@/views/AdminSessionsPage'
 import AdminSciencePage from '@/views/AdminSciencePage'
 import AdminAiPage from '@/views/AdminAiPage'
-import AdminBroadcastsPage from '@/views/AdminBroadcastsPage'
-import AdminEmailsPage from '@/views/AdminEmailsPage'
 import AdminTelemetryPage from '@/views/AdminTelemetryPage'
 import CoachSuiviPage from '@/views/CoachSuiviPage'
 import CoachPatientelePage from '@/views/CoachPatientelePage'
@@ -648,24 +646,33 @@ function AppRoutes() {
           </Layout>
         </ProtectedLayout>
       ),
+      comms: (
+        <ProtectedLayout adminOnly>
+          <Layout>
+            <Suspense fallback={<PageFallback />}>
+              <AdminCommsPage />
+            </Suspense>
+          </Layout>
+        </ProtectedLayout>
+      ),
       notifications: (
         <ProtectedLayout adminOnly>
           <Layout>
-            <AdminNotificationsPage />
+            <RouteRedirect to="/admin/comms?section=registry" />
           </Layout>
         </ProtectedLayout>
       ),
       broadcasts: (
         <ProtectedLayout adminOnly>
           <Layout>
-            <AdminBroadcastsPage />
+            <RouteRedirect to="/admin/comms?section=send&channel=notification" />
           </Layout>
         </ProtectedLayout>
       ),
       emails: (
         <ProtectedLayout adminOnly>
           <Layout>
-            <AdminEmailsPage />
+            <RouteRedirect to="/admin/comms?section=send&channel=email" />
           </Layout>
         </ProtectedLayout>
       ),

@@ -56,10 +56,10 @@ export async function POST(req: NextRequest) {
       to: email,
       inviterName,
       inviterDisplayName: inviterDisplay,
+      inviterUserId: uid,
       inviteUrl,
       scores: petals,
       kind: 'couple_garden',
-      ctaLabel: 'Rejoindre le Jardin du duo',
     }).catch(() => ({ sent: false as const }))
 
     return NextResponse.json(

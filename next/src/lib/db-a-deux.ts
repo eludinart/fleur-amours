@@ -538,11 +538,11 @@ export async function invitePairingByEmail(params: {
     to: params.partnerEmail.trim(),
     inviterName: inviter,
     inviterDisplayName: inviterDisplay,
+    inviterUserId: params.fromUserId,
     inviteUrl: params.inviteUrl,
     scores: scores ?? {},
     kind: qType === 'complet' ? 'a_deux_complet' : 'a_deux_porte',
     porteKey: anchor.porte ? String(anchor.porte) : null,
-    ctaLabel: 'Rejoindre le parcours',
   })
 
   if (result.sent) {
@@ -698,11 +698,11 @@ export async function invitePairingByUserId(params: {
       to: email,
       inviterName: inviter,
       inviterDisplayName: inviterDisplay,
+      inviterUserId: params.fromUserId,
       inviteUrl: params.inviteUrl,
       scores: scores ?? {},
       kind: qType === 'complet' ? 'a_deux_complet' : 'a_deux_porte',
       porteKey: anchor.porte ? String(anchor.porte) : null,
-      ctaLabel: 'Rejoindre le parcours',
     })
     emailSent = emailResult.sent
     emailError = emailResult.error

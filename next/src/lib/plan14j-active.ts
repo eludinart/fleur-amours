@@ -32,8 +32,12 @@ export function findActivePlan14j(sessions: Array<Record<string, unknown>>): Act
     const completed = Array.isArray(progress.completed) ? progress.completed : []
     if (completed.length >= days.length) continue
 
-    const dayNumbers = days.map((d, i) => Number(d.day ?? i + 1))
-    const currentDay = dayNumbers.find((n) => !completed.includes(n)) ?? dayNumbers[0]
+    const dayNumbers = days.map((d, i) => {
+      const n = Number(d.day ?? i + 1)
+      return Number.isFinite(n) && n > 0 ? n : i + 1
+    })
+    const currentDayRaw = dayNumbers.find((n) => !completed.includes(n)) ?? dayNumbers[0]
+    const currentDay = Number.isFinite(currentDayRaw) && currentDayRaw > 0 ? currentDayRaw : 1
     const idx = dayNumbers.indexOf(currentDay)
     const currentAction = String(days[idx]?.action ?? days[idx]?.focus ?? days[idx]?.title ?? '').trim()
 

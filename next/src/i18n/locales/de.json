@@ -663,6 +663,7 @@
     "adminPrompts": "KI-Prompts",
     "adminPromo": "Promo-Codes",
     "adminNotifications": "Benachrichtigungen",
+    "adminComms": "Versand & Benachrichtigungen",
     "adminCartes": "Karten",
     "adminGraph": "Graph",
     "adminMatrix": "Matrix",
@@ -1152,6 +1153,7 @@
     "resumeBtn": "Lesung fortsetzen",
     "inProgress": "läuft",
     "snapshot": "Lesungsüberblick",
+    "snapshotAlt": "Ziehung — innere Unterhaltung",
     "downloadSocial": "Social-Media-Bild",
     "regenerateSnapshot": "Vorschau regenerieren",
     "regenerateAllSnapshots": "Alle Vorschauen regenerieren",
@@ -2117,6 +2119,98 @@
     "title": "Kleine Gruppen",
     "subtitle": "Temporäre Kreise mit 3 bis 5 Personen, für 7 Tage."
   },
+  "email": {
+    "shell": {
+      "appName": "Fleur d'AmOurs",
+      "footer": "Du erhältst diese E-Mail, weil du Fleur d'AmOurs nutzt.",
+      "prefsLink": "Benachrichtigungen verwalten",
+      "ctaFallback": "Wenn der Button nicht öffnet, kopiere diesen Link in deinen Browser:",
+      "openInGarden": "Im Garten öffnen",
+      "adminFooter": "Interne Benachrichtigung — Fleur d'AmOurs Team"
+    },
+    "journey": {
+      "yourFlowerToday": "Deine Blume heute",
+      "dominantPetalPrefix": "Am weitesten geöffnetes Blatt:",
+      "noFlowerYet": "Deine Blume ist noch nicht gezeichnet",
+      "hasFleur": "Meine Blume ✓",
+      "noFleur": "Meine Blume — entdecken",
+      "plan14j": "Tag {{day}}/14",
+      "plan14jProgress": "14-Tage-Plan · {{progress}} %",
+      "lastTirage": "Letzte Ziehung: {{card}}",
+      "dominantPetalChip": "{{petal}} im Erwachen",
+      "checkinPending": "Check-in fällig",
+      "discoverFleur": "Blume zu entdecken",
+      "dreamscape": "Innere Unterhaltung",
+      "sessionInProgress": "Erkundung {{door}} läuft",
+      "checkinStale": "Check-in vor {{days}} T.",
+      "checkinRecent": "Kürzlicher Check-in ✓"
+    },
+    "contact": {
+      "confirmTitle": "Nachricht erhalten",
+      "confirmSubject": "Fleur d'AmOurs — Bestätigung deiner Nachricht",
+      "confirmBody": "Deine Anfrage ist eingegangen. Wir melden uns innerhalb von 48 Stunden.",
+      "confirmCta": "Zurück zum Garten",
+      "replyGreeting": "Hallo {{name}},",
+      "replyGreetingGeneric": "Hallo,",
+      "replySignoff": "— Das Fleur d'AmOurs Team",
+      "replyCta": "Kontaktformular",
+      "replyNotifTitle": "Antwort auf deine Nachricht"
+    },
+    "smtpTest": {
+      "subject": "SMTP-Test — Fleur d'AmOurs",
+      "body": "Wenn du diese E-Mail erhältst, ist SMTP korrekt konfiguriert."
+    },
+    "duo": {
+      "flowerOf": "Die Blume von {{name}}",
+      "howItWorks": "Wie funktioniert es?",
+      "step": "Schritt {{n}}",
+      "footerNote": "Die 8 Blätter erkunden acht Arten zu lieben — eine Karte zum besseren Verstehen.",
+      "headingPorte": "Eine Einladung zum gemeinsamen Erkunden",
+      "headingGarden": "Eine Einladung zum Duo-Garten",
+      "introPorte": "hat ihre Fleur d'AmOurs kartiert und lädt dich ein, deine zu vervollständigen.",
+      "introGarden": "lädt dich ein, eure Beziehung in einem gemeinsamen Raum zu pflegen.",
+      "badgeGarden": "Duo-Garten",
+      "badgeGardenDuration": "Gemeinsamer Raum",
+      "badgePorte": "Zu zweit · Durch ein Tor — {{porte}}",
+      "badgeComplet": "Zu zweit · Vollständiger Fragebogen",
+      "badgeDuo": "DUO-Blume",
+      "duration5": "~5 Min.",
+      "duration15": "~15 Min.",
+      "ctaGarden": "Duo-Garten beitreten",
+      "ctaQuestionnaire": "Meinen Fragebogen starten",
+      "subjectDuo": "{{inviter}} lädt dich zu einem Duo-Fragebogen auf Fleur d'AmOurs ein",
+      "subjectGarden": "{{inviter}} lädt dich zum Duo-Garten auf Fleur d'AmOurs ein",
+      "subjectPorte": "{{inviter}} lädt dich zu einer Zu-zweit-Reise auf Fleur d'AmOurs ein",
+      "steps": {
+        "discoverTitle": "Entdecke die Blume deines Einladenden",
+        "discoverDesc": "Jedes Blatt steht für eine Dimension der Liebe. Ihre ist oben bereits gezeichnet.",
+        "acceptTitle": "Nimm die Einladung an",
+        "acceptDescGarden": "Tritt dem gemeinsamen Garten bei — ein privater Raum zu zweit.",
+        "cultivateTitle": "Pflegt eure Verbindung täglich",
+        "cultivateDesc": "Geteilte Nachrichten, Rituale, Duo-Blume und begleitete Mediation.",
+        "answerTitle": "Antworte nun du",
+        "answerDescPorte": "12 symbolische Fragen · ca. 5 Minuten. Keine richtige Antwort.",
+        "answerDescComplet": "24 Fragen · ca. 15 Minuten. Keine richtige Antwort.",
+        "togetherTitle": "Eine Blume zu zweit erscheint",
+        "togetherDesc": "Eure Profile überlagern sich und zeigen Übereinstimmungen, Unterschiede und Dynamik."
+      },
+      "porte": {
+        "love": "Liebe",
+        "vegetal": "Pflanze",
+        "elements": "Elemente",
+        "life": "Leben"
+      }
+    },
+    "invite": {
+      "ctaDefault": "Einladung annehmen"
+    },
+    "mycelium": {
+      "inviteSubject": "{{inviter}} lädt dich zu Mycélium ein",
+      "inviteIntro": "{{inviter}} lädt dich ein, dem Mycélium-Arbeitsbereich beizutreten ({{org}}).",
+      "inviteCta": "Mycélium beitreten",
+      "orgFallback": "Organisation"
+    }
+  },
   "engagement": {
     "greeting": "Hallo {{name}},",
     "greetingGeneric": "Hallo,",
@@ -2173,7 +2267,7 @@
     "dreamscape": {
       "title": "Ein inneres Gespräch",
       "body": "Ein paar Minuten mit der Führung, um zu klären, was in dir kreist — ohne Urteil, in deinem Tempo.",
-      "actionLabel": "Dreamscape betreten",
+      "actionLabel": "Innere Unterhaltung öffnen",
       "emailSubject": "Ein Moment innerer Klarheit"
     }
   }

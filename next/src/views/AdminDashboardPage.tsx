@@ -682,7 +682,7 @@ export default function AdminDashboardPage() {
                       ? `${notifStats.delivered ?? 0} délivrées · cloche : ${notifStats.unread_mine ?? 0} non lue${(notifStats.unread_mine ?? 0) > 1 ? 's' : ''} · ${notifStats.unread ?? 0} en attente (tous comptes)`
                       : undefined
                   }
-                  to="/admin/notifications"
+                  to="/admin/comms"
                   icon="🔔"
                   color="emerald"
                 />
@@ -794,7 +794,7 @@ export default function AdminDashboardPage() {
               <ShortcutCard to="/admin/chat" label="Chat" icon="💬" />
               <ShortcutCard to="/admin/users" label="Utilisateurs" icon="👥" />
               <ShortcutCard to="/admin/prompts" label="Prompts IA" icon="✏️" />
-              <ShortcutCard to="/admin/notifications" label="Notifications" icon="🔔" />
+              <ShortcutCard to="/admin/comms" label="Envois & notifications" icon="📨" />
               <ShortcutCard to="/stats" label="Statistiques Fleur" icon="📈" />
               <ShortcutCard to="/diagnostic" label="Diagnostic" icon="🔍" />
               <ShortcutCard to="/campaigns" label="Campagnes" icon="✉️" />

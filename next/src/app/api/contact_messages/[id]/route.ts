@@ -7,6 +7,8 @@ import { isDbConfigured } from '@/lib/db'
 import { getContactMessage, updateContactMessageStatus } from '@/lib/db-contact'
 import { createNotification } from '@/lib/db-notifications'
 import { buildNotificationEmailHtml, sendTransactionalEmail } from '@/lib/email'
+import { tServer } from '@/lib/i18n-server'
+import { resolveEmailLocale } from '@/lib/user-locale'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,14 +43,20 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     }
 
     const to = String(msg.email ?? '')
+    const recipientUserId = msg.user_id != null ? Number(msg.user_id) : null
+    const locale = await resolveEmailLocale({ userId: recipientUserId })
     const subject = `Re: ${String(msg.subject ?? 'Votre demande')}`
-    const greeting = msg.name ? `Bonjour ${String(msg.name)},` : 'Bonjour,'
-    const fullBody = `${greeting}\n\n${reply}\n\n— L'équipe Fleur d'AmOurs`
+    const greeting = msg.name
+      ? tServer(locale, 'email.contact.replyGreeting', { name: String(msg.name) })
+      : tServer(locale, 'email.contact.replyGreetingGeneric')
+    const fullBody = `${greeting}\n\n${reply}\n\n${tServer(locale, 'email.contact.replySignoff')}`
     const { html, text } = buildNotificationEmailHtml({
-      title: subject,
+      title: tServer(locale, 'email.contact.replyNotifTitle'),
       body: fullBody,
       actionUrl: '/contact',
-      actionLabel: 'Formulaire de contact',
+      actionLabel: tServer(locale, 'email.contact.replyCta'),
+      locale,
+      showGarden: false,
     })
 
     const sent = await sendTransactionalEmail({
@@ -56,8 +64,8 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       subject,
       html,
       text,
-      userId: msg.user_id != null ? Number(msg.user_id) : null,
-      skipPrefs: !msg.user_id,
+      userId: recipientUserId,
+      skipPrefs: !recipientUserId,
       replyTo: process.env.SMTP_REPLY_TO?.trim() || undefined,
     })
 
@@ -67,14 +75,14 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
 
     await updateContactMessageStatus(id, 'replied')
 
-    if (msg.user_id) {
+    if (recipientUserId) {
       void createNotification({
         type: 'contact_reply',
-        title: 'Réponse à votre message',
+        title: tServer(locale, 'email.contact.replyNotifTitle'),
         body: reply.slice(0, 500),
         action_url: '/contact',
         recipient_type: 'user',
-        recipient_id: Number(msg.user_id),
+        recipient_id: recipientUserId,
         created_by: parseInt(userId, 10),
         source_type: 'contact',
         source_id: id,

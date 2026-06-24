@@ -2,11 +2,15 @@
  * E-mails transactionnels (invitations, notifications, contact, alertes admin).
  */
 import type { RowDataPacket } from 'mysql2'
-import { absolutePublicAppUrl } from './app-public-url'
 import { getPool, isDbConfigured, table } from './db'
+import { buildFleurEmailLayout } from './email-layout'
+import { buildJourneyChips, resolveEmailHero, campaignIdFromNotificationType } from './email-journey'
+import type { EngagementCampaignId } from './engagement-templates'
+import type { EngagementPersonalization } from './engagement-context'
 import { tServer } from './i18n-server'
 import { canSendOutboundToEmail } from './notification-outbound'
 import { isSmtpConfigured, trySendSmtpMail } from './smtp'
+import { getUserLocalesBatch, resolveEmailLocale } from './user-locale'
 
 const PREFS_META_KEY = 'fleur_notification_prefs'
 const APP_NAME = "Fleur d'AmOurs"
@@ -89,66 +93,46 @@ export function buildNotificationEmailHtml(params: {
   actionLabel?: string
   locale?: string
   highlight?: string | null
+  preheader?: string | null
+  mode?: 'user' | 'admin' | 'marketing'
+  personalization?: EngagementPersonalization | null
+  showGarden?: boolean
+  bodyHtml?: string | null
+  subtitle?: string | null
+  badge?: string | null
+  campaignId?: EngagementCampaignId
 }): { html: string; text: string } {
   const locale = params.locale ?? 'fr'
   const title = String(params.title ?? '').trim()
   const body = params.body ? String(params.body).trim() : ''
   const highlight = params.highlight ? String(params.highlight).trim() : ''
   const actionPath = params.actionUrl ? String(params.actionUrl).trim() : ''
-  const actionAbs = actionPath
-    ? actionPath.startsWith('http')
-      ? actionPath
-      : absolutePublicAppUrl(actionPath)
-    : ''
+  const mode = params.mode ?? 'user'
   const actionLabel =
-    params.actionLabel ?? tServer(locale, 'engagement.emailCtaDefault')
-  const footer = tServer(locale, 'engagement.emailFooter')
-  const textParts = [title, body, highlight, actionAbs ? `${actionLabel} : ${actionAbs}` : ''].filter(Boolean)
-  const text = textParts.join('\n\n')
-  const bodyHtml = body
-    ? body
-        .split(/\n\n+/)
-        .map(
-          (p) =>
-            `<p style="margin:0 0 12px;color:#334155;font-size:15px;line-height:1.6">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`
-        )
-        .join('')
-    : ''
-  const html = `<!DOCTYPE html>
-<html lang="${escapeHtml(locale)}">
-<head>
-  <meta charset="utf-8">
-  <meta name="color-scheme" content="light only">
-  <meta name="supported-color-schemes" content="light">
-</head>
-<body style="font-family:Georgia,serif;line-height:1.55;color:#1e293b;max-width:560px;margin:0 auto;padding:24px;background:#fafafa">
-  <div style="background:#ffffff;border-radius:16px;padding:28px;border:1px solid #e2e8f0;color:#334155">
-    <p style="color:#7c3aed;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 12px">${APP_NAME}</p>
-    <h1 style="font-size:22px;margin:0 0 16px;line-height:1.3;color:#0f172a">${escapeHtml(title)}</h1>
-    ${bodyHtml}
-    ${
-      highlight
-        ? `<div style="margin:16px 0;padding:14px 16px;background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:8px;font-size:15px;line-height:1.5;color:#4c1d95">${escapeHtml(highlight)}</div>`
-        : ''
-    }
-    ${
-      actionAbs
-        ? `<p style="margin:28px 0 8px"><a href="${escapeHtml(actionAbs)}" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:12px;font-weight:600;font-size:15px">${escapeHtml(actionLabel)}</a></p>`
-        : ''
-    }
-  </div>
-  <p style="font-size:12px;color:#64748b;margin-top:24px;text-align:center;line-height:1.5">${escapeHtml(footer)}</p>
-</body>
-</html>`
-  return { html, text }
-}
+    params.actionLabel ?? tServer(locale, 'email.shell.openInGarden')
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+  const p = params.personalization
+  const showGarden = params.showGarden !== false && mode === 'user' && !!p
+  const hero = showGarden && p ? resolveEmailHero(p) : mode === 'admin' ? { type: 'none' as const } : { type: 'logo' as const }
+  const journeyChips = showGarden && p ? buildJourneyChips(p.locale, p, params.campaignId) : undefined
+
+  return buildFleurEmailLayout({
+    locale,
+    preheader: params.preheader ?? highlight ?? body.slice(0, 100),
+    mode,
+    title,
+    subtitle: params.subtitle,
+    badge: params.badge,
+    hero,
+    journeyChips,
+    body: params.bodyHtml ? undefined : body,
+    bodyHtml: params.bodyHtml ?? undefined,
+    highlight: highlight || null,
+    cta:
+      mode !== 'admin' && actionPath
+        ? { label: actionLabel, url: actionPath }
+        : null,
+  })
 }
 
 export async function sendTransactionalEmail(params: {
@@ -203,21 +187,36 @@ export async function getStaffEmails(roles: Array<'admin' | 'coach'>): Promise<s
 
 export async function sendAdminAlertEmail(params: {
   subject: string
-  html: string
+  title?: string
+  body?: string
+  html?: string
   text?: string
   roles?: Array<'admin' | 'coach'>
 }): Promise<{ sent: number; errors: string[] }> {
   const roles = params.roles ?? ['admin']
   const emails = await getStaffEmails(roles)
   if (!emails.length) return { sent: 0, errors: ['Aucun e-mail staff trouvé'] }
+
+  const title = params.title ?? params.subject
+  const bodyText = params.body ?? params.text ?? ''
+  const { html, text } =
+    params.html && !params.body
+      ? { html: params.html, text: params.text ?? '' }
+      : buildNotificationEmailHtml({
+          title,
+          body: bodyText,
+          mode: 'admin',
+          locale: 'fr',
+        })
+
   let sent = 0
   const errors: string[] = []
   for (const to of emails) {
     const r = await sendTransactionalEmail({
       to,
       subject: params.subject,
-      html: params.html,
-      text: params.text,
+      html,
+      text,
       skipPrefs: true,
     })
     if (r.sent) sent++
@@ -235,31 +234,49 @@ export type NotificationEmailDispatchInput = {
   actionLabel?: string | null
   locale?: string
   highlight?: string | null
+  personalization?: EngagementPersonalization | null
   recipients: Array<{ user_id: number; email: string }>
   extraEmails?: string[]
   skipDevGuard?: boolean
+  campaignId?: EngagementCampaignId
 }
 
 export async function dispatchNotificationEmails(input: NotificationEmailDispatchInput): Promise<void> {
   if (!isSmtpConfigured()) return
-  const { html, text } = buildNotificationEmailHtml({
-    title: input.title,
-    body: input.body,
-    actionUrl: input.actionUrl,
-    actionLabel: input.actionLabel ?? undefined,
-    locale: input.locale,
-    highlight: input.highlight,
-  })
   const subject = (input.title || '').slice(0, 200)
   const headers: Record<string, string> = {}
   if (input.notificationId) headers['X-Fleur-Notification-Id'] = String(input.notificationId)
   if (input.type) headers['X-Fleur-Notification-Type'] = input.type
+
+  const userIds = input.recipients.map((r) => r.user_id).filter(Boolean)
+  const localeMap = await getUserLocalesBatch(userIds)
 
   const seen = new Set<string>()
   for (const r of input.recipients) {
     const email = normalizeEmail(r.email)
     if (!email || seen.has(email)) continue
     seen.add(email)
+
+    const locale =
+      input.locale ??
+      input.personalization?.locale ??
+      localeMap.get(r.user_id) ??
+      'fr'
+
+    const campaignId = input.campaignId ?? campaignIdFromNotificationType(input.type ?? '')
+
+    const { html, text } = buildNotificationEmailHtml({
+      title: input.title,
+      body: input.body,
+      actionUrl: input.actionUrl,
+      actionLabel: input.actionLabel ?? undefined,
+      locale,
+      highlight: input.highlight,
+      personalization: input.personalization,
+      showGarden: isEngagementType(input.type) || !!input.personalization,
+      campaignId,
+    })
+
     await sendTransactionalEmail({
       to: email,
       userId: r.user_id,
@@ -270,10 +287,21 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
       skipDevGuard: input.skipDevGuard,
     })
   }
+
   for (const raw of input.extraEmails ?? []) {
     const email = normalizeEmail(raw)
     if (!email || seen.has(email)) continue
     seen.add(email)
+    const locale = input.locale ?? 'fr'
+    const { html, text } = buildNotificationEmailHtml({
+      title: input.title,
+      body: input.body,
+      actionUrl: input.actionUrl,
+      actionLabel: input.actionLabel ?? undefined,
+      locale,
+      highlight: input.highlight,
+      showGarden: false,
+    })
     await sendTransactionalEmail({
       to: email,
       subject,
@@ -286,19 +314,31 @@ export async function dispatchNotificationEmails(input: NotificationEmailDispatc
   }
 }
 
+function isEngagementType(type: string): boolean {
+  return (
+    type.startsWith('engagement_') ||
+    type === 'plan14j_reminder' ||
+    type === 'checkin_reminder'
+  )
+}
+
 export async function sendInviteEmail(params: {
   to: string
   subject: string
   intro: string
   inviteUrl: string
   ctaLabel?: string
+  locale?: string
 }): Promise<{ sent: boolean; error?: string }> {
-  const cta = params.ctaLabel ?? 'Accepter l\'invitation'
+  const locale = params.locale ?? 'fr'
+  const cta = params.ctaLabel ?? tServer(locale, 'email.invite.ctaDefault')
   const { html, text } = buildNotificationEmailHtml({
     title: params.subject,
     body: params.intro,
     actionUrl: params.inviteUrl,
     actionLabel: cta,
+    locale,
+    showGarden: false,
   })
   return sendTransactionalEmail({
     to: params.to,
@@ -309,21 +349,23 @@ export async function sendInviteEmail(params: {
   })
 }
 
-export async function sendDuoInviteEmail(
-  params: {
-    to: string
-    subject?: string
-    inviterName: string
-    inviterDisplayName?: string | null
-    inviteUrl: string
-    scores: Record<string, number>
-    kind: 'a_deux_porte' | 'a_deux_complet' | 'duo_classic' | 'couple_garden'
-    porteKey?: string | null
-    ctaLabel?: string
-  }
-): Promise<{ sent: boolean; error?: string }> {
+export async function sendDuoInviteEmail(params: {
+  to: string
+  subject?: string
+  inviterName: string
+  inviterDisplayName?: string | null
+  inviterUserId?: number
+  inviteUrl: string
+  scores: Record<string, number>
+  kind: 'a_deux_porte' | 'a_deux_complet' | 'duo_classic' | 'couple_garden'
+  porteKey?: string | null
+  ctaLabel?: string
+  locale?: string
+}): Promise<{ sent: boolean; error?: string }> {
   const { buildDuoInviteEmailContent } = await import('./email-duo-invite')
-  const { html, text, subject } = buildDuoInviteEmailContent(params)
+  const locale =
+    params.locale ?? (await resolveEmailLocale({ userId: params.inviterUserId }))
+  const { html, text, subject } = buildDuoInviteEmailContent({ ...params, locale })
   return sendTransactionalEmail({
     to: params.to,
     subject: params.subject ?? subject,
@@ -336,22 +378,30 @@ export async function sendDuoInviteEmail(
 export async function sendContactConfirmationEmail(params: {
   to: string
   name?: string | null
+  userId?: number | null
 }): Promise<{ sent: boolean; error?: string }> {
-  const greeting = params.name?.trim() ? `Bonjour ${params.name.trim()},` : 'Bonjour,'
-  const body = `${greeting}\n\nVotre demande a bien été reçue. Nous vous recontacterons dans les 48h ouvrées à cette adresse.`
+  const locale = await resolveEmailLocale({ userId: params.userId })
+  const greeting = params.name?.trim()
+    ? tServer(locale, 'email.contact.replyGreeting', { name: params.name.trim() })
+    : tServer(locale, 'email.contact.replyGreetingGeneric')
+  const body = `${greeting}\n\n${tServer(locale, 'email.contact.confirmBody')}`
   const { html, text } = buildNotificationEmailHtml({
-    title: 'Message bien reçu',
+    title: tServer(locale, 'email.contact.confirmTitle'),
     body,
     actionUrl: '/',
-    actionLabel: 'Retour au Jardin',
+    actionLabel: tServer(locale, 'email.contact.confirmCta'),
+    locale,
+    showGarden: false,
   })
   return sendTransactionalEmail({
     to: params.to,
-    subject: `${APP_NAME} — confirmation de votre message`,
+    subject: tServer(locale, 'email.contact.confirmSubject'),
     html,
     text,
+    userId: params.userId,
     skipPrefs: true,
   })
 }
 
-export { isSmtpConfigured }
+export { buildFleurEmailLayout, wrapBroadcastEmailHtml } from './email-layout'
+export { isSmtpConfigured } from './smtp'

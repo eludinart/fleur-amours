@@ -10,6 +10,8 @@ import { absolutePublicAppUrl } from '@/lib/app-public-url'
 import { createBatchInvites, getManagedOrg, type OrgRole } from '@/lib/db-organisations'
 import { sendInviteEmail } from '@/lib/email'
 import { authMe } from '@/lib/db-auth'
+import { tServer } from '@/lib/i18n-server'
+import { getUserLocale } from '@/lib/user-locale'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,8 +41,6 @@ export async function POST(req: NextRequest) {
     if (!emails.length) return NextResponse.json({ error: 'Aucun email fourni' }, { status: 400 })
 
     let role = VALID_ROLES.includes(body.role as OrgRole) ? (body.role as OrgRole) : 'member'
-    // Anti-élévation : seuls owner et manager peuvent inviter avec un rôle élevé ;
-    // un RH ne peut inviter que des membres.
     if (role !== 'member' && managed.role !== 'owner' && managed.role !== 'manager') {
       role = 'member'
     }
@@ -53,19 +53,24 @@ export async function POST(req: NextRequest) {
     })
 
     const inviter = await authMe(ctx.uid).catch(() => null)
-    const inviterName = inviter?.name?.trim() || inviter?.email || 'Votre organisation'
+    const inviterName = inviter?.name?.trim() || inviter?.email || tServer('fr', 'email.mycelium.orgFallback')
+    const locale = await getUserLocale(ctx.uid)
+    const orgName = managed.org.name?.trim() || tServer(locale, 'email.mycelium.orgFallback')
 
     const invites = created.map((inv) => {
       const inviteLink = absolutePublicAppUrl(
         `/login?from=/mycelium/join&org_invite=${encodeURIComponent(inv.token)}`,
         req
       )
+      const subject = tServer(locale, 'email.mycelium.inviteSubject', { inviter: inviterName })
+      const intro = tServer(locale, 'email.mycelium.inviteIntro', { inviter: inviterName, org: orgName })
       void sendInviteEmail({
         to: inv.email,
-        subject: `${inviterName} vous invite sur Mycélium`,
-        intro: `${inviterName} vous invite à rejoindre l'espace Mycélium (${managed.org.name ?? 'organisation'}).`,
+        subject,
+        intro,
         inviteUrl: inviteLink,
-        ctaLabel: 'Rejoindre Mycélium',
+        ctaLabel: tServer(locale, 'email.mycelium.inviteCta'),
+        locale,
       }).catch(() => {})
       return {
         email: inv.email,

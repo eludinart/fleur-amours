@@ -65,8 +65,10 @@ export async function sendEngagementNotification(
     actionLabel: template.action_label,
     locale: template.locale,
     highlight: template.emailHighlight,
+    personalization: input.personalization,
     recipients: [{ user_id: input.userId, email }],
     skipDevGuard: input.skipDevGuard,
+    campaignId: input.campaignId,
   })
 
   return { sent: true, notification_id: result.notification_id }

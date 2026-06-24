@@ -116,7 +116,7 @@ export default function AdminPromptsPage() {
     setBusy(true)
     try {
       await adminApi.saveAnalyzeMoodPrompt(analyzeMoodContent)
-      showMessage('Prompt Dreamscape enregistré.')
+      showMessage('Prompt conversation intérieure enregistré.')
     } catch (e: unknown) {
       const err = e as { detail?: string; message?: string }
       showMessage(((err.detail ?? err.message ?? 'Erreur') as string) + ' — Enregistrement échoué.', 'error')
@@ -265,7 +265,7 @@ export default function AdminPromptsPage() {
               disabled={busy}
               className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-rose-500 shadow-md hover:opacity-90 disabled:opacity-50"
             >
-              {busy ? 'En cours…' : 'Enregistrer le prompt Dreamscape'}
+              {busy ? 'En cours…' : 'Enregistrer le prompt conversation intérieure'}
             </button>
           </>
         )}

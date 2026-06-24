@@ -77,7 +77,7 @@ const CAMPAIGN_LABELS: Record<string, string> = {
   tirage: 'Tirage carte',
   fleur: 'Fleur d\'AmOurs',
   session: 'Session porte',
-  dreamscape: 'Dreamscape',
+  dreamscape: 'Conversation intérieure',
 }
 
 export default function AdminNotificationsPage() {
@@ -657,7 +657,7 @@ export default function AdminNotificationsPage() {
             <p className="font-medium mb-1">Relances automatiques (pas encore activées en prod)</p>
             <p className="text-violet-700 dark:text-violet-300">
               Cron unifié : <code className="text-xs">POST /api/engagement/remind</code> — 1 rappel max / utilisateur / ~20 h,
-              priorité plan 14j → check-in → Fleur → tirage → session → dreamscape.
+              priorité plan 14j → check-in → Fleur → tirage → session → conversation intérieure.
               Les relances expirent après 36 h (disparaissent de la cloche).
               En développement : envois limités à <strong>eludinart@gmail.com</strong>.
             </p>

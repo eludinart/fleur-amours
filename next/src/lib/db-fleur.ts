@@ -635,10 +635,10 @@ export async function inviteDuoPartner(params: {
     to: partnerEmail,
     inviterName: inviter,
     inviterDisplayName: inviterDisplay,
+    inviterUserId: ownerId ?? undefined,
     inviteUrl: params.inviteUrl,
     scores,
     kind: 'duo_classic',
-    ctaLabel: 'Rejoindre le Duo',
   })
 
   if (result.sent) {

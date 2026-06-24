@@ -903,6 +903,7 @@
     "adminPrompts": "Prompts IA",
     "adminPromo": "Codes promo",
     "adminNotifications": "Notifications",
+    "adminComms": "Envois & notifications",
     "adminCartes": "Cartes",
     "adminGraph": "Graphe",
     "adminMatrix": "Matrice",
@@ -1324,7 +1325,7 @@
     "encourageDreamscape": "Une phrase ou le lien suffisent : vos proches voient un aperçu poétique avec image.",
     "encourageDreamscapeMenu": "Le lien mène à votre page de partage avec carte et texte pour les réseaux.",
     "encourageDreamscapeTitle": "Partager cette conversation (lien + aperçu sur les réseaux)",
-    "dreamscapeShareText": "Découvrez une Conversation intérieure sur Fleur d'AmOurs 🌸",
+    "dreamscapeShareText": "Découvrez une conversation intérieure sur Fleur d'AmOurs 🌸",
     "dreamscapeShareError": "Impossible d’obtenir le lien public de partage.",
     "socialPlatformsHint": "Twitter et WhatsApp reprennent le texte ci-dessus. Facebook et LinkedIn s’appuient surtout sur le titre, l’image et la description de la page. Instagram n’expose pas d’URL de partage web : utilisez « Copier le lien » puis collez dans une story ou une bio.",
     "dreamscapeShareTitle": "Partage",
@@ -1402,6 +1403,7 @@
     "resumeBtn": "Reprendre le tirage",
     "inProgress": "en cours",
     "snapshot": "Aperçu du tirage",
+    "snapshotAlt": "Tirage — conversation intérieure",
     "downloadSocial": "Image réseaux sociaux",
     "regenerateSnapshot": "Régénérer l'aperçu",
     "regenerateAllSnapshots": "Régénérer tous les aperçus",
@@ -2489,6 +2491,98 @@
     "ctaCoaches": "Voir l’annuaire des accompagnants",
     "footerNote": "Fleur d’AmOurs — Outil relationnel et espace numérique pour accompagnants"
   },
+  "email": {
+    "shell": {
+      "appName": "Fleur d'AmOurs",
+      "footer": "Vous recevez cet e-mail car vous utilisez Fleur d'AmOurs.",
+      "prefsLink": "Gérer vos notifications",
+      "ctaFallback": "Si le bouton ne s'ouvre pas, copiez ce lien dans votre navigateur :",
+      "openInGarden": "Ouvrir dans le Jardin",
+      "adminFooter": "Notification interne — équipe Fleur d'AmOurs"
+    },
+    "journey": {
+      "yourFlowerToday": "Votre fleur aujourd'hui",
+      "dominantPetalPrefix": "Pétale le plus déployé :",
+      "noFlowerYet": "Votre fleur n'est pas encore dessinée",
+      "hasFleur": "Ma Fleur ✓",
+      "noFleur": "Ma Fleur — à découvrir",
+      "plan14j": "Jour {{day}}/14",
+      "plan14jProgress": "Plan 14 j · {{progress}} %",
+      "lastTirage": "Dernier tirage : {{card}}",
+      "dominantPetalChip": "{{petal}} en éveil",
+      "checkinPending": "Check-in à faire",
+      "discoverFleur": "Fleur à révéler",
+      "dreamscape": "Conversation intérieure",
+      "sessionInProgress": "Exploration {{door}} en cours",
+      "checkinStale": "Check-in il y a {{days}} j.",
+      "checkinRecent": "Check-in récent ✓"
+    },
+    "contact": {
+      "confirmTitle": "Message bien reçu",
+      "confirmSubject": "Fleur d'AmOurs — confirmation de votre message",
+      "confirmBody": "Votre demande a bien été reçue. Nous vous recontacterons dans les 48h ouvrées à cette adresse.",
+      "confirmCta": "Retour au Jardin",
+      "replyGreeting": "Bonjour {{name}},",
+      "replyGreetingGeneric": "Bonjour,",
+      "replySignoff": "— L'équipe Fleur d'AmOurs",
+      "replyCta": "Formulaire de contact",
+      "replyNotifTitle": "Réponse à votre message"
+    },
+    "smtpTest": {
+      "subject": "Test SMTP — Fleur d'AmOurs",
+      "body": "Si vous recevez cet e-mail, la configuration SMTP fonctionne."
+    },
+    "duo": {
+      "flowerOf": "La fleur de {{name}}",
+      "howItWorks": "Comment ça marche ?",
+      "step": "Étape {{n}}",
+      "footerNote": "Les 8 pétales explorent huit façons d'aimer — une carte pour mieux se comprendre ensemble.",
+      "headingPorte": "Une invitation à explorer à deux",
+      "headingGarden": "Une invitation au Jardin du duo",
+      "introPorte": "a cartographié sa Fleur d'AmOurs et vous invite à compléter la vôtre.",
+      "introGarden": "vous invite à cultiver votre relation à deux dans un espace partagé.",
+      "badgeGarden": "Jardin du duo",
+      "badgeGardenDuration": "Espace partagé",
+      "badgePorte": "À deux · Par une Porte — {{porte}}",
+      "badgeComplet": "À deux · Questionnaire complet",
+      "badgeDuo": "Fleur DUO",
+      "duration5": "~5 min",
+      "duration15": "~15 min",
+      "ctaGarden": "Rejoindre le Jardin du duo",
+      "ctaQuestionnaire": "Commencer mon questionnaire",
+      "subjectDuo": "{{inviter}} vous invite à un questionnaire Duo sur Fleur d'AmOurs",
+      "subjectGarden": "{{inviter}} vous invite au Jardin du duo sur Fleur d'AmOurs",
+      "subjectPorte": "{{inviter}} vous invite à un parcours À deux sur Fleur d'AmOurs",
+      "steps": {
+        "discoverTitle": "Découvrez la fleur de votre invitant·e",
+        "discoverDesc": "Chaque pétale représente une dimension de l'amour. La leur est déjà dessinée ci-dessus.",
+        "acceptTitle": "Acceptez l'invitation",
+        "acceptDescGarden": "Rejoignez le jardin commun : un espace privé à deux, sans questionnaire obligatoire pour commencer.",
+        "cultivateTitle": "Cultivez votre lien au quotidien",
+        "cultivateDesc": "Messages partagés, rituels, fleur de duo et médiation guidée pour accompagner votre relation.",
+        "answerTitle": "Répondez à votre tour",
+        "answerDescPorte": "12 questions symboliques · environ 5 minutes. Pas de bonne réponse : seulement votre ressenti.",
+        "answerDescComplet": "24 questions · environ 15 minutes. Pas de bonne réponse : seulement votre ressenti.",
+        "togetherTitle": "Une fleur à deux apparaît",
+        "togetherDesc": "Vos deux profils se superposent pour révéler vos points d'accord, vos écarts et la dynamique de votre lien."
+      },
+      "porte": {
+        "love": "Amour",
+        "vegetal": "Végétal",
+        "elements": "Éléments",
+        "life": "Vie"
+      }
+    },
+    "invite": {
+      "ctaDefault": "Accepter l'invitation"
+    },
+    "mycelium": {
+      "inviteSubject": "{{inviter}} vous invite sur Mycélium",
+      "inviteIntro": "{{inviter}} vous invite à rejoindre l'espace Mycélium ({{org}}).",
+      "inviteCta": "Rejoindre Mycélium",
+      "orgFallback": "organisation"
+    }
+  },
   "engagement": {
     "greeting": "Bonjour {{name}},",
     "greetingGeneric": "Bonjour,",
@@ -2545,7 +2639,7 @@
     "dreamscape": {
       "title": "Une conversation intérieure",
       "body": "Quelques minutes avec le Tuteur pour clarifier ce qui tourne en vous — sans jugement, à votre rythme.",
-      "actionLabel": "Entrer en Dreamscape",
+      "actionLabel": "Ouvrir la conversation intérieure",
       "emailSubject": "Un moment de clarté intérieure"
     }
   },

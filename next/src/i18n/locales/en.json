@@ -712,6 +712,7 @@
     "adminPrompts": "AI Prompts",
     "adminPromo": "Promo codes",
     "adminNotifications": "Notifications",
+    "adminComms": "Messaging & notifications",
     "adminCartes": "Cards",
     "adminGraph": "Graph",
     "adminMatrix": "Matrix",
@@ -1201,6 +1202,7 @@
     "resumeBtn": "Resume the reading",
     "inProgress": "in progress",
     "snapshot": "Reading overview",
+    "snapshotAlt": "Draw — inner conversation",
     "downloadSocial": "Social media image",
     "regenerateSnapshot": "Regenerate preview",
     "regenerateAllSnapshots": "Regenerate all previews",
@@ -2397,6 +2399,98 @@
     "post": "Post",
     "remaining": "{{count}} / {{limit}} messages left today"
   },
+  "email": {
+    "shell": {
+      "appName": "Fleur d'AmOurs",
+      "footer": "You receive this email because you use Fleur d'AmOurs.",
+      "prefsLink": "Manage notifications",
+      "ctaFallback": "If the button does not open, copy this link into your browser:",
+      "openInGarden": "Open in the Garden",
+      "adminFooter": "Internal notification — Fleur d'AmOurs team"
+    },
+    "journey": {
+      "yourFlowerToday": "Your flower today",
+      "dominantPetalPrefix": "Most open petal:",
+      "noFlowerYet": "Your flower is not drawn yet",
+      "hasFleur": "My Flower ✓",
+      "noFleur": "My Flower — to discover",
+      "plan14j": "Day {{day}}/14",
+      "plan14jProgress": "14-day plan · {{progress}}%",
+      "lastTirage": "Last draw: {{card}}",
+      "dominantPetalChip": "{{petal}} awakening",
+      "checkinPending": "Check-in due",
+      "discoverFleur": "Flower to reveal",
+      "dreamscape": "Inner conversation",
+      "sessionInProgress": "{{door}} exploration in progress",
+      "checkinStale": "Check-in {{days}} d. ago",
+      "checkinRecent": "Recent check-in ✓"
+    },
+    "contact": {
+      "confirmTitle": "Message received",
+      "confirmSubject": "Fleur d'AmOurs — confirmation of your message",
+      "confirmBody": "Your request has been received. We will get back to you within 48 business hours at this address.",
+      "confirmCta": "Back to the Garden",
+      "replyGreeting": "Hello {{name}},",
+      "replyGreetingGeneric": "Hello,",
+      "replySignoff": "— The Fleur d'AmOurs team",
+      "replyCta": "Contact form",
+      "replyNotifTitle": "Reply to your message"
+    },
+    "smtpTest": {
+      "subject": "SMTP test — Fleur d'AmOurs",
+      "body": "If you receive this email, SMTP is configured correctly."
+    },
+    "duo": {
+      "flowerOf": "{{name}}'s flower",
+      "howItWorks": "How does it work?",
+      "step": "Step {{n}}",
+      "footerNote": "The 8 petals explore eight ways of loving — a map to understand each other better.",
+      "headingPorte": "An invitation to explore together",
+      "headingGarden": "An invitation to the Duo Garden",
+      "introPorte": "has mapped their Fleur d'AmOurs and invites you to complete yours.",
+      "introGarden": "invites you to nurture your relationship together in a shared space.",
+      "badgeGarden": "Duo Garden",
+      "badgeGardenDuration": "Shared space",
+      "badgePorte": "Together · Through a Door — {{porte}}",
+      "badgeComplet": "Together · Full questionnaire",
+      "badgeDuo": "DUO Flower",
+      "duration5": "~5 min",
+      "duration15": "~15 min",
+      "ctaGarden": "Join the Duo Garden",
+      "ctaQuestionnaire": "Start my questionnaire",
+      "subjectDuo": "{{inviter}} invites you to a Duo questionnaire on Fleur d'AmOurs",
+      "subjectGarden": "{{inviter}} invites you to the Duo Garden on Fleur d'AmOurs",
+      "subjectPorte": "{{inviter}} invites you to a Together journey on Fleur d'AmOurs",
+      "steps": {
+        "discoverTitle": "Discover your inviter's flower",
+        "discoverDesc": "Each petal represents a dimension of love. Theirs is already drawn above.",
+        "acceptTitle": "Accept the invitation",
+        "acceptDescGarden": "Join the shared garden: a private space for two, no questionnaire required to start.",
+        "cultivateTitle": "Nurture your bond day by day",
+        "cultivateDesc": "Shared messages, rituals, duo flower and guided mediation for your relationship.",
+        "answerTitle": "Answer in your turn",
+        "answerDescPorte": "12 symbolic questions · about 5 minutes. No right answer — only how you feel.",
+        "answerDescComplet": "24 questions · about 15 minutes. No right answer — only how you feel.",
+        "togetherTitle": "A flower for two appears",
+        "togetherDesc": "Your two profiles overlap to reveal agreement, gaps and the dynamics of your bond."
+      },
+      "porte": {
+        "love": "Love",
+        "vegetal": "Plant",
+        "elements": "Elements",
+        "life": "Life"
+      }
+    },
+    "invite": {
+      "ctaDefault": "Accept invitation"
+    },
+    "mycelium": {
+      "inviteSubject": "{{inviter}} invites you to Mycelium",
+      "inviteIntro": "{{inviter}} invites you to join the Mycelium workspace ({{org}}).",
+      "inviteCta": "Join Mycelium",
+      "orgFallback": "organization"
+    }
+  },
   "engagement": {
     "greeting": "Hello {{name}},",
     "greetingGeneric": "Hello,",
@@ -2453,7 +2547,7 @@
     "dreamscape": {
       "title": "An inner conversation",
       "body": "A few minutes with the Guide to clarify what's turning inside you — without judgment, at your pace.",
-      "actionLabel": "Enter Dreamscape",
+      "actionLabel": "Open inner conversation",
       "emailSubject": "A moment of inner clarity"
     }
   }

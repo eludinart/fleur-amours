@@ -618,6 +618,7 @@
     "adminPrompts": "Prompts IA",
     "adminPromo": "Códigos promo",
     "adminNotifications": "Notificaciones",
+    "adminComms": "Envíos y notificaciones",
     "adminCartes": "Cartas",
     "adminGraph": "Gráfico",
     "adminMatrix": "Matriz",
@@ -1112,6 +1113,7 @@
     "resumeBtn": "Reanudar el tiro",
     "inProgress": "en curso",
     "snapshot": "Vista del tiro",
+    "snapshotAlt": "Tirada — conversación interior",
     "downloadSocial": "Imagen redes sociales",
     "regenerateSnapshot": "Regenerar vista previa",
     "regenerateAllSnapshots": "Regenerar todas las vistas",
@@ -2117,6 +2119,98 @@
     "title": "Pequeños grupos",
     "subtitle": "Círculos temporales de 3 a 5 personas, durante 7 días."
   },
+  "email": {
+    "shell": {
+      "appName": "Fleur d'AmOurs",
+      "footer": "Recibes este correo porque usas Fleur d'AmOurs.",
+      "prefsLink": "Gestionar notificaciones",
+      "ctaFallback": "Si el botón no se abre, copia este enlace en tu navegador:",
+      "openInGarden": "Abrir en el Jardín",
+      "adminFooter": "Notificación interna — equipo Fleur d'AmOurs"
+    },
+    "journey": {
+      "yourFlowerToday": "Tu flor hoy",
+      "dominantPetalPrefix": "Pétalo más desplegado:",
+      "noFlowerYet": "Tu flor aún no está dibujada",
+      "hasFleur": "Mi Flor ✓",
+      "noFleur": "Mi Flor — por descubrir",
+      "plan14j": "Día {{day}}/14",
+      "plan14jProgress": "Plan 14 d · {{progress}} %",
+      "lastTirage": "Última tirada: {{card}}",
+      "dominantPetalChip": "{{petal}} en despertar",
+      "checkinPending": "Check-in pendiente",
+      "discoverFleur": "Flor por revelar",
+      "dreamscape": "Conversación interior",
+      "sessionInProgress": "Exploración {{door}} en curso",
+      "checkinStale": "Check-in hace {{days}} d.",
+      "checkinRecent": "Check-in reciente ✓"
+    },
+    "contact": {
+      "confirmTitle": "Mensaje recibido",
+      "confirmSubject": "Fleur d'AmOurs — confirmación de tu mensaje",
+      "confirmBody": "Hemos recibido tu solicitud. Te responderemos en un plazo de 48 horas laborables.",
+      "confirmCta": "Volver al Jardín",
+      "replyGreeting": "Hola {{name}},",
+      "replyGreetingGeneric": "Hola,",
+      "replySignoff": "— El equipo Fleur d'AmOurs",
+      "replyCta": "Formulario de contacto",
+      "replyNotifTitle": "Respuesta a tu mensaje"
+    },
+    "smtpTest": {
+      "subject": "Prueba SMTP — Fleur d'AmOurs",
+      "body": "Si recibes este correo, la configuración SMTP funciona."
+    },
+    "duo": {
+      "flowerOf": "La flor de {{name}}",
+      "howItWorks": "¿Cómo funciona?",
+      "step": "Paso {{n}}",
+      "footerNote": "Los 8 pétalos exploran ocho formas de amar — un mapa para comprenderse mejor.",
+      "headingPorte": "Una invitación a explorar juntos",
+      "headingGarden": "Una invitación al Jardín del dúo",
+      "introPorte": "ha cartografiado su Fleur d'AmOurs y te invita a completar la tuya.",
+      "introGarden": "te invita a cultivar vuestra relación en un espacio compartido.",
+      "badgeGarden": "Jardín del dúo",
+      "badgeGardenDuration": "Espacio compartido",
+      "badgePorte": "A dos · Por una Puerta — {{porte}}",
+      "badgeComplet": "A dos · Cuestionario completo",
+      "badgeDuo": "Fleur DUO",
+      "duration5": "~5 min",
+      "duration15": "~15 min",
+      "ctaGarden": "Unirse al Jardín del dúo",
+      "ctaQuestionnaire": "Empezar mi cuestionario",
+      "subjectDuo": "{{inviter}} te invita a un cuestionario Duo en Fleur d'AmOurs",
+      "subjectGarden": "{{inviter}} te invita al Jardín del dúo en Fleur d'AmOurs",
+      "subjectPorte": "{{inviter}} te invita a un recorrido A dos en Fleur d'AmOurs",
+      "steps": {
+        "discoverTitle": "Descubre la flor de quien te invita",
+        "discoverDesc": "Cada pétalo representa una dimensión del amor. La suya ya está dibujada arriba.",
+        "acceptTitle": "Acepta la invitación",
+        "acceptDescGarden": "Únete al jardín común: un espacio privado a dos, sin cuestionario obligatorio.",
+        "cultivateTitle": "Cultiva vuestro vínculo cada día",
+        "cultivateDesc": "Mensajes compartidos, rituales, flor del dúo y mediación guiada.",
+        "answerTitle": "Responde a tu turno",
+        "answerDescPorte": "12 preguntas simbólicas · unos 5 minutos. Sin respuesta correcta.",
+        "answerDescComplet": "24 preguntas · unos 15 minutos. Sin respuesta correcta.",
+        "togetherTitle": "Aparece una flor a dos",
+        "togetherDesc": "Vuestros dos perfiles se superponen para revelar acuerdos, diferencias y dinámica."
+      },
+      "porte": {
+        "love": "Amor",
+        "vegetal": "Vegetal",
+        "elements": "Elementos",
+        "life": "Vida"
+      }
+    },
+    "invite": {
+      "ctaDefault": "Aceptar invitación"
+    },
+    "mycelium": {
+      "inviteSubject": "{{inviter}} te invita a Mycélium",
+      "inviteIntro": "{{inviter}} te invita a unirte al espacio Mycélium ({{org}}).",
+      "inviteCta": "Unirse a Mycélium",
+      "orgFallback": "organización"
+    }
+  },
   "engagement": {
     "greeting": "Hola {{name}},",
     "greetingGeneric": "Hola,",
@@ -2173,7 +2267,7 @@
     "dreamscape": {
       "title": "Una conversación interior",
       "body": "Unos minutos con el Guía para aclarar lo que gira en ti — sin juicio, a tu ritmo.",
-      "actionLabel": "Entrar en Dreamscape",
+      "actionLabel": "Abrir la conversación interior",
       "emailSubject": "Un momento de claridad interior"
     }
   }

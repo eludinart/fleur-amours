@@ -12,8 +12,9 @@ import {
   type BroadcastContent,
 } from './db-broadcasts'
 import { createNotification } from './db-notifications'
-import { injectEmailPreheader } from './email-html-utils'
+import { wrapBroadcastEmailHtml } from './email'
 import { sendSmtpMail, isSmtpConfigured } from './smtp'
+import { getUserLocalesBatch } from './user-locale'
 
 type BroadcastChannels = BroadcastContent
 
@@ -39,15 +40,23 @@ export async function processBroadcastChannelBatch(params: {
       channel: 'email',
       limit,
     })
+    const localeMap = await getUserLocalesBatch(queued.map((d) => d.user_id))
     for (const d of queued) {
       processed++
       try {
         const subject = String(channels.email.subject ?? '').trim()
         const rawHtml = channels.email.html ? String(channels.email.html) : undefined
-        const html = rawHtml
-          ? injectEmailPreheader(rawHtml, channels.email.preheader)
-          : undefined
-        const text = channels.email.text ? String(channels.email.text) : undefined
+        const locale = localeMap.get(d.user_id) ?? 'fr'
+        const wrapped = rawHtml
+          ? wrapBroadcastEmailHtml({
+              locale,
+              preheader: channels.email.preheader,
+              title: subject,
+              bodyHtml: rawHtml,
+            })
+          : null
+        const html = wrapped?.html
+        const text = wrapped?.text ?? (channels.email.text ? String(channels.email.text) : undefined)
         const { messageId } = await sendSmtpMail({
           to: d.user_email,
           subject,

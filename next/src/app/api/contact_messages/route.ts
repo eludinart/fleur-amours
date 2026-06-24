@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ApiError, getUserIdFromRequest, requireAdminOrCoach } from '@/lib/api-auth'
 import { isDbConfigured } from '@/lib/db'
 import { createContactMessage, listContactMessages } from '@/lib/db-contact'
-import { sendAdminAlertEmail, sendContactConfirmationEmail, buildNotificationEmailHtml } from '@/lib/email'
+import { sendAdminAlertEmail, sendContactConfirmationEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,18 +66,14 @@ export async function POST(req: NextRequest) {
       ipAddress: ip,
     })
 
-    const { html, text } = buildNotificationEmailHtml({
-      title: `Nouvelle demande de contact #${id}`,
-      body: `De : ${name || '—'} <${email}>\n\n${fullMessage}`,
-    })
     void sendAdminAlertEmail({
       subject: `[Contact] ${subject} — ${name || email}`,
-      html,
-      text,
+      title: `Nouvelle demande de contact #${id}`,
+      body: `De : ${name || '—'} <${email}>\n\n${fullMessage}`,
       roles: ['admin', 'coach'],
     }).catch(() => {})
 
-    void sendContactConfirmationEmail({ to: email, name: name || null }).catch(() => {})
+    void sendContactConfirmationEmail({ to: email, name: name || null, userId: userId && !Number.isNaN(userId) ? userId : null }).catch(() => {})
 
     return NextResponse.json({ ok: true, id }, { status: 201 })
   } catch (err: unknown) {

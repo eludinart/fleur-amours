@@ -343,7 +343,7 @@ export default function DreamscapeHistoriquePage() {
                                   >
                                     <img
                                       src={item.snapshot}
-                                      alt="Tirage Dreamscape"
+                                      alt={t('dreamscapeHistorique.snapshotAlt')}
                                       className="w-full max-h-[360px] object-contain object-center mx-auto block rounded-lg bg-[#05030c]"
                                     />
                                   </div>

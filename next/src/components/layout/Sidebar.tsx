@@ -328,8 +328,7 @@ function buildNavGroups(params: {
       defaultOpen: false,
       items: [
         { to: '/admin', label: translate('nav.adminDashboard'), icon: '📊', end: true },
-        { to: '/admin/emails', label: 'Campagnes e-mail', icon: '✉️' },
-        { to: '/admin/broadcasts', label: 'Campagne de notification', icon: '📣' },
+        { to: '/admin/comms', label: translate('nav.adminComms'), icon: '📨' },
         { to: '/admin/sessions', label: translate('nav.adminSessions'), icon: '📋' },
         { to: '/admin/tirages', label: translate('nav.adminTirages'), icon: '🎴' },
         { to: '/admin/science', label: translate('nav.adminScience'), icon: '🧬' },
@@ -338,7 +337,6 @@ function buildNavGroups(params: {
         { to: '/admin/users', label: translate('nav.adminUsers'), icon: '👥' },
         { to: '/admin/prompts', label: translate('nav.adminPrompts'), icon: '✏️' },
         { to: '/admin/promo', label: translate('nav.adminPromo'), icon: '🎁' },
-        { to: '/admin/notifications', label: translate('nav.adminNotifications'), icon: '🔔' },
         { to: '/diagnostic', label: translate('diagnostic'), icon: '🔍' },
         { to: '/stats', label: translate('statistiques'), icon: '📈' },
         { to: '/campaigns', label: translate('campaigns'), icon: '✉️' },

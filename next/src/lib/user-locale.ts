@@ -39,6 +39,20 @@ export async function getUserLocalesBatch(userIds: number[]): Promise<Map<number
   return out
 }
 
+/** Locale pour un e-mail sortant (compte, invitation, session source). */
+export async function resolveEmailLocale(input: {
+  userId?: number | null
+  inviteLocale?: string | null
+  sessionLocale?: string | null
+}): Promise<ServerLocale> {
+  if (input.userId && input.userId > 0) {
+    return getUserLocale(input.userId)
+  }
+  if (input.inviteLocale) return normalizeServerLocale(input.inviteLocale)
+  if (input.sessionLocale) return normalizeServerLocale(input.sessionLocale)
+  return 'fr'
+}
+
 export async function saveUserLocale(userId: number, locale: string): Promise<void> {
   if (!isDbConfigured() || !userId) return
   const loc = normalizeServerLocale(locale)

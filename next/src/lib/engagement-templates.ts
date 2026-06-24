@@ -199,6 +199,9 @@ export function buildEngagementEmailPreview(
     actionLabel: template.action_label,
     locale: template.locale,
     highlight: template.emailHighlight,
+    personalization: vars.personalization,
+    preheader: template.emailHighlight ?? template.body.slice(0, 120),
+    campaignId,
   })
   return { subject: template.emailSubject, html, text, template }
 }
@@ -218,6 +221,19 @@ export const PLAN14J_PREVIEW_VARS: EngagementTemplateVars = {
     lastCardName: 'Philia',
     inProgressSessionId: null,
     inProgressDoor: null,
+    petalScores: {
+      agape: 0.85,
+      philautia: 0.4,
+      mania: 0.2,
+      storge: 0.55,
+      pragma: 0.35,
+      philia: 0.7,
+      ludus: 0.45,
+      eros: 0.5,
+    },
+    hasFleurProfile: true,
+    plan14j: { currentDay: 3, progressPct: 21 },
+    daysSinceCheckin: 2,
   },
 }
 

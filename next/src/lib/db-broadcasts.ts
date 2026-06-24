@@ -267,9 +267,16 @@ export async function list(params: { page?: number; per_page?: number; status?: 
   const countRes = await exec(pool, `SELECT COUNT(*) as total FROM ${tB} WHERE ${where}`, values)
   const countRows = (countRes[0] ?? []) as RowDataPacket[]
   const total = Number(countRows?.[0]?.total ?? 0)
+  const parseJson = (x: unknown) => {
+    try {
+      return x ? JSON.parse(String(x)) : null
+    } catch {
+      return null
+    }
+  }
   const rowsRes = await exec(
     pool,
-    `SELECT id, title, status, scheduled_at, started_at, completed_at, created_at
+    `SELECT id, title, status, channels_json, scheduled_at, started_at, completed_at, created_at
      FROM ${tB} WHERE ${where}
      ORDER BY created_at DESC
      LIMIT ? OFFSET ?`,
@@ -280,6 +287,7 @@ export async function list(params: { page?: number; per_page?: number; status?: 
     id: Number(r.id),
     title: String(r.title ?? ''),
     status: String(r.status ?? ''),
+    channels: parseJson(r.channels_json),
     scheduled_at: r.scheduled_at ?? null,
     started_at: r.started_at ?? null,
     completed_at: r.completed_at ?? null,
