@@ -21,6 +21,7 @@ import {
   explainEngagementRemind,
 } from '@/lib/engagement-remind-explain'
 import { buildEngagementTemplate, type EngagementCampaignId } from '@/lib/engagement-templates'
+import { cooldownPresetId, resolveEngagementRemindInput } from '@/lib/db-engagement-config'
 
 export type EngagementRemindInput = {
   limit?: number
@@ -67,7 +68,7 @@ async function isDeliverableCandidate(c: EngagementCandidate): Promise<boolean> 
 async function resolveCandidates(
   body: EngagementRemindInput
 ): Promise<{ candidates: EngagementCandidate[]; natural: EngagementCandidate[]; pilotAdded: number }> {
-  const cooldownHours = Math.min(Math.max(body.cooldownHours ?? 20, 6), 168)
+  const cooldownHours = Math.min(Math.max(body.cooldownHours ?? 168, 6), 720)
   const base = await findEngagementCandidates({
     limit: body.limit,
     activityDays: body.activityDays,
@@ -108,6 +109,7 @@ export type EngagementRemindResult =
       devRestricted: boolean
       allowlistActive: boolean
       allowlistNotFound: string[]
+      disabled?: boolean
     }
   | { error: string; status: number }
 
@@ -137,6 +139,11 @@ export type EngagementRecipientPreview = {
 
 export type EngagementAudiencePreview = {
   generatedAt: string
+  config: {
+    enabled: boolean
+    cooldownHours: number
+    cooldownPreset: string
+  }
   params: {
     limit: number
     cooldownHours: number
@@ -160,19 +167,20 @@ export type EngagementAudiencePreview = {
 }
 
 export async function previewEngagementAudience(
-  body: EngagementRemindInput
+  body: EngagementRemindInput = {}
 ): Promise<EngagementAudiencePreview | { error: string; status: number }> {
   if (!isDbConfigured()) {
     return { error: 'Backend non configuré', status: 503 }
   }
 
-  const limit = Math.min(Math.max(body.limit ?? 250, 1), 500)
-  const cooldownHours = Math.min(Math.max(body.cooldownHours ?? 20, 6), 168)
-  const inactiveDays = Math.min(Math.max(body.inactiveDays ?? 15, 7), 90)
+  const resolved = await resolveEngagementRemindInput(body)
+  const limit = resolved.limit
+  const cooldownHours = resolved.cooldownHours
+  const inactiveDays = resolved.inactiveDays
   const activityDays = Math.min(Math.max(body.activityDays ?? 30, 7), 90)
 
   const { candidates, natural, pilotAdded } = await resolveCandidates({
-    ...body,
+    ...resolved,
     limit,
     cooldownHours,
     inactiveDays,
@@ -257,6 +265,11 @@ export async function previewEngagementAudience(
 
   return {
     generatedAt: new Date().toISOString(),
+    config: {
+      enabled: resolved.enabled,
+      cooldownHours,
+      cooldownPreset: cooldownPresetId(cooldownHours),
+    },
     params: { limit, cooldownHours, inactiveDays, activityDays },
     candidates: candidates.length,
     pilotAdded,
@@ -276,13 +289,29 @@ export async function previewEngagementAudience(
 }
 
 export async function runEngagementRemind(
-  body: EngagementRemindInput
+  body: EngagementRemindInput = {}
 ): Promise<EngagementRemindResult> {
   if (!isDbConfigured()) {
     return { error: 'Backend non configuré', status: 503 }
   }
 
-  const { candidates, natural, pilotAdded } = await resolveCandidates(body)
+  const resolved = await resolveEngagementRemindInput(body)
+
+  if (!resolved.enabled && !body.dryRun) {
+    return {
+      candidates: 0,
+      pilotAdded: 0,
+      sent: 0,
+      skipped: 0,
+      byCampaign: {},
+      devRestricted: isNotificationOutboundRestricted(),
+      allowlistActive: isEngagementRemindAllowlistActive(),
+      allowlistNotFound: [],
+      disabled: true,
+    }
+  }
+
+  const { candidates, natural, pilotAdded } = await resolveCandidates(resolved)
   const notFound = await allowlistEmailsMissingFromDatabase()
 
   if (body.dryRun) {
@@ -290,7 +319,7 @@ export async function runEngagementRemind(
     for (const c of candidates) {
       if (await isDeliverableCandidate(c)) deliverable.push(c)
     }
-    const explain = await explainEngagementRemind(body, candidates, natural)
+    const explain = await explainEngagementRemind(resolved, candidates, natural)
     return {
       dryRun: true,
       devRestricted: isNotificationOutboundRestricted(),

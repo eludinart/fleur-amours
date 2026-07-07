@@ -7,6 +7,7 @@ import { toast } from '@/hooks/useToast'
 
 type AudienceData = {
   generatedAt: string
+  config?: { enabled: boolean; cooldownHours: number; cooldownPreset: string }
   params: { limit: number; cooldownHours: number; inactiveDays: number; activityDays: number }
   candidates: number
   pilotAdded: number
@@ -193,8 +194,18 @@ export function CommsEngagementAudienceModal({ open, onClose }: Props) {
                 <Stat label="Envois réels (cet env)" value={String(data.wouldSend)} highlight />
                 <Stat label="Candidats file cron" value={String(data.candidates)} />
                 <Stat label="Inactifs 15 j+ (base)" value={String(data.diagnostics.inactiveUsersTotal)} />
-                <Stat label="Cooldown 20 h" value={String(data.diagnostics.recentlyNudgedCooldown)} />
+                <Stat label={`Cooldown ${data.params.cooldownHours} h`} value={String(data.diagnostics.recentlyNudgedCooldown)} />
               </div>
+
+              {data.config?.enabled === false && (
+                <div className="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 p-3 text-xs text-rose-800 dark:text-rose-200">
+                  <p className="font-medium">Relances automatiques suspendues</p>
+                  <p className="mt-1">
+                    Aperçu informatif uniquement — la cron n&apos;enverra rien tant que les relances ne sont pas
+                    réactivées dans Planification.
+                  </p>
+                </div>
+              )}
 
               {data.candidates > 0 && data.wouldSend === 0 && (data.devRestricted || data.allowlistActive) && (
                 <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 p-3 text-xs text-violet-900 dark:text-violet-200">

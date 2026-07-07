@@ -20,11 +20,7 @@ if (!secret) {
 }
 
 const url = `${base}/api/engagement/remind`
-const body = JSON.stringify(
-  dryRun
-    ? { dryRun: true, limit: 250, cooldownHours: 20, inactiveDays: 15 }
-    : { limit: 250, cooldownHours: 20, inactiveDays: 15 }
-)
+const body = JSON.stringify(dryRun ? { dryRun: true } : {})
 
 log('POST', url)
 

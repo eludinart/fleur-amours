@@ -694,7 +694,8 @@ export default function AdminNotificationsPage() {
           <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-xl p-4 text-sm text-violet-900 dark:text-violet-200">
             <p className="font-medium mb-1">Relances automatiques (pas encore activées en prod)</p>
             <p className="text-violet-700 dark:text-violet-300">
-              Cron unifié : <code className="text-xs">POST /api/engagement/remind</code> — 1 rappel max / utilisateur / ~20 h,
+              Cron unifié : <code className="text-xs">POST /api/engagement/remind</code> — fréquence max configurable
+              dans Comms → Relances auto (défaut 1×/semaine),
               priorité plan 14j → check-in → Fleur → tirage → session → conversation intérieure.
               Les relances expirent après 36 h (disparaissent de la cloche).
               En développement : envois limités à <strong>eludinart@gmail.com</strong>.

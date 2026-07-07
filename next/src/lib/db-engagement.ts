@@ -35,7 +35,7 @@ export async function findRecentlyNudgedUserIds(cooldownHours: number): Promise<
   if (!isDbConfigured()) return new Set()
   await ensureNotificationsTables()
   const pool = getPool()
-  const hours = Math.min(Math.max(cooldownHours, 1), 168)
+  const hours = Math.min(Math.max(cooldownHours, 1), 720)
   const placeholders = ENGAGEMENT_TYPES.map(() => '?').join(', ')
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT DISTINCT d.user_id AS user_id
@@ -342,7 +342,7 @@ export async function findEngagementCandidates(params: {
 
   const limit = Math.min(Math.max(params.limit ?? 250, 1), 500)
   const activityDays = Math.min(Math.max(params.activityDays ?? 30, 7), 90)
-  const cooldownHours = Math.min(Math.max(params.cooldownHours ?? 20, 6), 168)
+  const cooldownHours = Math.min(Math.max(params.cooldownHours ?? 168, 6), 720)
   const tirageStaleDays = Math.min(Math.max(params.tirageStaleDays ?? 4, 1), 30)
   const dreamscapeStaleDays = Math.min(Math.max(params.dreamscapeStaleDays ?? 14, 3), 60)
   const inactiveDays = Math.min(Math.max(params.inactiveDays ?? 15, 7), 60)

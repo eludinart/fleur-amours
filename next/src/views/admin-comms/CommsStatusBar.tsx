@@ -23,6 +23,11 @@ export function CommsStatusBar({ onStatsLoaded }: Props) {
     devEmail?: string
     allowlistActive?: boolean
     allowlist?: string[] | null
+    engagement?: {
+      enabled?: boolean
+      cooldownHours?: number
+      cooldownPreset?: string
+    }
   } | null>(null)
   const [testBusy, setTestBusy] = useState(false)
   const [stats, setStats] = useState<{
@@ -42,6 +47,11 @@ export function CommsStatusBar({ onStatsLoaded }: Props) {
           devEmail?: string
           allowlistActive?: boolean
           allowlist?: string[] | null
+          engagement?: {
+            enabled?: boolean
+            cooldownHours?: number
+            cooldownPreset?: string
+          }
         }
       }
       setSmtpOk(!!data.smtp?.configured)
@@ -143,6 +153,16 @@ export function CommsStatusBar({ onStatsLoaded }: Props) {
             <code className="font-mono text-[11px]">docker-compose.env</code>, puis redémarrez{' '}
             <code className="font-mono text-[11px]">npm run dev.vps:clean</code>.
             Commenter une ligne avec <code className="font-mono text-[11px]">#</code> ne suffit pas.
+          </p>
+        </div>
+      ) : null}
+
+      {notifGuard?.engagement?.enabled === false ? (
+        <div className="rounded-2xl border border-rose-200/80 bg-rose-50/90 dark:bg-rose-950/30 dark:border-rose-900/60 p-4 text-sm text-rose-950 dark:text-rose-100">
+          <p className="font-semibold">Relances automatiques suspendues</p>
+          <p className="text-xs mt-1 text-rose-900/90 dark:text-rose-200/90">
+            La cron n&apos;enverra aucune relance tant que les relances ne sont pas réactivées dans l&apos;onglet{' '}
+            <strong>Relances auto → Planification</strong>.
           </p>
         </div>
       ) : null}

@@ -12,6 +12,7 @@ import {
   isNotificationOutboundRestricted,
 } from '@/lib/notification-outbound'
 import { getAiRuntimeConfig, isActiveAiConfigured, resolveActiveModel } from '@/lib/db-ai-config'
+import { cooldownPresetId, getEngagementRuntimeConfig } from '@/lib/db-engagement-config'
 import { aiProviderLabel } from '@/lib/ai-providers'
 import os from 'os'
 
@@ -98,6 +99,7 @@ export async function GET(req: NextRequest) {
     ])
     const aiModel = await resolveActiveModel(aiCfg)
     const aiConfigured = await isActiveAiConfigured(aiCfg)
+    const engagementCfg = await getEngagementRuntimeConfig()
 
     return NextResponse.json({
       hostname: os.hostname(),
@@ -136,6 +138,12 @@ export async function GET(req: NextRequest) {
         allowlist: engagementRemindAllowlist()
           ? [...engagementRemindAllowlist()!]
           : null,
+        engagement: {
+          enabled: engagementCfg.enabled,
+          cooldownHours: engagementCfg.cooldownHours,
+          cooldownPreset: cooldownPresetId(engagementCfg.cooldownHours),
+          updatedAt: engagementCfg.updatedAt,
+        },
       },
       ai: {
         provider: aiCfg.provider,

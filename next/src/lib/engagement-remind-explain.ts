@@ -251,7 +251,7 @@ export async function explainEngagementRemind(
     reasons: string[]
   }>
 }> {
-  const cooldownHours = Math.min(Math.max(body.cooldownHours ?? 20, 6), 168)
+  const cooldownHours = Math.min(Math.max(body.cooldownHours ?? 168, 6), 720)
   const naturalUserIds = new Set(naturalCandidates.map((c) => c.userId))
   const allowlist = engagementRemindAllowlist()
 
