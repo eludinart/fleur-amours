@@ -141,10 +141,8 @@ export async function POST(req: NextRequest) {
     result && typeof result === 'object' && !Array.isArray(result)
       ? (result as Record<string, unknown>)
       : null
-  const phraseRaw =
-    (asObj && (asObj.phrase ?? asObj.poetic_reflection)) != null
-      ? String(asObj.phrase ?? asObj.poetic_reflection ?? '').trim()
-      : ''
+  const phraseSource = asObj ? (asObj.phrase ?? asObj.poetic_reflection) : null
+  const phraseRaw = phraseSource != null ? String(phraseSource).trim() : ''
 
   if (asObj && phraseRaw) {
     const r = asObj
