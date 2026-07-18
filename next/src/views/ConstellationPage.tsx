@@ -103,12 +103,12 @@ export default function ConstellationPage() {
           <h1 className="text-sm font-bold text-violet-100 truncate">
             {detail.title || t('constellations.untitled')}
           </h1>
-          <p className="text-[10px] text-slate-500">
+          <p className="text-xs text-slate-500">
             {detail.memberCount}/{detail.maxMembers} · {t('constellations.expires')} {new Date(detail.expiresAt).toLocaleDateString()}
           </p>
         </div>
         {detail.isMember && (
-          <button type="button" onClick={copyInvite} className="text-[10px] px-2 py-1 rounded-lg border border-violet-500/40 text-violet-200">
+          <button type="button" onClick={copyInvite} className="text-xs px-2 py-1 rounded-lg border border-violet-500/40 text-violet-200">
             {t('constellations.copyInvite')}
           </button>
         )}
@@ -122,7 +122,7 @@ export default function ConstellationPage() {
         )}
 
         <section className="rounded-2xl border border-slate-600/40 bg-slate-950/60 p-4">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">{t('constellations.groupFlower')}</p>
+          <p className="text-xs uppercase tracking-wider text-slate-500 mb-3">{t('constellations.groupFlower')}</p>
           <div className="flex justify-center mb-3">
             <FleurSociale scores={groupScores} size={80} variant="portrait" pseudo="" />
           </div>
@@ -159,7 +159,7 @@ export default function ConstellationPage() {
 
         {detail.isMember && (
           <section className="rounded-2xl border border-slate-600/40 bg-slate-950/60 p-4">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2">{t('constellations.chat')}</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">{t('constellations.chat')}</p>
             <div className="space-y-2 max-h-64 overflow-y-auto mb-3">
               {(detail.messages ?? []).length === 0 ? (
                 <p className="text-xs text-slate-500">{t('constellations.chatEmpty')}</p>

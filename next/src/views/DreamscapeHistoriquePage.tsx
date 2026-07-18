@@ -407,11 +407,11 @@ export default function DreamscapeHistoriquePage() {
                                           className="w-full h-full object-cover"
                                         />
                                       </div>
-                                      <span className="text-[10px] font-semibold text-violet-400/90 text-center leading-tight max-w-[56px]">
+                                      <span className="text-xs font-semibold text-violet-400/90 text-center leading-tight max-w-[56px]">
                                         {slot.position ?? '—'}
                                       </span>
                                       {!slot.faceDown && slot.card !== slot.position && (
-                                        <span className="text-[9px] text-white/40 text-center leading-tight max-w-[56px] truncate" title={slot.card}>
+                                        <span className="text-xs text-white/70 text-center leading-tight max-w-[56px] truncate" title={slot.card}>
                                           {slot.card}
                                         </span>
                                       )}

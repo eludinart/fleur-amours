@@ -570,6 +570,12 @@
     "post": "Publier",
     "remaining": "{{count}} / {{limit}} messages restants aujourd'hui"
   },
+  "aiBusy": {
+    "thinking": "L'accompagnement réfléchit…",
+    "pleaseWait": "Merci de patienter — la réponse arrive.",
+    "generating": "Génération en cours…",
+    "interpreting": "Interprétation en cours…"
+  },
   "common": {
     "offline": "Pas de connexion — vos modifications peuvent ne pas être enregistrées.",
     "onlineRestored": "Connexion rétablie",
@@ -1381,6 +1387,9 @@
     "exchangeLimitSoft": "Tu as déjà fait {count} échanges. Si tu as trouvé ce que tu venais chercher, tu peux clôturer maintenant — sinon tu peux encore poursuivre un peu.",
     "exchangeLimitHard": "On arrive au terme de cette conversation ({count} échanges). Pour que ce qui a émergé puisse vraiment s'intégrer, je te propose de la clôturer maintenant.",
     "exchangeLimitForce": "On est au-delà de la limite douce ({count} échanges). Je te propose de clôturer la conversation maintenant.",
+    "aiError": "Impossible d'obtenir une réponse. Réessaie dans un instant.",
+    "aiDegraded": "Réponse en mode dégradé : {reason}",
+    "emptyReply": "L'accompagnement n'a pas renvoyé de texte. Réessaie.",
     "closeNudgeKicker": "Un seuil de clôture",
     "closeNudgeTitle": "Veux-tu sceller cette conversation ?",
     "shareFallback": "Ma conversation intérieure.",

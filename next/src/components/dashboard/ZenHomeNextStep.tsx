@@ -23,7 +23,7 @@ export function ZenHomeNextStep({
       >
         <p className="text-xs font-medium text-violet-300/90">👉 {t('dashboard.nextStep')}</p>
         <p className="text-base font-semibold text-violet-50 mt-0.5">{t('dashboard.resumeSession')}</p>
-        <p className="text-xs text-white/45 mt-1">{t('dashboard.sessionInProgress')}</p>
+        <p className="text-xs text-white/75 mt-1">{t('dashboard.sessionInProgress')}</p>
       </Link>
     )
   }
@@ -36,7 +36,7 @@ export function ZenHomeNextStep({
       >
         <p className="text-xs font-medium text-rose-300/90">👉 {t('dashboard.startHere')}</p>
         <p className="text-base font-semibold text-rose-50 mt-0.5">{t('dashboard.completeFleur')}</p>
-        <p className="text-xs text-white/45 mt-1">{t('dashboard.fleurDesc')}</p>
+        <p className="text-xs text-white/75 mt-1">{t('dashboard.fleurDesc')}</p>
       </Link>
     )
   }
@@ -48,7 +48,7 @@ export function ZenHomeNextStep({
     >
       <p className="text-xs font-medium text-amber-300/90">👉 {t('dashboard.suggestion')}</p>
       <p className="text-base font-semibold text-amber-50 mt-0.5">{t('dashboard.launchReading')}</p>
-      <p className="text-xs text-white/45 mt-1">{t('dashboard.readingDesc')}</p>
+      <p className="text-xs text-white/75 mt-1">{t('dashboard.readingDesc')}</p>
     </Link>
   )
 }

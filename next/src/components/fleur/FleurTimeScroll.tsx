@@ -78,7 +78,7 @@ export function FleurTimeScroll({
 
   return (
     <div className={`w-full max-w-2xl mx-auto space-y-3 ${className}`}>
-      <p className="text-center text-[10px] uppercase tracking-[0.2em] text-slate-500/80 dark:text-slate-400/80">
+      <p className="text-center text-xs uppercase tracking-wider text-slate-500/80 dark:text-slate-400/80">
         {sliderOnly ? t('fleurZen.timeScrollSliderOnlyTitle') : t('fleurZen.timeScrollTitle')}
       </p>
       {!sliderOnly ? (
@@ -103,7 +103,7 @@ export function FleurTimeScroll({
             }`}
             whileTap={{ scale: 0.97 }}
           >
-            <span className="block text-[9px] uppercase tracking-wider opacity-70">{t('fleurZen.timeNow')}</span>
+            <span className="block text-xs uppercase tracking-wider opacity-70">{t('fleurZen.timeNow')}</span>
             <span className="text-xs font-medium">{t('fleurZen.timeAggregate')}</span>
           </motion.button>
           {snapshots.map((snap, idx) => {
@@ -125,7 +125,7 @@ export function FleurTimeScroll({
                 }`}
                 whileTap={{ scale: 0.97 }}
               >
-                <span className="block text-[9px] uppercase tracking-wider opacity-70 truncate">
+                <span className="block text-xs uppercase tracking-wider opacity-70 truncate">
                   {formatZenSnapshotDate(snap.date, locale)}
                 </span>
                 <span className="text-xs font-medium line-clamp-2">{snap.label || snap.type || '—'}</span>
@@ -154,7 +154,7 @@ export function FleurTimeScroll({
               <button
                 type="button"
                 onClick={onResumeAuto}
-                className="text-[10px] uppercase tracking-[0.16em] text-teal-300/80 hover:text-teal-200 border border-teal-500/35 hover:border-teal-400/50 px-3 py-1.5 rounded-full transition-colors"
+                className="text-xs uppercase tracking-[0.16em] text-teal-300/80 hover:text-teal-200 border border-teal-500/35 hover:border-teal-400/50 px-3 py-1.5 rounded-full transition-colors"
               >
                 {t('fleurZen.timeResumeAuto')}
               </button>

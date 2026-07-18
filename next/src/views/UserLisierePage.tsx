@@ -136,12 +136,12 @@ export default function UserLisierePage() {
         </button>
         <div className="min-w-0 flex-1">
           <h1 className="text-sm font-semibold text-amber-100 truncate">{lisiere.pseudo}</h1>
-          <p className="text-[10px] text-slate-500">{t('social.lisiere')}</p>
+          <p className="text-xs text-slate-500">{t('social.lisiere')}</p>
         </div>
         <button
           type="button"
           onClick={() => router.push(`/prairie?profile=${lisiere.userId}`)}
-          className="text-[10px] px-2 py-1 rounded-lg border border-slate-600/50 text-cyan-300/90 hover:bg-slate-800/60"
+          className="text-xs px-2 py-1 rounded-lg border border-slate-600/50 text-cyan-300/90 hover:bg-slate-800/60"
         >
           🌌 {t('social.lisiereViewGalaxy')}
         </button>
@@ -179,7 +179,7 @@ export default function UserLisierePage() {
                   {lisiere.pseudo} {lisiere.avatarEmoji}
                 </p>
                 {(lisiere.age || lisiere.jardinIntention) && (
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-sm text-slate-400 mt-0.5">
                     {lisiere.age ? t('social.lisiereAge', { age: lisiere.age }) : ''}
                     {lisiere.age && lisiere.jardinIntention ? ' · ' : ''}
                     {lisiere.jardinIntention ? t(`profileOnboarding.intention.${lisiere.jardinIntention}`) : ''}
@@ -187,37 +187,37 @@ export default function UserLisierePage() {
                 )}
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {isOnline ? (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+                    <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
                       ● {t('social.lisiereOnline')}
                     </span>
                   ) : (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] text-slate-500 border border-slate-600/40">
+                    <span className="px-1.5 py-0.5 rounded text-xs text-slate-500 border border-slate-600/40">
                       {t('social.lisiereOffline')}
                     </span>
                   )}
                   {dominantDef && (
                     <span
-                      className="px-1.5 py-0.5 rounded text-[9px] border"
+                      className="px-1.5 py-0.5 rounded text-xs border"
                       style={{ color: dominantDef.color, borderColor: `${dominantDef.color}44`, backgroundColor: `${dominantDef.color}14` }}
                     >
                       {lisiere.dominantPetalName || dominantDef.name}
                     </span>
                   )}
                   {lisiere.hasDuoLink && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] bg-violet-500/15 text-violet-300 border border-violet-500/25">
+                    <span className="px-1.5 py-0.5 rounded text-xs bg-violet-500/15 text-violet-300 border border-violet-500/25">
                       {t('social.lisiereDuoLink')}
                     </span>
                   )}
                   {meteoDef && (
                     <span
-                      className="px-1.5 py-0.5 rounded text-[9px] border"
+                      className="px-1.5 py-0.5 rounded text-xs border"
                       style={{ color: meteoDef.color, borderColor: `${meteoDef.color}44`, backgroundColor: `${meteoDef.color}14` }}
                     >
                       {t('meteo.badge', { petal: meteoDef.name })}
                     </span>
                   )}
                   {isFocus && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] text-violet-300 border border-violet-500/30">
+                    <span className="px-1.5 py-0.5 rounded text-xs text-violet-300 border border-violet-500/30">
                       {t('meteo.focusBadge')}
                     </span>
                   )}
@@ -226,7 +226,7 @@ export default function UserLisierePage() {
                   <MaturityBadges badges={lisiere.maturityBadges} compact className="mt-2" />
                 )}
                 {activityLabel && (
-                  <p className="text-[10px] text-slate-500 mt-2">
+                  <p className="text-xs text-slate-500 mt-2">
                     {t('social.lisiereLastActivity')}: {activityLabel}
                   </p>
                 )}
@@ -236,7 +236,7 @@ export default function UserLisierePage() {
 
           {/* Résumé public */}
           <section className="rounded-2xl border border-emerald-700/35 bg-emerald-950/25 p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400/90 mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400/90 mb-2">
               {t('social.lisierePortrait')}
             </p>
             <p className="text-sm text-slate-300 leading-relaxed">
@@ -246,7 +246,7 @@ export default function UserLisierePage() {
 
           {/* Pétales + résonance */}
           <section className="rounded-2xl border border-slate-600/40 bg-slate-900/50 p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
               {t('social.lisiereFlower')}
             </p>
             <div className="flex justify-center mb-4 py-4 rounded-xl bg-gradient-to-b from-slate-800/40 via-slate-900/20 to-transparent">
@@ -264,7 +264,7 @@ export default function UserLisierePage() {
               <div className="space-y-2 mb-3">
                 {lisiere.topPetals.map((p) => (
                   <div key={p.id} className="flex items-center gap-2">
-                    <span className="text-[10px] text-slate-400 w-16 truncate">{p.name}</span>
+                    <span className="text-xs text-slate-400 w-16 truncate">{p.name}</span>
                     <div className="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.round(p.value * 33))}%`, backgroundColor: p.color }} />
                     </div>
@@ -284,7 +284,7 @@ export default function UserLisierePage() {
             </p>
             {Array.isArray(lisiere.petalComparison) && lisiere.petalComparison.length > 0 && (
               <div className="mt-3 pt-3 border-t border-slate-700/40">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                   {t('boussole.radarTitle')}
                 </p>
                 <BoussolePetalRadar comparison={lisiere.petalComparison} compact />
@@ -295,7 +295,7 @@ export default function UserLisierePage() {
           {/* Présence sociale (agrégats, pas d'intimité) */}
           {lisiere.social && (
             <section className="rounded-2xl border border-cyan-800/35 bg-cyan-950/15 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/80 mb-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-cyan-400/80 mb-1">
                 {t('social.lisiereGardenLife')}
               </p>
               <p className="text-xs text-slate-400">
@@ -307,7 +307,7 @@ export default function UserLisierePage() {
           {/* Arrosages récents — boucle réciproque (A4) */}
           {Array.isArray(lisiere.recentArrosages) && lisiere.recentArrosages.length > 0 && (
             <section className="rounded-2xl border border-emerald-700/30 bg-emerald-950/15 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400/90 mb-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400/90 mb-2">
                 💧 {t('social.lisiereRecentArrosages')}
               </p>
               <ul className="space-y-1">
@@ -340,7 +340,7 @@ export default function UserLisierePage() {
 
           {/* Rencontre */}
           <section className="rounded-2xl border border-amber-600/30 bg-amber-950/15 p-4 space-y-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
               {t('social.lisiereMeet')}
             </p>
 
@@ -391,7 +391,7 @@ export default function UserLisierePage() {
             {status === 'pending_out' && (
               <div className="rounded-xl border border-slate-600/40 bg-slate-900/40 p-3 text-center">
                 <p className="text-sm text-slate-300 mb-1">{t('social.graineDejaDeposee')}</p>
-                <p className="text-[10px] text-slate-500">{t('social.lisierePendingHint')}</p>
+                <p className="text-xs text-slate-500">{t('social.lisierePendingHint')}</p>
               </div>
             )}
 
@@ -399,14 +399,14 @@ export default function UserLisierePage() {
               <button
                 type="button"
                 onClick={() => router.push(`/jardin/duo?invite_user_id=${lisiere.userId}&invite_pseudo=${encodeURIComponent(lisiere.pseudo || '')}`)}
-                className="flex-1 py-2 rounded-lg bg-slate-800/80 text-violet-200 text-[11px] border border-slate-600/40 hover:bg-slate-800"
+                className="flex-1 py-2 rounded-lg bg-slate-800/80 text-violet-200 text-sm border border-slate-600/40 hover:bg-slate-800"
               >
                 💕 {t('prairie.inviteDuo')}
               </button>
               <button
                 type="button"
                 onClick={() => router.push('/prairie')}
-                className="flex-1 py-2 rounded-lg bg-slate-800/80 text-cyan-200 text-[11px] border border-slate-600/40 hover:bg-slate-800"
+                className="flex-1 py-2 rounded-lg bg-slate-800/80 text-cyan-200 text-sm border border-slate-600/40 hover:bg-slate-800"
               >
                 🌌 {t('social.lisiereBackPrairie')}
               </button>

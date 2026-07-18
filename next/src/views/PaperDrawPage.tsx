@@ -634,7 +634,7 @@ export default function PaperDrawPage() {
                 <span className="font-medium text-slate-800 dark:text-slate-100 flex-1 min-w-[8rem]">
                   {c.name}
                   {c.duplicate && (
-                    <span className="ml-1 text-[10px] text-amber-600">×2</span>
+                    <span className="ml-1 text-xs text-amber-600">×2</span>
                   )}
                 </span>
                 {slotOptions.length > 0 && (

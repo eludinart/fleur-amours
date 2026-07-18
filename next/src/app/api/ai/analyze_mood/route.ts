@@ -28,19 +28,23 @@ const PETAL_NAMES = [
   'eros',
 ]
 
-const MOCK_RESPONSE = {
-  poetic_reflection: 'Quel est ton climat intérieur en ce moment ?',
-  active_petals: {},
-  petals_deficit: {},
-  shadow_detected: false,
-  shadow_level: 0,
-  shadow_urgent: false,
-  shadow_card: null,
-  cards_to_reveal: [],
-  card_to_replace: null,
-  propose_close: false,
-  propose_close_actions: [] as string[],
-  provider: 'node-mock',
+function mockResponse(reason: string) {
+  return {
+    poetic_reflection: 'Quel est ton climat intérieur en ce moment ?',
+    active_petals: {},
+    petals_deficit: {},
+    shadow_detected: false,
+    shadow_level: 0,
+    shadow_urgent: false,
+    shadow_card: null,
+    cards_to_reveal: [] as string[],
+    card_to_replace: null,
+    propose_close: false,
+    propose_close_actions: [] as string[],
+    provider: 'node-mock',
+    degraded: true,
+    _ai_error: reason,
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -54,7 +58,7 @@ export async function POST(req: NextRequest) {
   const uid = parseInt(userId, 10)
 
   if (!(await isLlmConfigured())) {
-    return NextResponse.json(MOCK_RESPONSE)
+    return NextResponse.json(mockResponse('IA non configurée'))
   }
 
   let body: {
@@ -66,7 +70,7 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json(MOCK_RESPONSE)
+    return NextResponse.json(mockResponse('Corps de requête invalide'))
   }
 
   const text = String(body.text ?? '').trim()
@@ -121,23 +125,31 @@ export async function POST(req: NextRequest) {
       userId: uid,
       system: systemPrompt,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
-      options: { maxTokens: dreamscapeConfig.max_tokens ?? 300 },
+      options: {
+        maxTokens: dreamscapeConfig.max_tokens ?? 700,
+        responseFormatJson: true,
+      },
     })
     result = guarded.result
   } catch (e: unknown) {
     if (e instanceof AiAccessDeniedError) return aiAccessErrorResponse(e.result)
-    return NextResponse.json(MOCK_RESPONSE)
+    return NextResponse.json(mockResponse('Erreur appel IA'))
   }
 
-  if (
-    result &&
-    typeof result === 'object' &&
-    !Array.isArray(result) &&
-    result.phrase
-  ) {
-    const r = result as Record<string, unknown>
-    const phrase = String(r.phrase ?? '').trim()
-    const question = String(r.question ?? '').trim()
+  // Accepte phrase OU poetic_reflection (formats legacy / overrides admin).
+  const asObj =
+    result && typeof result === 'object' && !Array.isArray(result)
+      ? (result as Record<string, unknown>)
+      : null
+  const phraseRaw =
+    (asObj && (asObj.phrase ?? asObj.poetic_reflection)) != null
+      ? String(asObj.phrase ?? asObj.poetic_reflection ?? '').trim()
+      : ''
+
+  if (asObj && phraseRaw) {
+    const r = asObj
+    const phrase = phraseRaw
+    const question = String(r.question ?? r.open_question ?? '').trim()
 
     const activePetals: Record<string, number> = {}
     const petalsArr = Array.isArray(r.petals) ? r.petals : []
@@ -194,8 +206,8 @@ export async function POST(req: NextRequest) {
       .filter((x): x is string => typeof x === 'string')
       .slice(0, 5)
 
-    const cartes = (Array.isArray(r.cartes) ? r.cartes : [])
-      .filter((x): x is string => typeof x === 'string')
+    const cartes = (Array.isArray(r.cartes) ? r.cartes : Array.isArray(r.cards_to_reveal) ? r.cards_to_reveal : [])
+      .filter((x): x is string => typeof x === 'string' && isValidCard(x))
 
     const combined = [phrase, question].filter(Boolean).join(' ').trim()
     const poetic = (dreamscapeConfig.force_question_finale && combined && !combined.trim().endsWith('?'))
@@ -217,8 +229,15 @@ export async function POST(req: NextRequest) {
       propose_close: !!r.propose_close,
       propose_close_actions: proposeCloseActions,
       provider: (await getLlmMetaForTask('analyze-mood')).provider,
+      degraded: false,
     })
   }
 
-  return NextResponse.json(MOCK_RESPONSE)
+  return NextResponse.json(
+    mockResponse(
+      result == null
+        ? 'Réponse IA vide ou non JSON'
+        : 'Réponse IA sans champ phrase'
+    )
+  )
 }

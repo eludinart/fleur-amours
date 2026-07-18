@@ -356,7 +356,7 @@ function ChatCountBadges({
   size = 'xs',
 }: ChatCountPair & { variant?: 'overlay' | 'inline'; size?: 'xs' | 'sm' }) {
   if (openCount <= 0 && unreadCount <= 0) return null
-  const textSize = size === 'xs' ? 'text-[9px]' : 'text-[10px]'
+  const textSize = size === 'xs' ? 'text-xs' : 'text-sm'
   const pillSize = size === 'xs' ? 'min-w-[1.125rem] h-[1.125rem] px-0.5' : 'min-w-[1.125rem] h-[1.125rem] px-1'
   const ringClass = variant === 'overlay' ? 'ring-2 ring-white dark:ring-slate-900 shadow-sm' : ''
   const wrapClass =
@@ -461,7 +461,7 @@ function NavItemWithTooltip({
         {countBadges ? (
           <ChatCountBadges {...countBadges} variant="inline" size="sm" />
         ) : badge != null && badge > 0 ? (
-          <span className="ml-auto min-w-[1.125rem] h-[1.125rem] px-1 flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-bold">
+          <span className="ml-auto min-w-[1.125rem] h-[1.125rem] px-1 flex items-center justify-center rounded-full bg-rose-500 text-white text-xs font-bold">
             {badge > 99 ? '99+' : badge}
           </span>
         ) : null}
@@ -502,8 +502,8 @@ const EXPLORATION_ACCENTS: Record<
     cardActive:
       'bg-gradient-to-br from-violet-600 via-indigo-600 to-violet-700 border-violet-400/60 text-white shadow-lg shadow-violet-600/25',
     icon: 'bg-gradient-to-br from-violet-400 to-indigo-500 shadow-md shadow-violet-500/35 ring-2 ring-white/20',
-    hint: 'text-violet-700/75 dark:text-violet-300/80',
-    hintActive: 'text-white/75',
+    hint: 'text-violet-800 dark:text-violet-200',
+    hintActive: 'text-white/90',
     hover:
       'hover:border-violet-300/80 hover:shadow-md hover:shadow-violet-500/15 hover:-translate-y-px dark:hover:border-violet-600/60',
   },
@@ -513,8 +513,8 @@ const EXPLORATION_ACCENTS: Record<
     cardActive:
       'bg-gradient-to-br from-rose-500 via-pink-600 to-rose-600 border-rose-400/60 text-white shadow-lg shadow-rose-500/25',
     icon: 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-md shadow-rose-500/35 ring-2 ring-white/20',
-    hint: 'text-rose-700/75 dark:text-rose-300/80',
-    hintActive: 'text-white/75',
+    hint: 'text-rose-800 dark:text-rose-200',
+    hintActive: 'text-white/90',
     hover:
       'hover:border-rose-300/80 hover:shadow-md hover:shadow-rose-500/15 hover:-translate-y-px dark:hover:border-rose-700/60',
   },
@@ -524,8 +524,8 @@ const EXPLORATION_ACCENTS: Record<
     cardActive:
       'bg-gradient-to-br from-fuchsia-600 via-purple-600 to-fuchsia-700 border-fuchsia-400/60 text-white shadow-lg shadow-fuchsia-600/25',
     icon: 'bg-gradient-to-br from-fuchsia-400 to-purple-500 shadow-md shadow-fuchsia-500/35 ring-2 ring-white/20',
-    hint: 'text-fuchsia-700/75 dark:text-fuchsia-300/80',
-    hintActive: 'text-white/75',
+    hint: 'text-fuchsia-800 dark:text-fuchsia-200',
+    hintActive: 'text-white/90',
     hover:
       'hover:border-fuchsia-300/80 hover:shadow-md hover:shadow-fuchsia-500/15 hover:-translate-y-px dark:hover:border-fuchsia-700/60',
   },
@@ -535,8 +535,8 @@ const EXPLORATION_ACCENTS: Record<
     cardActive:
       'bg-gradient-to-br from-sky-500 via-cyan-600 to-sky-600 border-sky-400/60 text-white shadow-lg shadow-sky-500/25',
     icon: 'bg-gradient-to-br from-sky-400 to-cyan-500 shadow-md shadow-sky-500/35 ring-2 ring-white/20',
-    hint: 'text-sky-700/75 dark:text-sky-300/80',
-    hintActive: 'text-white/75',
+    hint: 'text-sky-800 dark:text-sky-200',
+    hintActive: 'text-white/90',
     hover:
       'hover:border-sky-300/80 hover:shadow-md hover:shadow-sky-500/15 hover:-translate-y-px dark:hover:border-sky-700/60',
   },
@@ -573,14 +573,14 @@ function ExplorationCard({
       </span>
       <span className="min-w-0 flex-1 leading-tight">
         <span
-          className={`block text-[12px] font-semibold leading-snug ${
+          className={`block text-sm font-semibold leading-snug ${
             isActive ? 'text-white' : 'text-slate-800 dark:text-slate-100'
           }`}
         >
           {item.label}
         </span>
         <span
-          className={`mt-0.5 block text-[10px] font-medium leading-snug ${
+          className={`mt-0.5 block text-xs font-medium leading-snug ${
             isActive ? theme.hintActive : theme.hint
           }`}
         >
@@ -648,14 +648,14 @@ function AccompagnementCard({
       </span>
       <span className="min-w-0 flex-1 leading-tight">
         <span
-          className={`block text-[11px] font-semibold leading-snug line-clamp-2 ${
+          className={`block text-sm font-semibold leading-snug line-clamp-2 ${
             isActive ? 'text-white' : 'text-slate-800 dark:text-slate-100'
           }`}
         >
           {item.label}
         </span>
         <span
-          className={`mt-0.5 block text-[10px] font-medium leading-snug line-clamp-2 ${
+          className={`mt-0.5 block text-xs font-medium leading-snug line-clamp-2 ${
             isActive
               ? 'text-white/75'
               : isFeatured
@@ -700,7 +700,7 @@ function AccompagnementSection({
   return (
     <div className="shrink-0 px-3 pt-3 pb-3 border-b border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-2 px-0.5 pb-2.5" title={tooltip}>
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400">
+        <p className="text-xs font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400">
           {label}
         </p>
         <span className="flex-1 h-px bg-gradient-to-r from-emerald-400/45 via-teal-300/30 to-transparent dark:from-emerald-600/50 dark:via-teal-500/35" />
@@ -782,7 +782,7 @@ function CoachNavSection({
   return (
     <div className="shrink-0 px-3 pt-3 pb-3 border-b border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-2 px-0.5 pb-2.5" title={tooltip}>
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-400">
+        <p className="text-xs font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-400">
           {label}
         </p>
         <span className="flex-1 h-px bg-gradient-to-r from-teal-400/45 via-emerald-300/30 to-transparent dark:from-teal-600/50 dark:via-emerald-500/35" />
@@ -822,7 +822,7 @@ function MyceliumNavSection({
   return (
     <div className="shrink-0 px-3 pt-3 pb-3 border-b border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-2 px-0.5 pb-2.5" title={t('nav.myceliumSectionTooltip')}>
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-400 to-amber-300">
+        <p className="text-xs font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-400 to-amber-300">
           {group.label}
         </p>
         <span className="flex-1 h-px bg-gradient-to-r from-amber-400/45 via-orange-300/30 to-transparent dark:from-amber-600/50" />
@@ -853,7 +853,7 @@ function MyceliumNavSection({
               >
                 {icon}
               </span>
-              <span className="text-[11px] font-semibold leading-snug">{label}</span>
+              <span className="text-sm font-semibold leading-snug">{label}</span>
             </Link>
           )
         })}
@@ -888,7 +888,7 @@ function NavGroup({
     <div>
       <button
         onClick={() => group.collapsible && setOpen((o) => !o)}
-        className={`w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest ${
+        className={`w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-widest ${
           group.collapsible
             ? 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer'
             : 'text-slate-500 dark:text-slate-400 cursor-default'
@@ -1195,7 +1195,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
               className="flex items-center gap-2 px-0.5 pb-2.5"
               title={t('nav.explorationsSectionTooltip')}
             >
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-violet-500 via-rose-400 to-fuchsia-400">
+              <p className="text-xs font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-violet-500 via-rose-400 to-fuchsia-400">
                 {explorationsGroup.label}
                 {viewMode === 'coach' || viewMode === 'rh' ? (
                   <span className="text-slate-400 dark:text-slate-500 font-medium normal-case tracking-normal">
@@ -1235,7 +1235,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
               className="flex items-center gap-2 px-0.5 pb-2.5"
               title={t('nav.aDeuxSectionTooltip')}
             >
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-400 to-violet-400">
+              <p className="text-xs font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-400 to-violet-400">
                 {t('nav.aDeuxSection')}
               </p>
               <span className="flex-1 h-px bg-gradient-to-r from-rose-400/40 via-pink-300/25 to-transparent dark:from-rose-600/50 dark:via-pink-500/30" />
@@ -1326,7 +1326,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             href="/cartes"
             onClick={onClose}
             title={t('nav.cartesTooltip')}
-            className={`inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors border ${
+            className={`inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-lg text-sm font-medium transition-colors border ${
               pathWithoutBase === 'cartes' || pathWithoutBase.startsWith('cartes/')
                 ? 'bg-accent text-white border-accent'
                 : 'text-accent dark:text-accent-dark bg-accent/10 hover:bg-accent/15 border-accent/25 hover:border-accent/40'
@@ -1357,7 +1357,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
                   {(user as { name?: string }).name || (user as { login?: string }).login}
                 </p>
-                <p className="text-[10px] text-slate-400 truncate">{(user as { email?: string }).email}</p>
+                <p className="text-xs text-slate-400 truncate">{(user as { email?: string }).email}</p>
               </div>
             </div>
             {/* Accès rapide : compte, notifs, boutique */}
@@ -1366,7 +1366,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 href="/account"
                 onClick={onClose}
                 title={t('nav.accountTooltip')}
-                className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <span className="text-sm" aria-hidden>👤</span>
                 <span>{t('accountTitle')}</span>
@@ -1375,7 +1375,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 href="/notifications"
                 onClick={onClose}
                 title={t('layout.notifications')}
-                className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <span className="text-sm" aria-hidden>🔔</span>
                 <span>{t('layout.notifications')}</span>
@@ -1384,7 +1384,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 href="/boutique"
                 onClick={onClose}
                 title={t('prairie.boutique')}
-                className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <span className="text-sm" aria-hidden>🛒</span>
                 <span>{t('nav.boutique')}</span>

@@ -93,7 +93,7 @@ export default function DreamscapePage() {
                 <button
                   type="button"
                   onClick={collapseBanner}
-                  className="shrink-0 text-[11px] text-white/50 hover:text-white/80 underline underline-offset-2"
+                  className="shrink-0 text-sm text-white/75 hover:text-white/80 underline underline-offset-2"
                 >
                   {t('dreamscapePage.bannerCollapse')}
                 </button>
@@ -108,7 +108,7 @@ export default function DreamscapePage() {
               <button
                 type="button"
                 onClick={expandBanner}
-                className="shrink-0 text-[11px] text-violet-300/90 hover:text-violet-200 underline underline-offset-2"
+                className="shrink-0 text-sm text-violet-300/90 hover:text-violet-200 underline underline-offset-2"
               >
                 {t('dreamscapePage.bannerAbout')}
               </button>

@@ -145,7 +145,7 @@ export function DashboardCoachingChats() {
     <div className="space-y-3">
       {openRows.length > 0 ? (
         <div className="rounded-2xl border-2 border-emerald-400/90 dark:border-emerald-500/80 bg-emerald-50/95 dark:bg-emerald-950/35 p-4 shadow-md ring-1 ring-emerald-500/25 dark:ring-emerald-400/20">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-200">
+          <p className="text-sm font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-200">
             {t('dashboard.coachingOpenHeading')}
           </p>
           <ul className="mt-2 space-y-2">
@@ -159,15 +159,15 @@ export function DashboardCoachingChats() {
                     <span className="block text-sm font-semibold truncate">
                       {t('chat.conversationHistoryItemLabel', { n: row.id })}
                     </span>
-                    <span className="block text-[11px] text-emerald-800/90 dark:text-emerald-200/90 mt-0.5 truncate">
+                    <span className="block text-sm text-emerald-800/90 dark:text-emerald-200/90 mt-0.5 truncate">
                       {formatPreview(row)}
                     </span>
                   </span>
-                  <span className="shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white mt-0.5">
+                  <span className="shrink-0 text-xs font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white mt-0.5">
                     {t('chat.openConversationBadge')}
                   </span>
                 </Link>
-                <p className="text-[10px] text-emerald-700/90 dark:text-emerald-300/90 mt-1 px-1">
+                <p className="text-xs text-emerald-700/90 dark:text-emerald-300/90 mt-1 px-1">
                   {formatActivity(row.last_message_at || row.created_at)}
                 </p>
               </li>
@@ -200,11 +200,11 @@ export function DashboardCoachingChats() {
                   <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
                     {t('chat.conversationHistoryItemLabel', { n: row.id })}
                   </span>
-                  <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-400">
+                  <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
                     {formatActivity(row.last_message_at || row.created_at)}
                   </span>
                   <span
-                    className={`shrink-0 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                    className={`shrink-0 text-xs font-bold uppercase px-1.5 py-0.5 rounded ${
                       closed
                         ? 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200'
                         : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200'

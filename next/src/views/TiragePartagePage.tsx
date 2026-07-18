@@ -66,7 +66,7 @@ function DoorCard({ c }: { c: PublicCard }) {
         onError={() => setImgErr(true)}
       />
       {c.name ? (
-        <span className="max-w-[8.5rem] text-center text-[11px] font-semibold leading-tight text-slate-200/90 sm:text-xs">
+        <span className="max-w-[8.5rem] text-center text-sm font-semibold leading-tight text-slate-200/90 sm:text-xs">
           {truncate(c.name, 22)}
         </span>
       ) : null}
@@ -208,7 +208,7 @@ export default function TiragePartagePage() {
       secondaryCta={{ href: paths.loginHref, label: t('share.landingLogin') }}
       variant="dark"
     >
-      <p className="mb-6 text-center text-[11px] text-slate-500 sm:text-left">
+      <p className="mb-6 text-center text-sm text-slate-500 sm:text-left">
         <span className="text-slate-500">{formatDate(reading.createdAt || reading.created_at)}</span>
         <span className="mx-2 text-slate-600">·</span>
         <Link href="/tirage" className="text-violet-400 hover:text-violet-300">
@@ -221,7 +221,7 @@ export default function TiragePartagePage() {
           <div className="flex shrink-0 flex-col items-center justify-center gap-5 lg:w-[min(340px,38%)]">
             {hasShareFlower ? (
               <div className="flex flex-col items-center rounded-2xl bg-white/[0.06] p-4 ring-1 ring-violet-400/25 shadow-[0_0_48px_rgba(139,92,246,0.2)]">
-                <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200/90">
+                <p className="mb-2 text-center text-xs font-bold uppercase tracking-wide text-violet-200/90">
                   {t('share.landingYourFlower')}
                 </p>
                 <FlowerSVG
@@ -237,7 +237,7 @@ export default function TiragePartagePage() {
             <HeroCard c={card} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 lg:pr-4">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-200/90">{copy.kicker}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-violet-200/90">{copy.kicker}</p>
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-50 sm:text-5xl lg:leading-[1.06]">
               {truncate(cardName, 40)}
             </h1>
@@ -258,7 +258,7 @@ export default function TiragePartagePage() {
         <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-5">
           {hasShareFlower ? (
             <div className="mx-auto flex flex-col items-center rounded-2xl bg-white/[0.06] p-4 ring-1 ring-violet-400/25 shadow-[0_0_40px_rgba(139,92,246,0.18)] sm:mx-0">
-              <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200/90">
+              <p className="mb-2 text-center text-xs font-bold uppercase tracking-wide text-violet-200/90">
                 {t('share.landingYourFlower')}
               </p>
               <FlowerSVG
@@ -271,7 +271,7 @@ export default function TiragePartagePage() {
               />
             </div>
           ) : null}
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-200/90">{copy.kicker}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-violet-200/90">{copy.kicker}</p>
           <p className="text-2xl font-extrabold leading-tight text-slate-50 sm:text-3xl">{copy.hook}</p>
           <p className="text-base font-medium text-slate-300/85">{copy.sub}</p>
           <div className="flex flex-wrap items-end justify-center gap-3 sm:justify-start sm:gap-4">

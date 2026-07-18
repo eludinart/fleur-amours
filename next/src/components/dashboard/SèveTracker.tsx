@@ -25,7 +25,7 @@ export function SèveTracker({ tokenBalance = 0, eternalSap = 0, totalAccumulate
         <InfoBubble title={t('sap.title')} content={t('sap.desc')} />
       </h3>
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('sap.desc')}</p>
-      <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-4">
+      <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
         {t('sap.sablier')} · {t('sap.cristal')} · {t('sap.petaleArgente')}
       </p>
       <div className="flex flex-col sm:flex-row gap-3 mb-6 min-w-0">
@@ -35,7 +35,7 @@ export function SèveTracker({ tokenBalance = 0, eternalSap = 0, totalAccumulate
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 truncate">Sablier</p>
-            <p className="text-[10px] text-slate-500 truncate">Sève de Saison</p>
+            <p className="text-xs text-slate-500 truncate">Sève de Saison</p>
           </div>
         </div>
         <div className="flex-1 min-w-0 rounded-xl border border-amber-200/60 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-950/30 p-4 flex items-center gap-3 overflow-hidden">
@@ -44,7 +44,7 @@ export function SèveTracker({ tokenBalance = 0, eternalSap = 0, totalAccumulate
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 truncate">{t('sap.cristal')}</p>
-            <p className="text-[10px] text-slate-500 truncate">{t('sap.eternelle')}</p>
+            <p className="text-xs text-slate-500 truncate">{t('sap.eternelle')}</p>
           </div>
         </div>
       </div>
@@ -63,9 +63,9 @@ export function SèveTracker({ tokenBalance = 0, eternalSap = 0, totalAccumulate
             className={`h-full rounded-full ${hasAura ? 'bg-gradient-to-r from-amber-400 to-slate-300' : 'bg-gradient-to-r from-amber-500 to-amber-400'}`}
           />
         </div>
-        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">{t('sap.petaleArgenteBonus')}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">{t('sap.petaleArgenteBonus')}</p>
         {hasAura && (
-          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">{t('sap.auraUnlocked')}</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">{t('sap.auraUnlocked')}</p>
         )}
       </div>
     </motion.div>

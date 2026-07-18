@@ -18,7 +18,7 @@ export function ZenHomeMiniStats({ stats = {} }: { stats?: Record<string, unknow
 
   return (
     <div className="w-full space-y-2">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 text-center xl:text-left">
+      <p className="text-xs uppercase tracking-wider text-white/70 text-center xl:text-left">
         {t('fleurZen.miniStatsTitle')}
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -37,7 +37,7 @@ export function ZenHomeMiniStats({ stats = {} }: { stats?: Record<string, unknow
                 </span>
                 <div className="min-w-0">
                   <p className="text-lg font-bold text-white/90 leading-none">{v}</p>
-                  <p className="text-[10px] text-white/45 truncate">{t(c.labelKey)}</p>
+                  <p className="text-xs text-white/75 truncate">{t(c.labelKey)}</p>
                 </div>
               </div>
             </Link>

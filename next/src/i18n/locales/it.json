@@ -343,6 +343,12 @@
     "lisierePendingHint": "La tua richiesta attende una risposta. Puoi anche invitarla a un Duo.",
     "lisiereNoScores": "Fiore in fioritura — nessun punteggio ancora registrato."
   },
+  "aiBusy": {
+    "thinking": "La guida sta riflettendo…",
+    "pleaseWait": "Attendi — la risposta sta arrivando.",
+    "generating": "Generazione in corso…",
+    "interpreting": "Interpretazione in corso…"
+  },
   "common": {
     "offline": "Nessuna connessione — le tue modifiche potrebbero non essere salvate.",
     "onlineRestored": "Connessione ripristinata",

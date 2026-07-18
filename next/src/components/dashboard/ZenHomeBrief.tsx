@@ -93,7 +93,7 @@ function buildLocalBrief(
 function BriefSection({ label, text }: { label: string; text: string }) {
   return (
     <div className="space-y-1">
-      <p className="text-[10px] uppercase tracking-wider text-white/40">{label}</p>
+      <p className="text-xs uppercase tracking-wider text-white/70">{label}</p>
       <p className="text-sm sm:text-[15px] text-violet-100/88 leading-relaxed">{text}</p>
     </div>
   )
@@ -173,7 +173,7 @@ export function ZenHomeBrief({
   if (!hasAnyActivity) {
     return (
       <div className="rounded-2xl border border-violet-400/25 bg-gradient-to-br from-violet-950/40 to-rose-950/20 backdrop-blur-sm px-4 py-5 mb-5 space-y-3">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-teal-300/75">{t('fleurZen.briefTitle')}</p>
+        <p className="text-xs uppercase tracking-wider text-teal-300/75">{t('fleurZen.briefTitle')}</p>
         <p className="text-sm text-violet-100/95 leading-relaxed font-medium">{t('fleurZen.briefNoDataWow')}</p>
         <Link
           href="/a-deux/par-une-porte?welcome=1"
@@ -188,13 +188,13 @@ export function ZenHomeBrief({
   if (initialLoading && !brief) {
     return (
       <div className="rounded-2xl border border-white/12 bg-white/[0.05] backdrop-blur-sm px-4 py-4 mb-5 space-y-3">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-teal-300/75">{t('fleurZen.briefTitle')}</p>
+        <p className="text-xs uppercase tracking-wider text-teal-300/75">{t('fleurZen.briefTitle')}</p>
         <div className="space-y-2 animate-pulse">
           <div className="h-4 bg-white/10 rounded w-2/3" />
           <div className="h-3 bg-white/8 rounded w-full" />
           <div className="h-3 bg-white/8 rounded w-11/12" />
         </div>
-        <p className="text-[10px] text-white/30">{t('fleurZen.briefLoading')}</p>
+        <p className="text-xs text-white/65">{t('fleurZen.briefLoading')}</p>
       </div>
     )
   }
@@ -203,7 +203,7 @@ export function ZenHomeBrief({
 
   return (
     <div className="rounded-2xl border border-white/12 bg-white/[0.05] backdrop-blur-sm px-4 py-4 mb-5 space-y-4">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-teal-300/75">{t('fleurZen.briefTitle')}</p>
+      <p className="text-xs uppercase tracking-wider text-teal-300/75">{t('fleurZen.briefTitle')}</p>
 
       {summary.headline ? (
         <p className="text-base sm:text-lg font-semibold text-violet-50/95 leading-snug">{summary.headline}</p>

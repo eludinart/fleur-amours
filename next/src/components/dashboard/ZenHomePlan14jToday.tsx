@@ -35,7 +35,7 @@ export function ZenHomePlan14jToday({ plan }: { plan: ActivePlan14j }) {
     <div className="mb-5 rounded-2xl border-2 border-emerald-500/35 bg-emerald-950/25 px-4 py-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-emerald-300/85">
+          <p className="text-xs font-medium uppercase tracking-wider text-emerald-300/85">
             {t('dashboard.plan14TodayLabel')}
           </p>
           <p className="text-base font-semibold text-emerald-50 mt-0.5">

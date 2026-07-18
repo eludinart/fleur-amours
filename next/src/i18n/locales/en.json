@@ -379,6 +379,12 @@
     "badge": "Weather: {petal}",
     "focusBadge": "Inward focus"
   },
+  "aiBusy": {
+    "thinking": "Your guide is reflecting…",
+    "pleaseWait": "Please wait — a reply is on the way.",
+    "generating": "Generating…",
+    "interpreting": "Interpreting…"
+  },
   "common": {
     "offline": "No connection — your changes may not be saved.",
     "onlineRestored": "Connection restored",
@@ -1180,6 +1186,9 @@
     "exchangeLimitSoft": "You have already had {count} exchanges. If you found what you came for, you can close now — or continue a little longer.",
     "exchangeLimitHard": "This conversation is reaching its natural end ({count} exchanges). To let what emerged settle, I suggest closing it now.",
     "exchangeLimitForce": "We are past the soft limit ({count} exchanges). I suggest closing the conversation now.",
+    "aiError": "Couldn't get a reply. Please try again in a moment.",
+    "aiDegraded": "Degraded response: {reason}",
+    "emptyReply": "No text came back. Please try again.",
     "closeNudgeKicker": "A closing threshold",
     "closeNudgeTitle": "Would you like to seal this conversation?",
     "shareFallback": "My inner conversation.",

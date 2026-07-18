@@ -144,8 +144,8 @@ export function ChronicleList({
     ? 'rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm'
     : 'rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50'
   const titleCls = zen ? 'text-white/90' : 'text-slate-800 dark:text-slate-100'
-  const descCls = zen ? 'text-white/45' : 'text-slate-500 dark:text-slate-400'
-  const metaCls = zen ? 'text-white/45' : 'text-slate-400'
+  const descCls = zen ? 'text-white/75' : 'text-slate-500 dark:text-slate-400'
+  const metaCls = zen ? 'text-white/75' : 'text-slate-400'
 
   const clampQuote = layout === 'grid'
   const bodyCls = zen ? 'text-violet-50/95' : 'text-slate-800 dark:text-slate-100'
@@ -196,12 +196,12 @@ export function ChronicleList({
     const chips = (
       <div className="flex flex-wrap items-center gap-1.5 mb-2">
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] ${badgeTone}`}
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-[0.14em] ${badgeTone}`}
         >
           {t(toneLabelKey(tone))}
         </span>
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${typeChip}`}
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ${typeChip}`}
         >
           {typeLabel}
         </span>
@@ -212,7 +212,7 @@ export function ChronicleList({
       <>
         {chips}
         <p className={quoteCls}>{item.synthesis}</p>
-        <p className={`text-[10px] mt-auto pt-2.5 flex items-center gap-1 shrink-0 border-t ${zen ? 'border-white/10' : 'border-slate-200/80 dark:border-slate-700/80'} ${metaCls}`}>
+        <p className={`text-xs mt-auto pt-2.5 flex items-center gap-1 shrink-0 border-t ${zen ? 'border-white/10' : 'border-slate-200/80 dark:border-slate-700/80'} ${metaCls}`}>
           <span className="opacity-80">{formatDate(item.created_at as string, locale)}</span>
         </p>
       </>
@@ -336,14 +336,14 @@ export function ChronicleList({
         {whisper ? (
           <div className="mb-4 border-l-2 border-violet-400/50 pl-3 space-y-1.5">
             {zen && whisperSubhint ? (
-              <p className="text-[9px] uppercase tracking-wider text-violet-300/60">{whisperSubhint}</p>
+              <p className="text-xs uppercase tracking-wider text-violet-300/60">{whisperSubhint}</p>
             ) : null}
             <p className={`text-sm italic ${zen ? 'text-violet-200/90' : 'text-violet-700/90 dark:text-violet-200/90'}`}>
               {whisper}
             </p>
           </div>
         ) : null}
-        <div className={`flex flex-col items-center justify-center py-10 ${zen ? 'text-white/35' : 'text-slate-400 dark:text-slate-500'}`}>
+        <div className={`flex flex-col items-center justify-center py-10 ${zen ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'}`}>
           <span className="text-4xl mb-2">📜</span>
           <p className="text-sm text-center">{t('chronicle.empty')}</p>
         </div>
@@ -378,14 +378,14 @@ export function ChronicleList({
           }`}
         >
           <p
-            className={`text-[10px] uppercase tracking-widest mb-1 ${
+            className={`text-xs uppercase tracking-widest mb-1 ${
               zen ? 'text-violet-200/70' : 'text-violet-600/80 dark:text-violet-300/80'
             }`}
           >
             {whisperLabel}
           </p>
           {zen && whisperSubhint ? (
-            <p className="text-[9px] uppercase tracking-wider text-violet-300/55 mb-2">{whisperSubhint}</p>
+            <p className="text-xs uppercase tracking-wider text-violet-300/55 mb-2">{whisperSubhint}</p>
           ) : null}
           <p
             className={`text-sm italic leading-relaxed ${

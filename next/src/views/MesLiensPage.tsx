@@ -196,7 +196,7 @@ export default function MesLiensPage() {
               key={f.id}
               type="button"
               onClick={() => setFilter(f.id)}
-              className={`px-3 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium border transition-colors ${
                 filter === f.id
                   ? 'bg-violet-600 text-white border-violet-600'
                   : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-violet-300'
@@ -274,19 +274,19 @@ export default function MesLiensPage() {
                           {l.pseudo}
                         </button>
                         <span
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border ${badge.tone}`}
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium border ${badge.tone}`}
                         >
                           <span>{badge.emoji}</span>
                           <span>{badge.label()}</span>
                         </span>
                         {l.unreadCount > 0 && (
-                          <span className="min-w-[1.25rem] h-5 px-1.5 inline-flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-bold">
+                          <span className="min-w-[1.25rem] h-5 px-1.5 inline-flex items-center justify-center rounded-full bg-rose-500 text-white text-xs font-bold">
                             {l.unreadCount > 99 ? '99+' : l.unreadCount}
                           </span>
                         )}
                       </div>
                       {intention && l.relation === 'pending_in' && (
-                        <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-300 italic">
+                        <p className="mt-1 text-sm text-amber-700 dark:text-amber-300 italic">
                           {t('liens.intentionLabel', { label: intention })}
                         </p>
                       )}
@@ -294,7 +294,7 @@ export default function MesLiensPage() {
                         <MaturityBadges badges={l.maturityBadges} compact className="mt-1.5" />
                       )}
                       {last && (
-                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                           {t('liens.lastContact')} · {last}
                         </p>
                       )}

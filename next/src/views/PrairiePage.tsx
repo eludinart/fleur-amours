@@ -1,4 +1,4 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 'use client'
 
 import dynamic from 'next/dynamic'
@@ -533,7 +533,7 @@ export default function PrairiePage() {
             🔄
           </button>
           {myLinks.length > 0 && (
-            <span className="text-[10px] opacity-70" title={t('prairie.linksHint')}>🔗</span>
+            <span className="text-xs opacity-70" title={t('prairie.linksHint')}>🔗</span>
           )}
           <span title={t('prairie.pointsRosee')}>💧 {pointsDeRosee}</span>
           </div>
@@ -633,7 +633,7 @@ export default function PrairiePage() {
               <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-w-[min(100%,22rem)] pointer-events-auto">
                 <button
                   type="button"
-                  className="md:hidden self-start px-2 py-1 rounded-lg text-[10px] text-slate-300 bg-slate-950/72 border border-slate-600/40"
+                  className="md:hidden self-start px-2 py-1 rounded-lg text-xs text-slate-300 bg-slate-950/72 border border-slate-600/40"
                   onClick={() => setControlsCollapsed((v) => !v)}
                   aria-expanded={!controlsCollapsed}
                 >
@@ -653,7 +653,7 @@ export default function PrairiePage() {
                       key={opt.id}
                       type="button"
                       onClick={() => setGalaxieFilter((prev) => (prev === opt.id ? 'all' : opt.id))}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+                      className={`px-2.5 py-1 rounded-lg text-sm font-medium transition-colors ${
                         galaxieFilter === opt.id
                           ? 'bg-violet-500/30 text-violet-100 border border-violet-400/40'
                           : 'text-slate-300 hover:bg-slate-800/80 border border-transparent'
@@ -667,7 +667,7 @@ export default function PrairiePage() {
                   <select
                     value={galaxiePetal}
                     onChange={(e) => setGalaxiePetal(e.target.value)}
-                    className="flex-1 min-w-[7rem] px-2 py-1 rounded-lg text-[11px] bg-slate-900/90 text-slate-200 border border-slate-600/50"
+                    className="flex-1 min-w-[7rem] px-2 py-1 rounded-lg text-sm bg-slate-900/90 text-slate-200 border border-slate-600/50"
                     aria-label={t('prairie.filterPetal')}
                   >
                     <option value="">{t('prairie.filterPetalAll')}</option>
@@ -678,7 +678,7 @@ export default function PrairiePage() {
                   <button
                     type="button"
                     onClick={() => galaxieRef.current?.centerOnMe?.()}
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium text-amber-100 bg-amber-500/20 border border-amber-400/30 hover:bg-amber-500/30"
+                    className="px-2.5 py-1 rounded-lg text-sm font-medium text-amber-100 bg-amber-500/20 border border-amber-400/30 hover:bg-amber-500/30"
                     title={t('prairie.centerOnMe')}
                   >
                     ◎ {t('prairie.centerOnMe')}
@@ -686,7 +686,7 @@ export default function PrairiePage() {
                   <button
                     type="button"
                     onClick={() => galaxieRef.current?.resetView?.()}
-                    className="px-2 py-1 rounded-lg text-[11px] text-slate-300 hover:bg-slate-800/80 border border-slate-600/40"
+                    className="px-2 py-1 rounded-lg text-sm text-slate-300 hover:bg-slate-800/80 border border-slate-600/40"
                     title={t('prairie.resetView')}
                   >
                     ↺
@@ -702,17 +702,17 @@ export default function PrairiePage() {
                     onChange={(e) => setGalaxieSearch(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleGalaxieSearch() }}
                     placeholder={t('prairie.searchPlaceholder')}
-                    className="flex-1 min-w-0 px-2.5 py-1 rounded-lg text-[11px] bg-slate-900/90 text-slate-200 border border-slate-600/50 placeholder:text-slate-500"
+                    className="flex-1 min-w-0 px-2.5 py-1 rounded-lg text-sm bg-slate-900/90 text-slate-200 border border-slate-600/50 placeholder:text-slate-500"
                   />
                   <button
                     type="button"
                     onClick={handleGalaxieSearch}
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium text-cyan-100 bg-cyan-500/20 border border-cyan-400/30 hover:bg-cyan-500/30"
+                    className="px-2.5 py-1 rounded-lg text-sm font-medium text-cyan-100 bg-cyan-500/20 border border-cyan-400/30 hover:bg-cyan-500/30"
                   >
                     {t('prairie.searchGo')}
                   </button>
                 </div>
-                <p className="hidden md:block text-[9px] text-slate-500 px-1">{t('prairie.keyboardHint')}</p>
+                <p className="hidden md:block text-xs text-slate-500 px-1">{t('prairie.keyboardHint')}</p>
                 </div>
               </div>
             )}
@@ -773,7 +773,7 @@ export default function PrairiePage() {
                     <p className="font-semibold text-amber-50 text-sm truncate group-hover:text-amber-100">
                       {selectedFleur.pseudo} {selectedFleur.avatar_emoji}
                     </p>
-                    <p className="text-[10px] text-cyan-300/80 group-hover:text-cyan-200/90">
+                    <p className="text-xs text-cyan-300/80 group-hover:text-cyan-200/90">
                       {t('prairie.profileViewFull')} →
                     </p>
                   </div>
@@ -781,17 +781,17 @@ export default function PrairiePage() {
 
                 <div className="flex flex-wrap gap-1 mb-2.5">
                   {isOnline ? (
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+                    <span className="px-1.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
                       ● {t('prairie.profileOnline')}
                     </span>
                   ) : (
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] text-slate-400 border border-slate-600/40">
+                    <span className="px-1.5 py-0.5 rounded-md text-xs text-slate-400 border border-slate-600/40">
                       {t('prairie.profileOffline')}
                     </span>
                   )}
                   {dominantDef && (
                     <span
-                      className="px-1.5 py-0.5 rounded-md text-[9px] font-medium border"
+                      className="px-1.5 py-0.5 rounded-md text-xs font-medium border"
                       style={{
                         color: dominantDef.color,
                         borderColor: `${dominantDef.color}55`,
@@ -802,23 +802,23 @@ export default function PrairiePage() {
                     </span>
                   )}
                   {relation === 'accepted' && (
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-violet-500/15 text-violet-300 border border-violet-500/25">
+                    <span className="px-1.5 py-0.5 rounded-md text-xs font-medium bg-violet-500/15 text-violet-300 border border-violet-500/25">
                       {t('prairie.profileRelationDuo')}
                     </span>
                   )}
                   {relation === 'pending_out' && (
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] text-amber-300/90 border border-amber-500/30">
+                    <span className="px-1.5 py-0.5 rounded-md text-xs text-amber-300/90 border border-amber-500/30">
                       {t('prairie.profileRelationPending')}
                     </span>
                   )}
                   {relation === 'pending_in' && (
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] text-amber-200 border border-amber-400/35">
+                    <span className="px-1.5 py-0.5 rounded-md text-xs text-amber-200 border border-amber-400/35">
                       {t('social.graineTAttend')}
                     </span>
                   )}
                   {targetMeteo && PETAL_BY_ID[targetMeteo] && (
                     <span
-                      className="px-1.5 py-0.5 rounded-md text-[9px] font-medium border"
+                      className="px-1.5 py-0.5 rounded-md text-xs font-medium border"
                       style={{
                         color: PETAL_BY_ID[targetMeteo].color,
                         borderColor: `${PETAL_BY_ID[targetMeteo].color}55`,
@@ -829,27 +829,27 @@ export default function PrairiePage() {
                     </span>
                   )}
                   {targetFocus && (
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] text-violet-300 border border-violet-500/30">
+                    <span className="px-1.5 py-0.5 rounded-md text-xs text-violet-300 border border-violet-500/30">
                       {t('meteo.focusBadge')}
                     </span>
                   )}
                 </div>
 
                 {profilePreviewLoading ? (
-                  <p className="text-[10px] text-slate-500 mb-2 animate-pulse">{t('common.loading')}</p>
+                  <p className="text-xs text-slate-500 mb-2 animate-pulse">{t('common.loading')}</p>
                 ) : (
                   <div className="rounded-lg border border-slate-700/50 bg-slate-900/50 p-2 mb-2.5 space-y-1.5">
                     {activityLabel && (
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-xs text-slate-400">
                         {t('prairie.profileActivity')}: <span className="text-slate-300">{activityLabel}</span>
                       </p>
                     )}
                     {topPetals.length > 0 && (
                       <div className="space-y-1">
-                        <p className="text-[9px] uppercase tracking-wide text-slate-500">{t('prairie.profileTopPetals')}</p>
+                        <p className="text-xs uppercase tracking-wide text-slate-500">{t('prairie.profileTopPetals')}</p>
                         {topPetals.map((p) => (
                           <div key={p.id} className="flex items-center gap-1.5">
-                            <span className="text-[9px] text-slate-400 w-14 truncate">{p.name}</span>
+                            <span className="text-xs text-slate-400 w-14 truncate">{p.name}</span>
                             <div className="flex-1 h-1.5 rounded-full bg-slate-800 overflow-hidden">
                               <div
                                 className="h-full rounded-full"
@@ -861,7 +861,7 @@ export default function PrairiePage() {
                       </div>
                     )}
                     {social && (
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-xs text-slate-400">
                         💧 {social.rosee_received_total ?? 0}
                         {' · '}
                         🌸 {social.pollen_received_total ?? 0}
@@ -869,11 +869,11 @@ export default function PrairiePage() {
                     )}
                     {(resonancePct > 0 || complementPct > 0) && (
                       <div className="flex flex-wrap gap-2 pt-0.5">
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-xs text-slate-400">
                           {t('boussole.mirror')}:{' '}
                           <span className="text-cyan-300 font-medium">{resonancePct}%</span>
                         </span>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-xs text-slate-400">
                           {t('boussole.complement')}:{' '}
                           <span className="text-amber-300 font-medium">{complementPct}%</span>
                           {complementDef ? ` · ${complementDef.name}` : ''}
@@ -888,7 +888,7 @@ export default function PrairiePage() {
                     <button
                       type="button"
                       onClick={openLisiere}
-                      className="w-full mb-2 py-2 rounded-lg bg-cyan-500/15 text-cyan-200 text-[11px] font-medium border border-cyan-400/25 hover:bg-cyan-500/25 transition-colors"
+                      className="w-full mb-2 py-2 rounded-lg bg-cyan-500/15 text-cyan-200 text-sm font-medium border border-cyan-400/25 hover:bg-cyan-500/25 transition-colors"
                     >
                       🌿 {t('social.voirLisiere')}
                     </button>
@@ -896,7 +896,7 @@ export default function PrairiePage() {
                       <button
                         type="button"
                         onClick={() => router.push(`/clairiere?with=${selectedFleur.user_id}`)}
-                        className="w-full mb-2 py-2 rounded-lg bg-violet-500/15 text-violet-200 text-[11px] font-medium border border-violet-400/25 hover:bg-violet-500/25 transition-colors"
+                        className="w-full mb-2 py-2 rounded-lg bg-violet-500/15 text-violet-200 text-sm font-medium border border-violet-400/25 hover:bg-violet-500/25 transition-colors"
                       >
                         💬 {t('social.ouvrirClairiere')}
                       </button>
@@ -905,13 +905,13 @@ export default function PrairiePage() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleArroser(selectedFleur) }}
                         disabled={pointsDeRosee < 1 || arrosing}
-                        className="flex-1 px-2 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-[11px] border border-emerald-500/20"
+                        className="flex-1 px-2 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-sm border border-emerald-500/20"
                       >
                         💧 {t('prairie.arroser')}
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setShowPollen(true) }}
-                        className="flex-1 px-2 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 text-[11px] border border-amber-500/20"
+                        className="flex-1 px-2 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 text-sm border border-amber-500/20"
                       >
                         🌸 {t('prairie.envoyerPollen')}
                       </button>
@@ -920,14 +920,14 @@ export default function PrairiePage() {
                     <button
                       type="button"
                       onClick={() => router.push(`/jardin/duo?invite_user_id=${selectedFleur.user_id}&invite_pseudo=${encodeURIComponent(selectedFleur.pseudo || '')}`)}
-                      className="flex-1 px-2 py-1 rounded-lg bg-slate-800/80 text-violet-300 text-[10px] border border-slate-600/40"
+                      className="flex-1 px-2 py-1 rounded-lg bg-slate-800/80 text-violet-300 text-xs border border-slate-600/40"
                     >
                       💕 {t('prairie.inviteDuo')}
                     </button>
                     <button
                       type="button"
                       onClick={() => dismissProfilePanel()}
-                      className="px-2 py-1 rounded-lg text-slate-500 text-[10px] border border-slate-700/50 hover:text-slate-300"
+                      className="px-2 py-1 rounded-lg text-slate-500 text-xs border border-slate-700/50 hover:text-slate-300"
                       aria-label={t('common.close')}
                     >
                       ✕
@@ -942,7 +942,7 @@ export default function PrairiePage() {
                     <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                       {FOUR_DOORS.map((door) => (
                         <div key={door.key} className="space-y-1.5">
-                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 sticky top-0 bg-white dark:bg-slate-800 py-0.5 z-10">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 sticky top-0 bg-white dark:bg-slate-800 py-0.5 z-10">
                             {door.subtitle}
                           </p>
                           <div className="grid grid-cols-4 gap-1.5">
@@ -961,7 +961,7 @@ export default function PrairiePage() {
                                   loading="lazy"
                                   className="w-full aspect-[3/4] object-cover"
                                 />
-                                <span className="block px-1 py-0.5 text-[9px] leading-tight text-slate-700 dark:text-slate-200 truncate">
+                                <span className="block px-1 py-0.5 text-xs leading-tight text-slate-700 dark:text-slate-200 truncate">
                                   {card.name}
                                 </span>
                               </button>
@@ -972,7 +972,7 @@ export default function PrairiePage() {
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowPollen(false) }}
-                      className="mt-1.5 text-[10px] text-slate-500 hover:text-slate-700"
+                      className="mt-1.5 text-xs text-slate-500 hover:text-slate-700"
                     >
                       {t('common.cancel')}
                     </button>

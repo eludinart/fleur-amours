@@ -5,6 +5,7 @@ import { requireAuth } from '@/lib/api-auth'
 import { recordTimelineEvent } from '@/lib/db-timeline'
 import { buildDreamscapeChronicleSummary } from '@/lib/chronicle-summary'
 import { PETAL_ORDER_IDS } from '@/lib/petal-theme'
+import { cacheDel } from '@/lib/server-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     const { userId } = await requireAuth(req)
     const body = await req.json()
     const result = await save(userId, body)
+    cacheDel(`dreamscape_my:${userId}`)
     const uid = parseInt(userId, 10)
     const savedId = Number((result as { id?: unknown })?.id) || null
     const petalsRaw = body?.petals as Record<string, number> | undefined

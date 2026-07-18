@@ -291,7 +291,7 @@ export default function MyceliumDashboardPage() {
                                   <span className="block font-medium text-slate-800 dark:text-slate-100">
                                     {petalLabel(id, 'A')}
                                   </span>
-                                  <span className="block text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+                                  <span className="block text-sm leading-tight text-slate-500 dark:text-slate-400">
                                     {petalLabel(id, 'B')}
                                   </span>
                                 </span>

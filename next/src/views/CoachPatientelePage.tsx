@@ -309,17 +309,17 @@ export default function CoachPatientelePage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
                             <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{p.pseudo}</p>
-                            <span className="shrink-0 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                            <span className="shrink-0 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                               Suivi détaillé →
                             </span>
                           </div>
                           {p.email ? <p className="text-xs text-slate-500 dark:text-slate-400">{p.email}</p> : null}
                         <div className="flex flex-wrap gap-2 mt-2 items-center">
-                          <span className="text-[10px] px-2 py-1 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-200 border border-violet-200/60 dark:border-violet-800/60 font-semibold">
+                          <span className="text-xs px-2 py-1 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-200 border border-violet-200/60 dark:border-violet-800/60 font-semibold">
                             SAP : {p.sapBalance ?? 0}
                           </span>
                           <span
-                            className={`text-[10px] px-2 py-1 rounded-full border font-medium ${
+                            className={`text-xs px-2 py-1 rounded-full border font-medium ${
                               p.acquisitionChannel === 'direct'
                                 ? 'bg-teal-50 dark:bg-teal-950/30 border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-200'
                                 : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200'
@@ -337,7 +337,7 @@ export default function CoachPatientelePage() {
                           {(p.intentionIds ?? []).map((cid) => (
                             <span
                               key={cid}
-                              className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
+                              className="text-xs px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
                             >
                               {intentionLabel.get(cid) ?? cid}
                             </span>
@@ -361,7 +361,7 @@ export default function CoachPatientelePage() {
                         )}
 
                         {p.science?.meta?.has_chat_context === false ? (
-                          <p className="text-[10px] mt-2 text-amber-700 dark:text-amber-300">
+                          <p className="text-xs mt-2 text-amber-700 dark:text-amber-300">
                             Note : synthèse sans contexte Clairière/coach.
                           </p>
                         ) : null}
@@ -388,11 +388,11 @@ export default function CoachPatientelePage() {
                             Pas d&apos;email — suivi détaillé indisponible
                           </p>
                           <div className="flex flex-wrap gap-2 mt-2 items-center">
-                            <span className="text-[10px] px-2 py-1 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-200 border border-violet-200/60 dark:border-violet-800/60 font-semibold">
+                            <span className="text-xs px-2 py-1 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-200 border border-violet-200/60 dark:border-violet-800/60 font-semibold">
                               SAP : {p.sapBalance ?? 0}
                             </span>
                             <span
-                              className={`text-[10px] px-2 py-1 rounded-full border font-medium ${
+                              className={`text-xs px-2 py-1 rounded-full border font-medium ${
                                 p.acquisitionChannel === 'direct'
                                   ? 'bg-teal-50 dark:bg-teal-950/30 border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-200'
                                   : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200'
@@ -405,7 +405,7 @@ export default function CoachPatientelePage() {
                             {(p.intentionIds ?? []).map((cid) => (
                               <span
                                 key={cid}
-                                className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
+                                className="text-xs px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
                               >
                                 {intentionLabel.get(cid) ?? cid}
                               </span>
@@ -431,7 +431,7 @@ export default function CoachPatientelePage() {
                         Ouvrir la Clairière
                       </Link>
                       <div className="flex items-center gap-3 flex-wrap justify-end">
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-xs text-slate-400">
                           {p.channelId ? 'Conversation prête' : 'Canal en attente'}
                         </span>
                         <button
@@ -465,7 +465,7 @@ export default function CoachPatientelePage() {
                       <div className="mt-3">
                         {Array.isArray(p.science.facts) && p.science.facts.length > 0 ? (
                           <div className="space-y-2">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
                               Faits
                             </p>
                             <ul className="space-y-1">
@@ -480,14 +480,14 @@ export default function CoachPatientelePage() {
 
                         {Array.isArray(p.science.hypotheses) && p.science.hypotheses.length > 0 ? (
                           <div className="space-y-2 mt-3">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
                               Hypothèses
                             </p>
                             <ul className="space-y-1">
                               {p.science.hypotheses.slice(0, 3).map((h: any) => (
                                 <li key={h.id || h.text} className="text-xs text-slate-700 dark:text-slate-200 flex items-center gap-2">
                                   <span
-                                    className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                                    className={`text-xs px-2 py-0.5 rounded-full border ${
                                       h.confidence_label === 'high'
                                         ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
                                         : h.confidence_label === 'medium'
@@ -543,7 +543,7 @@ export default function CoachPatientelePage() {
                   key={g.title}
                   className="rounded-2xl border border-slate-200/70 dark:border-slate-700/60 bg-white/40 dark:bg-slate-950/20 p-4 space-y-2 min-w-0"
                 >
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  <p className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                     {g.title}
                   </p>
                   {g.rows.length === 0 ? (
@@ -573,12 +573,12 @@ export default function CoachPatientelePage() {
                                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">
                                   {email || `Conversation #${convId}`}
                                 </span>
-                                <span className="text-[10px] text-slate-400 shrink-0">#{convId}</span>
+                                <span className="text-xs text-slate-400 shrink-0">#{convId}</span>
                               </div>
                               <div className="mt-1 flex items-center justify-between gap-2">
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{badge}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{badge}</span>
                                 {(c?.unread_count ?? 0) > 0 ? (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white shrink-0">
+                                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white shrink-0">
                                     {c.unread_count > 99 ? '99+' : c.unread_count}
                                   </span>
                                 ) : null}
@@ -588,7 +588,7 @@ export default function CoachPatientelePage() {
                         )
                       })}
                       {g.rows.length > 12 ? (
-                        <li className="text-[11px] text-slate-400">
+                        <li className="text-sm text-slate-400">
                           + {g.rows.length - 12} autres… (voir “Ouvrir la messagerie”)
                         </li>
                       ) : null}

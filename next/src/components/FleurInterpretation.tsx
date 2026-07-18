@@ -204,7 +204,7 @@ export function FleurInterpretation({
               {aiData.summary && (
                 <div>
                   {interpretationApi === 'fleur-beta' && (
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/90 mb-1">
+                    <p className="text-sm font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/90 mb-1">
                       {t('fleurBeta.aiBlockSynthesis')}
                     </p>
                   )}
@@ -214,7 +214,7 @@ export function FleurInterpretation({
               {aiData.insights && (
                 <div>
                   {interpretationApi === 'fleur-beta' && (
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/90 mb-1">
+                    <p className="text-sm font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/90 mb-1">
                       {t('fleurBeta.aiBlockTensions')}
                     </p>
                   )}
@@ -224,7 +224,7 @@ export function FleurInterpretation({
               {aiData.reflection && (
                 <div>
                   {interpretationApi === 'fleur-beta' && (
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/90 mb-1">
+                    <p className="text-sm font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/90 mb-1">
                       {t('fleurBeta.aiBlockOpening')}
                     </p>
                   )}

@@ -110,7 +110,7 @@ export function LoginPage() {
               <p className="text-xs font-semibold text-violet-800 dark:text-violet-200">
                 {t('login.registerOnboardingTitle')}
               </p>
-              <ul className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 space-y-1.5 list-disc pl-4 leading-snug">
+              <ul className="text-sm sm:text-xs text-slate-600 dark:text-slate-400 space-y-1.5 list-disc pl-4 leading-snug">
                 <li>{t('login.registerOnboarding1')}</li>
                 <li>{t('login.registerOnboarding2')}</li>
                 <li>{t('login.registerOnboarding3')}</li>

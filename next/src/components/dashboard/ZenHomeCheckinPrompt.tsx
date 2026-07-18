@@ -46,13 +46,13 @@ export function ZenHomeCheckinPrompt({
 
   return (
     <div className="mb-5 rounded-2xl border border-sky-500/30 bg-sky-950/25 px-4 py-4">
-      <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-sky-300/85">
+      <p className="text-xs font-medium uppercase tracking-wider text-sky-300/85">
         {t('dashboard.checkinWeeklyLabel')}
       </p>
       {lastEcho?.whisper && !showDaily ? (
         <>
           {echoPetal ? (
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-sky-300/70">{echoPetal}</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-sky-300/70">{echoPetal}</p>
           ) : null}
           <p className="text-sm text-sky-50/90 mt-1 leading-relaxed italic line-clamp-2">
             {lastEcho.echo || lastEcho.whisper}

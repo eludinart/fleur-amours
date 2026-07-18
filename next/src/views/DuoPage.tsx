@@ -267,7 +267,7 @@ function DuoResult({ duoData, onReset, currentUser }) {
       {/* Fleur superposée : les deux profils sur un même radar */}
       <div className="flex flex-col items-center">
         <p className="text-xs font-medium text-slate-500 mb-1">{t('duo.twoFlowersOverlay')}</p>
-        <p className="text-[10px] text-slate-400 mb-2">{t('duo.legendAB')}</p>
+        <p className="text-xs text-slate-400 mb-2">{t('duo.legendAB')}</p>
         <div className="flex justify-center w-full">
         <FlowerSVG
           petalsA={scoresToPetals(person_a.scores)}
@@ -321,7 +321,7 @@ function DuoResult({ duoData, onReset, currentUser }) {
               {Object.entries(person.scores).map(([p, v]) => (
                 <div key={p} className={`rounded-lg border px-1 py-1 text-center text-xs ${ZONE_COLOR[person.analysis?.zones?.[p] ?? 'neutre']}`}>
                   <div className="font-bold">{v}</div>
-                  <div className="leading-none text-[10px]">{PETAL_LABELS[p]}</div>
+                  <div className="leading-none text-xs">{PETAL_LABELS[p]}</div>
                 </div>
               ))}
             </div>
@@ -368,7 +368,7 @@ function DuoResult({ duoData, onReset, currentUser }) {
                   return (
                     <div key={p} className="px-2.5 py-1.5 rounded-lg bg-white/90 dark:bg-slate-900/60 border border-white/50 dark:border-white/10 text-xs font-medium space-y-0.5 shadow-sm">
                       <div className="font-semibold text-center text-slate-800 dark:text-slate-100">{PETAL_LABELS[p]}</div>
-                      <div className="flex items-center gap-1 text-[11px]">
+                      <div className="flex items-center gap-1 text-sm">
                         <span className="text-rose-700 dark:text-rose-400 font-semibold">{scoreA}</span>
                         <span className="text-slate-500 dark:text-slate-400">vs</span>
                         <span className="text-emerald-700 dark:text-emerald-400 font-semibold">{scoreB}</span>

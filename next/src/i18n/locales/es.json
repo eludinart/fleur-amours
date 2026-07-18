@@ -303,6 +303,12 @@
     "dialDominantLong": "{{petal}} es el tono de amor más marcado entre las flores cercanas. Tu tono personal: {{myPetal}}.",
     "dialClickHint": "Clic para filtrar la galaxia"
   },
+  "aiBusy": {
+    "thinking": "Tu guía está reflexionando…",
+    "pleaseWait": "Espera un momento — la respuesta llega.",
+    "generating": "Generando…",
+    "interpreting": "Interpretando…"
+  },
   "common": {
     "offline": "Sin conexión — tus cambios podrían no guardarse.",
     "onlineRestored": "Conexión restaurada",

@@ -111,7 +111,7 @@ export default function SalonsPage() {
                 >
                   <span style={active ? undefined : { color: p.color }}>{p.name}</span>
                   {sum?.messagesToday > 0 && (
-                    <span className={`text-[10px] ${active ? 'text-violet-100' : 'text-slate-400'}`}>
+                    <span className={`text-xs ${active ? 'text-violet-100' : 'text-slate-400'}`}>
                       {sum.messagesToday}
                     </span>
                   )}
@@ -129,7 +129,7 @@ export default function SalonsPage() {
             <h2 className="text-base font-semibold" style={{ color: petalDef?.color }}>
               {petalDef?.name ?? activePetal}
             </h2>
-            <p className="text-[11px] text-slate-500">{t('salons.roomHint')}</p>
+            <p className="text-sm text-slate-500">{t('salons.roomHint')}</p>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -151,7 +151,7 @@ export default function SalonsPage() {
                     >
                       {msg.avatarEmoji} {msg.pseudo}
                     </button>
-                    <span className="text-[10px] text-slate-400">{timeAgo(msg.createdAt)}</span>
+                    <span className="text-xs text-slate-400">{timeAgo(msg.createdAt)}</span>
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{msg.body}</p>
                 </div>
@@ -160,7 +160,7 @@ export default function SalonsPage() {
           </div>
 
           <div className="shrink-0 p-3 border-t border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/80">
-            <p className="text-[10px] text-slate-500 mb-2">
+            <p className="text-xs text-slate-500 mb-2">
               {t('salons.remaining', { count: postStatus.remainingToday, limit: postStatus.dailyLimit })}
             </p>
             {error && <p className="text-xs text-rose-500 mb-2">{error}</p>}

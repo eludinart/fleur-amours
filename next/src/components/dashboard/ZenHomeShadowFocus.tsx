@@ -50,7 +50,7 @@ export function ZenHomeShadowFocus({
   return (
     <div className="rounded-2xl border border-rose-900/45 bg-gradient-to-br from-rose-950/50 via-slate-950/80 to-slate-950/90 px-4 py-4 mb-5 space-y-4 ring-1 ring-rose-500/15">
       <div className="space-y-1">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-rose-300/80">{t('fleurZen.shadowTitle')}</p>
+        <p className="text-xs uppercase tracking-wider text-rose-300/80">{t('fleurZen.shadowTitle')}</p>
         <p className="text-sm sm:text-[15px] text-rose-50/90 leading-relaxed">{intro}</p>
       </div>
 
@@ -98,7 +98,7 @@ export function ZenHomeShadowFocus({
             className="flex-1 text-center text-xs sm:text-[13px] font-medium rounded-xl border border-violet-400/35 bg-violet-950/40 hover:bg-violet-900/50 text-violet-100 px-4 py-2.5 transition-colors"
           >
             <span className="block">{t('fleurZen.shadowCtaExplorer')}</span>
-            <span className="block text-[9px] uppercase tracking-wider opacity-70 mt-0.5">{t('layout.phare')}</span>
+            <span className="block text-xs uppercase tracking-wider opacity-70 mt-0.5">{t('layout.phare')}</span>
           </Link>
         </div>
       </div>

@@ -78,12 +78,12 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
               {title}
             </span>
             {c.coach_verified ? (
-              <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-sm ring-1 ring-white/80 shrink-0">
+              <span className="inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-sm ring-1 ring-white/80 shrink-0">
                 {t('coaches.verifiedBadge')}
               </span>
             ) : null}
             <span
-              className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0 ${
+              className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0 ${
                 c.is_online
                   ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border border-emerald-500/40'
                   : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600'
@@ -100,11 +100,11 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
             <p className="text-xs text-slate-600 dark:text-slate-300 truncate">{c.name}</p>
           ) : null}
           {!c.is_online ? (
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {formatCoachLastSeenLabel(c.last_seen_at ?? null, t)}
             </p>
           ) : (
-            <p className="text-[11px] text-emerald-700 dark:text-emerald-200 font-medium">
+            <p className="text-sm text-emerald-700 dark:text-emerald-200 font-medium">
               {t('chat.presenceActiveHint')}
             </p>
           )}
@@ -125,22 +125,22 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
         <div className="px-4 pb-4 border-t border-slate-200 dark:border-slate-600 space-y-4">
           <div className="flex flex-wrap gap-1.5 pt-2">
             {c.coach_years_experience != null && c.coach_years_experience > 0 ? (
-              <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-amber-50 dark:bg-amber-500/15 text-amber-950 dark:text-amber-50 border-amber-300 dark:border-amber-400/60">
+              <span className="text-xs px-2 py-0.5 rounded-full border font-medium bg-amber-50 dark:bg-amber-500/15 text-amber-950 dark:text-amber-50 border-amber-300 dark:border-amber-400/60">
                 {t('chat.yearsExp', { n: c.coach_years_experience })}
               </span>
             ) : null}
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-900 dark:text-violet-100 border border-violet-200 dark:border-violet-700">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-900 dark:text-violet-100 border border-violet-200 dark:border-violet-700">
               {c.coach_response_time_label || '—'}
             </span>
             {(c.coach_languages?.length ?? 0) > 0 ? (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600">
                 {c.coach_languages!.join(' · ')}
               </span>
             ) : null}
             {(c.coach_specialties ?? []).slice(0, 6).map((s, i) => (
               <span
                 key={`spec-${c.id}-${i}`}
-                className="text-[10px] px-2 py-0.5 rounded-full bg-violet-600/10 dark:bg-violet-400/15 text-violet-950 dark:text-violet-100 border border-violet-300 dark:border-violet-500/40"
+                className="text-xs px-2 py-0.5 rounded-full bg-violet-600/10 dark:bg-violet-400/15 text-violet-950 dark:text-violet-100 border border-violet-300 dark:border-violet-500/40"
               >
                 {s}
               </span>
@@ -150,7 +150,7 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
           <div className="space-y-3 text-sm text-slate-800 dark:text-slate-200">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-3 border border-slate-200 dark:border-slate-600">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {t('chat.responseTime')}
                 </p>
                 <p className="font-semibold mt-0.5">{c.coach_response_time_label || '—'}</p>
@@ -159,7 +159,7 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
                 ) : null}
               </div>
               <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-3 border border-slate-200 dark:border-slate-600">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {t('chat.experience')}
                 </p>
                 <p className="font-semibold mt-0.5">
@@ -169,7 +169,7 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
                 </p>
               </div>
               <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-3 border border-slate-200 dark:border-slate-600 sm:col-span-2">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {t('chat.languages')}
                 </p>
                 <p className="font-medium mt-0.5">
@@ -179,14 +179,14 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
             </div>
             {(c.coach_specialties?.length ?? 0) > 0 ? (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
                   {t('chat.specialties')}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {c.coach_specialties!.map((s, i) => (
                     <span
                       key={`spec-full-${c.id}-${i}`}
-                      className="text-[11px] px-2.5 py-1 rounded-lg bg-violet-600/10 dark:bg-violet-400/15 text-violet-950 dark:text-violet-100 border border-violet-300 dark:border-violet-500/40"
+                      className="text-sm px-2.5 py-1 rounded-lg bg-violet-600/10 dark:bg-violet-400/15 text-violet-950 dark:text-violet-100 border border-violet-300 dark:border-violet-500/40"
                     >
                       {s}
                     </span>
@@ -196,7 +196,7 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
             ) : null}
             {c.coach_reviews_label ? (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
                   {t('chat.reviews')}
                 </p>
                 <p className="text-sm">{c.coach_reviews_label}</p>
@@ -204,7 +204,7 @@ function CoachDirectoryCard({ coach: c }: { coach: Coach }) {
             ) : null}
             {c.coach_long_bio ? (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
                   {t('chat.longBioLabel')}
                 </p>
                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{c.coach_long_bio}</p>

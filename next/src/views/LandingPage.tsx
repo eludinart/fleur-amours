@@ -143,7 +143,7 @@ function CardFace({ card }: { card: ParsedCard }) {
 
         <div className="flex min-w-0 flex-col gap-2.5 text-center md:text-left">
           <div>
-            <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-amber-700/85 sm:text-xs">
+            <p className="font-sans text-[0.7rem] font-semibold uppercase tracking-wider text-amber-700/85 sm:text-xs">
               {t('landing.cardLabel')}
             </p>
             <h3 className="mt-1 break-words font-serif text-lg font-semibold leading-snug text-stone-900 sm:text-xl md:text-2xl lg:text-3xl">
@@ -467,7 +467,7 @@ export function LandingPage({
             <motion.span
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center rounded-full border border-rose-200/90 bg-white/70 px-5 py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 shadow-sm backdrop-blur-sm sm:px-6 sm:py-3 sm:text-sm"
+              className="inline-flex items-center rounded-full border border-rose-200/90 bg-white/70 px-5 py-2.5 font-sans text-xs font-semibold uppercase tracking-wider text-rose-600 shadow-sm backdrop-blur-sm sm:px-6 sm:py-3 sm:text-sm"
             >
               {t('landing.tagline')}
             </motion.span>
@@ -508,7 +508,7 @@ export function LandingPage({
                       rows={2}
                       className="w-full rounded-xl border border-amber-200/80 bg-white/90 px-4 py-3 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-none"
                     />
-                    <p className="text-[11px] text-stone-500 text-center sm:text-left">{t('landing.intentionHint')}</p>
+                    <p className="text-sm text-stone-500 text-center sm:text-left">{t('landing.intentionHint')}</p>
                   </div>
                 ) : null}
                 <CardFlipRitual

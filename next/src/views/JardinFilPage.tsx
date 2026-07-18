@@ -173,7 +173,7 @@ export default function JardinFilPage() {
                   ✨
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">
                     {t('pouls.title')}
                   </p>
                   <p className="text-sm font-semibold" style={{ color: dominant.color }}>
@@ -185,11 +185,11 @@ export default function JardinFilPage() {
 
             <section className="rounded-2xl border border-emerald-200 dark:border-emerald-800/50 bg-white dark:bg-slate-900 p-4 space-y-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">
                   {t('semis.title')}
                 </p>
                 {(pouls.semisToday ?? 0) > 0 && (
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-300">
+                  <span className="text-xs text-emerald-600 dark:text-emerald-300">
                     {t('semis.todayCount', { count: pouls.semisToday })}
                   </span>
                 )}
@@ -234,7 +234,7 @@ export default function JardinFilPage() {
                 <button
                   type="button"
                   onClick={() => setSemisFilter('')}
-                  className={`px-2 py-0.5 rounded-lg text-[10px] ${!semisFilter ? 'bg-slate-700 text-white' : 'text-slate-500'}`}
+                  className={`px-2 py-0.5 rounded-lg text-xs ${!semisFilter ? 'bg-slate-700 text-white' : 'text-slate-500'}`}
                 >
                   {t('semis.filterAll')}
                 </button>
@@ -243,7 +243,7 @@ export default function JardinFilPage() {
                     key={p.id}
                     type="button"
                     onClick={() => setSemisFilter(p.id)}
-                    className={`px-2 py-0.5 rounded-lg text-[10px] ${semisFilter === p.id ? 'text-white' : 'text-slate-500'}`}
+                    className={`px-2 py-0.5 rounded-lg text-xs ${semisFilter === p.id ? 'text-white' : 'text-slate-500'}`}
                     style={semisFilter === p.id ? { backgroundColor: p.color } : undefined}
                   >
                     {p.name}
@@ -263,7 +263,7 @@ export default function JardinFilPage() {
                         className="rounded-xl border border-slate-200 dark:border-slate-700 p-3"
                         style={def ? { borderColor: `${def.color}44` } : undefined}
                       >
-                        <p className="text-[10px] font-medium mb-1" style={{ color: def?.color }}>
+                        <p className="text-xs font-medium mb-1" style={{ color: def?.color }}>
                           {def?.name ?? s.petalId} · {t('semis.anonymous')} · {timeAgo(s.createdAt)}
                         </p>
                         <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{s.body}</p>
@@ -275,7 +275,7 @@ export default function JardinFilPage() {
             </section>
 
             <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-              <p className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">
+              <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">
                 {t('pouls.recentEclosions')}
               </p>
               {pouls.recentEclosions.length === 0 ? (
@@ -294,7 +294,7 @@ export default function JardinFilPage() {
                           <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
                             {e.pseudo}
                           </p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
                             🌼 fleur éclose · {timeAgo(e.createdAt)}
                           </p>
                         </div>
@@ -336,7 +336,7 @@ function PoulsCard({
     <div className={`rounded-2xl border p-3 ${tone}`}>
       <div className="text-2xl mb-0.5">{icon}</div>
       <div className="text-2xl font-bold leading-none">{value}</div>
-      <div className="text-[11px] mt-1 opacity-80 leading-snug">{label}</div>
+      <div className="text-sm mt-1 opacity-80 leading-snug">{label}</div>
     </div>
   )
 }

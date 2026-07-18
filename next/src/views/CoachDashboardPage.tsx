@@ -30,7 +30,7 @@ function StatCard({ label, value, sub, to, icon, color }: { label: string; value
         <div>
           <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{value ?? '—'}</p>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>
-          {sub && <p className="text-[10px] text-slate-400 mt-1">{sub}</p>}
+          {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
         </div>
         <span className="text-2xl opacity-70">{icon}</span>
       </div>
@@ -186,12 +186,12 @@ export default function CoachDashboardPage() {
                                   {c?.user_email ? String(c.user_email) : `Conversation #${c.id}`}
                                 </span>
                                 {unread > 0 ? (
-                                  <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white">
+                                  <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white">
                                     {unread} non lu{unread > 1 ? 's' : ''}
                                   </span>
                                 ) : null}
                               </div>
-                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                              <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                                 <span className="truncate">
                                   {assigned ? `Coach : ${coachLabel}` : 'À prendre en charge'}
                                 </span>

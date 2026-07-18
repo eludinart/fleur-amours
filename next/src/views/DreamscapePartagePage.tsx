@@ -160,7 +160,7 @@ export default function DreamscapePartagePage() {
       secondaryCta={{ href: paths.loginHref, label: t('share.landingLogin') }}
       variant="dark"
     >
-      <p className="mb-6 text-center text-[11px] text-slate-500 sm:text-left">
+      <p className="mb-6 text-center text-sm text-slate-500 sm:text-left">
         <span className="text-slate-500">{formatDate(item.savedAt)}</span>
         <span className="mx-2 text-slate-600">·</span>
         <Link href={paths.homeHref} className="text-violet-400 hover:text-violet-300">
@@ -185,7 +185,7 @@ export default function DreamscapePartagePage() {
         ) : null}
 
         <div className="space-y-4">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-200/90">{copy.kicker}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-violet-200/90">{copy.kicker}</p>
           <p className="text-2xl font-extrabold leading-tight text-slate-50 sm:text-3xl">{copy.hook}</p>
           <p className="text-base font-medium leading-snug text-slate-300/85">{copy.sub}</p>
 
@@ -197,7 +197,7 @@ export default function DreamscapePartagePage() {
 
           {closing?.path && closing.path.length > 0 ? (
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-amber-300/90">
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-amber-300/90">
                 {t('dreamscapeCanvas.pathLabel')}
               </p>
               <p className="text-sm text-white/90">{closing.path.join(' → ')}</p>
@@ -206,7 +206,7 @@ export default function DreamscapePartagePage() {
 
           {closing?.actions && closing.actions.length > 0 ? (
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-emerald-300/90">
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-300/90">
                 {t('dreamscapeCanvas.actionsLabel')}
               </p>
               <ul className="list-inside list-disc space-y-1 text-sm text-white/90">
@@ -219,7 +219,7 @@ export default function DreamscapePartagePage() {
 
           {!item.snapshot && item.slots && item.slots.length > 0 ? (
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-violet-300/90">
+              <p className="mb-3 text-sm font-bold uppercase tracking-wider text-violet-300/90">
                 {t('dreamscapeHistorique.snapshot')}
               </p>
               <div className="flex flex-wrap justify-center gap-3">
@@ -239,7 +239,7 @@ export default function DreamscapePartagePage() {
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <span className="text-[10px] text-white/60">{slot.position}</span>
+                      <span className="text-xs text-white/60">{slot.position}</span>
                     </div>
                   )
                 })}
@@ -249,7 +249,7 @@ export default function DreamscapePartagePage() {
 
           {item.petals && Object.keys(item.petals).some((k) => (item.petals![k] ?? 0) > 0) ? (
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-emerald-300/90">Fleur</p>
+              <p className="mb-3 text-sm font-bold uppercase tracking-wider text-emerald-300/90">Fleur</p>
               <div className="flex justify-center">
                 <FlowerSVG
                   petals={item.petals}

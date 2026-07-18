@@ -31,7 +31,7 @@ function ProgressBar({ answered, total }) {
   const pct = Math.round((answered / total) * 100)
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-xs text-slate-500">
+      <div className="flex justify-between text-sm text-slate-600 dark:text-slate-300">
         <span>{t('fleur.questionsCount', { answered, total })}</span>
         <span>{pct}%</span>
       </div>
@@ -141,7 +141,7 @@ function ResultView({ result, answers: answersProp, onReset }) {
           {ITEMS.map(({ key, labelKey, color }) => (
             <div key={key} className="text-center">
               <div className={`text-2xl font-bold ${color}`}>{Math.round((composite[key] ?? 0) * 100)}%</div>
-              <div className="text-xs text-slate-500">{t(`fleur.${labelKey}`)}</div>
+              <div className="text-sm text-slate-600 dark:text-slate-300">{t(`fleur.${labelKey}`)}</div>
             </div>
           ))}
         </div>
@@ -149,7 +149,7 @@ function ResultView({ result, answers: answersProp, onReset }) {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {Object.entries(scores).map(([p, v]) => (
-          <div key={p} className={`rounded-xl border px-2 py-2 text-center text-xs ${ZONE_COLOR[analysis?.zones?.[p] ?? 'neutre']}`}>
+          <div key={p} className={`rounded-xl border px-2 py-2 text-center text-sm ${ZONE_COLOR[analysis?.zones?.[p] ?? 'neutre']}`}>
             <div className="text-lg font-bold">{v}</div>
             <div>{PETAL_LABELS[p]}</div>
           </div>
@@ -164,9 +164,9 @@ function ResultView({ result, answers: answersProp, onReset }) {
 
       {result.token && (
         <div className="rounded-xl bg-slate-50 dark:bg-slate-800 p-4 space-y-1">
-          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">{t('fleur.tokenLabel')}</p>
-          <code className="text-xs font-mono text-accent break-all">{result.token}</code>
-          <p className="text-xs text-slate-400">{t('fleur.tokenDesc')}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wide">{t('fleur.tokenLabel')}</p>
+          <code className="text-sm font-mono text-accent break-all">{result.token}</code>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('fleur.tokenDesc')}</p>
         </div>
       )}
 
@@ -389,7 +389,7 @@ export default function FleurPage() {
         <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 space-y-2"
           style={{ animation: 'fadeIn 0.5s ease' }}>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('fleur.feelingsLabel')}</p>
-          <p className="text-xs text-slate-400">{t('fleur.feelingsHint')}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('fleur.feelingsHint')}</p>
           <VoiceTextInput
             value={comment}
             onChange={setComment}

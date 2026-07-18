@@ -142,13 +142,13 @@ export function SapWallet({
 
           {showPackButtons ? (
             <>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Packs</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">Packs</p>
               <div className="flex flex-wrap gap-2">
                 {packs.length === 0 ? (
                   <p className="text-xs text-slate-500">
-                    Définissez <code className="text-[10px]">STRIPE_PRICE_SAP_10</code>,{' '}
-                    <code className="text-[10px]">STRIPE_PRICE_SAP_50</code>,{' '}
-                    <code className="text-[10px]">STRIPE_PRICE_SAP_100</code> pour activer les achats.
+                    Définissez <code className="text-xs">STRIPE_PRICE_SAP_10</code>,{' '}
+                    <code className="text-xs">STRIPE_PRICE_SAP_50</code>,{' '}
+                    <code className="text-xs">STRIPE_PRICE_SAP_100</code> pour activer les achats.
                   </p>
                 ) : (
                   packs.map((p) => (

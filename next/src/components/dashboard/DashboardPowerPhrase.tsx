@@ -88,8 +88,8 @@ export function DashboardPowerPhrase({
 
   const labelCls =
     variant === 'zen'
-      ? 'text-[10px] uppercase tracking-[0.22em] text-teal-300/75 mb-2'
-      : 'text-[10px] uppercase tracking-[0.2em] text-violet-600/80 dark:text-violet-300/80 mb-2'
+      ? 'text-xs uppercase tracking-[0.22em] text-teal-300/75 mb-2'
+      : 'text-xs uppercase tracking-wider text-violet-600/80 dark:text-violet-300/80 mb-2'
 
   const bodyCls =
     variant === 'zen'
@@ -120,7 +120,7 @@ export function DashboardPowerPhrase({
             {titleLabel}
           </p>
           {hintLabel ? (
-            <p className="text-[10px] text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left">
+            <p className="text-xs text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left">
               {hintLabel}
             </p>
           ) : null}
@@ -139,7 +139,7 @@ export function DashboardPowerPhrase({
         {titleLabel}
       </p>
       {hintLabel ? (
-        <p className="text-[10px] text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left">
+        <p className="text-xs text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left">
           {hintLabel}
         </p>
       ) : null}

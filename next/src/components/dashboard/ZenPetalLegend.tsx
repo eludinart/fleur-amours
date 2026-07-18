@@ -13,7 +13,7 @@ function petalLabel(id: string): string {
 export function ZenPetalLegend({ petals }: { petals: Record<string, number> }) {
   return (
     <div className="w-full rounded-xl border border-white/[0.08] bg-slate-950/40 px-3 py-3">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 mb-2.5 text-center">
+      <p className="text-xs uppercase tracking-wide text-white/70 mb-2.5 text-center">
         {t('fleurZen.petalLegendTitle')}
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2">

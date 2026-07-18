@@ -117,7 +117,7 @@ export default function ContactPage() {
           className="mb-8 rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50/80 dark:bg-violet-950/30 p-4"
           aria-label={t('contact.openChatsAriaLabel')}
         >
-          <p className="text-[10px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-300">
+          <p className="text-xs font-bold uppercase tracking-wide text-violet-600 dark:text-violet-300">
             {t('contact.openChatsEyebrow')}
           </p>
           <p className="font-semibold text-violet-900 dark:text-violet-100 mt-1">

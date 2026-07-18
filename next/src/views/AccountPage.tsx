@@ -204,7 +204,7 @@ function RichTextToolbar({
 }: {
   onInsert: (template: string) => void
 }) {
-  const btn = 'text-[11px] px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600 bg-white/70 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200'
+  const btn = 'text-sm px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600 bg-white/70 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200'
   return (
     <div className="flex flex-wrap gap-1.5 mb-1.5">
       <button type="button" onClick={() => onInsert('**texte en gras**')} className={btn}><strong>B</strong></button>
@@ -869,11 +869,11 @@ export function AccountPage() {
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
                     {t('account.photo')}
                   </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t('account.photoHint')}
                   </p>
                   {!(profileForm.avatar || profile?.avatar) && (
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                       {t('account.avatarEmojiHint')}
                     </p>
                   )}
@@ -881,7 +881,7 @@ export function AccountPage() {
               </div>
               {!(profileForm.avatar || profile?.avatar) && (
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 w-full">
+                  <span className="text-sm text-slate-500 dark:text-slate-400 w-full">
                     {t('account.selectFlowerEmoji')}
                   </span>
                   {FLOWER_EMOJIS.map((emoji) => (
@@ -916,7 +916,7 @@ export function AccountPage() {
                 placeholder={(user as { email?: string })?.email?.split('@')[0] || ''}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
               />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 {t('account.displayNameHint')}
               </p>
             </div>
@@ -936,7 +936,7 @@ export function AccountPage() {
                 placeholder={t('account.pseudoPlaceholder')}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-400/40"
               />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 {t('account.pseudoHint')}
               </p>
             </div>
@@ -957,7 +957,7 @@ export function AccountPage() {
                 }
                 className="w-full max-w-xs px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
               />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 {profileForm.birth_date && displayedAge != null
                   ? t('account.ageDisplayHint', { age: displayedAge })
                   : !profileForm.birth_date && displayedAge != null
@@ -982,7 +982,7 @@ export function AccountPage() {
                   </option>
                 ))}
               </select>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 {t('account.jardinIntentionHint')}
               </p>
             </div>
@@ -1002,7 +1002,7 @@ export function AccountPage() {
                 rows={5}
                 className="w-full min-h-[130px] px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-[15px] leading-relaxed focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-y"
               />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 {profileForm.bio.length}/500 — {t('account.bioHint')}
               </p>
             </div>
@@ -1029,7 +1029,7 @@ export function AccountPage() {
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   {t('account.profilePublic')}
                 </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   {t('account.profilePublicHint')}
                 </p>
               </div>
@@ -1082,7 +1082,7 @@ export function AccountPage() {
                 <h3 className="text-sm font-semibold text-violet-800 dark:text-violet-200">
                   Fiche coach (visible aux utilisateurs)
                 </h3>
-                <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
                   Ces informations sont utilisees pour aider les utilisateurs a choisir leur coach dans la section Accompagnement.
                 </p>
 
@@ -1097,7 +1097,7 @@ export function AccountPage() {
                     placeholder="Ex: Accompagnement relationnel et transitions de vie"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/40"
                   />
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     Conseil: explicitez votre promesse en 1 phrase (public + resultat).
                   </p>
                 </div>
@@ -1114,7 +1114,7 @@ export function AccountPage() {
                         coach_short_bio:
                           "J'aide les personnes et les duos a clarifier leurs blocages relationnels, retrouver une communication apaisée et poser des actions concretes en quelques echanges progressifs.",
                       }))}
-                      className="text-[11px] px-2 py-1 rounded-md border border-violet-300/60 dark:border-violet-700/60 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30"
+                      className="text-sm px-2 py-1 rounded-md border border-violet-300/60 dark:border-violet-700/60 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30"
                     >
                       Inserer un exemple
                     </button>
@@ -1138,7 +1138,7 @@ export function AccountPage() {
                     placeholder="2-3 phrases pour expliquer votre accompagnement."
                     className="w-full min-h-[180px] max-h-[520px] px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[15px] leading-relaxed focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-y"
                   />
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     {profileForm.coach_short_bio.length}/280 — Formatage simple: gras, italique, listes. Coin bas-droit pour agrandir la zone.
                   </p>
                 </div>
@@ -1155,7 +1155,7 @@ export function AccountPage() {
                         coach_long_bio:
                           "Approche:\n- Ecoute active et sans jugement\n- Clarification des besoins et limites\n\nMethode:\n- Diagnostic en messages\n- Plan d'action progressif sur 2 a 4 semaines\n\nCe que vous obtenez:\n- Plus de clarte emotionnelle\n- Des mots concrets pour communiquer\n- Une trajectoire relationnelle plus stable",
                       }))}
-                      className="text-[11px] px-2 py-1 rounded-md border border-violet-300/60 dark:border-violet-700/60 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30"
+                      className="text-sm px-2 py-1 rounded-md border border-violet-300/60 dark:border-violet-700/60 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30"
                     >
                       Inserer une structure type
                     </button>
@@ -1179,20 +1179,20 @@ export function AccountPage() {
                     placeholder="Votre posture, methode, ce qui vous differencie."
                     className="w-full min-h-[320px] px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[15px] leading-relaxed focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-y max-h-[min(70vh,900px)]"
                   />
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     {profileForm.coach_long_bio.length}/2500 — Astuce: structurez par sections (approche, methode, benefices). Coin bas-droit pour agrandir la zone.
                   </p>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-3">
-                    <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Apercu presentation courte</p>
-                    <p className="text-[12px] whitespace-pre-wrap text-slate-700 dark:text-slate-200 min-h-[56px]">
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">Apercu presentation courte</p>
+                    <p className="text-sm whitespace-pre-wrap text-slate-700 dark:text-slate-200 min-h-[56px]">
                       {profileForm.coach_short_bio || 'Votre texte apparaitra ici.'}
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-3">
-                    <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Qualite de la fiche</p>
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">Qualite de la fiche</p>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="h-2 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
@@ -1200,9 +1200,9 @@ export function AccountPage() {
                           style={{ width: `${Math.round((coachScore / 6) * 100)}%` }}
                         />
                       </div>
-                      <span className="text-[11px] text-slate-600 dark:text-slate-300">{coachScore}/6</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">{coachScore}/6</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       Visez 5/6 minimum pour une fiche convaincante.
                     </p>
                   </div>
@@ -1309,7 +1309,7 @@ export function AccountPage() {
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         Coach verifie par l&apos;equipe
                       </span>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
                         Badge de confiance affiche cote utilisateur.
                       </p>
                     </div>
@@ -1327,7 +1327,7 @@ export function AccountPage() {
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       Afficher ce profil dans le choix du coach
                     </span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       Si desactive, vous restez coach mais vous n'apparaissez plus dans la liste de selection utilisateur.
                     </p>
                   </div>
@@ -1339,7 +1339,7 @@ export function AccountPage() {
                 <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">
                   Profil admin
                 </h3>
-                <p className="text-[12px] text-slate-700 dark:text-slate-200">
+                <p className="text-sm text-slate-700 dark:text-slate-200">
                   En tant qu&apos;administrateur, vous gérez la plateforme. Activez le rôle coach uniquement si vous accompagnez aussi des personnes dans l&apos;annuaire.
                 </p>
 
@@ -1354,7 +1354,7 @@ export function AccountPage() {
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       Je suis aussi coach (accompagnant)
                     </span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       Si activé, votre fiche peut apparaître dans l&apos;annuaire des coachs. Utilisez l&apos;onglet <strong>Profil coach</strong> pour la compléter.
                     </p>
                   </div>
@@ -1497,24 +1497,24 @@ export function AccountPage() {
 
               <div className="grid grid-cols-2 gap-3 min-w-0">
                 <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 min-w-0 overflow-hidden">
-                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
                     {t('account.sapBadge')}
                   </p>
                   <p className="text-xl font-bold text-amber-600 dark:text-amber-400">
                     {access?.token_balance ?? 0}
                   </p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {t('account.sapSaison')}
                   </p>
                 </div>
                 <div className="rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 p-3 min-w-0 overflow-hidden">
-                  <p className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">
                     {t('account.cristalLabel')}
                   </p>
                   <p className="text-xl font-bold text-violet-600 dark:text-violet-400">
                     {access?.eternal_sap ?? 0}
                   </p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {t('account.sapEternelle')}
                   </p>
                 </div>
@@ -1573,7 +1573,7 @@ export function AccountPage() {
                   <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
                     {access?.credits}
                   </p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {t('account.creditsAvailable')}
                   </p>
                 </div>
@@ -1768,7 +1768,7 @@ export function AccountPage() {
                 {t('account.experimentalFleurBetaDesc')}
               </p>
               {experimentalFeaturesEnabled && (
-                <p className="text-[11px] text-violet-600 dark:text-violet-400 mt-1.5">
+                <p className="text-sm text-violet-600 dark:text-violet-400 mt-1.5">
                   {t('account.experimentalEnabledHint')}
                 </p>
               )}

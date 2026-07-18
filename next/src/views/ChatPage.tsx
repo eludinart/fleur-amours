@@ -782,7 +782,7 @@ export function ChatPage() {
                         💬
                       </span>
                       <div className="min-w-0 flex-1 space-y-1">
-                        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
+                        <p className="text-xs font-extrabold uppercase tracking-wide text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
                           <span className="relative flex h-2.5 w-2.5">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-45" />
                             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
@@ -829,16 +829,16 @@ export function ChatPage() {
                                 <span className="block text-sm font-bold truncate">
                                   {t('chat.conversationHistoryItemLabel', { n: row.id })}
                                 </span>
-                                <span className="block text-[11px] font-semibold text-emerald-800/85 dark:text-emerald-200/90 truncate mt-0.5">
+                                <span className="block text-sm font-semibold text-emerald-800/85 dark:text-emerald-200/90 truncate mt-0.5">
                                   {coachLabel}
                                   {preview ? ` · ${previewPrefix}${preview}` : ''}
                                 </span>
                               </span>
                               <span className="flex flex-wrap items-center gap-2 shrink-0">
-                                <span className="text-[11px] font-semibold text-emerald-800/85 dark:text-emerald-200/90">
+                                <span className="text-sm font-semibold text-emerald-800/85 dark:text-emerald-200/90">
                                   {labelTime}
                                 </span>
-                                <span className="text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full bg-emerald-600 text-white">
+                                <span className="text-xs font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full bg-emerald-600 text-white">
                                   {t('chat.pickerResumeConversation')}
                                 </span>
                               </span>
@@ -896,11 +896,11 @@ export function ChatPage() {
                                 <span className="font-semibold truncate">
                                   {t('chat.conversationHistoryItemLabel', { n: row.id })}
                                 </span>
-                                <span className="shrink-0 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200">
+                                <span className="shrink-0 text-xs font-bold uppercase px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200">
                                   {t('chat.closedConversationBadge')}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{labelTime}</p>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{labelTime}</p>
                             </button>
                           </li>
                         )
@@ -996,12 +996,12 @@ export function ChatPage() {
                             {title}
                           </span>
                           {c.coach_verified ? (
-                            <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-sm ring-1 ring-white/80 shrink-0">
+                            <span className="inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-sm ring-1 ring-white/80 shrink-0">
                               Vérifié
                             </span>
                           ) : null}
                           <span
-                            className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0 ${
+                            className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0 ${
                               c.is_online
                                 ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border border-emerald-500/40'
                                 : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600'
@@ -1014,11 +1014,11 @@ export function ChatPage() {
                           <p className="text-xs text-slate-600 dark:text-slate-300 truncate">{c.name}</p>
                         ) : null}
                         {!c.is_online ? (
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
                             {formatCoachLastSeenLabel(c.last_seen_at ?? null, t)}
                           </p>
                         ) : (
-                          <p className="text-[11px] text-emerald-700 dark:text-emerald-200 font-medium">
+                          <p className="text-sm text-emerald-700 dark:text-emerald-200 font-medium">
                             {t('chat.presenceActiveHint')}
                           </p>
                         )}
@@ -1034,28 +1034,28 @@ export function ChatPage() {
                         ) : null}
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           {c.coach_years_experience != null && c.coach_years_experience > 0 ? (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-amber-50 dark:bg-amber-500/15 text-amber-950 dark:text-amber-50 border-amber-300 dark:border-amber-400/60">
+                            <span className="text-xs px-2 py-0.5 rounded-full border font-medium bg-amber-50 dark:bg-amber-500/15 text-amber-950 dark:text-amber-50 border-amber-300 dark:border-amber-400/60">
                               {t('chat.yearsExp', { n: c.coach_years_experience })}
                             </span>
                           ) : null}
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-900 dark:text-violet-100 border border-violet-200 dark:border-violet-700">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-900 dark:text-violet-100 border border-violet-200 dark:border-violet-700">
                             {c.coach_response_time_label || '—'}
                           </span>
                           {(c.coach_languages?.length ?? 0) > 0 ? (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600">
                               {c.coach_languages!.join(' · ')}
                             </span>
                           ) : null}
                           {(c.coach_specialties ?? []).slice(0, 4).map((s, i) => (
                             <span
                               key={`spec-${c.id}-${i}`}
-                              className="text-[10px] px-2 py-0.5 rounded-full bg-violet-600/10 dark:bg-violet-400/15 text-violet-950 dark:text-violet-100 border border-violet-300 dark:border-violet-500/40"
+                              className="text-xs px-2 py-0.5 rounded-full bg-violet-600/10 dark:bg-violet-400/15 text-violet-950 dark:text-violet-100 border border-violet-300 dark:border-violet-500/40"
                             >
                               {s}
                             </span>
                           ))}
                           {(c.coach_specialties?.length ?? 0) > 4 ? (
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
                               +{(c.coach_specialties!.length ?? 0) - 4}
                             </span>
                           ) : null}
@@ -1076,7 +1076,7 @@ export function ChatPage() {
                     <div className="pt-2 pb-1 space-y-3 text-sm text-slate-800 dark:text-slate-200">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-3 border border-slate-200 dark:border-slate-600">
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             {t('chat.responseTime')}
                           </p>
                           <p className="font-semibold mt-0.5">{c.coach_response_time_label || '—'}</p>
@@ -1087,7 +1087,7 @@ export function ChatPage() {
                           ) : null}
                         </div>
                         <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-3 border border-slate-200 dark:border-slate-600">
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             {t('chat.experience')}
                           </p>
                           <p className="font-semibold mt-0.5">
@@ -1097,7 +1097,7 @@ export function ChatPage() {
                           </p>
                         </div>
                         <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-3 border border-slate-200 dark:border-slate-600 sm:col-span-2">
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             {t('chat.languages')}
                           </p>
                           <p className="font-medium mt-0.5">
@@ -1107,14 +1107,14 @@ export function ChatPage() {
                       </div>
                       {(c.coach_specialties?.length ?? 0) > 0 ? (
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
+                          <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
                             {t('chat.specialties')}
                           </p>
                           <div className="flex flex-wrap gap-1.5">
                             {c.coach_specialties!.map((s, i) => (
                               <span
                                 key={`spec-full-${c.id}-${i}`}
-                                className="text-[11px] px-2.5 py-1 rounded-lg bg-violet-600/10 dark:bg-violet-400/15 text-violet-950 dark:text-violet-100 border border-violet-300 dark:border-violet-500/40"
+                                className="text-sm px-2.5 py-1 rounded-lg bg-violet-600/10 dark:bg-violet-400/15 text-violet-950 dark:text-violet-100 border border-violet-300 dark:border-violet-500/40"
                               >
                                 {s}
                               </span>
@@ -1124,7 +1124,7 @@ export function ChatPage() {
                       ) : null}
                       {c.coach_reviews_label ? (
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                          <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
                             {t('chat.reviews')}
                           </p>
                           <p className="text-sm">{c.coach_reviews_label}</p>
@@ -1132,7 +1132,7 @@ export function ChatPage() {
                       ) : null}
                       {c.coach_long_bio ? (
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                          <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
                             {t('chat.longBioLabel')}
                           </p>
                           <p className="text-sm whitespace-pre-wrap leading-relaxed">{c.coach_long_bio}</p>
@@ -1250,7 +1250,7 @@ export function ChatPage() {
           </p>
           {!isClosed && (
             <details className="mt-2 group w-full max-w-xl">
-              <summary className="text-[12px] text-violet-700 dark:text-violet-300 cursor-pointer list-none inline-flex items-center gap-1 font-medium hover:text-violet-800 dark:hover:text-violet-200">
+              <summary className="text-sm text-violet-700 dark:text-violet-300 cursor-pointer list-none inline-flex items-center gap-1 font-medium hover:text-violet-800 dark:hover:text-violet-200">
                 {activeCoach ? 'En savoir plus sur ce profil' : "Comment fonctionne l'accompagnement ?"}
                 <span className="transition-transform group-open:rotate-180">▾</span>
               </summary>
@@ -1262,7 +1262,7 @@ export function ChatPage() {
                   </p>
                 </div>
               ) : (
-              <div className="mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white text-[12px] leading-relaxed shadow-lg ring-1 ring-slate-200/80 dark:border-slate-600 dark:bg-slate-800 dark:ring-slate-600/50 dark:text-slate-100 dark:shadow-slate-950/40">
+              <div className="mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white text-sm leading-relaxed shadow-lg ring-1 ring-slate-200/80 dark:border-slate-600 dark:bg-slate-800 dark:ring-slate-600/50 dark:text-slate-100 dark:shadow-slate-950/40">
                 <div className="h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-rose-500" aria-hidden />
                 <div className="px-4 py-4 space-y-4 text-slate-800 dark:text-slate-100">
                 <div className="flex items-start gap-3 pb-4 border-b border-slate-200 dark:border-slate-600">
@@ -1285,13 +1285,13 @@ export function ChatPage() {
                         {headerMainTitle}
                       </p>
                       {activeCoach?.coach_verified && (
-                        <span className="inline-flex items-center shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-600 text-white shadow-md ring-2 ring-white/90">
+                        <span className="inline-flex items-center shrink-0 text-sm font-bold px-2.5 py-1 rounded-full bg-emerald-600 text-white shadow-md ring-2 ring-white/90">
                           Vérifié
                         </span>
                       )}
                     </div>
                     {coachPseudoHandle(activeCoach) && coachProfileDisplayName(activeCoach) && (
-                      <p className="text-slate-700 dark:text-slate-200 text-[11px] mt-0.5">
+                      <p className="text-slate-700 dark:text-slate-200 text-sm mt-0.5">
                         Nom affiché :{' '}
                         <span className="text-slate-950 dark:!text-white font-semibold">{coachProfileDisplayName(activeCoach)}</span>
                       </p>
@@ -1303,12 +1303,12 @@ export function ChatPage() {
                     )}
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {activeCoach?.coach_years_experience != null && activeCoach.coach_years_experience > 0 && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-amber-50 dark:bg-amber-500/15 text-amber-950 dark:text-amber-50 border-amber-300 dark:border-amber-400/60">
+                        <span className="text-xs px-2 py-0.5 rounded-full border font-medium bg-amber-50 dark:bg-amber-500/15 text-amber-950 dark:text-amber-50 border-amber-300 dark:border-amber-400/60">
                           {activeCoach.coach_years_experience}+ ans d&apos;experience
                         </span>
                       )}
                       {activeCoach?.coach_reviews_label && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-violet-50 dark:bg-violet-500/15 text-violet-950 dark:text-violet-50 border-violet-300 dark:border-violet-400/50">
+                        <span className="text-xs px-2 py-0.5 rounded-full border font-medium bg-violet-50 dark:bg-violet-500/15 text-violet-950 dark:text-violet-50 border-violet-300 dark:border-violet-400/50">
                           {activeCoach.coach_reviews_label}
                         </span>
                       )}
@@ -1318,13 +1318,13 @@ export function ChatPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div className="rounded-xl bg-slate-100 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-600 px-3 py-2">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Délai</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Délai</p>
                     <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-50 mt-0.5">
                       {activeCoach?.coach_response_time_label || 'Sous 24 h'}
                     </p>
                   </div>
                   <div className="rounded-xl bg-slate-100 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-600 px-3 py-2">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Langues</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Langues</p>
                     <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-50 mt-0.5">
                       {(activeCoach?.coach_languages?.length ?? 0) > 0
                         ? activeCoach?.coach_languages?.join(', ')
@@ -1332,7 +1332,7 @@ export function ChatPage() {
                     </p>
                   </div>
                   <div className="rounded-xl bg-slate-100 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-600 px-3 py-2">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Expérience</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Expérience</p>
                     <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-50 mt-0.5">
                       {activeCoach?.coach_years_experience != null && activeCoach.coach_years_experience > 0
                         ? `${activeCoach.coach_years_experience} ans+`
@@ -1342,7 +1342,7 @@ export function ChatPage() {
                 </div>
 
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
                     À propos
                   </p>
                   <p className="whitespace-pre-wrap text-slate-900 dark:text-slate-100 text-[13px] leading-relaxed">
@@ -1352,7 +1352,7 @@ export function ChatPage() {
                 </div>
 
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
                     Spécialités
                   </p>
                   {(activeCoach?.coach_specialties?.length ?? 0) > 0 ? (
@@ -1360,24 +1360,24 @@ export function ChatPage() {
                       {activeCoach?.coach_specialties?.slice(0, 10).map((s, i) => (
                         <span
                           key={`coach-chip-${i}`}
-                          className="px-2.5 py-1 rounded-lg bg-violet-600/10 dark:bg-violet-400/15 border border-violet-300 dark:border-violet-500/40 text-[11px] font-medium text-violet-950 dark:text-violet-100"
+                          className="px-2.5 py-1 rounded-lg bg-violet-600/10 dark:bg-violet-400/15 border border-violet-300 dark:border-violet-500/40 text-sm font-medium text-violet-950 dark:text-violet-100"
                         >
                           {s}
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[12px] text-slate-600 dark:text-slate-400 italic">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 italic">
                       Pas encore renseigné — complétez la section Spécialités dans Mon compte, onglet Profil coach.
                     </p>
                   )}
                 </div>
 
                 <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-600 px-3 py-2.5 space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     Cadre & confidentialité
                   </p>
-                  <p className="text-[11px] text-slate-800 dark:text-slate-200 leading-snug">
+                  <p className="text-sm text-slate-800 dark:text-slate-200 leading-snug">
                     Echanges confidentiels. Accompagnement{' '}
                     <strong className="text-slate-950 dark:text-white">non médical</strong> et{' '}
                     <strong className="text-slate-950 dark:text-white">non juridique</strong>.
@@ -1386,7 +1386,7 @@ export function ChatPage() {
 
                 {activeCoach?.coach_long_bio && (
                   <details className="group/sub border-t border-slate-200 dark:border-slate-600 pt-3">
-                    <summary className="cursor-pointer list-none inline-flex items-center gap-1 text-violet-700 dark:text-violet-300 font-semibold text-[12px]">
+                    <summary className="cursor-pointer list-none inline-flex items-center gap-1 text-violet-700 dark:text-violet-300 font-semibold text-sm">
                       Voir le profil complet
                       <span className="transition-transform group-open/sub:rotate-180">▾</span>
                     </summary>
@@ -1431,7 +1431,7 @@ export function ChatPage() {
                 className="flex items-center gap-3 py-2"
               >
                 <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" />
-                <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium uppercase tracking-wider">
+                <span className="text-sm text-slate-600 dark:text-slate-300 font-medium uppercase tracking-wider">
                   {item.date}
                 </span>
                 <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" />
@@ -1447,7 +1447,7 @@ export function ChatPage() {
               className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[90%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-sm shadow-sm ${
+                className={`max-w-[90%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-base leading-relaxed shadow-sm ${
                   isUser
                     ? 'bg-violet-600 text-white rounded-br-md'
                     : staffBubble
@@ -1455,7 +1455,7 @@ export function ChatPage() {
               >
                 <p className={`whitespace-pre-wrap ${isUser ? 'text-white' : ''}`}>{item.content}</p>
                 <p
-                  className={`text-[10px] mt-1 ${
+                  className={`text-xs mt-1 ${
                     isUser ? 'text-violet-200' : patientStaffFooterClass(staffKind)
                   }`}
                 >

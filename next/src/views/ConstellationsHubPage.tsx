@@ -118,7 +118,7 @@ export default function ConstellationsHubPage() {
         </section>
 
         <section className="rounded-2xl border border-slate-600/40 bg-slate-950/50 p-4">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">{t('constellations.mine')}</p>
+          <p className="text-xs uppercase tracking-wider text-slate-500 mb-3">{t('constellations.mine')}</p>
           {loading ? (
             <p className="text-sm text-slate-500 animate-pulse">{t('common.loading')}</p>
           ) : items.length === 0 ? (
@@ -135,7 +135,7 @@ export default function ConstellationsHubPage() {
                       <p className="text-sm font-medium text-slate-200">
                         {c.title || t('constellations.untitled')}
                       </p>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-sm text-slate-500">
                         {c.memberCount}/{c.maxMembers} · {t('constellations.expires')} {new Date(c.expiresAt).toLocaleDateString()}
                       </p>
                     </div>

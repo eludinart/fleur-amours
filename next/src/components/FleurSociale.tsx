@@ -130,7 +130,7 @@ export function FleurSociale({
         />
       )}
       {isMe && (
-        <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-500/90 dark:bg-amber-500/80 text-amber-950 text-[10px] font-bold whitespace-nowrap shadow-lg">
+        <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-500/90 dark:bg-amber-500/80 text-amber-950 text-xs font-bold whitespace-nowrap shadow-lg">
           {t('prairie.you')}
         </div>
       )}
@@ -238,13 +238,13 @@ export function FleurSociale({
         </span>
       )}
       {showPseudo && pseudo && (
-        <span className="mt-0.5 max-w-28 truncate text-[10px] leading-tight font-medium inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-950/40 dark:bg-slate-950/55 border border-white/10 text-slate-50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]" title={pseudo}>
+        <span className="mt-0.5 max-w-28 truncate text-xs leading-tight font-medium inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-950/40 dark:bg-slate-950/55 border border-white/10 text-slate-50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]" title={pseudo}>
           <span className={`inline-block w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-slate-400'}`} />
           {pseudo}
         </span>
       )}
       {social && ((social.rosee_received_today ?? 0) > 0 || (social.pollen_received_today ?? 0) > 0) && (
-        <span className="mt-0.5 text-[10px] leading-tight text-cyan-100 dark:text-cyan-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+        <span className="mt-0.5 text-xs leading-tight text-cyan-100 dark:text-cyan-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
           {(social.rosee_received_today ?? 0) > 0 ? `💧${social.rosee_received_today}` : ''}{' '}
           {(social.pollen_received_today ?? 0) > 0 ? `🌸${social.pollen_received_today}` : ''}
         </span>

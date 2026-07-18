@@ -710,7 +710,7 @@ function SimpleDraw({
               placeholder={t('tarot.intentionPlaceholder')}
               rows={3}
             />
-            <p className="text-[10px] text-slate-400 italic">
+            <p className="text-xs text-slate-400 italic">
               {petalFlow ? t('tarot.petalFlowIntentionHelper') : t('tarot.intentionOptional')}
             </p>
           </div>
@@ -727,7 +727,7 @@ function SimpleDraw({
             </button>
             {petalFlow && autoSecLeft != null && autoSecLeft > 0 && !userCancelledAuto && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 text-center sm:text-left flex-1 min-w-0">
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-snug">
                   {t('tarot.petalAutoDrawIn').replace('{n}', String(autoSecLeft))}
                 </p>
                 <button
@@ -736,7 +736,7 @@ function SimpleDraw({
                     setUserCancelledAuto(true)
                     setAutoSecLeft(null)
                   }}
-                  className="text-[11px] font-medium text-teal-600 dark:text-teal-400 hover:underline shrink-0"
+                  className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:underline shrink-0"
                 >
                   {t('tarot.petalAutoDrawCancel')}
                 </button>
@@ -744,7 +744,7 @@ function SimpleDraw({
             )}
           </div>
           {petalFlow && (
-            <p className="text-[10px] text-center text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-center text-slate-500 dark:text-slate-400">
               {t('tarot.clickCardToDrawHint')}
             </p>
           )}
@@ -756,7 +756,7 @@ function SimpleDraw({
           className="rounded-xl border border-violet-200/80 dark:border-violet-800/60 bg-violet-50/50 dark:bg-violet-950/25 px-4 py-3 relative z-[1]"
           aria-readonly="true"
         >
-          <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1">
+          <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1">
             {t('tarot.intentionLabel')}
           </p>
           <p className="text-sm text-slate-700 dark:text-slate-200 italic whitespace-pre-wrap">
@@ -810,7 +810,7 @@ function SimpleDraw({
             className="flex flex-col items-center gap-2 pt-2"
             style={{ animation: 'content-rise 0.65s cubic-bezier(.23,1.12,.32,1)' }}
           >
-            <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest text-center">
+            <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest text-center">
               {t('tarot.flowerAfterDraw')}
             </p>
             <FlowerSVG
@@ -1093,7 +1093,7 @@ function FourDoorsDraw({
             placeholder={t('tarot.intentionPlaceholder')}
             rows={2}
           />
-          <p className="text-[10px] text-slate-400 italic">
+          <p className="text-xs text-slate-400 italic">
             {t('tarot.intentionOptional')}
           </p>
         </div>
@@ -1104,7 +1104,7 @@ function FourDoorsDraw({
           className="rounded-xl border border-violet-200/80 dark:border-violet-800/60 bg-violet-50/50 dark:bg-violet-950/25 px-4 py-3"
           aria-readonly="true"
         >
-          <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1">
+          <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1">
             {t('tarot.intentionLabel')}
           </p>
           <p className="text-sm text-slate-700 dark:text-slate-200 italic whitespace-pre-wrap">
@@ -1151,7 +1151,7 @@ function FourDoorsDraw({
                   {doorT.subtitle}
                 </p>
                 <p
-                  className={`text-[10px] ${isRevealed ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}
+                  className={`text-xs ${isRevealed ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}
                 >
                   {doorT.title}
                 </p>
@@ -1197,7 +1197,7 @@ function FourDoorsDraw({
           className="flex flex-col items-center gap-2 py-2"
           style={{ animation: 'content-rise 0.65s cubic-bezier(.23,1.12,.32,1)' }}
         >
-          <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest text-center">
+          <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest text-center">
             {t('tarot.flowerAfterDraw')}
           </p>
           <FlowerSVG
@@ -1646,7 +1646,7 @@ function ReadingsList({
               </div>
               {detail.intention && (
                 <div className="rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 p-3 mb-3">
-                  <p className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1">
+                  <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-1">
                     {t('tarot.intentionLabel')}
                   </p>
                   <p className="text-sm text-slate-700 dark:text-slate-200 italic">

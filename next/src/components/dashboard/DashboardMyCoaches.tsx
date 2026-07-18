@@ -69,7 +69,7 @@ export function DashboardMyCoaches() {
               {(c.intentionIds ?? []).map((id) => (
                 <span
                   key={id}
-                  className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
+                  className="text-xs px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
                 >
                   {intentionLabel.get(id) ?? id}
                 </span>

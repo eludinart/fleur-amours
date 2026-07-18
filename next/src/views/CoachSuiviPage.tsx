@@ -105,10 +105,10 @@ function CoachPatientNoteEditor({
 
   return (
     <div className="rounded-xl border border-emerald-200/80 dark:border-emerald-800/80 bg-emerald-50/40 dark:bg-emerald-950/20 p-4">
-      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">
+      <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">
         {title}
       </p>
-      {hint ? <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">{hint}</p> : null}
+      {hint ? <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">{hint}</p> : null}
       <textarea
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
@@ -349,7 +349,7 @@ function PatientEnsembleTab({
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40 p-4">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
           Compte et profil
         </p>
         {acc ? (
@@ -383,7 +383,7 @@ function PatientEnsembleTab({
       </div>
 
       <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/15 p-4">
-        <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">
+        <p className="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">
           Coaches liés (acceptés)
         </p>
         {overview.linked_coaches.length === 0 ? (
@@ -404,7 +404,7 @@ function PatientEnsembleTab({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
             Sève (SAP)
           </p>
           <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
@@ -412,7 +412,7 @@ function PatientEnsembleTab({
           </p>
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
             Usage mois courant
           </p>
           {overview.usage_month ? (
@@ -430,7 +430,7 @@ function PatientEnsembleTab({
       </div>
 
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
           Science de la Fleur (profil agrégé)
         </p>
         {!overview.science ? (
@@ -466,7 +466,7 @@ function PatientEnsembleTab({
       </div>
 
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
           Questionnaires Fleur d&apos;AmOurs (24 questions)
         </p>
         {overview.questionnaire_results.length === 0 ? (
@@ -485,7 +485,7 @@ function PatientEnsembleTab({
                       {q.created_at ? formatDate(q.created_at) : '—'}
                     </span>
                     {q.intended_duo && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300">
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300">
                         Duo
                       </span>
                     )}
@@ -494,7 +494,7 @@ function PatientEnsembleTab({
                       max · {PETAL_LABELS[dominant] ?? dominant}
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1 font-mono truncate" title={q.token}>
+                  <p className="text-xs text-slate-400 mt-1 font-mono truncate" title={q.token}>
                     token {q.token.slice(0, 12)}…
                   </p>
                 </li>
@@ -505,7 +505,7 @@ function PatientEnsembleTab({
       </div>
 
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
           Conversations intérieures
         </p>
         {overview.dreamscape_walks.length === 0 ? (
@@ -530,7 +530,7 @@ function PatientEnsembleTab({
       </div>
 
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
           Tirages tarot
         </p>
         {overview.tarot_readings.length === 0 ? (
@@ -657,7 +657,7 @@ function UserDetailPanel({
                   </span>
                   {sp && (
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${sp.bg} ${sp.text} ${sp.border}`}
+                      className={`px-2 py-0.5 rounded-full text-xs font-bold border ${sp.bg} ${sp.text} ${sp.border}`}
                     >
                       {sp.icon} Ombre niv. {data.max_shadow_level} — {sp.label}
                     </span>
@@ -766,7 +766,7 @@ function UserDetailPanel({
                     animate
                     showLabels
                   />
-                  <div className="flex items-center gap-4 text-[10px] text-slate-400">
+                  <div className="flex items-center gap-4 text-xs text-slate-400">
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-emerald-400" />
                       Lumière
@@ -776,7 +776,7 @@ function UserDetailPanel({
                       Ombre/Déficit
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-400 text-center">
+                  <p className="text-xs text-slate-400 text-center">
                     Moyenne sur {data.session_count} session
                     {data.session_count > 1 ? 's' : ''}
                   </p>
@@ -784,10 +784,10 @@ function UserDetailPanel({
 
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-4 mb-3">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                       Parts de lumière
                     </p>
-                    <p className="text-[10px] text-amber-400 uppercase tracking-widest">
+                    <p className="text-xs text-amber-400 uppercase tracking-widest">
                       Déficits
                     </p>
                   </div>
@@ -805,7 +805,7 @@ function UserDetailPanel({
 
               {data.petal_evolution.length > 1 && (
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
                     Évolution session par session
                   </p>
                   <div className="overflow-x-auto">
@@ -843,14 +843,14 @@ function UserDetailPanel({
                               petalsDeficit={ev.deficit}
                               size={56}
                             />
-                            <p className="text-[9px] text-slate-400 text-center leading-tight">
+                            <p className="text-xs text-slate-400 text-center leading-tight">
                               {formatDate(ev.date)}
                             </p>
-                            <p className="text-[9px] text-emerald-500 font-medium">
+                            <p className="text-xs text-emerald-500 font-medium">
                               {PETAL_LABELS[topPetal]?.slice(0, 5)}
                             </p>
                             {hasDeficit && (
-                              <p className="text-[9px] text-amber-400">
+                              <p className="text-xs text-amber-400">
                                 {PETAL_LABELS[topDeficit]?.slice(0, 5)}
                               </p>
                             )}
@@ -903,7 +903,7 @@ function UserDetailPanel({
 
               {data.shadow_events.length > 0 ? (
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                     Chronologie complète
                   </p>
                   {data.shadow_events.map((ev, i) => {
@@ -940,16 +940,16 @@ function UserDetailPanel({
                             )}
                           </span>
                           {ev.urgent && (
-                            <span className="text-[10px] font-bold bg-red-700/30 text-red-300 px-1.5 py-0.5 rounded">
+                            <span className="text-xs font-bold bg-red-700/30 text-red-300 px-1.5 py-0.5 rounded">
                               URGENT
                             </span>
                           )}
                           {ev.door && (
-                            <span className="text-[10px] text-slate-400 uppercase">
+                            <span className="text-xs text-slate-400 uppercase">
                               {DOOR_LABELS[ev.door] || ev.door}
                             </span>
                           )}
-                          <span className="ml-auto text-[10px] text-slate-400">
+                          <span className="ml-auto text-xs text-slate-400">
                             {formatDate(ev.session_date)}
                           </span>
                         </div>
@@ -964,7 +964,7 @@ function UserDetailPanel({
                           </p>
                         )}
                         {isDeficit && (
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
                             Pas d&apos;événement Tuteur enregistré pour cette session ; la part
                             d&apos;ombre vient des déficits de pétales sauvegardés dans la session.
                           </p>
@@ -981,7 +981,7 @@ function UserDetailPanel({
 
               {data.shadow_event_count > 0 && (
                 <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/10 p-4">
-                  <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-1.5">
+                  <p className="text-xs font-bold text-violet-500 uppercase tracking-widest mb-1.5">
                     Note accompagnateur
                   </p>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -1031,7 +1031,7 @@ function UserDetailPanel({
               ) : (
                 <div className="space-y-4">
                   <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/10 p-4">
-                    <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">
+                    <p className="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">
                       Résumé
                     </p>
                     <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
@@ -1039,7 +1039,7 @@ function UserDetailPanel({
                     </p>
                   </div>
                   <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10 p-4">
-                    <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-2">
+                    <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-2">
                       Analyse (pour le coach)
                     </p>
                     <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
@@ -1049,7 +1049,7 @@ function UserDetailPanel({
 
                   {Array.isArray(patientSnapshot.coach_suggestions) && patientSnapshot.coach_suggestions.length > 0 && (
                     <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
                         Suggestions d’accompagnement
                       </p>
                       <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200 list-disc pl-5">
@@ -1062,7 +1062,7 @@ function UserDetailPanel({
 
                   {Array.isArray(patientSnapshot.coach_conversation_prompts) && patientSnapshot.coach_conversation_prompts.length > 0 && (
                     <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
                         Questions à poser (coach → patient)
                       </p>
                       <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200 list-disc pl-5">
@@ -1075,7 +1075,7 @@ function UserDetailPanel({
 
                   {Array.isArray(patientSnapshot.coach_next_steps) && patientSnapshot.coach_next_steps.length > 0 && (
                     <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/10 p-4">
-                      <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">
+                      <p className="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">
                         Prochaines relances (coach)
                       </p>
                       <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-200 list-disc pl-5">
@@ -1125,11 +1125,11 @@ function UserDetailPanel({
                   setData((prev) => (prev ? { ...prev, coach_patient_notes: notes } : prev))
                 }
               />
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                 {data.session_count} session
                 {data.session_count > 1 ? 's' : ''}
               </p>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 Fiche patient générée : {coachPatientFicheReady ? 'Oui' : 'Non'}
               </p>
               {data.sessions.map((s) => {
@@ -1160,12 +1160,12 @@ function UserDetailPanel({
                             {formatDate(s.created_at)}
                           </span>
                           {s.door_suggested && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300">
+                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300">
                               {DOOR_LABELS[s.door_suggested] || s.door_suggested}
                             </span>
                           )}
                           <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            className={`text-xs px-1.5 py-0.5 rounded-full ${
                               s.status === 'completed'
                                 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                                 : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
@@ -1174,7 +1174,7 @@ function UserDetailPanel({
                             {s.status === 'completed' ? 'Terminée' : 'En cours'}
                           </span>
                           {sp2 && (
-                            <span className={`text-[10px] font-bold ${sp2.text}`}>
+                            <span className={`text-xs font-bold ${sp2.text}`}>
                               {sp2.icon} Niv. {s.max_shadow_level}
                             </span>
                           )}
@@ -1187,7 +1187,7 @@ function UserDetailPanel({
                         {s.threshold_snapshot &&
                           typeof s.threshold_snapshot.door_reason === 'string' &&
                           s.threshold_snapshot.door_reason.trim() && (
-                            <p className="text-[10px] text-violet-600 dark:text-violet-400 mt-1.5 leading-snug line-clamp-3">
+                            <p className="text-xs text-violet-600 dark:text-violet-400 mt-1.5 leading-snug line-clamp-3">
                               <span className="font-semibold text-slate-500 dark:text-slate-400">
                                 Seuil IA :{' '}
                               </span>
@@ -1197,12 +1197,12 @@ function UserDetailPanel({
                         {s.threshold_snapshot &&
                           typeof s.threshold_snapshot.first_question === 'string' &&
                           s.threshold_snapshot.first_question.trim() && (
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 italic line-clamp-2">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic line-clamp-2">
                               Q. {s.threshold_snapshot.first_question}
                             </p>
                           )}
                         {/* La fiche coach principale est la "Fiche patient" (onglet patient), générée par patient. */}
-                        <div className="flex gap-3 mt-1 text-[10px] text-slate-400">
+                        <div className="flex gap-3 mt-1 text-xs text-slate-400">
                           <span>{s.turn_count} tours</span>
                           <span>{formatDuration(s.duration_seconds)}</span>
                           {(s.shadow_event_count ?? 0) > 0 && (
@@ -1321,18 +1321,18 @@ function UserCard({
             </span>
             {hasTuteurShadow && sp && (
               <span
-                className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border ${sp.bg} ${sp.text} ${sp.border}`}
+                className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-bold border ${sp.bg} ${sp.text} ${sp.border}`}
               >
                 {sp.icon} Niv. {user.max_shadow_level}
               </span>
             )}
             {hasDeficit && !hasTuteurShadow && (
-              <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border border-amber-600/40 bg-amber-950/20 text-amber-300">
+              <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-bold border border-amber-600/40 bg-amber-950/20 text-amber-300">
                 🌗 Déficit pétales
               </span>
             )}
           </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[10px] text-slate-400">
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-slate-400">
             <span>
               {user.session_count} session
               {user.session_count > 1 ? 's' : ''}
@@ -1356,7 +1356,7 @@ function UserCard({
             if (!topK || topK[1] < 0.001) return null
             return (
               <div>
-                <p className="text-[9px] text-slate-400 uppercase tracking-widest">
+                <p className="text-xs text-slate-400 uppercase tracking-widest">
                   Dominant
                 </p>
                 <p className="text-xs font-semibold text-emerald-500">
@@ -1403,14 +1403,14 @@ function GlobalStats({ users }: { users: SuiviUser[] }) {
 
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5">
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
         Vue d&apos;ensemble — {total} utilisateur
         {total > 1 ? 's' : ''} suivis
       </p>
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         <div className="flex flex-col items-center gap-2 shrink-0">
           <FlowerSVG petals={scoresToPetals(globalPetals)} size={180} animate showLabels />
-          <p className="text-[10px] text-slate-400 text-center">
+          <p className="text-xs text-slate-400 text-center">
             Fleur moyenne globale
           </p>
         </div>
@@ -1420,13 +1420,13 @@ function GlobalStats({ users }: { users: SuiviUser[] }) {
             <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">
               {totalSessions}
             </p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Sessions totales</p>
+            <p className="text-xs text-slate-400 mt-0.5">Sessions totales</p>
           </div>
           <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/10 p-3 text-center">
             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {PETAL_LABELS[topPetal]}
             </p>
-            <p className="text-[10px] text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               Dynamique dominante
             </p>
           </div>
@@ -1444,7 +1444,7 @@ function GlobalStats({ users }: { users: SuiviUser[] }) {
             >
               {withShadow}
             </p>
-            <p className="text-[10px] text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               Avec ombre détectée
             </p>
           </div>
@@ -1465,18 +1465,18 @@ function GlobalStats({ users }: { users: SuiviUser[] }) {
             >
               {urgent}
             </p>
-            <p className="text-[10px] text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               Urgents (niv. 4)
             </p>
           </div>
         </div>
 
         <div className="w-full lg:w-52 space-y-1.5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
             Équilibre global
           </p>
           {PETAL_KEYS.map((k) => (
-            <div key={k} className="flex items-center gap-2 text-[11px]">
+            <div key={k} className="flex items-center gap-2 text-sm">
               <span className="w-14 text-slate-400 shrink-0 truncate">
                 {PETAL_LABELS[k]}
               </span>
@@ -1488,7 +1488,7 @@ function GlobalStats({ users }: { users: SuiviUser[] }) {
                   }}
                 />
               </div>
-              <span className="font-mono text-slate-400 text-[10px] w-8 text-right">
+              <span className="font-mono text-slate-400 text-xs w-8 text-right">
                 {globalPetals[k].toFixed(2)}
               </span>
             </div>
@@ -1557,12 +1557,12 @@ function CoachSuiviPageInner() {
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <span
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200"
                 title="Périmètre des utilisateurs affichés"
               >
                 🧑‍🌾 Patientèle du coach
               </span>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-xs text-slate-400">
                 (Pour la vue globale :{' '}
                 <Link href="/coach/analytics" className="underline">
                   Vue globale

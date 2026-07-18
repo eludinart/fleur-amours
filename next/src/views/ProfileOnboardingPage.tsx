@@ -153,14 +153,14 @@ export default function ProfileOnboardingPage() {
       </div>
 
       <header className="shrink-0 px-4 py-4 flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-300/90">
+        <p className="text-sm font-semibold uppercase tracking-wider text-violet-300/90">
           {t('profileOnboarding.stepLabel', { current: step + 1, total: STEPS })}
         </p>
         <button
           type="button"
           onClick={() => finish(true)}
           disabled={saving}
-          className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50"
+          className="text-sm text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50"
         >
           {t('profileOnboarding.skipAll')}
         </button>
@@ -220,7 +220,7 @@ export default function ProfileOnboardingPage() {
                     placeholder={t('profileOnboarding.pseudoPlaceholder')}
                     className="w-full px-4 py-3 rounded-xl border border-slate-600/60 bg-slate-900/70 text-amber-50 font-mono placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                   />
-                  <p className="text-[11px] text-slate-500">{t('profileOnboarding.pseudoFormat')}</p>
+                  <p className="text-sm text-slate-500">{t('profileOnboarding.pseudoFormat')}</p>
                 </>
               )}
 
@@ -262,7 +262,7 @@ export default function ProfileOnboardingPage() {
                     />
                     <span>
                       <span className="block text-sm font-medium text-emerald-100">{t('profileOnboarding.publicTitle')}</span>
-                      <span className="block text-[11px] text-emerald-300/70 mt-0.5">{t('profileOnboarding.publicHint')}</span>
+                      <span className="block text-sm text-emerald-300/70 mt-0.5">{t('profileOnboarding.publicHint')}</span>
                     </span>
                   </label>
                 </>

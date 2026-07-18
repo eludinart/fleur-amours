@@ -166,18 +166,18 @@ export default function CheckinPage() {
     <div className="flex-1 min-h-0 overflow-y-auto bg-gradient-to-b from-slate-950 via-[#0f0a1a] to-slate-950">
       <div className="mx-auto max-w-xl px-4 py-8 sm:px-6 sm:py-10 pb-28">
         <header className="mb-8 text-center space-y-2">
-          <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-violet-300/70">
+          <p className="text-xs font-medium uppercase tracking-widest text-violet-200/90">
             {t('checkin.eyebrow')}
           </p>
           <h1 className="text-2xl sm:text-3xl font-light tracking-wide text-white/95">{t('checkin.title')}</h1>
-          <p className="text-sm text-white/45 max-w-md mx-auto leading-relaxed">{t('checkin.subtitle')}</p>
+          <p className="text-base text-white/80 max-w-md mx-auto leading-relaxed">{t('checkin.subtitle')}</p>
         </header>
 
         {checkedInToday ? (
           <section className="space-y-6">
             <div className="rounded-2xl border border-emerald-400/25 bg-emerald-950/20 px-4 py-4 text-center">
               <p className="text-sm text-emerald-100/95">{t('checkin.alreadyToday')}</p>
-              <p className="mt-1 text-xs text-emerald-200/65">{t('checkin.comeBackTomorrow')}</p>
+              <p className="mt-1 text-xs text-emerald-100/85">{t('checkin.comeBackTomorrow')}</p>
             </div>
 
             {context?.todayEcho ? (
@@ -204,13 +204,13 @@ export default function CheckinPage() {
                 </div>
 
                 <div className="rounded-3xl border border-white/12 bg-white/[0.05] px-5 py-6 space-y-4">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-violet-300/60 text-center">
+                  <p className="text-xs uppercase tracking-wider text-violet-200/85 text-center">
                     {t('checkin.todayEchoLabel')}
                   </p>
                   {context.todayEcho.highlightPetal ? (
                     <div className="flex justify-center">
                       <span
-                        className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em]"
+                        className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold uppercase tracking-wide"
                         style={{
                           color: petalColor(context.todayEcho.highlightPetal),
                           backgroundColor: `${petalColor(context.todayEcho.highlightPetal)}18`,
@@ -226,7 +226,7 @@ export default function CheckinPage() {
                     </div>
                   ) : null}
                   {context.todayEcho.intention ? (
-                    <p className="text-xs text-white/45 text-center italic">
+                    <p className="text-xs text-white/75 text-center italic">
                       « {context.todayEcho.intention} »
                     </p>
                   ) : null}
@@ -235,10 +235,10 @@ export default function CheckinPage() {
                   </p>
                   {context.todayEcho.invitation ? (
                     <div className="border-t border-white/8 pt-4">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-white/35 text-center mb-2">
+                      <p className="text-xs uppercase tracking-wider text-white/70 text-center mb-2">
                         {t('checkin.invitationLabel')}
                       </p>
-                      <p className="text-sm text-white/65 text-center leading-relaxed">
+                      <p className="text-sm text-white/80 text-center leading-relaxed">
                         {context.todayEcho.invitation}
                       </p>
                     </div>
@@ -251,10 +251,10 @@ export default function CheckinPage() {
 
         {!checkedInToday && context?.lastEcho && act === 'pose' ? (
           <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-violet-300/60">{t('checkin.lastEchoLabel')}</p>
+            <p className="text-xs uppercase tracking-wider text-violet-200/85">{t('checkin.lastEchoLabel')}</p>
             {context.lastEcho.highlightPetal ? (
               <span
-                className="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                className="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
                 style={{
                   color: petalColor(context.lastEcho.highlightPetal),
                   backgroundColor: `${petalColor(context.lastEcho.highlightPetal)}22`,
@@ -267,7 +267,7 @@ export default function CheckinPage() {
             <p className="mt-2 text-sm italic text-violet-100/90 leading-relaxed">
               {context.lastEcho.echo || context.lastEcho.whisper}
             </p>
-            <p className="mt-1 text-[10px] text-white/35">
+            <p className="mt-1 text-xs text-white/70">
               {formatDate(context.lastEcho.createdAt, locale)}
             </p>
           </div>
@@ -284,13 +284,13 @@ export default function CheckinPage() {
                 maxLength={500}
                 rows={4}
                 placeholder={t('checkin.intentionPlaceholder')}
-                className="w-full rounded-2xl border border-white/12 bg-black/25 p-4 text-sm text-white/90 placeholder:text-white/30 focus:border-violet-400/50 focus:outline-none focus:ring-1 focus:ring-violet-400/30 resize-none"
+                className="w-full rounded-2xl border border-white/12 bg-black/25 p-4 text-sm text-white/90 placeholder:text-white/55 focus:border-violet-400/50 focus:outline-none focus:ring-1 focus:ring-violet-400/30 resize-none"
               />
             </div>
 
             {context?.suggestions?.length ? (
               <div className="space-y-2">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-white/40">{t('checkin.suggestionsLabel')}</p>
+                <p className="text-xs uppercase tracking-wide text-white/70">{t('checkin.suggestionsLabel')}</p>
                 <div className="flex flex-col gap-2">
                   {context.suggestions.map((s, i) => {
                     const badge = suggestionBadge(s.kind)
@@ -303,13 +303,13 @@ export default function CheckinPage() {
                     >
                       <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 mb-1">
                         {badge ? (
-                          <span className="text-[9px] font-medium uppercase tracking-wider text-violet-300/65">
+                          <span className="text-xs font-medium uppercase tracking-wider text-violet-200/90">
                             {badge}
                           </span>
                         ) : null}
                         {s.petalId ? (
                           <span
-                            className="text-[10px] font-semibold uppercase tracking-wider"
+                            className="text-xs font-semibold uppercase tracking-wider"
                             style={{ color: petalColor(s.petalId) }}
                           >
                             {petalName(s.petalId)}
@@ -373,7 +373,7 @@ export default function CheckinPage() {
                 {highlightId ? (
                   <div className="flex justify-center">
                     <span
-                      className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em]"
+                      className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold uppercase tracking-wide"
                       style={{
                         color: petalColor(highlightId),
                         backgroundColor: `${petalColor(highlightId)}18`,
@@ -393,10 +393,10 @@ export default function CheckinPage() {
                 </p>
                 {echo.invitation ? (
                   <div className="border-t border-white/8 pt-4">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/35 text-center mb-2">
+                    <p className="text-xs uppercase tracking-wider text-white/70 text-center mb-2">
                       {t('checkin.invitationLabel')}
                     </p>
-                    <p className="text-sm text-white/65 text-center leading-relaxed">{echo.invitation}</p>
+                    <p className="text-sm text-white/80 text-center leading-relaxed">{echo.invitation}</p>
                   </div>
                 ) : null}
               </div>
@@ -423,11 +423,11 @@ export default function CheckinPage() {
                     }`}
                   >
                     <span className="text-xl block mb-1">{opt.emoji}</span>
-                    <span className="text-[10px] font-medium leading-tight">{t(`checkin.${opt.key}`)}</span>
+                    <span className="text-xs font-medium leading-tight">{t(`checkin.${opt.key}`)}</span>
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-[10px] text-center text-white/30">{t('checkin.feltOptional')}</p>
+              <p className="mt-2 text-xs text-center text-white/80">{t('checkin.feltOptional')}</p>
             </div>
 
             {error ? (
@@ -457,7 +457,7 @@ export default function CheckinPage() {
             <p className="text-center">
               <Link
                 href={`/tirage?petal=${echo.highlight_petal}`}
-                className="text-xs text-violet-300/70 hover:text-violet-200 underline-offset-2 hover:underline"
+                className="text-xs text-violet-200/90 hover:text-violet-200 underline-offset-2 hover:underline"
               >
                 {t('checkin.drawLink', { petal: petalName(echo.highlight_petal) })}
               </Link>
@@ -477,7 +477,7 @@ export default function CheckinPage() {
         {/* Historique */}
         {history.filter((c) => c.intention || c.aiResponse).length > 0 && (checkedInToday || act === 'pose') ? (
           <section className="mt-10">
-            <h2 className="mb-4 text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">
+            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-white/70">
               {t('checkin.historyTitle')}
             </h2>
             <ul className="space-y-3">
@@ -490,12 +490,12 @@ export default function CheckinPage() {
                     className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3.5"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <span className="text-[10px] text-white/35 shrink-0 pt-0.5">
+                      <span className="text-xs text-white/70 shrink-0 pt-0.5">
                         {formatDate(c.createdAt, locale)}
                       </span>
                       {c.highlightPetal ? (
                         <span
-                          className="text-[10px] font-semibold uppercase tracking-wider shrink-0"
+                          className="text-xs font-semibold uppercase tracking-wider shrink-0"
                           style={{ color: petalColor(c.highlightPetal) }}
                         >
                           {petalName(c.highlightPetal)}
@@ -506,7 +506,7 @@ export default function CheckinPage() {
                       {c.aiResponse?.whisper || c.intention}
                     </p>
                     {c.aiResponse?.echo && c.aiResponse.echo !== c.aiResponse.whisper ? (
-                      <p className="mt-1 text-xs italic text-white/45 line-clamp-2">{c.aiResponse.echo}</p>
+                      <p className="mt-1 text-xs italic text-white/75 line-clamp-2">{c.aiResponse.echo}</p>
                     ) : null}
                   </li>
                 ))}

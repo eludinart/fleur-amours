@@ -150,12 +150,12 @@ export default function MesFleursPage() {
                         ? t('nav.fleurBeta')
                         : t('nav.fleur')}
                     {item.type === 'fleur-beta' && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded bg-violet-200/80 dark:bg-violet-800/80 text-violet-800 dark:text-violet-100">
+                      <span className="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide rounded bg-violet-200/80 dark:bg-violet-800/80 text-violet-800 dark:text-violet-100">
                         Beta
                       </span>
                     )}
                     {item.type === 'duo' && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded bg-rose-200/80 dark:bg-rose-800/80 text-rose-700 dark:text-rose-200">
+                      <span className="px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide rounded bg-rose-200/80 dark:bg-rose-800/80 text-rose-700 dark:text-rose-200">
                         {t('mesFleurs.duo')}
                       </span>
                     )}

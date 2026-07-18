@@ -137,16 +137,16 @@ function SovereigntyPanel({ petals, overriddenPetals, onChange, autoOpen, shadow
           <span>⚖</span>
           <span>{t('session.sovereignty')}</span>
           {overriddenPetals.size > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-600 dark:text-teal-300 text-[10px] font-bold">
+            <span className="px-1.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-600 dark:text-teal-300 text-xs font-bold">
               {overriddenPetals.size} ✎
             </span>
           )}
         </span>
-        <span className="text-[10px]">{open ? '▲' : '▼'}</span>
+        <span className="text-xs">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
         <div className="px-3 pb-3 space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2">
-          <p className="text-[10px] text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-400 leading-relaxed">
             {t('session.sovereigntyHint')}
           </p>
           {PETAL_DEFS.map(p => (
@@ -218,33 +218,33 @@ function DoorSummaryPanel({ door, summary, onConfirm, loading, isLastDoor, card 
         <div className="space-y-4 text-left">
           {synthesis && (
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('session.synthesis')}</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('session.synthesis')}</p>
               <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed italic break-words">{synthesis}</p>
             </div>
           )}
           {intention && (
             <div>
-              <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest mb-1">{t('session.pathIntention')}</p>
+              <p className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-1">{t('session.pathIntention')}</p>
               <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed break-words">{intention}</p>
             </div>
           )}
           {choices && (
             <div>
-              <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1">{t('session.choicesActions')}</p>
+              <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">{t('session.choicesActions')}</p>
               <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed break-words">{choices}</p>
             </div>
           )}
           {paths && (
             <div>
-              <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-1">{t('session.leads')}</p>
+              <p className="text-xs font-bold text-violet-500 uppercase tracking-widest mb-1">{t('session.leads')}</p>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed break-words">{paths}</p>
             </div>
           )}
           {shadowsNoted && (
             <div className="rounded-xl bg-slate-800/60 dark:bg-slate-900/80 border border-slate-600 p-3">
-              <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-1">🌑 {t('session.shadowParts')}</p>
+              <p className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">🌑 {t('session.shadowParts')}</p>
               <p className="text-xs text-slate-300 leading-relaxed italic break-words">{shadowsNoted}</p>
-              <p className="text-[10px] text-slate-500 mt-1.5">{t('session.shadowNeedAccompaniment')}</p>
+              <p className="text-xs text-slate-500 mt-1.5">{t('session.shadowNeedAccompaniment')}</p>
             </div>
           )}
         </div>
@@ -297,7 +297,7 @@ function DoorLockPanel({ door, onLock, supportedSpeech }) {
           <p className={`text-xs font-bold ${door?.color ?? 'text-emerald-600'}`}>
             {t('session.lockDoor', { door: door?.subtitle ?? t('session.thisDoor') })}
           </p>
-          <p className="text-[10px] text-slate-400">{t('session.synthesizeBeforeMoving')}</p>
+          <p className="text-xs text-slate-400">{t('session.synthesizeBeforeMoving')}</p>
         </div>
       </div>
 
@@ -664,7 +664,7 @@ function IntroStep({
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100 line-clamp-4 group-hover:text-rose-600 dark:group-hover:text-rose-400 break-words">
                       « {s.first_words || 'Session'} »
                     </p>
-                    <div className="flex flex-wrap gap-2 mt-1 text-[10px] text-slate-500">
+                    <div className="flex flex-wrap gap-2 mt-1 text-xs text-slate-500">
                       {s.door_suggested && (
                         <span className="px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-300">
                           {getDoorLabels()[s.door_suggested] || s.door_suggested}
@@ -674,7 +674,7 @@ function IntroStep({
                       <span>{formatDate(s.created_at)}</span>
                     </div>
                     {(doors.length > 0 || cards.length > 0) && (
-                      <div className="flex flex-wrap gap-1.5 mt-2 text-[10px]">
+                      <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
                         {doors.length > 0 && (
                           <span className="text-slate-500">
                             {t('session.doorsSummary')} : {doors.map(d => getDoorLabels()[d] || d).join(', ')}
@@ -688,11 +688,11 @@ function IntroStep({
                       </div>
                     )}
                     <div className="flex items-center justify-between gap-2 mt-1">
-                      <p className="text-[10px] text-rose-500 font-medium">{t('session.resume')}</p>
+                      <p className="text-xs text-rose-500 font-medium">{t('session.resume')}</p>
                       <button
                         type="button"
                         onClick={e => handleDeleteSession(s.id, e)}
-                        className="text-[10px] text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                        className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                         {t('common.delete')}
                       </button>
                     </div>
@@ -739,7 +739,7 @@ function IntroStep({
                   <p className="text-xs font-medium text-slate-800 dark:text-slate-100 line-clamp-4 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 break-words">
                     « {s.first_words || 'Session'} »
                   </p>
-                  <div className="flex flex-wrap gap-1.5 mt-0.5 text-[10px] text-slate-500">
+                  <div className="flex flex-wrap gap-1.5 mt-0.5 text-xs text-slate-500">
                     {s.door_suggested && (
                       <span className="px-1 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300">
                         {getDoorLabels()[s.door_suggested] || s.door_suggested}
@@ -749,13 +749,13 @@ function IntroStep({
                     <span>{formatDate(s.created_at)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-2 mt-0.5">
-                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                       {t('session.seePlanSummary')}
                     </p>
                     <button
                       type="button"
                       onClick={e => handleDeleteSession(s.id, e)}
-                      className="text-[10px] text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                      className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                       {t('common.delete')}
                     </button>
                   </div>
@@ -771,7 +771,7 @@ function IntroStep({
                   ›
                 </button>
               </div>
-              <p className="text-center text-[10px] text-slate-500">
+              <p className="text-center text-xs text-slate-500">
                 {completedSessionIndex + 1} / {completedSessions.length}
               </p>
             </div>
@@ -805,7 +805,7 @@ function IntroStep({
                       <button
                         type="button"
                         onClick={() => handleDeleteSession(expandedSessionId)}
-                        className="text-[10px] text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                        className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                         {t('common.delete')}
                       </button>
                     </div>
@@ -848,7 +848,7 @@ function IntroStep({
                             <div className="flex flex-col items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
                               {expandedDetail.petals && Object.keys(expandedDetail.petals).length > 0 && (
                                 <div className="flex flex-col items-center gap-3">
-                                  <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">{t('session.myFleur')}</p>
+                                  <p className="text-xs font-bold text-rose-500 uppercase tracking-widest">{t('session.myFleur')}</p>
                                   <button
                                     type="button"
                                     onClick={() => setSessionDetailZoom({ type: 'flower' })}
@@ -869,7 +869,7 @@ function IntroStep({
                                 if (drawn.length === 0) return null
                                 return (
                                   <div className="flex flex-col items-center gap-1 w-full">
-                                    <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest">{t('session.drawnCards')}</p>
+                                    <p className="text-xs font-bold text-violet-500 uppercase tracking-widest">{t('session.drawnCards')}</p>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-xs">
                                       {drawn.map((d, i) => (
                                         <button
@@ -881,10 +881,10 @@ function IntroStep({
                                             {d.card?.img ? (
                                               <img src={d.card.img} alt={d.card.name} className="w-full h-full object-contain" onError={e => { e.target.style.display = 'none' }} />
                                             ) : (
-                                              <span className="text-[9px] text-slate-500 text-center px-0.5">{d.card?.name}</span>
+                                              <span className="text-xs text-slate-500 text-center px-0.5">{d.card?.name}</span>
                                             )}
                                           </div>
-                                          <span className="text-[9px] text-slate-600 dark:text-slate-300 truncate w-full">{d.card?.name}</span>
+                                          <span className="text-xs text-slate-600 dark:text-slate-300 truncate w-full">{d.card?.name}</span>
                                         </button>
                                       ))}
                                     </div>
@@ -928,7 +928,7 @@ function IntroStep({
                                       onError={e => { e.target.style.display = 'none' }}
                                     />
                                     <div className="rounded-xl bg-white dark:bg-[#0f172a] px-4 py-3 w-full text-center shadow-lg border border-slate-200 dark:border-slate-700">
-                                      <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-0.5">
+                                      <p className="text-xs font-bold text-violet-500 uppercase tracking-widest mb-0.5">
                                         {getDoorTranslated(DOOR_MAP[sessionDetailZoom.door], locale)?.subtitle ?? sessionDetailZoom.door}
                                       </p>
                                       <h3 className="font-bold text-slate-800 dark:text-slate-100">{sessionDetailZoom.card.name}</h3>
@@ -950,13 +950,13 @@ function IntroStep({
                           )}
                           {expandedDetail.anchors?.length > 0 && (
                             <div>
-                              <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2">✦ {t('session.doorsSummary')}</p>
+                              <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2">✦ {t('session.doorsSummary')}</p>
                               <div className="space-y-2">
                                 {expandedDetail.anchors.map((a, i) => (
                                   <div key={i} className="rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 p-2.5 border border-emerald-100 dark:border-emerald-900/50">
-                                    <p className="text-[10px] font-bold text-emerald-600 uppercase">{a.subtitle ?? a.door}</p>
+                                    <p className="text-xs font-bold text-emerald-600 uppercase">{a.subtitle ?? a.door}</p>
                                     <p className="text-xs text-slate-700 dark:text-slate-200 italic">{a.synthesis}</p>
-                                    {a.habit && <p className="text-[10px] text-slate-500 mt-0.5">🔗 {a.habit}</p>}
+                                    {a.habit && <p className="text-xs text-slate-500 mt-0.5">🔗 {a.habit}</p>}
                                   </div>
                                 ))}
                               </div>
@@ -964,7 +964,7 @@ function IntroStep({
                           )}
                           {expandedDetail.plan14j && (
                             <div>
-                              <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">{t('session.plan14Title')}</p>
+                              <p className="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest mb-2">{t('session.plan14Title')}</p>
                               {(expandedDetail.plan14j.synthesis || expandedDetail.plan14j.synthesis_suggestion) && (
                                 <p className="text-xs text-slate-700 dark:text-slate-200 italic mb-3">
                                   {expandedDetail.plan14j.synthesis || expandedDetail.plan14j.synthesis_suggestion}
@@ -976,7 +976,7 @@ function IntroStep({
                                     const [action, anchor] = (lever || '').split('||ANCHOR||')
                                     return (
                                       <div key={i} className="flex gap-2 items-start">
-                                        <span className="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900 text-violet-600 dark:text-violet-300 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                                        <span className="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900 text-violet-600 dark:text-violet-300 flex items-center justify-center text-xs font-bold flex-shrink-0">
                                           {i + 1}
                                         </span>
                                         <p className="text-xs text-slate-700 dark:text-slate-200">{action}{anchor ? ` ${t('session.anchorAfter')} ${anchor}` : ''}</p>
@@ -1037,7 +1037,7 @@ function IntroStep({
       <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 sm:p-6 text-left space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-200">{t('session.howItWorks')}</h3>
-          <span className="text-[10px] text-slate-400 font-medium">~25–40 min</span>
+          <span className="text-xs text-slate-400 font-medium">~25–40 min</span>
         </div>
         {[
           ['🌱', t('session.step1Title'), t('session.step1Desc')],
@@ -1085,12 +1085,12 @@ function IntroStep({
             : 'bg-gradient-to-r from-rose-500 to-violet-500 text-white hover:shadow-rose-500/25 hover:scale-[1.02] active:scale-[0.98]'}`}>
         {t('session.enterGarden')}
       </button>
-      <p className="text-[10px] text-slate-400 text-center">{t('session.doorsDesc')}</p>
+      <p className="text-xs text-slate-400 text-center">{t('session.doorsDesc')}</p>
 
       <div className="rounded-2xl border border-violet-200/80 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/20 p-4 text-left space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-semibold text-sm text-violet-900 dark:text-violet-100">{t('session.singleDoorTitle')}</h3>
-          <span className="text-[10px] text-violet-500 font-medium">~10 min</span>
+          <span className="text-xs text-violet-500 font-medium">~10 min</span>
         </div>
         <p className="text-xs text-violet-800/80 dark:text-violet-200/80 leading-relaxed">{t('session.singleDoorDesc')}</p>
         <div className="grid grid-cols-2 gap-2">
@@ -1103,7 +1103,7 @@ function IntroStep({
               className="rounded-xl border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-900 px-3 py-2.5 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-violet-400 transition-colors disabled:opacity-50"
             >
               <span className={`block font-bold ${d.color}`}>{getDoorLabels()[d.key] || d.key}</span>
-              <span className="block text-[10px] text-slate-500 mt-0.5 line-clamp-2">{d.subtitle}</span>
+              <span className="block text-xs text-slate-500 mt-0.5 line-clamp-2">{d.subtitle}</span>
             </button>
           ))}
         </div>
@@ -1310,7 +1310,7 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded, singleDo
 
       {gateReady && (
         <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50/40 dark:bg-violet-950/20 p-4 space-y-3">
-          <p className="text-[10px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest">
+          <p className="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest">
             {t('session.thresholdAnalysisTitle')}
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -1321,12 +1321,12 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded, singleDo
               {DOOR_MAP[gateReady.door_suggested]?.subtitle ?? gateReady.door_suggested}
             </span>
             {gateReady.provider && (
-              <span className="text-[10px] text-slate-400">({gateReady.provider})</span>
+              <span className="text-xs text-slate-400">({gateReady.provider})</span>
             )}
           </div>
           {gateReady.door_reason && (
             <div>
-              <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">
+              <p className="text-xs font-semibold text-slate-500 uppercase mb-0.5">
                 {t('session.thresholdWhy')}
               </p>
               <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
@@ -1336,7 +1336,7 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded, singleDo
           )}
           {gateReady.first_question && (
             <div>
-              <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">
+              <p className="text-xs font-semibold text-slate-500 uppercase mb-0.5">
                 {t('session.thresholdFirstQuestion')}
               </p>
               <p className="text-sm text-slate-600 dark:text-slate-300 italic leading-relaxed">
@@ -1344,7 +1344,7 @@ function ThresholdStep({ onThresholdComplete, userEmail, quotaExceeded, singleDo
               </p>
             </div>
           )}
-          <p className="text-[10px] text-slate-400">{t('session.thresholdCacheHint')}</p>
+          <p className="text-xs text-slate-400">{t('session.thresholdCacheHint')}</p>
         </div>
       )}
 
@@ -2093,7 +2093,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
           />
         </button>
         {(Object.values(petalsDeficit || {}).some(v => (v ?? 0) > 0.05) || petalsHistory.length > 0) && (
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 text-center flex items-center justify-center gap-2 flex-wrap">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center flex items-center justify-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
               <span>{t('session.rises')}</span>
@@ -2117,7 +2117,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
       </div>
       {threadContext && (
         <div className="space-y-1">
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest px-1">{t('session.liveThreads')}</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest px-1">{t('session.liveThreads')}</p>
           <LiveThreads threadContext={threadContext} />
         </div>
       )}
@@ -2129,7 +2129,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
         shadowPetalId={shadowPetalId}
       />
       <div className={`rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 space-y-2 ${compact ? 'p-2' : 'p-3'}`}>
-        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t('session.drawnCards')}</p>
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t('session.drawnCards')}</p>
         <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
           {['love', 'vegetal', 'elements', 'life'].map(doorKey => {
             const d = drawnCards.find(x => x.door === doorKey)
@@ -2151,17 +2151,17 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                           <span className="card-fallback hidden absolute inset-0 flex items-center justify-center p-0.5 text-[7px] text-slate-500 dark:text-slate-400 text-center leading-tight break-words">{d.card.name}</span>
                         </>
                       ) : (
-                        <span className="text-[10px] text-slate-600 dark:text-slate-300 text-center leading-tight break-words px-1">{d.card.name}</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-300 text-center leading-tight break-words px-1">{d.card.name}</span>
                       )}
                     </div>
-                    <span className="text-[9px] text-slate-600 dark:text-slate-300 text-center leading-tight w-full min-w-0 truncate block">{d.card.name}</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-300 text-center leading-tight w-full min-w-0 truncate block">{d.card.name}</span>
                   </button>
                 ) : (
                   <div className={`${cardSize} rounded-lg overflow-hidden border-2 border-slate-300 dark:border-slate-600 bg-slate-100/50 dark:bg-slate-800/30 flex-shrink-0 flex items-center justify-center`}>
                     <img src={BACK_IMG} alt="" className="w-full h-full object-contain" />
                   </div>
                 )}
-                <span className={`text-[9px] font-medium ${doorObj.color}`}>{doorLabel}</span>
+                <span className={`text-xs font-medium ${doorObj.color}`}>{doorLabel}</span>
               </div>
             )
           })}
@@ -2214,17 +2214,17 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                               <span className="card-fallback hidden absolute inset-0 flex items-center justify-center p-0.5 text-[6px] text-slate-500 dark:text-slate-400 text-center leading-tight break-words">{d.card.name}</span>
                             </>
                           ) : (
-                            <span className="text-[8px] text-slate-600 dark:text-slate-300 text-center leading-tight break-words px-0.5">{d.card.name}</span>
+                            <span className="text-xs text-slate-600 dark:text-slate-300 text-center leading-tight break-words px-0.5">{d.card.name}</span>
                           )}
                         </div>
-                        <span className={`text-[8px] font-medium truncate w-full text-center px-0.5 ${doorObj.color}`}>{doorLabel}</span>
+                        <span className={`text-xs font-medium truncate w-full text-center px-0.5 ${doorObj.color}`}>{doorLabel}</span>
                       </button>
                     ) : (
                       <div className="flex flex-col items-center gap-0 w-full">
                         <div className="w-14 h-20 rounded-md overflow-hidden border border-slate-300 dark:border-slate-600 bg-slate-100/50 dark:bg-slate-800/30 flex-shrink-0 flex items-center justify-center">
                           <img src={BACK_IMG} alt="" className="w-full h-full object-contain" />
                         </div>
-                        <span className={`text-[8px] font-medium ${doorObj.color}`}>{doorLabel}</span>
+                        <span className={`text-xs font-medium ${doorObj.color}`}>{doorLabel}</span>
                       </div>
                     )}
                   </div>
@@ -2249,7 +2249,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
               />
             </button>
             {(Object.values(petalsDeficit || {}).some(v => (v ?? 0) > 0.05) || petalsHistory.length > 0) && (
-              <p className="text-[9px] text-slate-500 dark:text-slate-400 text-center flex items-center justify-center gap-1.5 flex-wrap">
+              <p className="text-xs text-slate-500 dark:text-slate-400 text-center flex items-center justify-center gap-1.5 flex-wrap">
                 <span className="inline-flex items-center gap-0.5"><span className="w-1 h-1 rounded-full bg-emerald-500" />{t('session.rises')}</span>
                 <span className="text-slate-400">|</span>
                 <span className="inline-flex items-center gap-0.5"><span className="w-1 h-1 rounded-full bg-red-400" />{t('session.tensions')}</span>
@@ -2378,14 +2378,14 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
               </div>
               <div className="mt-4 space-y-4">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Description</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Description</p>
                   <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
                     {getCardTranslated(cardModal.card, locale).desc || ''}
                   </p>
                 </div>
                 {history.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-1">Mise en contexte</p>
+                    <p className="text-xs font-bold text-violet-500 uppercase tracking-widest mb-1">Mise en contexte</p>
                     {cardContextLoading ? (
                       <div className="flex items-center gap-2 py-2">
                         <span className="w-4 h-4 border-2 border-violet-300 border-t-violet-500 rounded-full animate-spin" />
@@ -2421,7 +2421,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                 onClick={() => setCardImageZoomed(false)}
               />
               <div className="rounded-xl bg-white dark:bg-[#0f172a] px-5 py-4 w-full text-center shadow-xl border border-slate-200 dark:border-slate-700">
-                <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-1">
+                <p className="text-xs font-bold text-violet-500 uppercase tracking-widest mb-1">
                   {getDoorTranslated(DOOR_MAP[cardModal.door], locale)?.subtitle ?? cardModal.door}
                 </p>
                 <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{cardModal.card.name}</h3>
@@ -2479,7 +2479,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                   />
                 ))}
               </div>
-              <p className="text-[10px] text-slate-500 mt-1">Échange {doorTurn} sur cette porte</p>
+              <p className="text-xs text-slate-500 mt-1">Échange {doorTurn} sur cette porte</p>
             </div>
           </div>
 
@@ -2510,7 +2510,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-base">{palette.icon}</span>
                   <p className={`text-xs font-bold uppercase tracking-widest ${palette.labelColor}`}>{palette.labelKey ? t(`session.${palette.labelKey}`) : palette.label}</p>
-                  <span className={`ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded ${palette.ctaBg} ${palette.anchorColor}`}>N{level}</span>
+                  <span className={`ml-auto text-xs font-mono px-1.5 py-0.5 rounded ${palette.ctaBg} ${palette.anchorColor}`}>N{level}</span>
                 </div>
 
                 {/* Observation du Tuteur */}
@@ -2537,9 +2537,9 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                       <span className="text-2xl flex-shrink-0">🌿</span>
                     )}
                     <div className="min-w-0">
-                      <p className={`text-[10px] font-semibold uppercase tracking-wide ${palette.anchorColor}`}>{t('session.proposedAnchor')}</p>
+                      <p className={`text-xs font-semibold uppercase tracking-wide ${palette.anchorColor}`}>{t('session.proposedAnchor')}</p>
                       <p className="text-xs text-slate-200 font-medium">{aiMessage.resource_card}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{t('session.dynamicHelp')}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{t('session.dynamicHelp')}</p>
                     </div>
                   </div>
                 )}
@@ -2563,7 +2563,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                         setDrawerOpen(true)
                         setTimeout(() => document.querySelector('[data-sovereignty-toggle]')?.click(), 200)
                       }}
-                      className="text-[10px] font-medium px-2 py-1.5 rounded-lg bg-white/10 text-slate-300 hover:bg-white/20 transition-colors">
+                      className="text-xs font-medium px-2 py-1.5 rounded-lg bg-white/10 text-slate-300 hover:bg-white/20 transition-colors">
                       ✎ {t('session.inaccurateScore')}
                     </button>
                   </div>
@@ -2578,13 +2578,13 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
             <div className="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/20 p-4 md:p-3 space-y-3 shrink-0 w-full">
               {thresholdData?.firstWords && (
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-1">{t('session.firstWords')}</p>
+                  <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-1">{t('session.firstWords')}</p>
                   <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed italic break-words">« {thresholdData.firstWords} »</p>
                 </div>
               )}
               {history.length > 0 && history[0]?.role === 'user' && (
                 <div className={`min-w-0 ${thresholdData?.firstWords ? 'border-t border-rose-200 dark:border-rose-800 pt-3' : ''}`}>
-                  <p className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-1">{t('session.firstResponse')}</p>
+                  <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-1">{t('session.firstResponse')}</p>
                   <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed break-words">« {history[0].content} »</p>
                 </div>
               )}
@@ -2628,12 +2628,12 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                   {history.slice(0, -2).map((msg, i) => (
                     <div
                       key={i}
-                      className={`text-sm leading-relaxed px-3 py-2 rounded-xl break-words ${
+                      className={`text-base leading-relaxed px-3 py-2 rounded-xl break-words ${
                         msg.role === 'user'
                           ? 'bg-rose-50 dark:bg-rose-950/20 text-slate-700 dark:text-slate-200 border-l-2 border-rose-300'
-                          : 'bg-violet-50 dark:bg-violet-950/20 text-slate-600 dark:text-slate-300 italic border-l-2 border-violet-300'
+                          : 'bg-violet-50 dark:bg-violet-950/20 text-slate-700 dark:text-slate-200 italic border-l-2 border-violet-300'
                       }`}>
-                      <span className="font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
+                      <span className="font-semibold text-xs uppercase tracking-wide text-slate-600 dark:text-slate-400 block mb-1">
                         {msg.role === 'user' ? t('session.you') : t('session.tuteur')}
                       </span>
                       {msg.content}
@@ -2659,7 +2659,7 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
             <div className="flex items-center justify-between pr-12 lg:pr-0">
               <p className="text-sm font-bold text-violet-500 uppercase tracking-widest">✦ {t('session.tuteur')}</p>
               {turn > 0 && (
-                <span className="text-[10px] text-slate-400">Échange {turn}</span>
+                <span className="text-xs text-slate-400">Échange {turn}</span>
               )}
             </div>
             <p className="text-base leading-[1.6] italic text-slate-700 dark:text-slate-200 break-words">
@@ -2958,7 +2958,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
           </div>
 
           {(Object.values(petalsDeficit || {}).some((v) => (v ?? 0) > 0.05) || petalsHistory.length > 0) && (
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 text-center flex items-center justify-center gap-2 flex-wrap">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center flex items-center justify-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                 <span>{t('session.rises')}</span>
@@ -2980,7 +2980,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
           />
 
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/40 p-3">
-            <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               {t('session.drawnCards')}
             </p>
             <div className="grid grid-cols-4 gap-2 mt-2">
@@ -2994,7 +2994,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
                         {drawn.card.img ? (
                           <img src={drawn.card.img} alt={drawn.card.name} className="w-full h-full object-contain" />
                         ) : (
-                          <span className="text-[10px] text-slate-600 dark:text-slate-300 text-center leading-tight break-words">
+                          <span className="text-xs text-slate-600 dark:text-slate-300 text-center leading-tight break-words">
                             {drawn.card.name}
                           </span>
                         )}
@@ -3004,7 +3004,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
                         <img src={BACK_IMG} alt="" className="w-full h-full object-contain" />
                       </div>
                     )}
-                    <span className={`text-[9px] font-medium ${d.color}`}>{d.subtitle}</span>
+                    <span className={`text-xs font-medium ${d.color}`}>{d.subtitle}</span>
                   </div>
                 )
               })}
@@ -3013,7 +3013,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
 
           {threadContext && (
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest px-1">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest px-1">
                 {t('session.liveThreads')}
               </p>
               <LiveThreads threadContext={threadContext} />
@@ -3038,7 +3038,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
               </span>
             </div>
             {currentCard ? <p className="font-semibold text-sm truncate">{currentCard.name}</p> : <p className="text-xs text-slate-400 italic">Pas encore de carte</p>}
-            <p className="text-[10px] text-slate-500 mt-1">Échange {turn}</p>
+            <p className="text-xs text-slate-500 mt-1">Échange {turn}</p>
           </div>
         </div>
 
@@ -3069,7 +3069,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
         <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50 to-white dark:from-violet-950/10 dark:to-slate-900 p-5 space-y-3 mt-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold text-violet-500 uppercase tracking-widest">✦ {t('session.tuteur')}</p>
-            {turn > 0 && <span className="text-[10px] text-slate-400">Échange {turn}</span>}
+            {turn > 0 && <span className="text-xs text-slate-400">Échange {turn}</span>}
           </div>
           <p className="text-base leading-[1.6] italic text-slate-700 dark:text-slate-200 break-words">
             {!aiMessage && doorIntroMessage ? `Prenez un instant pour sentir ce qui se passe en vous. ${(doorIntroMessage.response_a || '').trim()}` : displayMessage.response_a}
@@ -3086,7 +3086,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
             </div>
           )}
           <div className="rounded-xl bg-white dark:bg-slate-800 border border-violet-100 dark:border-violet-900 p-4">
-            <p className="text-sm md:text-base font-semibold text-slate-800 dark:text-slate-100 leading-[1.6] break-words">{displayMessage.question}</p>
+            <p className="text-base md:text-lg font-semibold text-slate-800 dark:text-slate-100 leading-[1.6] break-words">{displayMessage.question}</p>
           </div>
         </div>
 
@@ -3381,7 +3381,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
               <span className="w-full h-full flex items-center justify-center p-0.5 text-[7px] text-slate-500 dark:text-slate-400 text-center leading-tight break-words">{d.card?.name ?? ''}</span>
             )}
           </div>
-          <span className="text-[9px] sm:text-[10px] text-slate-600 dark:text-slate-300 text-center leading-tight truncate w-full px-0.5">{d.card?.name ?? ''}</span>
+          <span className="text-xs sm:text-xs text-slate-600 dark:text-slate-300 text-center leading-tight truncate w-full px-0.5">{d.card?.name ?? ''}</span>
         </div>
       ))}
     </div>
@@ -3399,7 +3399,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
         <div className="flex flex-col items-center">
           <FlowerSVG petals={petals} petalsDeficit={petalsDeficit} petalsEvolution={petalsEvolution} size={400} animate showLabels />
           {(Object.values(petalsDeficit || {}).some(v => (v ?? 0) > 0.05) || petalsHistory?.length > 0) && (
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-center gap-2 flex-wrap">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {t('session.rises')}</span>
               <span className="text-slate-300">|</span>
               <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400" /> {t('session.tensions')}</span>
@@ -3425,7 +3425,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
       <div className="flex flex-col items-center">
         <FlowerSVG petals={petals} petalsDeficit={petalsDeficit} petalsEvolution={petalsEvolution} size={400} animate showLabels />
         {(Object.values(petalsDeficit || {}).some(v => (v ?? 0) > 0.05) || petalsHistory?.length > 0) && (
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-center gap-2 flex-wrap">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {t('session.rises')}</span>
             <span className="text-slate-300">|</span>
             <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400" /> {t('session.tensions')}</span>
@@ -3501,7 +3501,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
       <div className="flex flex-col items-center">
         <FlowerSVG petals={petals} petalsDeficit={petalsDeficit} petalsEvolution={petalsEvolution} size={400} animate showLabels />
         {(Object.values(petalsDeficit || {}).some(v => (v ?? 0) > 0.05) || petalsHistory?.length > 0) && (
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-center gap-2 flex-wrap">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {t('session.rises')}</span>
             <span className="text-slate-300">|</span>
             <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400" /> {t('session.tensions')}</span>
@@ -3530,9 +3530,9 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
           <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">✦ {t('session.sessionAnchors')}</p>
           {anchors.map((a, i) => (
             <div key={i} className="space-y-0.5 p-3 rounded-xl bg-white/60 dark:bg-slate-800/40 border border-emerald-100/80 dark:border-emerald-900/40">
-              <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{a.subtitle}</p>
+              <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{a.subtitle}</p>
               <p className="text-sm text-slate-700 dark:text-slate-200 italic">"{a.synthesis}"</p>
-              {a.habit && <p className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80">{t('session.habit')} : {a.habit}</p>}
+              {a.habit && <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80">{t('session.habit')} : {a.habit}</p>}
             </div>
           ))}
         </div>
@@ -3551,7 +3551,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
               <div>
                 <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">{action}</p>
                 {anchor && (
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
                     {t('session.anchorAfter')} {anchor}
                   </p>
                 )}
@@ -3569,7 +3569,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
       <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-slate-50/60 via-white to-violet-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950/10 p-5 space-y-4 shadow-sm">
         <div>
           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('session.plan14Title')}</p>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{t('session.plan14Desc')}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t('session.plan14Desc')}</p>
         </div>
         <div className="space-y-3">
           {(plan.plan_14j || []).map((day, idx) => (
@@ -3585,7 +3585,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
                   {day.action || 'Respirer et observer.'}
                 </p>
                 {day.context && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 italic">{day.context}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 italic">{day.context}</p>
                 )}
               </div>
             </div>
@@ -3620,7 +3620,7 @@ function PlanStep({ petals, petalsDeficit = {}, petalsHistory = [], cardsDrawn, 
                   {hasTensions ? t('session.shadowEmerging') : t('session.extendExploration')}
                 </p>
                 {hasTensions && tensionNames.length > 0 && (
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {t('session.dynamicsInTension')} : {tensionNames.join(', ')}
                   </p>
                 )}

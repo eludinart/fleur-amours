@@ -39,7 +39,7 @@ export function VersionBadge() {
 
   return (
     <span
-      className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-slate-200/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300"
+      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono bg-slate-200/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300"
       title={label.includes('dev') ? 'Environnement local' : `Version déployée: ${label}`}
     >
       {label}

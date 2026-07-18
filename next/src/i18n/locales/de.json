@@ -343,6 +343,12 @@
     "lisierePendingHint": "Deine Anfrage wartet auf eine Antwort. Du kannst auch zu einem Duo einladen.",
     "lisiereNoScores": "Blume im Aufblühen — noch keine Werte erfasst."
   },
+  "aiBusy": {
+    "thinking": "Dein Begleiter denkt nach…",
+    "pleaseWait": "Bitte warten — die Antwort kommt.",
+    "generating": "Wird erzeugt…",
+    "interpreting": "Wird gedeutet…"
+  },
   "common": {
     "offline": "Keine Verbindung — deine Änderungen werden möglicherweise nicht gespeichert.",
     "onlineRestored": "Verbindung wiederhergestellt",

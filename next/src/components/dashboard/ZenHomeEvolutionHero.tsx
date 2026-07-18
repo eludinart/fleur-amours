@@ -58,14 +58,14 @@ export function ZenHomeEvolutionHero({
   return (
     <section className="mb-8 rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-6 sm:px-6 sm:py-8 backdrop-blur-sm">
       <div className="text-center mb-5 space-y-2">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-violet-300/80">{t('fleurZen.evolutionTitle')}</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-violet-300/80">{t('fleurZen.evolutionTitle')}</p>
         {whisper ? (
           <div className="mx-auto max-w-2xl space-y-1">
-            <p className="text-[9px] uppercase tracking-wider text-violet-300/55">{whisperSubhint}</p>
+            <p className="text-xs uppercase tracking-wider text-violet-300/55">{whisperSubhint}</p>
             <p className="text-base sm:text-lg font-light text-violet-100/95 leading-relaxed italic">{whisper}</p>
           </div>
         ) : snapshots.length >= 2 ? (
-          <p className="text-sm text-white/45">{t('fleurZen.readingLevel3HintTrend')}</p>
+          <p className="text-sm text-white/75">{t('fleurZen.readingLevel3HintTrend')}</p>
         ) : null}
       </div>
 
@@ -98,13 +98,13 @@ export function ZenHomeEvolutionHero({
         </div>
 
         <div className="w-full max-w-lg rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3 text-center">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-violet-300/75">{t('fleurZen.snapshotLabel')}</p>
+          <p className="text-xs uppercase tracking-wider text-violet-300/75">{t('fleurZen.snapshotLabel')}</p>
           <div className="mt-1.5 text-sm text-violet-50/95 leading-relaxed" aria-live="polite">
             {timeStateCaption.mode === 'present' ? (
               <p>{timeStateCaption.text}</p>
             ) : timeStateCaption.mode === 'snapshot' ? (
               <>
-                <p className="text-xs text-white/45">{timeStateCaption.date}</p>
+                <p className="text-xs text-white/75">{timeStateCaption.date}</p>
                 <p>{timeStateCaption.detail}</p>
               </>
             ) : timeStateCaption.mode === 'petalOnly' ? (

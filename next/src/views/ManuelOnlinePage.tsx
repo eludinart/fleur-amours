@@ -833,7 +833,7 @@ function ManualNarrativeBlocks({
             key={`${keyBase}-ex-${i}`}
             className="not-italic rounded-xl border-l-[3px] border-amber-400/70 bg-amber-50/60 dark:border-amber-500/60 dark:bg-amber-950/20 pl-4 pr-4 py-3"
           >
-            <span className="inline-flex items-center rounded-full border border-amber-300/80 bg-white/90 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:border-amber-700/70 dark:bg-slate-900 dark:text-amber-300">
+            <span className="inline-flex items-center rounded-full border border-amber-300/80 bg-white/90 px-2 py-0.5 text-sm font-semibold uppercase tracking-wide text-amber-700 dark:border-amber-700/70 dark:bg-slate-900 dark:text-amber-300">
               Exemple
             </span>
             <p className={`mt-2 ${MANUAL_BODY_CLASS}`}>
@@ -868,7 +868,7 @@ function ManualNarrativeBlocks({
             key={`${keyBase}-co-${i}`}
             className="not-italic rounded-xl border border-sky-200/70 bg-sky-50/60 p-3 dark:border-sky-900/60 dark:bg-sky-950/20"
           >
-            <span className="inline-flex items-center rounded-full border border-sky-200 bg-white/90 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-700 dark:border-sky-800 dark:bg-slate-900 dark:text-sky-300">
+            <span className="inline-flex items-center rounded-full border border-sky-200 bg-white/90 px-2 py-0.5 text-sm font-semibold uppercase tracking-wide text-sky-700 dark:border-sky-800 dark:bg-slate-900 dark:text-sky-300">
               {b.label}
             </span>
             {b.text ? (
@@ -921,7 +921,7 @@ function extractQuotedQuestion(raw: string): { quote: string | null; rest: strin
 function CardVerso({ text }: { text: string }) {
   return (
     <aside className="not-italic rounded-2xl border border-amber-200/70 dark:border-amber-700/40 bg-gradient-to-br from-amber-50/70 to-rose-50/40 dark:from-amber-950/20 dark:to-rose-950/15 p-4 sm:p-5 shadow-sm">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300">
+      <p className="text-sm font-semibold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300">
         Au verso de la carte
       </p>
       <p className="mt-2 text-sm sm:text-[15px] leading-7 text-slate-700 dark:text-slate-200 italic">
@@ -1014,7 +1014,7 @@ function HerbierTable({ entries }: { entries: ReturnType<typeof buildHerbierEntr
               {e.name}
             </h3>
             {e.family ? (
-              <span className="text-[11px] uppercase tracking-wide text-violet-700 dark:text-violet-300">
+              <span className="text-sm uppercase tracking-wide text-violet-700 dark:text-violet-300">
                 {e.family}
               </span>
             ) : null}
@@ -1152,8 +1152,8 @@ function ChapterBody({ text, title, locale = 'fr' }: { text: string; title?: str
               <h3
                 className={
                   isShadow
-                    ? 'text-[11px] sm:text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300'
-                    : 'text-[11px] sm:text-xs font-semibold uppercase tracking-[0.12em] text-violet-700 dark:text-violet-300'
+                    ? 'text-sm sm:text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300'
+                    : 'text-sm sm:text-xs font-semibold uppercase tracking-[0.12em] text-violet-700 dark:text-violet-300'
                 }
               >
                 {b.label}
@@ -1186,7 +1186,7 @@ function ChapterBody({ text, title, locale = 'fr' }: { text: string; title?: str
               key={`${b.key}-${idx}`}
               className="rounded-2xl border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/80 dark:bg-amber-950/25 p-4 sm:p-6 shadow-sm"
             >
-              <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300">
+              <h3 className="text-sm sm:text-xs font-semibold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300">
                 {b.label}
               </h3>
               {quote ? (
@@ -1216,7 +1216,7 @@ function ChapterBody({ text, title, locale = 'fr' }: { text: string; title?: str
                       key={`${f.label}-${f.value}`}
                       className="rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/65 p-3.5"
                     >
-                      <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                      <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-300">
                         {f.label}
                       </p>
                       <div className="mt-1.5 text-sm leading-7 text-slate-800 dark:text-slate-100 sm:text-[15px]">

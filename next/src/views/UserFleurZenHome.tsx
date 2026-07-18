@@ -241,8 +241,8 @@ export function UserFleurZenHome() {
                 <p className="text-xs text-emerald-200/80 mt-1">{t('fleurZen.celebrateBody')}</p>
               </div>
             ) : null}
-            <h1 className="text-xl sm:text-2xl font-light tracking-[0.2em] uppercase text-white/90">{t('fleurZen.title')}</h1>
-            <p className="text-xs sm:text-[13px] text-white/50 font-light tracking-wide max-w-2xl mx-auto xl:mx-0">
+            <h1 className="text-xl sm:text-2xl font-light tracking-wider uppercase text-white/90">{t('fleurZen.title')}</h1>
+            <p className="text-sm text-white/80 font-light tracking-wide max-w-2xl mx-auto xl:mx-0 leading-relaxed">
               {t('fleurZen.subtitle')}
             </p>
           </header>
@@ -309,7 +309,7 @@ export function UserFleurZenHome() {
               <div className="flex justify-center xl:justify-start">
                 <Link
                   href={statsHref}
-                  className="text-xs sm:text-[13px] font-medium text-teal-300/90 hover:text-teal-200 border border-teal-500/35 hover:border-teal-400/55 bg-teal-950/30 px-5 py-2.5 rounded-full transition-colors whitespace-nowrap"
+                  className="text-sm font-medium text-teal-200 hover:text-teal-100 border border-teal-500/35 hover:border-teal-400/55 bg-teal-950/30 px-5 py-2.5 rounded-full transition-colors whitespace-nowrap"
                 >
                   {t('fleurZen.detailsStatsLong')}
                 </Link>
@@ -328,7 +328,7 @@ export function UserFleurZenHome() {
                   compact
                 />
               ) : (
-                <p className="text-sm text-white/40 text-center py-6">{t('fleurZen.zenHelpTimeEmpty')}</p>
+                <p className="text-sm text-white/70 text-center py-6">{t('fleurZen.zenHelpTimeEmpty')}</p>
               )}
             </section>
           </div>
