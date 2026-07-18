@@ -29,6 +29,10 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
   useStore((s) => s.locale)
   const [text, setText] = useState('')
   const [liveText, setLiveText] = useState('')
+  /** Brouillon synchrone — évite d’envoyer une version périmée de liveText/text. */
+  const draftRef = useRef('')
+  /** Verrou anti double-envoi (state React trop lent entre deux clics). */
+  const sendingRef = useRef(false)
   const [poeticReflection, setPoeticReflection] = useState(
     () => (initialData?.poeticReflection ?? '') || (initialData?.history?.filter(m => m.role === 'assistant').pop()?.content ?? '')
   )
@@ -70,10 +74,12 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
   const [closeModalShareToken, setCloseModalShareToken] = useState<string | null>(null)
   const [hardCloseMessage, setHardCloseMessage] = useState<string>('')
   const [dreamscapeConfig, setDreamscapeConfig] = useState(() => ({
-    close_mode: 'model', // 'model'|'manual'|'auto' (auto kept for backward behavior)
+    close_mode: 'auto', // cercle complet → invitation à clôturer
     max_cartes_par_tour: 1,
-    min_echanges_avant_cloture: 20,
-    objectif_echanges: 20,
+    min_echanges_avant_cloture: 5,
+    objectif_echanges: 8,
+    max_echanges: 12,
+    extra_echanges_avant_forcer_cloture: 3,
     force_question_finale: true,
   }))
   const revealOrderRef = useRef(
@@ -81,9 +87,17 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
   )
   const allRevealedRef = useRef(false)
   allRevealedRef.current = slots.every(s => !s.faceDown)
+  const revealedCount = slots.filter((s) => !s.faceDown).length
   const userMessageCount = history.filter(m => m.role === 'user').length
-  /** Dès qu’au moins un échange — la promenade peut se clôturer quand le cercle est complet */
-  const canCloseTirage = allRevealedRef.current && userMessageCount >= 1
+  /** Cercle complet, ou assez avancé pour pouvoir sceller sans bloquer */
+  const canCloseTirage =
+    userMessageCount >= 1 &&
+    (allRevealedRef.current ||
+      (revealedCount >= 4 &&
+        userMessageCount >= Math.min(5, Number(dreamscapeConfig?.min_echanges_avant_cloture ?? 5))))
+  const stagnantTurnsRef = useRef(0)
+  const slotsRef = useRef(slots)
+  slotsRef.current = slots
   const closeNudgeShownRef = useRef(false)
   const autoEndFormTriggeredRef = useRef(false)
   const snapshotRef = useRef(null)
@@ -177,11 +191,19 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
   }, [showCloseModal, captureSnapshot])
 
   const resetWalk = useCallback(() => {
+    draftRef.current = ''
+    sendingRef.current = false
+    stagnantTurnsRef.current = 0
+    closeNudgeShownRef.current = false
+    setShowCloseNudge(false)
+    setHardCloseMessage('')
     setText('')
     setLiveText('')
-    setHistory([])
-    setPoeticReflection(t('dreamscapeCanvas.openingQuestion'))
+    const opening = t('dreamscapeCanvas.openingQuestion')
+    setHistory([{ role: 'assistant', content: opening }])
+    setPoeticReflection(opening)
     setSlots(initSlots())
+    slotsRef.current = initSlots()
     setLivePetals({})
     setPetalScores({})
     setLivePetalsDeficit({})
@@ -200,7 +222,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
     revealOrderRef.current = 0
     autoEndFormTriggeredRef.current = false
     allRevealedRef.current = false
-  }, [setText, setLiveText, setHistory, setPoeticReflection, setSlots, setLivePetals, setLivePetalsDeficit])
+  }, [])
 
   useEffect(() => {
     const mq = window.matchMedia('(hover: none)')
@@ -281,64 +303,77 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
     [slots]
   )
 
-  // Révèle ou remplace des cartes dans les 8 slots
-  // cardToReplace : quand toutes révélées, cible le slot contenant cette carte (sinon slot le plus ancien)
+  // Révèle ou remplace des cartes dans les 8 slots.
+  // Retourne le nombre de faces nouvellement tournées (calcul synchrone).
   const revealCards = useCallback((cardNames, context = {}) => {
-    if (!cardNames?.length) return
+    if (!cardNames?.length) return 0
     const shadowDetected = context.shadowDetected ?? false
     const hasDeficit = context.hasDeficit ?? false
     const hasPetals = context.hasPetals ?? false
     const cardToReplace = context.cardToReplace ?? null
-    const halo = (shadowDetected && hasDeficit) ? 'shadow' : (hasPetals && !shadowDetected) ? 'light' : null
-    setSlots(prev => {
-      const next = prev.map(s => ({ ...s }))
-      let counter = revealOrderRef.current
+    const halo =
+      shadowDetected && hasDeficit ? 'shadow' : hasPetals && !shadowDetected ? 'light' : null
 
-      const resolveTarget = (nextSlots, newCardName) => {
-        const existing = nextSlots.find(s => s.card === newCardName)
-        if (existing) return null
-        let t = nextSlots.find(s => s.faceDown)
-        if (t) return t
-        if (cardToReplace) {
-          const toReplaceCard = findCard(cardToReplace)
-          if (toReplaceCard) {
-            const slot = nextSlots.find(s => s.card === toReplaceCard.name)
-            if (slot) return slot
-          }
+    const prev = slotsRef.current
+    const next = prev.map((s) => ({ ...s }))
+    let counter = revealOrderRef.current
+    let revealedThisCall = 0
+
+    const resolveTarget = (nextSlots) => {
+      const t = nextSlots.find((s) => s.faceDown)
+      if (t) return t
+      if (cardToReplace) {
+        const toReplaceCard = findCard(cardToReplace)
+        if (toReplaceCard) {
+          const slot = nextSlots.find((s) => s.card === toReplaceCard.name)
+          if (slot) return slot
         }
-        return nextSlots.reduce((oldest, s) =>
-          !oldest || s.revealOrder < oldest.revealOrder ? s : oldest,
-          null
-        )
+      }
+      return nextSlots.reduce(
+        (oldest, s) => (!oldest || s.revealOrder < oldest.revealOrder ? s : oldest),
+        null
+      )
+    }
+
+    cardNames.forEach((name) => {
+      const card = findCard(name)
+      if (!card) return
+
+      const existing = next.find((s) => s.card === card.name)
+      if (existing) {
+        if (existing.faceDown) {
+          existing.faceDown = false
+          existing.revealOrder = ++counter
+          if (halo) existing.halo = halo
+          revealedThisCall += 1
+        }
+        return
       }
 
-      cardNames.forEach(name => {
-        const card = findCard(name)
-        if (!card) return
-
-        const existing = next.find(s => s.card === card.name)
-        if (existing) {
-          if (existing.faceDown) {
-            existing.faceDown = false
-            existing.revealOrder = ++counter
-            if (halo) existing.halo = halo
-          }
-          return
-        }
-
-        const target = resolveTarget(next, card.name)
-        if (target) {
-          target.card = card.name
-          target.faceDown = false
-          target.revealOrder = ++counter
-          if (halo) target.halo = halo
-        }
-      })
-
-      revealOrderRef.current = counter
-      return next
+      const target = resolveTarget(next)
+      if (target) {
+        const flipped = target.faceDown
+        target.card = card.name
+        target.faceDown = false
+        target.revealOrder = ++counter
+        if (halo) target.halo = halo
+        if (flipped) revealedThisCall += 1
+      }
     })
+
+    revealOrderRef.current = counter
+    slotsRef.current = next
+    setSlots(next)
+    return revealedThisCall
   }, [findCard])
+
+  /** Retourne une carte face cachée pour faire avancer le cercle si l’IA n’en propose pas. */
+  const pickFallbackReveal = useCallback(() => {
+    const faceDown = slotsRef.current.filter((s) => s.faceDown)
+    if (!faceDown.length) return null
+    const pick = faceDown[Math.floor(Math.random() * faceDown.length)]
+    return pick?.card ?? null
+  }, [])
 
   // Accumule les pétales lumière (nouvelles valeurs fusionnées, légère décroissance)
   const mergePetals = useCallback((newPetals) => {
@@ -384,38 +419,36 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
     })
   }, [])
 
-  // ── Phrase d'ouverture (sauf reprise) ─────────────────────────────
+  // ── Phrase d'ouverture locale immédiate (pas de blocage ni faux « Bonjour ») ──
   useEffect(() => {
     if (initialData) return
-    const loadOpening = async () => {
-      setIsAnalyzing(true)
-      try {
-        const res = await aiApi.analyzeMood({ text: 'Bonjour', history: [] })
-        if (res?.poetic_reflection) {
-          setPoeticReflection(res.poetic_reflection)
-          setHistory([{ role: 'assistant', content: res.poetic_reflection }])
-        } else {
-          setPoeticReflection(t('dreamscapeCanvas.openingQuestion'))
-        }
-      } catch (e) {
-        setPoeticReflection(t('dreamscapeCanvas.openingQuestion'))
-      } finally {
-        setIsAnalyzing(false)
-      }
-    }
-    loadOpening()
+    setPoeticReflection(t('dreamscapeCanvas.openingQuestion'))
+    setHistory([{ role: 'assistant', content: t('dreamscapeCanvas.openingQuestion') }])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ── Envoi d'un message ───────────────────────────────────────────
+  const setDraft = useCallback((v: string) => {
+    draftRef.current = v
+    setText(v)
+  }, [])
+
+  const setDraftLive = useCallback((v: string) => {
+    draftRef.current = v
+    setLiveText(v)
+  }, [])
+
   const sendMessage = useCallback(async () => {
-    const msg = (liveText || text).trim()
-    if (!msg || isAnalyzing) return
+    // Préférer le brouillon synchrone (ref) ; fallback text/liveText
+    const raw = draftRef.current || text || liveText
+    const msg = String(raw ?? '').trim()
+    if (!msg || sendingRef.current || isAnalyzing) return
 
     // Si on a dépassé la limite forcée, on n'envoie plus; on invite à clôturer.
     const max = Number(dreamscapeConfig?.max_echanges ?? 0)
     const extra = Number(dreamscapeConfig?.extra_echanges_avant_forcer_cloture ?? 0)
-    const userTurnsNow = history.filter(m => m.role === 'user').length
+    const historySnapshot = history
+    const userTurnsNow = historySnapshot.filter(m => m.role === 'user').length
     if (userTurnsNow === 0 && onFirstUserMessage) onFirstUserMessage()
     if (Number.isFinite(max) && max > 0 && userTurnsNow >= max + extra) {
       setHardCloseMessage(
@@ -426,8 +459,10 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
       return
     }
 
-    const newHistory = [...history, { role: 'user', content: msg }]
+    sendingRef.current = true
+    const newHistory = [...historySnapshot, { role: 'user', content: msg }]
     setHistory(newHistory)
+    draftRef.current = ''
     setText('')
     setLiveText('')
     setIsAnalyzing(true)
@@ -437,16 +472,42 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
       const allRevealed = allRevealedRef.current
       const res = await aiApi.analyzeMood({
         text: msg,
-        history,
+        history: historySnapshot,
         card_positions: cardPositions,
         all_revealed: allRevealed,  // indique à l'IA qu'elle peut proposer des remplacements
       })
 
-      if (res?.dreamscape_config) setDreamscapeConfig(res.dreamscape_config)
-      if (res?.poetic_reflection) {
-        setPoeticReflection(res.poetic_reflection)
-        setHistory([...newHistory, { role: 'assistant', content: res.poetic_reflection }])
+      if (res?.dreamscape_config) {
+        const c = res.dreamscape_config
+        const rawMax = Number(c?.max_cartes_par_tour)
+        setDreamscapeConfig((prev) => ({
+          ...prev,
+          ...c,
+          // Toujours au moins 1 carte / tour pour garder le rythme ludique
+          max_cartes_par_tour: Math.max(1, Math.min(3, Number.isFinite(rawMax) ? Math.floor(rawMax) : 1)),
+        }))
       }
+
+      const reflection = typeof res?.poetic_reflection === 'string' ? res.poetic_reflection.trim() : ''
+      if (!reflection) {
+        // Pas de réponse utile : restaurer le brouillon et annuler le compteur d’échange
+        draftRef.current = msg
+        setText(msg)
+        setLiveText(msg)
+        setHistory(historySnapshot)
+        const aiErrEarly = res?._ai_error ?? res?._openrouter_error
+        toast(
+          aiErrEarly
+            ? t('dreamscapeCanvas.aiDegraded', { reason: String(aiErrEarly) })
+            : t('dreamscapeCanvas.emptyReply'),
+          'warning'
+        )
+        return
+      }
+
+      setPoeticReflection(reflection)
+      setHistory([...newHistory, { role: 'assistant', content: reflection }])
+
       if (res?.active_petals) mergePetals(res.active_petals)
       let deficitToMerge = res?.petals_deficit
       if (res?.shadow_detected) {
@@ -477,20 +538,31 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
         setShadowState(null)
       }
       if (deficitToMerge && Object.keys(deficitToMerge).length) mergePetalsDeficit(deficitToMerge)
-      if (res?.cards_to_reveal?.length) {
-        const allRevealed = allRevealedRef.current
-        const maxPerTurn = Math.max(0, Math.min(3, Number(dreamscapeConfig?.max_cartes_par_tour ?? 1)))
-        const toReveal = maxPerTurn > 0
-          ? res.cards_to_reveal.slice(0, maxPerTurn)
-          : []
-        const hasDeficit = deficitToMerge && Object.values(deficitToMerge).some(v => (v ?? 0) > 0.05)
-        revealCards(toReveal, {
-          shadowDetected: !!res.shadow_detected,
-          hasDeficit,
-          hasPetals: !!(res.active_petals && Object.keys(res.active_petals).length),
-          cardToReplace: allRevealed ? (res.card_to_replace ?? null) : null,
-        })
+
+      // Révélation : proposition IA, sinon secours pour que le cercle avance à chaque échange
+      const hasDeficit = deficitToMerge && Object.values(deficitToMerge).some(v => (v ?? 0) > 0.05)
+      const revealCtx = {
+        shadowDetected: !!res.shadow_detected,
+        hasDeficit,
+        hasPetals: !!(res.active_petals && Object.keys(res.active_petals).length),
+        cardToReplace: allRevealedRef.current ? (res.card_to_replace ?? null) : null,
       }
+      let flipped = 0
+      if (res?.cards_to_reveal?.length) {
+        const rawMax = Number(dreamscapeConfig?.max_cartes_par_tour ?? 1)
+        const maxPerTurn = Math.max(1, Math.min(3, Number.isFinite(rawMax) ? Math.floor(rawMax) : 1))
+        flipped = revealCards(res.cards_to_reveal.slice(0, maxPerTurn), revealCtx)
+      }
+      if (flipped === 0 && !allRevealedRef.current) {
+        stagnantTurnsRef.current += 1
+        const fallback = pickFallbackReveal()
+        if (fallback) flipped = revealCards([fallback], revealCtx)
+      }
+      if (flipped > 0) {
+        stagnantTurnsRef.current = 0
+        allRevealedRef.current = slotsRef.current.every((s) => !s.faceDown)
+      }
+
       if ((dreamscapeConfig?.close_mode ?? 'model') === 'model') {
         const minTurns = Number(dreamscapeConfig?.min_echanges_avant_cloture ?? 0)
         const userTurns = newHistory.filter(m => m.role === 'user').length
@@ -502,21 +574,21 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
 
       const aiErr = res?._ai_error ?? res?._openrouter_error
       if (aiErr) {
-        toast(`IA dégradée : ${aiErr}`, 'warning')
+        toast(t('dreamscapeCanvas.aiDegraded', { reason: String(aiErr) }), 'warning')
       }
     } catch (e) {
       console.error('Erreur analyze_mood:', e)
+      // Restaurer le message : l’utilisateur ne doit pas le perdre
+      draftRef.current = msg
+      setText(msg)
+      setLiveText(msg)
+      setHistory(historySnapshot)
+      toast(t('dreamscapeCanvas.aiError'), 'error')
     } finally {
       setIsAnalyzing(false)
+      sendingRef.current = false
     }
-  }, [text, liveText, history, isAnalyzing, buildCardPositions, mergePetals, mergePetalsDeficit, revealCards, dreamscapeConfig, onFirstUserMessage])
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage()
-    }
-  }
+  }, [text, liveText, history, isAnalyzing, buildCardPositions, mergePetals, mergePetalsDeficit, revealCards, pickFallbackReveal, dreamscapeConfig, onFirstUserMessage])
 
   const handleSave = useCallback(async () => {
     if (!history.length && !poeticReflection?.trim()) {
@@ -791,30 +863,57 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
           )
         })()}
 
+        {/* Progression ludique — cartes + échanges */}
+        <div className="w-full max-w-md space-y-1.5 px-1" aria-live="polite">
+          <div className="flex justify-between gap-3 text-[11px] sm:text-xs font-medium text-white/70">
+            <span>
+              {t('dreamscapeCanvas.progressCards', { revealed: String(revealedCount) })}
+            </span>
+            <span>
+              {t('dreamscapeCanvas.progressExchanges', {
+                count: String(userMessageCount),
+                goal: String(Number(dreamscapeConfig?.objectif_echanges ?? 8)),
+              })}
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-violet-400 via-fuchsia-400 to-rose-400"
+              initial={false}
+              animate={{ width: `${Math.min(100, (revealedCount / 8) * 100)}%` }}
+              transition={{ type: 'spring', stiffness: 140, damping: 22 }}
+            />
+          </div>
+          {canCloseTirage && !showCloseModal ? (
+            <p className="text-center text-[11px] text-emerald-300/90">
+              {t('dreamscapeCanvas.readyToSeal')}
+            </p>
+          ) : revealedCount > 0 && revealedCount < 8 ? (
+            <p className="text-center text-[11px] text-white/45">
+              {t('dreamscapeCanvas.almostThere')}
+            </p>
+          ) : null}
+        </div>
+
         {/* Zone de saisie */}
         <div className="w-full bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-1 shadow-xl border border-white/10">
           <VoiceTextInput
             value={text}
-            onChange={setText}
-            onLiveUpdate={setLiveText}
+            onChange={setDraft}
+            onLiveUpdate={setDraftLive}
+            onSubmit={sendMessage}
             autoStart={false}
             placeholder={t('dreamscapeCanvas.placeholder')}
             className="text-white placeholder-white/40 text-base sm:text-lg"
             rows={2}
             loading={isAnalyzing}
             loadingText={t('dreamscapeCanvas.listening')}
-            onKeyDown={handleKeyDown}
-            micAddon={(() => {
-              const turns = history.filter(m => m.role === 'user').length
-              const max = Number(dreamscapeConfig?.max_echanges ?? 0)
-              const label = max > 0 ? `${Math.min(turns, max)}/${max}` : String(turns)
-              return (
-                <span className="inline-flex items-center h-11 px-3 rounded-xl border border-white/15 bg-white/5 text-xs font-semibold text-white/80">
-                  Échanges&nbsp;: {label}
-                </span>
-              )
-            })()}
           />
+          {!isAnalyzing && (
+            <p className="text-[10px] sm:text-[11px] text-white/40 text-center pb-1.5 pt-0.5">
+              {t('dreamscapeCanvas.enterHint')}
+            </p>
+          )}
         </div>
 
         {/* Boutons : principal + secondaires regroupés */}
@@ -823,7 +922,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              disabled={isAnalyzing || !(liveText || text).trim()}
+              disabled={isAnalyzing || !(text.trim() || liveText.trim())}
               onClick={sendMessage}
               className="px-6 py-2 sm:px-8 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-violet-600 to-rose-500 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-all border border-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -1216,7 +1315,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
                 onClick={() => setShowCloseNudge(false)}
                 className="px-4 py-2 rounded-full text-sm font-medium border border-white/25 bg-white/5 text-white/90 hover:bg-white/10"
               >
-                Continuer l’exploration
+                {t('dreamscapeCanvas.closeNudgeContinue')}
               </button>
               <button
                 type="button"
@@ -1226,7 +1325,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
                 }}
                 className="px-5 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-violet-600 to-rose-500 text-white hover:opacity-90"
               >
-                Clôturer maintenant
+                {t('dreamscapeCanvas.closeNudgeSeal')}
               </button>
             </div>
           </motion.div>

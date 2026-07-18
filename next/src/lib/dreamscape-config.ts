@@ -26,13 +26,13 @@ const DEFAULT_CONFIG: Required<Pick<
   DreamscapeConfig,
   'objectif_echanges' | 'min_echanges_avant_cloture' | 'close_mode' | 'max_cartes_par_tour' | 'max_tokens' | 'force_question_finale' | 'max_echanges' | 'extra_echanges_avant_forcer_cloture'
 >> = {
-  objectif_echanges: 20,
-  min_echanges_avant_cloture: 20,
-  close_mode: 'model',
+  objectif_echanges: 8,
+  min_echanges_avant_cloture: 5,
+  close_mode: 'auto',
   max_cartes_par_tour: 1,
   max_tokens: 700,
   force_question_finale: true,
-  max_echanges: 20,
+  max_echanges: 12,
   extra_echanges_avant_forcer_cloture: 3,
 }
 
@@ -59,7 +59,7 @@ export function parseDreamscapeConfigFromPrompt(prompt: string): DreamscapeConfi
       objectif_echanges: clampInt(o.objectif_echanges, 1, 200),
       min_echanges_avant_cloture: clampInt(o.min_echanges_avant_cloture, 0, 200),
       close_mode: closeMode,
-      max_cartes_par_tour: clampInt(o.max_cartes_par_tour, 0, 3),
+      max_cartes_par_tour: clampInt(o.max_cartes_par_tour, 1, 3),
       max_tokens: clampInt(o.max_tokens, 150, 4000),
       force_question_finale: typeof o.force_question_finale === 'boolean' ? o.force_question_finale : undefined,
       max_echanges: clampInt(o.max_echanges, 1, 200),

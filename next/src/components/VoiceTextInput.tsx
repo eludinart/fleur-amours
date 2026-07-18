@@ -43,10 +43,13 @@ export function VoiceTextInput({
 }: VoiceTextInputProps) {
   const baseAtStartRef = useRef('')
   const prevValueRef = useRef<string>(value ?? '')
+  /** Ignore les résultats vocaux tardifs après un clear / pendant un envoi. */
+  const ignoreSpeechRef = useRef(false)
+
   const { listening, interimText, supported, error: speechError, start, stop, reset } =
     useSpeech({
       onResult: (t) => {
-        if (!t) return
+        if (!t || ignoreSpeechRef.current || loading) return
         const base = baseAtStartRef.current
         onChange?.(base.trimEnd() ? `${base.trimEnd()} ${t}`.trim() : t)
       },
@@ -54,6 +57,10 @@ export function VoiceTextInput({
     })
 
   const [hasAutoStarted, setHasAutoStarted] = useState(false)
+
+  useEffect(() => {
+    if (loading) ignoreSpeechRef.current = true
+  }, [loading])
 
   // Quand l'hôte "vide" l'input (ex. après envoi), on s'assure que la dictée
   // ne continue pas à concaténer sur une ancienne base.
@@ -63,11 +70,16 @@ export function VoiceTextInput({
     prevValueRef.current = cur
     // Ne pas exécuter au montage si l'input démarre déjà vide.
     if (!prev && !cur) return
-    if (cur !== '') return
+    if (cur !== '') {
+      // Nouveau texte (saisie ou restauration) : réautoriser la voix.
+      if (!loading) ignoreSpeechRef.current = false
+      return
+    }
+    ignoreSpeechRef.current = true
     baseAtStartRef.current = ''
     if (listening) stop()
     reset()
-  }, [value, listening, stop, reset])
+  }, [value, listening, stop, reset, loading])
 
   useEffect(() => {
     if (autoStart && supported && !listening && !hasAutoStarted) {
@@ -81,7 +93,7 @@ export function VoiceTextInput({
   }, [autoStart, supported, listening, hasAutoStarted, start, value])
 
   const displayValue = (() => {
-    if (!listening || !interimText) return value ?? ''
+    if (!listening || !interimText || ignoreSpeechRef.current) return value ?? ''
     const base = (value ?? '').trimEnd()
     const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
     if (norm(base).endsWith(norm(interimText))) return value ?? ''
@@ -95,6 +107,7 @@ export function VoiceTextInput({
   function toggleMic() {
     if (listening) stop()
     else {
+      ignoreSpeechRef.current = false
       baseAtStartRef.current = value ?? ''
       reset()
       // Must start synchronously on user gesture for some browsers.
@@ -104,6 +117,7 @@ export function VoiceTextInput({
 
   function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     if (listening) stop()
+    ignoreSpeechRef.current = false
     onChange?.(e.target.value)
   }
 
@@ -155,12 +169,12 @@ export function VoiceTextInput({
             <button
               type="button"
               onClick={toggleMic}
-              disabled={disabled}
+              disabled={disabled || loading}
               className={`relative w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm transition-all active:scale-95
                 ${
                   listening
                     ? 'bg-rose-500 shadow-rose-500/40 scale-105'
-                    : disabled
+                    : disabled || loading
                       ? 'bg-slate-100 dark:bg-slate-800 opacity-40 cursor-not-allowed'
                       : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-rose-400'
                 }`}
