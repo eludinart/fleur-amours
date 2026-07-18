@@ -28,6 +28,7 @@ import { SessionPreviewPrintable } from '@/components/SessionPreviewPrintable'
 import { TranslatableContent } from '@/components/TranslatableContent'
 import { NoteCard } from '@/components/NoteCard'
 import { AlertBox, AlertBoxLink } from '@/components/AlertBox'
+import { AiBusyIndicator, AiBusyLock } from '@/components/AiBusyIndicator'
 import { thresholdSnapshotFromThresholdData } from '@/lib/session-threshold-snapshot'
 
 // ── Helper : trouver une carte par nom dans les portes ─────────
@@ -2940,8 +2941,9 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
   const canOpenMoreDoors = lockedDoors.length < maxDoors
   const localeDoor = DOOR_MAP[currentDoor] ?? FOUR_DOORS[0]
 
-  function SessionLeftColumn({ flowerSize = 320 }) {
-    return (
+  // IMPORTANT : JSX en constantes (pas de composants imbriqués).
+  // Sinon chaque frappe recrée SessionRightColumn → remount textarea → perte de focus.
+  const sessionLeftColumn = (
       <div className="hidden lg:block lg:sticky lg:top-4 lg:self-start min-w-0 h-full overflow-y-auto overflow-x-hidden">
         <div className="space-y-4 p-4 lg:p-0">
           <div className="flex flex-col items-center w-full shrink-0">
@@ -2949,7 +2951,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
               petals={petals}
               petalsDeficit={petalsDeficit}
               petalsEvolution={petalsHistory.length > 0 ? petalsHistory[petalsHistory.length - 1] : null}
-              size={flowerSize}
+              size={320}
               animate
               showLabels
               overriddenPetals={overriddenPetals}
@@ -3021,11 +3023,9 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
           )}
         </div>
       </div>
-    )
-  }
+  )
 
-  function SessionRightColumn() {
-    return (
+  const sessionRightColumn = (
       <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain pb-1">
         <div className={`rounded-2xl border-2 ${localeDoor.border} p-4 flex gap-3 items-center w-full shrink-0`}>
           <div className="flex-1 min-w-0">
@@ -3149,7 +3149,7 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
 
         {/* Input */}
         {!doorLocked && !showCardDraw && (!showSummaryPanel || showInputWithSummary) && (
-          <div className="space-y-2 py-4 md:py-3 shrink-0 w-full mt-4">
+          <AiBusyLock active={loading} className="space-y-2 py-4 md:py-3 shrink-0 w-full mt-4">
             <div className="space-y-2">
               <textarea
                 value={effectiveText}
@@ -3198,8 +3198,8 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
               </div>
             </div>
 
-            {loading && <p className="text-xs text-violet-400 italic text-center animate-pulse">{t('session.tuteurListening')}</p>}
-          </div>
+            {loading && <AiBusyIndicator active variant="banner" label={t('session.tuteurListening')} />}
+          </AiBusyLock>
         )}
 
         {/* Erreur */}
@@ -3263,14 +3263,13 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
           </div>
         )}
       </div>
-    )
-  }
+  )
 
   return (
     <div className="max-w-4xl mx-auto h-full flex flex-col min-h-0">
       <div className="grid h-full min-h-0 grid-cols-1 auto-rows-[minmax(0,1fr)] lg:grid-cols-[420px_1fr] gap-5 flex-1 min-w-0 overflow-hidden [&>*]:min-h-0">
-        <SessionLeftColumn />
-        <SessionRightColumn />
+        {sessionLeftColumn}
+        {sessionRightColumn}
       </div>
     </div>
   )
