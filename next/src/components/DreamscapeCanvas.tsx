@@ -11,6 +11,7 @@ import { aiApi } from '@/api/ai'
 import { dreamscapeApi } from '@/api/dreamscape'
 import { proxyImageUrl } from '@/lib/api-client'
 import { toast } from '@/hooks/useToast'
+import { ApiError } from '@/lib/api-client'
 import { ALL_CARDS, LOVE, BACK_IMG, getCardTranslated } from '@/data/tarotCards'
 import { DreamscapeRosace } from '@/components/DreamscapeRosace'
 import { FLOWER_OFFSET } from '@/config/dreamscapeLayout'
@@ -470,12 +471,31 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
     try {
       const cardPositions = buildCardPositions()
       const allRevealed = allRevealedRef.current
-      const res = await aiApi.analyzeMood({
+      const payload = {
         text: msg,
         history: historySnapshot,
         card_positions: cardPositions,
-        all_revealed: allRevealed,  // indique à l'IA qu'elle peut proposer des remplacements
-      })
+        all_revealed: allRevealed,
+      }
+
+      // 1 retry sur erreur réseau / gateway (ex. recompile Next en dev)
+      let res: Awaited<ReturnType<typeof aiApi.analyzeMood>> | null = null
+      let lastErr: unknown = null
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          res = await aiApi.analyzeMood(payload)
+          lastErr = null
+          break
+        } catch (err) {
+          lastErr = err
+          const status = err instanceof ApiError ? err.status : 0
+          const retryable = status === 0 || status === 502 || status === 503 || status === 504
+          if (!retryable || attempt === 2) throw err
+          await new Promise((r) => setTimeout(r, 600))
+        }
+      }
+      if (lastErr) throw lastErr
+      if (!res) throw new Error('Réponse IA absente')
 
       if (res?.dreamscape_config) {
         const c = res.dreamscape_config
@@ -583,7 +603,23 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
       setText(msg)
       setLiveText(msg)
       setHistory(historySnapshot)
-      toast(t('dreamscapeCanvas.aiError'), 'error')
+      const detail =
+        e instanceof ApiError
+          ? e.detail || e.message
+          : e instanceof Error
+            ? e.message
+            : ''
+      if (e instanceof ApiError && e.status === 401) {
+        toast(t('dreamscapeCanvas.sessionExpired'), 'error')
+      } else if (e instanceof ApiError && (e.status === 429 || e.code === 'RATE_LIMITED')) {
+        toast(detail || t('dreamscapeCanvas.rateLimited'), 'warning')
+      } else if (e instanceof ApiError && (e.status === 402 || e.status === 403)) {
+        toast(detail || t('dreamscapeCanvas.aiError'), 'warning')
+      } else if (detail && detail !== t('dreamscapeCanvas.aiError')) {
+        toast(t('dreamscapeCanvas.aiErrorDetail', { reason: detail.slice(0, 160) }), 'error')
+      } else {
+        toast(t('dreamscapeCanvas.aiError'), 'error')
+      }
     } finally {
       setIsAnalyzing(false)
       sendingRef.current = false

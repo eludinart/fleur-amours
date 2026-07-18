@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/api-auth'
 import { getLlmMetaForTask, isLlmConfigured } from '@/lib/llm'
-import { AiAccessDeniedError, aiAccessErrorResponse, guardedLlmCall } from '@/lib/ai-guard'
+import { AiAccessDeniedError, guardedLlmCall } from '@/lib/ai-guard'
 import { getAnalyzeMoodPrompt } from '@/lib/prompts-resolver'
 import { getLangInstruction, isValidPetal, isValidCard } from '@/lib/prompts'
 import { parseDreamscapeConfigFromPrompt } from '@/lib/dreamscape-config'
@@ -30,7 +30,8 @@ const PETAL_NAMES = [
 
 function mockResponse(reason: string) {
   return {
-    poetic_reflection: 'Quel est ton climat intérieur en ce moment ?',
+    poetic_reflection:
+      'Je t’écoute encore. Dis-moi en une phrase ce qui est le plus vivant en toi maintenant ?',
     active_petals: {},
     petals_deficit: {},
     shadow_detected: false,
@@ -116,7 +117,13 @@ export async function POST(req: NextRequest) {
   userMsg += getLangInstruction(locale)
   messages.push({ role: 'user', content: userMsg })
 
-  const systemPrompt = await getAnalyzeMoodPrompt()
+  const systemPrompt = await getAnalyzeMoodPrompt().catch((err) => {
+    console.error('[analyze_mood] prompt:', err)
+    return null
+  })
+  if (!systemPrompt) {
+    return NextResponse.json(mockResponse('Prompt Dreamscape indisponible'))
+  }
   const dreamscapeConfig = parseDreamscapeConfigFromPrompt(systemPrompt)
   let result: Record<string, unknown> | string | null = null
   try {
@@ -132,7 +139,14 @@ export async function POST(req: NextRequest) {
     })
     result = guarded.result
   } catch (e: unknown) {
-    if (e instanceof AiAccessDeniedError) return aiAccessErrorResponse(e.result)
+    if (e instanceof AiAccessDeniedError) {
+      // Soft-degrade : le parcours reste jouable (toast côté client via _ai_error)
+      console.warn('[analyze_mood] accès limité:', e.result.code, e.result.reason)
+      return NextResponse.json(
+        mockResponse(e.result.reason ?? e.message ?? 'Accès IA limité')
+      )
+    }
+    console.error('[analyze_mood] llm:', e)
     return NextResponse.json(mockResponse('Erreur appel IA'))
   }
 
