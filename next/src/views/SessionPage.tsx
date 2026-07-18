@@ -2663,24 +2663,24 @@ function SessionStepLegacy({ thresholdData, initialState, onComplete, onBeforeDr
                 <span className="text-xs text-slate-400">Échange {turn}</span>
               )}
             </div>
-            <p className="text-base leading-[1.6] italic text-slate-700 dark:text-slate-200 break-words">
+            <p className="text-ai-prose leading-[1.6] italic text-slate-700 dark:text-slate-200 break-words">
               {!aiMessage && doorIntroMessage
                 ? `Prenez un instant pour sentir ce qui se passe en vous. ${(doorIntroMessage.response_a || '').trim()}`
                 : displayMessage.response_a}
             </p>
             {displayMessage.response_b && (
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed break-words border-t border-violet-100 dark:border-violet-900 pt-2">
+              <p className="text-ai-prose text-slate-600 dark:text-slate-300 leading-relaxed break-words border-t border-violet-100 dark:border-violet-900 pt-2">
                 {displayMessage.response_b}
               </p>
             )}
             {displayMessage.reflection && (
               <div className="flex items-start gap-2 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 px-3 py-2 min-w-0">
                 <span className="text-teal-500 text-sm mt-0.5 flex-shrink-0">⚖</span>
-                <TranslatableContent text={displayMessage.reflection} className="text-xs text-teal-700 dark:text-teal-300 leading-relaxed italic break-words min-w-0" as="p" />
+                <TranslatableContent text={displayMessage.reflection} className="text-ai-prose text-teal-700 dark:text-teal-300 leading-relaxed italic break-words min-w-0" as="p" />
               </div>
             )}
             <div className="rounded-xl bg-white dark:bg-slate-800 border border-violet-100 dark:border-violet-900 p-4 md:p-5 w-full max-w-full min-w-0 overflow-visible">
-              <p className="text-sm md:text-base font-semibold text-slate-800 dark:text-slate-100 leading-[1.6] break-words pb-px">
+              <p className="text-ai-prose font-semibold text-slate-800 dark:text-slate-100 leading-[1.6] break-words pb-px">
                 {displayMessage.question}
               </p>
             </div>
@@ -3071,23 +3071,23 @@ function SessionStep({ thresholdData, initialState, onComplete, onBeforeDrawCard
             <p className="text-sm font-bold text-violet-500 uppercase tracking-widest">✦ {t('session.tuteur')}</p>
             {turn > 0 && <span className="text-xs text-slate-400">Échange {turn}</span>}
           </div>
-          <p className="text-base leading-[1.6] italic text-slate-700 dark:text-slate-200 break-words">
-            {!aiMessage && doorIntroMessage ? `Prenez un instant pour sentir ce qui se passe en vous. ${(doorIntroMessage.response_a || '').trim()}` : displayMessage.response_a}
-          </p>
-          {displayMessage.response_b && (
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed break-words border-t border-violet-100 dark:border-violet-900 pt-2">
-              {displayMessage.response_b}
+            <p className="text-ai-prose leading-[1.6] italic text-slate-700 dark:text-slate-200 break-words">
+              {!aiMessage && doorIntroMessage ? `Prenez un instant pour sentir ce qui se passe en vous. ${(doorIntroMessage.response_a || '').trim()}` : displayMessage.response_a}
             </p>
-          )}
-          {displayMessage.reflection && (
-            <div className="flex items-start gap-2 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 px-3 py-2">
-              <span className="text-teal-500 text-sm mt-0.5">⚖</span>
-              <TranslatableContent text={displayMessage.reflection} className="text-xs text-teal-700 dark:text-teal-300 leading-relaxed italic min-w-0" as="p" />
+            {displayMessage.response_b && (
+              <p className="text-ai-prose text-slate-600 dark:text-slate-300 leading-relaxed break-words border-t border-violet-100 dark:border-violet-900 pt-2">
+                {displayMessage.response_b}
+              </p>
+            )}
+            {displayMessage.reflection && (
+              <div className="flex items-start gap-2 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 px-3 py-2">
+                <span className="text-teal-500 text-sm mt-0.5">⚖</span>
+                <TranslatableContent text={displayMessage.reflection} className="text-ai-prose text-teal-700 dark:text-teal-300 leading-relaxed italic min-w-0" as="p" />
+              </div>
+            )}
+            <div className="rounded-xl bg-white dark:bg-slate-800 border border-violet-100 dark:border-violet-900 p-4">
+              <p className="text-ai-prose font-semibold text-slate-800 dark:text-slate-100 leading-[1.6] break-words">{displayMessage.question}</p>
             </div>
-          )}
-          <div className="rounded-xl bg-white dark:bg-slate-800 border border-violet-100 dark:border-violet-900 p-4">
-            <p className="text-base md:text-lg font-semibold text-slate-800 dark:text-slate-100 leading-[1.6] break-words">{displayMessage.question}</p>
-          </div>
         </div>
 
         {/* Suggestion de carte */}

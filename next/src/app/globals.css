@@ -6,13 +6,40 @@
   --foreground-rgb: 15, 23, 42;
   --background-rgb: 248, 250, 252;
   --layout-header-h: 48px;
-  /* Typo lisible PC / tablette / smartphone */
+  /* Typo lisible PC / tablette / smartphone — base 100% (navigateur) */
+  --fs-scale: 1;
   --fs-body: 1rem;
   --fs-ui: 0.9375rem;
   --fs-caption: 0.8125rem;
+  --fs-ai: 1.05rem;
+  --lh-body: 1.55;
+  --lh-ai: 1.65;
   --text-muted-on-dark: rgba(255, 255, 255, 0.72);
   --text-soft-on-dark: rgba(255, 255, 255, 0.88);
   --text-muted-on-light: rgb(71, 85, 105);
+}
+
+/* Accessibilité : taille de police (Compte → Accessibilité). Scale rem Tailwind. */
+html[data-font-size='large'] {
+  --fs-scale: 1.125;
+  font-size: 112.5%;
+  --fs-body: 1.05rem;
+  --fs-ui: 1rem;
+  --fs-caption: 0.875rem;
+  --fs-ai: 1.15rem;
+  --lh-body: 1.62;
+  --lh-ai: 1.7;
+}
+
+html[data-font-size='xlarge'] {
+  --fs-scale: 1.25;
+  font-size: 125%;
+  --fs-body: 1.1rem;
+  --fs-ui: 1.05rem;
+  --fs-caption: 0.9375rem;
+  --fs-ai: 1.25rem;
+  --lh-body: 1.68;
+  --lh-ai: 1.75;
 }
 
 .dark {
@@ -38,7 +65,7 @@ body {
   display: flex;
   flex-direction: column;
   font-size: var(--fs-body);
-  line-height: 1.55;
+  line-height: var(--lh-body);
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
 }
@@ -136,6 +163,11 @@ body > div {
   .text-caption-readable {
     font-size: var(--fs-caption);
     line-height: 1.4;
+  }
+  /** Textes IA / longs paragraphes — suit la préférence d’accessibilité */
+  .text-ai-prose {
+    font-size: var(--fs-ai);
+    line-height: var(--lh-ai);
   }
   .text-muted-dark {
     color: var(--text-muted-on-dark);

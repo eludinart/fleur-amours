@@ -115,10 +115,10 @@ export function HelpChatbot() {
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`max-w-[92%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
+                className={`max-w-[92%] rounded-xl px-3 py-2 leading-relaxed ${
                   m.role === 'user'
-                    ? 'ml-auto bg-violet-600 text-white'
-                    : 'mr-auto border border-slate-100 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+                    ? 'ml-auto bg-violet-600 text-white text-xs'
+                    : 'mr-auto border border-slate-100 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 text-ai-prose'
                 }`}
               >
                 {m.content}

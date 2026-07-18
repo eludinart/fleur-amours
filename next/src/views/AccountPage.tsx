@@ -13,6 +13,7 @@ import { INTENTIONS, socialApi } from '@/api/social'
 import { JARDIN_INTENTION_IDS } from '@/lib/profile-constants'
 import { ageFromBirthDate, birthDateInputBounds } from '@/lib/profile-age'
 import { toast } from '@/hooks/useToast'
+import { FontSizeSelector } from '@/components/FontSizeSelector'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/jardin'
 
@@ -240,8 +241,6 @@ export function AccountPage() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const fontSizePreference = useStore((s) => s.fontSizePreference)
-  const setFontSizePreference = useStore((s) => s.setFontSizePreference)
   const openCoachRequestModal = useStore((s) => s.openCoachRequestModal)
   const experimentalFeaturesEnabled = useStore((s) => s.experimentalFeaturesEnabled)
   const setExperimentalFeaturesEnabled = useStore((s) => s.setExperimentalFeaturesEnabled)
@@ -1705,7 +1704,7 @@ export function AccountPage() {
           <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
             ♿ {t('accessibility')}
           </h2>
-          <div className="flex items-center justify-between gap-4">
+          <div className="space-y-3">
             <div>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 {t('fontSize')}
@@ -1714,20 +1713,7 @@ export function AccountPage() {
                 {t('fontSizeDesc')}
               </p>
             </div>
-            <button
-              onClick={() =>
-                setFontSizePreference(
-                  fontSizePreference === 'large' ? 'normal' : 'large'
-                )
-              }
-              className={`px-4 py-2 rounded-xl font-medium text-sm transition-colors ${
-                fontSizePreference === 'large'
-                  ? 'bg-violet-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
-            >
-              {fontSizePreference === 'large' ? t('fontLarge') : t('fontNormal')}
-            </button>
+            <FontSizeSelector variant="full" />
           </div>
           <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
             <div>

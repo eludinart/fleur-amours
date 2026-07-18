@@ -388,7 +388,7 @@ export default function CheckinPage() {
                     </span>
                   </div>
                 ) : null}
-                <p className="text-base sm:text-lg font-light italic text-violet-50/95 leading-relaxed text-center">
+                <p className="text-ai-prose font-light italic text-violet-50/95 leading-relaxed text-center">
                   {echo.echo}
                 </p>
                 {echo.invitation ? (
@@ -396,7 +396,7 @@ export default function CheckinPage() {
                     <p className="text-xs uppercase tracking-wider text-white/70 text-center mb-2">
                       {t('checkin.invitationLabel')}
                     </p>
-                    <p className="text-sm text-white/80 text-center leading-relaxed">{echo.invitation}</p>
+                    <p className="text-ai-prose text-white/80 text-center leading-relaxed">{echo.invitation}</p>
                   </div>
                 ) : null}
               </div>

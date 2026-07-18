@@ -736,14 +736,8 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           className={[
-            'text-white/90 font-serif text-center leading-relaxed drop-shadow-lg min-h-[2rem] w-full',
-            !poeticReflection || poeticReflection.length < 60
-              ? 'text-xl sm:text-2xl'
-              : poeticReflection.length < 110
-              ? 'text-lg sm:text-xl'
-              : poeticReflection.length < 160
-              ? 'text-base sm:text-lg'
-              : 'text-sm sm:text-base',
+            'text-ai-prose text-white/90 font-serif text-center leading-relaxed drop-shadow-lg min-h-[2rem] w-full',
+            isAnalyzing ? 'opacity-60' : '',
           ].join(' ')}
         >
           {isAnalyzing && !poeticReflection ? '…' : poeticReflection}

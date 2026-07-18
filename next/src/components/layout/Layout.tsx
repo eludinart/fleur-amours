@@ -16,6 +16,7 @@ import { billingApi } from '@/api/billing'
 import { socialApi } from '@/api/social'
 import NotificationCenter from '../NotificationCenter'
 import { LanguageSelector } from './LanguageSelector'
+import { FontSizeSelector } from '@/components/FontSizeSelector'
 import { FormBackBar } from './FormBackBar'
 import { OnboardingTour } from '../OnboardingTour'
 import { CoachRequestModal } from '../CoachRequestModal'
@@ -41,7 +42,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const refreshAccessInFlight = useRef<Promise<void> | null>(null)
 
   useEffect(() => {
-    document.documentElement.dataset.fontSize = fontSizePreference === 'large' ? 'large' : ''
+    const v = fontSizePreference === 'large' || fontSizePreference === 'xlarge' ? fontSizePreference : 'normal'
+    if (v === 'normal') {
+      delete document.documentElement.dataset.fontSize
+    } else {
+      document.documentElement.dataset.fontSize = v
+    }
   }, [fontSizePreference])
 
   useEffect(() => {
@@ -174,6 +180,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               />
             )}
             <LanguageSelector />
+            <FontSizeSelector variant="compact" />
             <button
               onClick={toggle}
               className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-lg shrink-0"
