@@ -64,6 +64,7 @@ import ConstellationPage from '@/views/ConstellationPage'
 import SalonsPage from '@/views/SalonsPage'
 import BoutiquePage from '@/views/BoutiquePage'
 import AdminDashboardPage from '@/views/AdminDashboardPage'
+import AdminStandPresentationPage from '@/views/AdminStandPresentationPage'
 import AdminTiragesPage from '@/views/AdminTiragesPage'
 import AdminChatPage from '@/views/AdminChatPage'
 import AdminPromptsPage from '@/views/AdminPromptsPage'
@@ -720,6 +721,11 @@ function AppRoutes() {
           <Layout>
             <AdminTelemetryPage />
           </Layout>
+        </ProtectedLayout>
+      ),
+      'presentation-stand': (
+        <ProtectedLayout adminOnly>
+          <AdminStandPresentationPage />
         </ProtectedLayout>
       ),
     }

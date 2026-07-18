@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+  Version locale / hors-ligne (file://).
+  Version déployée dans l’app (admin) : next/public/stand/presentation.html
+  URL admin : /jardin/admin/presentation-stand
+  Après édition ici, resynchroniser vers next/public/stand/presentation.html
+  (chemins images → URLs eludein.art + assets /jardin/).
+-->
+<title>Fleur d'AmOurs — Présentation stand</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --rose: #f472b6;
+    --violet: #a855f7;
+    --indigo: #6366f1;
+    --amber: #f59e0b;
+    --green: #34d399;
+    --dark: #0f0a1e;
+    --card: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.16);
+    --text: #faf9ff;
+    --muted: #d2cce8;
+    --ui-scale: 1;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  body.nav-hidden .nav,
+  body.nav-hidden .auto-bar {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 24px);
+  }
+  body.nav-hidden .auto-bar { transform: none; }
+  body.nav-hidden .slide { padding-bottom: 48px; }
+
+  .deck { width: 100vw; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: calc(40px * var(--ui-scale)) calc(56px * var(--ui-scale)) calc(88px * var(--ui-scale));
+    opacity: 0;
+    transform: translateX(60px);
+    transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+    background: var(--dark);
+    overflow: hidden;
+  }
+
+  .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+  .slide.prev { opacity: 0; transform: translateX(-60px); }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(168,85,247,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(244,114,182,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 30% at 50% 50%, rgba(99,102,241,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 100;
+    background: rgba(15,10,30,0.88);
+    padding: 10px 18px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .nav button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav button:hover { background: var(--card); border-color: var(--violet); }
+  .nav button.playing { border-color: var(--green); color: var(--green); }
+  .nav button.paused { border-color: var(--amber); color: var(--amber); }
+
+  .progress {
+    font-size: calc(14px * var(--ui-scale));
+    color: var(--muted);
+    min-width: 64px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dots {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    max-width: 280px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .dot.active {
+    background: var(--violet);
+    width: 18px;
+    border-radius: 3px;
+  }
+
+  .auto-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--violet), var(--rose));
+    z-index: 101;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Barre outils projection (taille texte + lecteur) */
+  .ui-toolbar {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    background: rgba(15,10,30,0.75);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+  }
+
+  .ui-toolbar button {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text);
+    min-width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0 8px;
+    transition: all 0.2s;
+  }
+
+  .ui-toolbar button:hover {
+    background: var(--card);
+    border-color: var(--violet);
+  }
+
+  .ui-toolbar button.active {
+    border-color: var(--violet);
+    background: rgba(168,85,247,0.18);
+    color: #fff;
+  }
+
+  .ui-scale-label {
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 36px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* TYPO — tailles de base plus lisibles, multipliées par --ui-scale */
+  .eyebrow {
+    font-size: calc(13px * var(--ui-scale));
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #c4a8ff;
+    margin-bottom: calc(14px * var(--ui-scale));
+    z-index: 1;
+  }
+
+  h1 {
+    font-size: calc(clamp(2.2rem, 4.6vw, 3.9rem) * var(--ui-scale));
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 0%, #ffd0e8 45%, #d8b4fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: calc(16px * var(--ui-scale));
+    text-align: center;
+    z-index: 1;
+  }
+
+  h2 {
+    font-size: calc(clamp(1.55rem, 2.8vw, 2.45rem) * var(--ui-scale));
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    background: linear-gradient(135deg, #fff 0%, #ffd0e8 50%, #d8b4fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: calc(20px * var(--ui-scale));
+    text-align: center;
+    z-index: 1;
+  }
+
+  .subtitle {
+    font-size: calc(clamp(1.1rem, 1.7vw, 1.4rem) * var(--ui-scale));
+    color: var(--muted);
+    max-width: calc(760px * var(--ui-scale));
+    line-height: 1.55;
+    text-align: center;
+    z-index: 1;
+    font-weight: 500;
+  }
+
+  .lead {
+    font-size: calc(clamp(1.2rem, 1.85vw, 1.55rem) * var(--ui-scale));
+    color: var(--text);
+    max-width: calc(780px * var(--ui-scale));
+    line-height: 1.45;
+    text-align: center;
+    z-index: 1;
+    font-weight: 600;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 18px;
+    backdrop-filter: blur(4px);
+    z-index: 1;
+  }
+
+  .card-grid {
+    display: grid;
+    gap: 14px;
+    width: 100%;
+    max-width: 1100px;
+    z-index: 1;
+  }
+
+  .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .card-title {
+    font-size: calc(16px * var(--ui-scale));
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .card-desc {
+    font-size: calc(14px * var(--ui-scale));
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  .check-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: calc(14px * var(--ui-scale));
+    text-align: left;
+    max-width: calc(620px * var(--ui-scale));
+    z-index: 1;
+  }
+
+  .check-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: calc(16px * var(--ui-scale));
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .check-list li::before {
+    content: '◆';
+    color: var(--violet);
+    font-size: calc(11px * var(--ui-scale));
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .check-list li strong { color: var(--text); }
+
+  .petal-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: calc(12px * var(--ui-scale));
+    width: 100%;
+    max-width: calc(1120px * var(--ui-scale));
+    z-index: 1;
+  }
+
+  .petal-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: calc(10px * var(--ui-scale));
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .petal-item img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  }
+
+  .petal-name { font-size: calc(15px * var(--ui-scale)); font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .petal-desc { font-size: calc(13px * var(--ui-scale)); color: var(--muted); line-height: 1.3; }
+
+  .timeline {
+    display: flex;
+    width: 100%;
+    max-width: 1000px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 36px;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--violet), var(--rose));
+  }
+
+  .timeline-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .timeline-title { font-size: calc(15px * var(--ui-scale)); font-weight: 700; color: var(--text); }
+  .timeline-desc { font-size: calc(13px * var(--ui-scale)); color: var(--muted); line-height: 1.4; max-width: calc(180px * var(--ui-scale)); }
+
+  .timeline-dot {
+    width: calc(88px * var(--ui-scale));
+    height: calc(88px * var(--ui-scale));
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 1;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .timeline-dot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    width: 100%;
+    max-width: calc(1040px * var(--ui-scale));
+    z-index: 1;
+    align-items: center;
+  }
+
+  .quote-block {
+    background: var(--card);
+    border-left: 3px solid var(--violet);
+    border-radius: 0 12px 12px 0;
+    padding: calc(18px * var(--ui-scale)) calc(22px * var(--ui-scale));
+    font-size: calc(16px * var(--ui-scale));
+    color: var(--muted);
+    line-height: 1.6;
+    font-style: italic;
+    max-width: calc(900px * var(--ui-scale));
+    z-index: 1;
+  }
+
+  .quote-block strong { color: var(--text); font-style: normal; }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    z-index: 1;
+    margin-top: 8px;
+  }
+
+  .pill {
+    padding: calc(8px * var(--ui-scale)) calc(16px * var(--ui-scale));
+    border-radius: 20px;
+    font-size: calc(14px * var(--ui-scale));
+    font-weight: 600;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .pill.accent {
+    border-color: rgba(168,85,247,0.45);
+    background: rgba(168,85,247,0.12);
+    color: var(--text);
+  }
+
+  .cover-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    z-index: 1;
+  }
+
+  .door-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    width: 100%;
+    max-width: 1040px;
+    z-index: 1;
+  }
+
+  .door-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .door-card img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+  }
+
+  .door-num {
+    font-size: calc(12px * var(--ui-scale));
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c4a8ff;
+    margin-bottom: 4px;
+  }
+
+  .door-name {
+    font-size: calc(18px * var(--ui-scale));
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .door-desc {
+    font-size: calc(13px * var(--ui-scale));
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .cta-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(16px * var(--ui-scale));
+    z-index: 1;
+    max-width: calc(760px * var(--ui-scale));
+    text-align: center;
+  }
+
+  .cta-url {
+    font-size: calc(20px * var(--ui-scale));
+    font-weight: 700;
+    color: var(--rose);
+    letter-spacing: 0.02em;
+  }
+
+  .dual-line {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: calc(980px * var(--ui-scale));
+    z-index: 1;
+  }
+
+  .dual-line .card { text-align: left; }
+
+  .dual-label {
+    font-size: calc(12px * var(--ui-scale));
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #c4a8ff;
+    margin-bottom: 8px;
+  }
+
+  /* ── ILLUSTRATIONS TAROT ── */
+  .brand-flower {
+    width: min(220px, 40vw);
+    height: auto;
+    filter: drop-shadow(0 12px 40px rgba(168,85,247,0.35));
+    z-index: 1;
+    display: block;
+  }
+
+  .brand-flower.lg { width: min(280px, 48vw); }
+  .brand-flower.sm { width: min(160px, 36vw); }
+
+  /* Fleur générée (même géométrie / couleurs que FlowerSVG dans l’app) */
+  .app-flower {
+    width: calc(min(280px, 46vw) * var(--ui-scale));
+    height: calc(min(280px, 46vw) * var(--ui-scale));
+    flex-shrink: 0;
+  }
+  .app-flower.lg { width: calc(min(340px, 56vw) * var(--ui-scale)); height: calc(min(340px, 56vw) * var(--ui-scale)); }
+  .app-flower.sm { width: calc(min(180px, 38vw) * var(--ui-scale)); height: calc(min(180px, 38vw) * var(--ui-scale)); }
+  .app-flower svg { width: 100%; height: 100%; display: block; }
+
+  .tarot-card {
+    border-radius: 12px;
+    box-shadow:
+      0 4px 8px rgba(0,0,0,0.25),
+      0 18px 40px rgba(0,0,0,0.45);
+    object-fit: cover;
+    background: #1a1020;
+  }
+
+  .tarot-card.hero {
+    width: calc(min(300px, 36vw) * var(--ui-scale));
+    aspect-ratio: 2 / 3;
+  }
+
+  .tarot-card.sm {
+    width: calc(140px * var(--ui-scale));
+    aspect-ratio: 2 / 3;
+  }
+
+  .tarot-card.md {
+    width: calc(min(190px, 22vw) * var(--ui-scale));
+    aspect-ratio: 2 / 3;
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: calc(40px * var(--ui-scale));
+    width: 100%;
+    max-width: calc(1180px * var(--ui-scale));
+    align-items: center;
+    z-index: 1;
+  }
+
+  .split.reverse { grid-template-columns: 0.95fr 1.05fr; }
+  .split .copy { text-align: left; }
+  .split .copy h1,
+  .split .copy h2,
+  .split .copy .eyebrow,
+  .split .copy .subtitle,
+  .split .copy .lead { text-align: left; }
+
+  .visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: calc(320px * var(--ui-scale));
+  }
+
+  .fan {
+    position: relative;
+    width: calc(340px * var(--ui-scale));
+    height: calc(380px * var(--ui-scale));
+  }
+
+  .fan .tarot-card {
+    position: absolute;
+    left: 50%;
+    top: 20px;
+    width: calc(180px * var(--ui-scale));
+    margin-left: calc(-90px * var(--ui-scale));
+    transition: transform 0.4s ease;
+  }
+
+  .fan .tarot-card:nth-child(1) { transform: rotate(-18deg) translateX(calc(-80px * var(--ui-scale))); z-index: 1; }
+  .fan .tarot-card:nth-child(2) { transform: rotate(-6deg) translateX(calc(-24px * var(--ui-scale))); z-index: 2; }
+  .fan .tarot-card:nth-child(3) { transform: rotate(6deg) translateX(calc(24px * var(--ui-scale))); z-index: 3; }
+  .fan .tarot-card:nth-child(4) { transform: rotate(18deg) translateX(calc(80px * var(--ui-scale))); z-index: 4; }
+
+  .spread {
+    display: flex;
+    gap: calc(16px * var(--ui-scale));
+    justify-content: center;
+    flex-wrap: wrap;
+    z-index: 1;
+    margin-bottom: 18px;
+  }
+
+  .spread-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .spread-item span {
+    font-size: calc(13px * var(--ui-scale));
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  .thumb-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 14px;
+    z-index: 1;
+  }
+
+  .entry-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  }
+
+  .entry-img.portrait {
+    aspect-ratio: 2 / 3;
+    max-height: calc(240px * var(--ui-scale));
+    width: auto;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+  }
+
+  .app-preview {
+    width: calc(min(480px, 92%) * var(--ui-scale));
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+    border: 1px solid var(--border);
+  }
+
+  .verso {
+    width: calc(min(200px, 26vw) * var(--ui-scale));
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+  }
+
+  @media (max-width: 900px) {
+    .slide { padding: 32px 20px 90px; }
+    .card-grid.cols-3 { grid-template-columns: 1fr; }
+    .card-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+    .petal-grid { grid-template-columns: repeat(2, 1fr); }
+    .door-grid { grid-template-columns: 1fr 1fr; }
+    .two-col, .dual-line, .split, .split.reverse { grid-template-columns: 1fr; gap: 18px; }
+    .split .copy h1,
+    .split .copy h2,
+    .split .copy .eyebrow,
+    .split .copy .subtitle,
+    .split .copy .lead { text-align: center; }
+    .timeline::before { display: none; }
+    .timeline { flex-direction: column; gap: 14px; }
+    .timeline-step { flex-direction: row; text-align: left; }
+    .timeline-desc { max-width: none; }
+    .fan { width: calc(240px * var(--ui-scale)); height: calc(280px * var(--ui-scale)); }
+    .fan .tarot-card { width: calc(120px * var(--ui-scale)); margin-left: calc(-60px * var(--ui-scale)); }
+    .ui-toolbar { top: 10px; left: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ui-toolbar" role="toolbar" aria-label="Contrôles de projection">
+  <button type="button" id="btnFontDown" title="Réduire le texte">A−</button>
+  <span class="ui-scale-label" id="scaleLabel">100%</span>
+  <button type="button" id="btnFontUp" title="Agrandir le texte">A+</button>
+  <button type="button" id="btnToggleNav" title="Masquer / afficher le lecteur" aria-pressed="false">▣</button>
+</div>
+<div class="auto-bar" id="autoBar"></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 — COUVERTURE -->
+  <div class="slide active" data-duration="10000">
+    <div class="cover-content">
+      <div class="app-flower lg" data-app-flower aria-label="Fleur d’AmOurs générée (profil type)"></div>
+      <div class="eyebrow">Le Jardin d’AmOurs</div>
+      <h1>Fleur d’AmOurs</h1>
+      <p class="subtitle">Un langage pour mieux s’aimer, se relier, et grandir — sur table ou en ligne.</p>
+    </div>
+  </div>
+
+  <!-- 2 — ACCROCHE -->
+  <div class="slide" data-duration="13000">
+    <div class="split">
+      <div class="copy">
+        <div class="eyebrow">Accroche</div>
+        <h1>Et si l’amour était un langage qu’on peut apprendre&nbsp;?</h1>
+        <p class="subtitle">Chacun met des réalités différentes derrière ce mot. La Fleur d’AmOurs propose un vocabulaire commun — pour se comprendre sans se perdre.</p>
+      </div>
+      <div class="visual">
+        <img class="tarot-card hero" src="../FRAMEWORK%20DOCS/CARTES/la_fleur.png" alt="Carte La Fleur">
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 — TROIS ENTRÉES -->
+  <div class="slide" data-duration="14000">
+    <div class="eyebrow">Trois portes d’entrée</div>
+    <h2>Trois façons d’entrer dans le Jardin</h2>
+    <div class="card-grid cols-3">
+      <div class="card" style="text-align:center">
+        <div class="app-flower sm" data-app-flower style="margin:0 auto 12px" aria-label="La Fleur"></div>
+        <div class="card-title">La Fleur</div>
+        <div class="card-desc">Le cadre : 8 formes d’amour pour cartographier votre façon d’être en relation.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/eros.png" alt="Carte Éros">
+        <div class="card-title">Le Tarot</div>
+        <div class="card-desc">L’interface papier : jouer, tirer, dessiner — pour travailler sur soi avec le corps et le hasard.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="entry-img" src="../next/public/landing-fleur-app-preview.png" alt="Aperçu de l’application">
+        <div class="card-title">L’Application</div>
+        <div class="card-desc">Le jardin en ligne : votre fleur, dialoguée avec une IA-tuteur, entre les séances.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 — QU’EST-CE QUE LA FLEUR -->
+  <div class="slide" data-duration="13000">
+    <div class="split reverse">
+      <div class="visual">
+        <div class="app-flower lg" data-app-flower data-show-guides="1" aria-label="Fleur d’AmOurs à huit pétales"></div>
+      </div>
+      <div class="copy">
+        <div class="eyebrow">Le cadre</div>
+        <h2>Qu’est-ce que la Fleur d’AmOurs&nbsp;?</h2>
+        <p class="lead">Un miroir à huit pétales.<br>Chaque pétale est une façon d’aimer, de se relier, de se respecter.</p>
+        <p class="subtitle" style="margin-top:18px">Pas une étiquette figée. Une carte vivante de vos circuits émotionnels — que vous pouvez dessiner, partager, faire évoluer.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 — HUIT PÉTALES -->
+  <div class="slide" data-duration="18000">
+    <div class="eyebrow">Les 8 pétales</div>
+    <h2>Huit tonalités de l’amour</h2>
+    <div class="petal-grid">
+      <div class="petal-item">
+        <img src="../FRAMEWORK%20DOCS/CARTES/eros.png" alt="Éros">
+        <div class="petal-name">Éros</div>
+        <div class="petal-desc">Désir, élan, force vitale</div>
+      </div>
+      <div class="petal-item">
+        <img src="../FRAMEWORK%20DOCS/CARTES/agape.png" alt="Agapè">
+        <div class="petal-name">Agapè</div>
+        <div class="petal-desc">Don sans calcul, ouverture</div>
+      </div>
+      <div class="petal-item">
+        <img src="../FRAMEWORK%20DOCS/CARTES/philia.png" alt="Philia">
+        <div class="petal-name">Philia</div>
+        <div class="petal-desc">Amitié choisie, fraternité</div>
+      </div>
+      <div class="petal-item">
+        <img src="../FRAMEWORK%20DOCS/CARTES/storge.png" alt="Storgè">
+        <div class="petal-name">Storgè</div>
+        <div class="petal-desc">Attachement, familiarité</div>
+      </div>
+      <div class="petal-item">
+        <img src="../FRAMEWORK%20DOCS/CARTES/pragma.png" alt="Pragma">
+        <div class="petal-name">Pragma</div>
+        <div class="petal-desc">Engagement, construction</div>
+      </div>
+      <div class="petal-item">
+        <img src="../FRAMEWORK%20DOCS/CARTES/ludus.png" alt="Ludus">
+        <div class="petal-name">Ludus</div>
+        <div class="petal-desc">Jeu, légèreté, plaisir</div>
+      </div>
+      <div class="petal-item">
+        <img src="../FRAMEWORK%20DOCS/CARTES/mania.png" alt="Mania">
+        <div class="petal-name">Mania</div>
+        <div class="petal-desc">Intensité, passion</div>
+      </div>
+      <div class="petal-item">
+        <img src="../FRAMEWORK%20DOCS/CARTES/philautia.png" alt="Philautia">
+        <div class="petal-name">Philautia</div>
+        <div class="petal-desc">Rapport à soi, limites</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 — CE QUE ÇA APPORTE -->
+  <div class="slide" data-duration="14000">
+    <div class="split">
+      <div class="copy">
+        <div class="eyebrow">Bénéfices</div>
+        <h2>Ce que la Fleur apporte</h2>
+        <ul class="check-list">
+          <li><strong>Un langage commun</strong> — pour parler d’amour et de lien sans malentendu.</li>
+          <li><strong>Une cartographie claire</strong> — voir ce qui est fort, ce qui manque, ce qui demande soin.</li>
+          <li><strong>Un miroir non pathologisant</strong> — des mots riches, humains, partageables.</li>
+          <li><strong>Un fil rouge</strong> — entre introspection, couple, équipe ou accompagnement.</li>
+        </ul>
+      </div>
+      <div class="visual">
+        <div class="fan">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/philia.png" alt="Philia">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/pragma.png" alt="Pragma">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/agape.png" alt="Agapè">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/l%27unite.png" alt="L’Unité">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 — POUR QUI -->
+  <div class="slide" data-duration="14000">
+    <div class="eyebrow">Publics</div>
+    <h2>Pour qui&nbsp;?</h2>
+    <div class="card-grid cols-4">
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/philautia.png" alt="Philautia">
+        <div class="card-title">Individus</div>
+        <div class="card-desc">Mieux se connaître dans ses relations et ses élans.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/eros.png" alt="Éros">
+        <div class="card-title">Couples</div>
+        <div class="card-desc">Mettre des mots sur ce qui se joue entre deux fleurs.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/philia.png" alt="Philia">
+        <div class="card-title">Groupes</div>
+        <div class="card-desc">Ateliers, équipes, cercles — un langage partagé.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/l%27offrande.png" alt="L’Offrande">
+        <div class="card-title">Accompagnants</div>
+        <div class="card-desc">Coachs, thérapeutes, facilitateurs — un outil de séance.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8 — CE QUE CE N’EST PAS -->
+  <div class="slide" data-duration="13000">
+    <div class="eyebrow">Cadre clair</div>
+    <h2>Ce que ce n’est pas</h2>
+    <div class="card-grid cols-3">
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/l%27invisible.png" alt="L’Invisible">
+        <div class="card-title">Pas de voyance</div>
+        <div class="card-desc">Le hasard des cartes ouvre un dialogue — il ne prédit pas l’avenir.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/la_presence.png" alt="La Présence">
+        <div class="card-title">Pas une thérapie</div>
+        <div class="card-desc">Un outil de connaissance de soi. L’humain reste le guide quand il faut soigner.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/la_metamorphose.png" alt="La Métamorphose">
+        <div class="card-title">Pas une étiquette</div>
+        <div class="card-desc">Votre fleur évolue. C’est un film, pas une photo figée.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9 — LE TAROT -->
+  <div class="slide" data-duration="14000">
+    <div class="split">
+      <div class="copy">
+        <div class="eyebrow">Le Tarot</div>
+        <h2>Le Tarot Fleur d’AmOurs</h2>
+        <p class="lead">Le jardin en cartes.</p>
+        <p class="subtitle" style="margin-top:16px">Un système pour faire circuler les formes d’amour avec le vivant : le temps végétal, les éléments, les grandes étapes de la vie.</p>
+        <p class="subtitle" style="margin-top:12px">Jouer pour se comprendre — avec le geste, la couleur, la synchronicité.</p>
+      </div>
+      <div class="visual">
+        <div class="fan">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/les_racines.png" alt="Les Racines">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/le_feu.png" alt="Le Feu">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/l%27eau.png" alt="L’Eau">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/la_naissance.png" alt="La Naissance">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 — QUATRE PORTES -->
+  <div class="slide" data-duration="16000">
+    <div class="eyebrow">Tirage phare</div>
+    <h2>Les Quatre Portes du Jardin</h2>
+    <div class="door-grid">
+      <div class="door-card">
+        <img src="../FRAMEWORK%20DOCS/CARTES/agape.png" alt="Porte du Cœur — Agapè">
+        <div class="door-num">Porte 1</div>
+        <div class="door-name">Cœur</div>
+        <div class="door-desc">L’essence — quel amour est en jeu&nbsp;?</div>
+      </div>
+      <div class="door-card">
+        <img src="../FRAMEWORK%20DOCS/CARTES/la_germination.png" alt="Porte du Temps — Germination">
+        <div class="door-num">Porte 2</div>
+        <div class="door-name">Temps</div>
+        <div class="door-desc">Le processus — à quelle saison êtes-vous&nbsp;?</div>
+      </div>
+      <div class="door-card">
+        <img src="../FRAMEWORK%20DOCS/CARTES/le_vent_solaire.png" alt="Porte du Climat — Vent solaire">
+        <div class="door-num">Porte 3</div>
+        <div class="door-name">Climat</div>
+        <div class="door-desc">L’environnement — quelles forces agissent&nbsp;?</div>
+      </div>
+      <div class="door-card">
+        <img src="../FRAMEWORK%20DOCS/CARTES/la_transmission.png" alt="Porte de l’Histoire — Transmission">
+        <div class="door-num">Porte 4</div>
+        <div class="door-name">Histoire</div>
+        <div class="door-desc">Le sens — quel apprentissage dans le récit&nbsp;?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11 — EXEMPLE -->
+  <div class="slide" data-duration="16000">
+    <div class="eyebrow">Exemple</div>
+    <h2>Une phrase, un chemin</h2>
+    <div class="spread">
+      <div class="spread-item">
+        <img class="tarot-card md" src="../FRAMEWORK%20DOCS/CARTES/philautia.png" alt="Philautia">
+        <span>Cœur · Philautia</span>
+      </div>
+      <div class="spread-item">
+        <img class="tarot-card md" src="../FRAMEWORK%20DOCS/CARTES/les_racines.png" alt="Les Racines">
+        <span>Temps · Racines</span>
+      </div>
+      <div class="spread-item">
+        <img class="tarot-card md" src="../FRAMEWORK%20DOCS/CARTES/l%27invisible.png" alt="L’Invisible">
+        <span>Climat · Invisible</span>
+      </div>
+      <div class="spread-item">
+        <img class="tarot-card md" src="../FRAMEWORK%20DOCS/CARTES/la_metamorphose.png" alt="La Métamorphose">
+        <span>Histoire · Métamorphose</span>
+      </div>
+    </div>
+    <div class="quote-block">
+      «&nbsp;<strong>L’amour de moi-même</strong> (Philautia) doit accepter une lente phase de <strong>Racines</strong> avant de s’épanouir, car le climat me demande de faire confiance à <strong>l’Invisible</strong>. Ce processus mène à une inévitable <strong>Métamorphose</strong>.&nbsp;»
+    </div>
+  </div>
+
+  <!-- 12 — GESTES -->
+  <div class="slide" data-duration="14000">
+    <div class="eyebrow">Pratiques</div>
+    <h2>Des gestes pour entrer en relation</h2>
+    <div class="card-grid cols-3">
+      <div class="card" style="text-align:center">
+        <div class="app-flower sm" data-app-flower data-profile="balanced" style="margin:0 auto 12px" aria-label="Dessiner sa fleur"></div>
+        <div class="card-title">Dessiner sa Fleur</div>
+        <div class="card-desc">Remplir les huit pétales avec votre histoire, vos couleurs, vos manques.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/la_danse%20du%20monde.png" alt="La Danse du Monde">
+        <div class="card-title">Danse des cartes</div>
+        <div class="card-desc">Laisser le jeu et le mouvement révéler ce que les mots seuls ne disent pas.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/l%27harmonie_des_cycles.png" alt="L’Harmonie des cycles">
+        <div class="card-title">Triple Fleur</div>
+        <div class="card-desc">Mettre en dialogue plusieurs fleurs — soi, l’autre, le lien.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13 — SUR LE STAND -->
+  <div class="slide" data-duration="12000">
+    <div class="split reverse">
+      <div class="visual">
+        <img class="verso" src="../next/public/verso-cartes.webp" alt="Verso des cartes du tarot"
+             onerror="this.onerror=null;this.src='../next/public/verso-cartes.png'">
+        <div class="thumb-row" style="position:absolute; bottom:-10px;">
+          <img class="tarot-card sm" src="../FRAMEWORK%20DOCS/CARTES/ludus.png" alt="Ludus" style="transform:rotate(-8deg)">
+          <img class="tarot-card sm" src="../FRAMEWORK%20DOCS/CARTES/le_bouton.png" alt="Le Bouton" style="transform:rotate(4deg)">
+          <img class="tarot-card sm" src="../FRAMEWORK%20DOCS/CARTES/la_flamme.png" alt="La Flamme" style="transform:rotate(10deg)">
+        </div>
+      </div>
+      <div class="copy">
+        <div class="eyebrow">Ici, maintenant</div>
+        <h2>Sur ce stand</h2>
+        <p class="lead">Touchez le jeu.<br>Posez une intention.<br>Ouvrez une porte.</p>
+        <div class="pill-row" style="justify-content:flex-start; margin-top:22px">
+          <span class="pill accent">Tirage guidé</span>
+          <span class="pill accent">Découverte de la Fleur</span>
+          <span class="pill accent">Échange avec l’équipe</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14 — L’APPLICATION -->
+  <div class="slide" data-duration="14000">
+    <div class="split">
+      <div class="copy">
+        <div class="eyebrow">Le numérique</div>
+        <h2>Le Jardin en ligne</h2>
+        <p class="lead">Votre fleur, nourrie par le dialogue.</p>
+        <p class="subtitle" style="margin-top:16px">L’application prolonge le travail entre les séances : profil émotionnel, tirages, accompagnement par une IA-tuteur — pour creuser, clarifier, avancer.</p>
+        <p class="subtitle" style="margin-top:12px">L’IA questionne. Elle n’oracle pas.</p>
+      </div>
+      <div class="visual">
+        <img class="app-preview" src="../next/public/landing-fleur-app-preview.png" alt="Aperçu de l’application Jardin">
+      </div>
+    </div>
+  </div>
+
+  <!-- 15 — PARCOURS -->
+  <div class="slide" data-duration="15000">
+    <div class="eyebrow">Parcours</div>
+    <h2>En quelques minutes, une carte qui reste</h2>
+    <div class="timeline">
+      <div class="timeline-step">
+        <div class="timeline-dot"><img src="../FRAMEWORK%20DOCS/CARTES/la_graine_endormie.png" alt="Questionnaire"></div>
+        <div class="timeline-title">Questionnaire</div>
+        <div class="timeline-desc">Des questions simples pour révéler votre profil</div>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-dot"><img src="../FRAMEWORK%20DOCS/CARTES/la_fleur.png" alt="Votre Fleur"></div>
+        <div class="timeline-title">Votre Fleur</div>
+        <div class="timeline-desc">Huit pétales visualisés — un miroir unique</div>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-dot"><img src="../FRAMEWORK%20DOCS/CARTES/le_messager.png" alt="Dialogue"></div>
+        <div class="timeline-title">Dialogue</div>
+        <div class="timeline-desc">Questions maïeutiques guidées par l’IA</div>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-dot"><img src="../FRAMEWORK%20DOCS/CARTES/la_spirale%20de%20la%20vie.png" alt="Suite"></div>
+        <div class="timeline-title">Suite</div>
+        <div class="timeline-desc">Plans concrets et évolution dans le temps</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 16 — IA -->
+  <div class="slide" data-duration="14000">
+    <div class="split reverse">
+      <div class="visual">
+        <div class="fan">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/le_messager.png" alt="Le Messager">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/le%20verbe.png" alt="Le Verbe">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/l%27echo.png" alt="L’Écho">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/la_source_lumineuse.png" alt="La Source lumineuse">
+        </div>
+      </div>
+      <div class="copy">
+        <div class="eyebrow">Intelligence artificielle</div>
+        <h2>Ce que l’IA apporte — concrètement</h2>
+        <ul class="check-list">
+          <li><strong>Interprète</strong> votre profil de façon personnelle — pas un texte générique.</li>
+          <li><strong>Guide</strong> le dialogue par des questions qui font avancer.</li>
+          <li><strong>Propose</strong> des pistes et des plans d’action adaptés à votre fleur.</li>
+          <li><strong>Conserve</strong> le fil : votre histoire ne recommence pas à zéro à chaque visite.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 17 — ACCOMPAGNANTS -->
+  <div class="slide" data-duration="14000">
+    <div class="eyebrow">Pour les pros</div>
+    <h2>Coachs, thérapeutes, facilitateurs</h2>
+    <div class="dual-line">
+      <div class="card">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/la_transmission.png" alt="La Transmission" style="max-height:140px">
+        <div class="dual-label">En séance</div>
+        <div class="card-desc">Un langage partageable avec vos clients. Un profil clair. Des tirages qui structurent le travail sans remplacer votre posture.</div>
+      </div>
+      <div class="card">
+        <img class="entry-img portrait" src="../FRAMEWORK%20DOCS/CARTES/l%27abeille.png" alt="L’Abeille" style="max-height:140px">
+        <div class="dual-label">Entre les séances</div>
+        <div class="card-desc">Vos accompagnés peuvent dialoguer avec leur fleur en ligne — vous restez le guide humain.</div>
+      </div>
+    </div>
+    <p class="subtitle" style="margin-top:20px">Outil d’augmentation — pas de remplacement.</p>
+  </div>
+
+  <!-- 18 — PAPIER + NUMÉRIQUE -->
+  <div class="slide" data-duration="13000">
+    <div class="eyebrow">Écosystème</div>
+    <h2>Papier et numérique, une même sève</h2>
+    <div class="two-col">
+      <div class="card" style="text-align:center">
+        <div class="fan" style="height:260px; width:240px; margin:0 auto 12px">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/le_nectar.png" alt="Le Nectar">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/le_fruit.png" alt="Le Fruit">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/le_pollen.png" alt="Le Pollen">
+          <img class="tarot-card" src="../FRAMEWORK%20DOCS/CARTES/la_memoire%20de%20la%20seve.png" alt="La Mémoire de la sève">
+        </div>
+        <div class="card-title">Le Tarot ancre le corps</div>
+        <div class="card-desc">Le geste, la table, le hasard, le dessin. Présence. Atelier. Instant partagé.</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <img class="app-preview" src="../next/public/landing-fleur-app-preview.png" alt="Application" style="margin-bottom:14px; width:min(100%,340px)">
+        <div class="card-title">L’app prolonge le fil</div>
+        <div class="card-desc">Entre deux rencontres : dialogue, suivi, profondeur — sans perdre le cadre de la Fleur.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 19 — CTA -->
+  <div class="slide" data-duration="14000">
+    <div class="cta-box">
+      <div class="app-flower sm" data-app-flower aria-label="Fleur d’AmOurs"></div>
+      <div class="eyebrow">Commencer</div>
+      <h2>Envie d’entrer dans le Jardin&nbsp;?</h2>
+      <p class="subtitle">Parlez-nous sur le stand · Demandez une démo · Découvrez le jeu</p>
+      <div class="cta-url">eludein.art/jardin</div>
+      <div class="pill-row">
+        <span class="pill accent">Particuliers</span>
+        <span class="pill accent">Coachs &amp; thérapeutes</span>
+        <span class="pill accent">Ateliers &amp; groupes</span>
+      </div>
+      <div class="thumb-row">
+        <img class="tarot-card sm" src="../FRAMEWORK%20DOCS/CARTES/le_soleil_interieur.png" alt="Soleil intérieur">
+        <img class="tarot-card sm" src="../FRAMEWORK%20DOCS/CARTES/l%27ame_du_monde.png" alt="Âme du monde">
+        <img class="tarot-card sm" src="../FRAMEWORK%20DOCS/CARTES/la_source_profonde.png" alt="Source profonde">
+      </div>
+    </div>
+  </div>
+
+  <!-- 20 — CLÔTURE -->
+  <div class="slide" data-duration="11000">
+    <div class="cover-content">
+      <div class="app-flower lg" data-app-flower data-profile="luminous" aria-label="Fleur d’AmOurs"></div>
+      <h1>Devenez le jardinier<br>conscient de votre âme</h1>
+      <p class="subtitle">Fleur d’AmOurs · Tarot · Application</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAV -->
+<div class="nav" id="navBar">
+  <button type="button" id="btnPrev" title="Précédent">‹</button>
+  <button type="button" id="btnPlay" class="playing" title="Pause / Lecture">❚❚</button>
+  <div class="dots" id="dots"></div>
+  <div class="progress" id="progress">1 / 20</div>
+  <button type="button" id="btnNext" title="Suivant">›</button>
+  <button type="button" id="btnHideNav" title="Masquer le lecteur">✕</button>
+</div>
+
+<script>
+  /* ── Échelle typo / images + masquage lecteur ── */
+  const SCALE_STEPS = [0.85, 1, 1.15, 1.3, 1.45, 1.6, 1.8];
+  const SCALE_KEY = 'fda-stand-ui-scale';
+  const NAV_KEY = 'fda-stand-nav-hidden';
+  let scaleIndex = 1;
+
+  function applyScale(index) {
+    scaleIndex = Math.max(0, Math.min(SCALE_STEPS.length - 1, index));
+    const scale = SCALE_STEPS[scaleIndex];
+    document.documentElement.style.setProperty('--ui-scale', String(scale));
+    const label = document.getElementById('scaleLabel');
+    if (label) label.textContent = Math.round(scale * 100) + '%';
+    try { localStorage.setItem(SCALE_KEY, String(scaleIndex)); } catch (_) {}
+  }
+
+  function setNavHidden(hidden) {
+    document.body.classList.toggle('nav-hidden', hidden);
+    const btn = document.getElementById('btnToggleNav');
+    if (btn) {
+      btn.classList.toggle('active', hidden);
+      btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+      btn.title = hidden ? 'Afficher le lecteur' : 'Masquer le lecteur';
+    }
+    try { localStorage.setItem(NAV_KEY, hidden ? '1' : '0'); } catch (_) {}
+  }
+
+  try {
+    const saved = parseInt(localStorage.getItem(SCALE_KEY) || '1', 10);
+    if (Number.isFinite(saved)) scaleIndex = saved;
+  } catch (_) {}
+  applyScale(scaleIndex);
+  try {
+    setNavHidden(localStorage.getItem(NAV_KEY) === '1');
+  } catch (_) {
+    setNavHidden(false);
+  }
+
+  document.getElementById('btnFontDown').onclick = () => applyScale(scaleIndex - 1);
+  document.getElementById('btnFontUp').onclick = () => applyScale(scaleIndex + 1);
+  document.getElementById('btnToggleNav').onclick = () => {
+    setNavHidden(!document.body.classList.contains('nav-hidden'));
+  };
+  document.getElementById('btnHideNav').onclick = () => setNavHidden(true);
+
+  /* ── Fleur app (alignée sur next/src/components/FlowerSVG.tsx + petal-theme.ts) ── */
+  const PETAL_DEFS = [
+    { id: 'agape', name: 'Agapè', angle: 0, color: '#ec8698' },
+    { id: 'philautia', name: 'Philautia', angle: 45, color: '#b8a2e8' },
+    { id: 'mania', name: 'Mania', angle: 90, color: '#e11d48' },
+    { id: 'storge', name: 'Storgè', angle: 135, color: '#5fa06e' },
+    { id: 'pragma', name: 'Pragma', angle: 180, color: '#4b7ab8' },
+    { id: 'philia', name: 'Philia', angle: 225, color: '#12c48e' },
+    { id: 'ludus', name: 'Ludus', angle: 270, color: '#14c4e8' },
+    { id: 'eros', name: 'Éros', angle: 315, color: '#9559f2' },
+  ];
+
+  const FLOWER_PROFILES = {
+    default: {
+      agape: 0.72, philautia: 0.45, mania: 0.28, storge: 0.58,
+      pragma: 0.41, philia: 0.65, ludus: 0.38, eros: 0.52,
+    },
+    balanced: {
+      agape: 0.55, philautia: 0.62, mania: 0.35, storge: 0.7,
+      pragma: 0.58, philia: 0.68, ludus: 0.48, eros: 0.5,
+    },
+    luminous: {
+      agape: 0.82, philautia: 0.7, mania: 0.4, storge: 0.55,
+      pragma: 0.48, philia: 0.75, ludus: 0.6, eros: 0.68,
+    },
+  };
+
+  const MIN_LEN = 18;
+  const MAX_LEN = 58;
+  const PETAL_W = 18;
+  const CENTER = 100;
+
+  function petalPath(halfLen, width) {
+    const tip = halfLen * 2;
+    return [
+      'M 0 0',
+      `C ${-width * 1.1} ${-halfLen * 0.4} ${-width * 0.8} ${-tip * 0.7} 0 ${-tip}`,
+      `C ${width * 0.8} ${-tip * 0.7} ${width * 1.1} ${-halfLen * 0.4} 0 0`,
+      'Z',
+    ].join(' ');
+  }
+
+  function buildAppFlowerSvg(scores, opts = {}) {
+    const uid = 'af' + Math.random().toString(36).slice(2, 9);
+    const showGuides = !!opts.showGuides;
+    const c = CENTER;
+    let petalsHtml = '';
+
+    if (showGuides) {
+      ;[0.25, 0.5, 0.75, 1].forEach((t) => {
+        petalsHtml += `<circle cx="${c}" cy="${c}" r="${(MIN_LEN + t * (MAX_LEN - MIN_LEN)) * 1.15}" fill="none" stroke="rgba(148,163,184,0.22)" stroke-width="0.4" ${t === 1 ? '' : 'stroke-dasharray="2,3"'} />`;
+      });
+    }
+
+    PETAL_DEFS.forEach((p) => {
+      const intensity = Math.max(0, Math.min(1, scores[p.id] ?? 0));
+      const halfLen = MIN_LEN + intensity * (MAX_LEN - MIN_LEN);
+      const opacity = (0.4 + intensity * 0.64).toFixed(3);
+      petalsHtml += `
+        <g transform="translate(${c},${c}) rotate(${p.angle})">
+          <g transform="rotate(0)">
+            <path d="${petalPath(halfLen, PETAL_W)}"
+              fill="${p.color}"
+              stroke="${p.color}"
+              stroke-width="0.8"
+              stroke-opacity="0.6"
+              opacity="${opacity}" />
+            ${intensity > 0.05 ? `<circle cx="0" cy="${-(halfLen * 2 + 3)}" r="2" fill="${p.color}" opacity="0.9" />` : ''}
+          </g>
+        </g>`;
+    });
+
+    return `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+        <defs>
+          <radialGradient id="${uid}-center" cx="35%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#fdeef2" stop-opacity="0.92"/>
+            <stop offset="70%" stop-color="#efb0c0" stop-opacity="0.65"/>
+            <stop offset="100%" stop-color="#ec8698" stop-opacity="0.45"/>
+          </radialGradient>
+          <filter id="${uid}-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.18"/>
+          </filter>
+        </defs>
+        <g filter="url(#${uid}-shadow)">
+          ${petalsHtml}
+          <circle cx="${c}" cy="${c}" r="8" fill="url(#${uid}-center)" stroke="rgba(253,164,175,0.6)" stroke-width="0.8"/>
+          <circle cx="${c}" cy="${c}" r="3" fill="#ec8698" opacity="0.85"/>
+        </g>
+      </svg>`;
+  }
+
+  document.querySelectorAll('[data-app-flower]').forEach((el) => {
+    const profile = el.getAttribute('data-profile') || 'default';
+    const scores = FLOWER_PROFILES[profile] || FLOWER_PROFILES.default;
+    const showGuides = el.getAttribute('data-show-guides') === '1';
+    el.innerHTML = buildAppFlowerSvg(scores, { showGuides });
+  });
+
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+  let playing = true;
+  let timer = null;
+  let startedAt = 0;
+  let remaining = 0;
+  const DEFAULT_MS = 12000;
+  const bar = document.getElementById('autoBar');
+  const btnPlay = document.getElementById('btnPlay');
+
+  const dotsEl = document.getElementById('dots');
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => { goTo(i); restartTimer(); };
+    dotsEl.appendChild(d);
+  }
+
+  function durationOf(i) {
+    const raw = slides[i].getAttribute('data-duration');
+    const n = raw ? parseInt(raw, 10) : DEFAULT_MS;
+    return Number.isFinite(n) && n > 0 ? n : DEFAULT_MS;
+  }
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    slides[current].classList.add('prev');
+    const leaving = current;
+    setTimeout(() => slides[leaving].classList.remove('prev'), 500);
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    const label = (current + 1) + ' / ' + total;
+    document.getElementById('progress').textContent = label;
+  }
+
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  function clearTimer() {
+    if (timer) { clearTimeout(timer); timer = null; }
+  }
+
+  function updateBar(elapsed, totalMs) {
+    bar.style.width = Math.min(100, (elapsed / totalMs) * 100) + '%';
+  }
+
+  function schedule(ms) {
+    clearTimer();
+    remaining = ms;
+    startedAt = Date.now();
+    const totalMs = durationOf(current);
+    const tick = () => {
+      if (!playing) return;
+      const elapsed = totalMs - remaining + (Date.now() - startedAt);
+      updateBar(elapsed, totalMs);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    timer = setTimeout(() => {
+      nextSlide();
+      schedule(durationOf(current));
+    }, ms);
+  }
+
+  function restartTimer() {
+    bar.style.width = '0%';
+    if (playing) schedule(durationOf(current));
+  }
+
+  function setPlaying(on) {
+    playing = on;
+    btnPlay.textContent = on ? '❚❚' : '▶';
+    btnPlay.classList.toggle('playing', on);
+    btnPlay.classList.toggle('paused', !on);
+    if (on) {
+      schedule(remaining > 200 ? remaining : durationOf(current));
+    } else {
+      remaining = Math.max(0, remaining - (Date.now() - startedAt));
+      clearTimer();
+    }
+  }
+
+  function togglePlay() { setPlaying(!playing); }
+
+  document.getElementById('btnPrev').onclick = () => { prevSlide(); restartTimer(); };
+  document.getElementById('btnNext').onclick = () => { nextSlide(); restartTimer(); };
+  btnPlay.onclick = togglePlay;
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); restartTimer(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); restartTimer(); }
+    if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+    if (e.key === 'Home') { e.preventDefault(); goTo(0); restartTimer(); }
+    if (e.key === '+' || e.key === '=') { e.preventDefault(); applyScale(scaleIndex + 1); }
+    if (e.key === '-' || e.key === '_') { e.preventDefault(); applyScale(scaleIndex - 1); }
+    if (e.key === 'h' || e.key === 'H') { e.preventDefault(); setNavHidden(!document.body.classList.contains('nav-hidden')); }
+  });
+
+  let touchX = 0;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const diff = touchX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? nextSlide() : prevSlide();
+      restartTimer();
+    }
+  }, { passive: true });
+
+  schedule(durationOf(0));
+</script>
+</body>
+</html>
