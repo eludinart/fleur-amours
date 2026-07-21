@@ -802,6 +802,8 @@
     "checkinRising": "alza",
     "checkinFalling": "retraimiento",
     "checkinCta": "Hacer mi check-in",
+    "checkinStreak": "Racha: {days} d",
+    "checkinStreakHint": "Días consecutivos con un eco plantado — cada día suma savia.",
     "coachGatewayBody": "En {petal}, tu jardín vuelve a menudo — un acompañante puede ayudarte a profundizar con cuidado.",
     "coachGatewayCta": "Ver acompañantes",
     "eclosionHubCta": "La historia de mi jardín"
@@ -864,6 +866,10 @@
     "journalTitleZen": "Últimos pasajes",
     "journalDescZen": "Tirajes, sesiones y exploraciones recientes — por fecha.",
     "detailsStatsLong": "Ver clima completo y estadísticas →",
+    "badgesLabel": "Mis insignias de jardinero",
+    "badgesMore": "Seguir en la Pradera",
+    "badgesEmpty": "Tus insignias de jardinero aparecerán aquí: siembra, riega y teje vínculos en la Pradera.",
+    "badgesEmptyCta": "Descubrir la Pradera",
     "headerLineNewGarden": "Tu paisaje afectivo aún se dibuja — respira con suavidad al entrar en este espacio.",
     "headerLineDominantOnly": "Hoy {dominant} colorea con más fuerza tu flor — confía en esa señal.",
     "headerLineDominantEcho": "{dominant} lidera el momento; {echo} responde como contrapunto — escucha su diálogo interior.",
@@ -1870,7 +1876,8 @@
   "plan14Tracker": {
     "title": "Mi progreso",
     "completedTitle": "Plan completado — tu balance",
-    "bilanPlaceholder": "¿Qué cambió durante estos 14 días?"
+    "bilanPlaceholder": "¿Qué cambió durante estos 14 días?",
+    "cadenceLimit": "Un día a la vez 🌱 El siguiente paso se desbloquea mañana — el ritmo es lo que hace la transformación."
   },
   "checkin": {
     "title": "El eco del día",
@@ -1905,6 +1912,8 @@
     "drawLink": "Profundizar con una tirada sobre {petal} →",
     "alreadyToday": "Ya has plantado el eco de hoy.",
     "comeBackTomorrow": "Vuelve mañana para un nuevo eco.",
+    "streakDays": "Racha de {days} días",
+    "sapReward": "+{amount} savia ganada",
     "todayEchoLabel": "Tu eco de hoy",
     "limitError": "Solo un eco al día. Vuelve mañana.",
     "lastEchoLabel": "Tu último eco",
@@ -2324,6 +2333,14 @@
       "body": "Unos minutos con el Guía para aclarar lo que gira en ti — sin juicio, a tu ritmo.",
       "actionLabel": "Abrir la conversación interior",
       "emailSubject": "Un momento de claridad interior"
+    },
+    "earlyreturn": {
+      "title": "Una puerta quedó entreabierta",
+      "body": "Han pasado unos días — nada urgente, solo una puerta entreabierta en tu jardín. Dos minutos bastan para retomar el hilo donde lo dejaste.",
+      "highlight": "Tu pétalo {{petal}} te espera — un pequeño paso basta para mantener el impulso.",
+      "highlightGeneric": "Un check-in de 30 segundos basta para mantener el impulso.",
+      "actionLabel": "Retomar el hilo",
+      "emailSubject": "Una puerta entreabierta en tu jardín"
     },
     "comeback": {
       "title": "El jardín te espera",

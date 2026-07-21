@@ -247,6 +247,10 @@ export async function fetchDashboardData() {
     checkinsRes.status === 'fulfilled'
       ? ((checkinsRes.value as { checkins?: Array<{ created_at?: string; createdAt?: string }> })?.checkins ?? [])
       : []
+  const checkinStreak =
+    checkinsRes.status === 'fulfilled'
+      ? Number((checkinsRes.value as { streak?: number })?.streak ?? 0)
+      : 0
   const baseline =
     baselineRes.status === 'fulfilled'
       ? ((baselineRes.value as { baseline?: { petals?: Record<string, number> } | null })?.baseline ?? null)
@@ -687,6 +691,7 @@ export async function fetchDashboardData() {
     activePlan14j,
     daysSinceCheckin,
     lastCheckinEcho,
+    checkinStreak,
     baselinePetals: baselinePetals01,
     coachGateway,
     prairieResonance,
@@ -717,6 +722,7 @@ export async function fetchDashboardData() {
       activePlan14j: null,
       daysSinceCheckin: null,
       lastCheckinEcho: null,
+      checkinStreak: 0,
       baselinePetals: null,
       coachGateway: null,
       prairieResonance: null,

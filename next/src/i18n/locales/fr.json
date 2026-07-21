@@ -1083,6 +1083,8 @@
     "checkinRising": "hausse",
     "checkinFalling": "retrait",
     "checkinCta": "Écouter la fleur",
+    "checkinStreak": "Série : {days} j",
+    "checkinStreakHint": "Jours consécutifs avec un écho planté — chaque jour rapporte de la sève.",
     "coachGatewayBody": "Sur {petal}, votre jardin revient souvent — un accompagnant peut vous aider à approfondir avec bienveillance.",
     "coachGatewayCta": "Voir les accompagnants",
     "eclosionHubCta": "L'histoire de mon jardin"
@@ -1145,6 +1147,10 @@
     "journalTitleZen": "Derniers passages",
     "journalDescZen": "Tirages, sessions et explorations récents — classés par date.",
     "detailsStatsLong": "Voir le climat complet et les statistiques →",
+    "badgesLabel": "Mes badges de jardinier",
+    "badgesMore": "Continuer dans la Prairie",
+    "badgesEmpty": "Vos badges de jardinier apparaîtront ici : semez, arrosez, tissez des liens dans la Prairie.",
+    "badgesEmptyCta": "Découvrir la Prairie",
     "headerLineNewGarden": "Ton paysage affectif se dessine encore — accorde-toi une respiration tendre en entrant dans cette carte.",
     "headerLineDominantOnly": "Aujourd’hui, {dominant} colore le plus fortement ta fleur — fais confiance à ce signal.",
     "headerLineDominantEcho": "{dominant} mène la couleur du moment ; {echo} y répond en contrepoint — écoute leur dialogue intérieur.",
@@ -2343,7 +2349,8 @@
   "plan14Tracker": {
     "title": "Ma progression",
     "completedTitle": "Plan terminé — votre bilan",
-    "bilanPlaceholder": "Qu'est-ce qui a changé pendant ces 14 jours ?"
+    "bilanPlaceholder": "Qu'est-ce qui a changé pendant ces 14 jours ?",
+    "cadenceLimit": "Un jour à la fois 🌱 La prochaine étape sera cochable demain — c'est le rythme qui fait la transformation."
   },
   "checkin": {
     "title": "L'écho du jour",
@@ -2378,6 +2385,8 @@
     "drawLink": "Approfondir avec un tirage sur {petal} →",
     "alreadyToday": "Votre écho du jour est déjà planté.",
     "comeBackTomorrow": "Revenez demain pour un nouvel écho.",
+    "streakDays": "Série de {days} jours",
+    "sapReward": "+{amount} sève offerte",
     "todayEchoLabel": "Votre écho d'aujourd'hui",
     "limitError": "Un seul écho par jour est possible. Revenez demain.",
     "lastEchoLabel": "Votre dernier écho",
@@ -2727,6 +2736,14 @@
       "body": "Quelques minutes avec le Tuteur pour clarifier ce qui tourne en vous — sans jugement, à votre rythme.",
       "actionLabel": "Ouvrir la conversation intérieure",
       "emailSubject": "Un moment de clarté intérieure"
+    },
+    "earlyreturn": {
+      "title": "Une porte est restée entrouverte",
+      "body": "Quelques jours ont passé — rien d'urgent, juste une porte entrouverte dans votre jardin. Deux minutes suffisent pour reprendre le fil là où vous l'avez laissé.",
+      "highlight": "Votre pétale {{petal}} vous attend — un petit pas suffit pour garder l'élan.",
+      "highlightGeneric": "Un check-in de 30 secondes suffit pour garder l'élan.",
+      "actionLabel": "Reprendre le fil",
+      "emailSubject": "Une porte entrouverte dans votre jardin"
     },
     "comeback": {
       "title": "Le jardin vous attend",

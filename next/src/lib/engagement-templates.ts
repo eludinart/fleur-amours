@@ -15,6 +15,7 @@ export type EngagementCampaignId =
   | 'fleur'
   | 'session'
   | 'dreamscape'
+  | 'earlyreturn'
   | 'comeback'
 
 export type EngagementTemplate = {
@@ -45,6 +46,7 @@ const ENGAGEMENT_TYPES = new Set([
   'engagement_fleur',
   'engagement_session',
   'engagement_dreamscape',
+  'engagement_earlyreturn',
   'engagement_comeback',
 ])
 
@@ -86,6 +88,8 @@ function resolveActionUrl(
       return '/session?mode=single'
     case 'dreamscape':
       return '/dreamscape'
+    case 'earlyreturn':
+      return p?.hasFleurProfile ? '/checkin' : '/tirage'
     case 'comeback':
       return '/tirage'
     default:
@@ -155,6 +159,7 @@ function buildRichBody(
       }
       return { body: lines.join('\n\n'), highlight: null }
     }
+    case 'earlyreturn':
     case 'comeback': {
       lines.push(tServer(locale, `${baseKey}.body`, {}))
       if (p?.dominantPetalName) {
@@ -199,7 +204,7 @@ export function buildEngagementTemplate(
     body,
     action_url,
     action_label,
-    priority: campaignId === 'fleur' ? 'normal' : 'low',
+    priority: campaignId === 'fleur' || campaignId === 'earlyreturn' ? 'normal' : 'low',
     emailSubject: tServer(loc, `${baseKey}.emailSubject`, titleVars),
     emailHighlight: highlight,
     locale: loc,

@@ -206,6 +206,46 @@ export async function findCheckinReminderCandidates(params: {
   return rows.map((r) => ({ userId: Number(r.user_id), email: r.email ?? null }))
 }
 
+/**
+ * Streak : nombre de jours calendaires consécutifs avec un check-in,
+ * en remontant depuis aujourd'hui (ou hier si le check-in du jour n'est pas encore fait).
+ */
+export async function getCheckinStreak(userId: number): Promise<number> {
+  if (!isDbConfigured()) return 0
+  await ensureCheckinsTable()
+  const pool = getPool()
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT DISTINCT DATE(created_at) AS d FROM ${TBL()} WHERE user_id = ? ORDER BY d DESC LIMIT 400`,
+    [userId]
+  )
+  if (!rows.length) return 0
+
+  const dayMs = 86400000
+  const toDayIndex = (v: unknown): number => {
+    const d = new Date(String(v))
+    return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())) / dayMs)
+  }
+  const now = new Date()
+  const todayIdx = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / dayMs)
+
+  const first = toDayIndex(rows[0].d)
+  // Le streak est rompu si le dernier check-in date d'avant-hier ou plus.
+  if (first < todayIdx - 1) return 0
+
+  let streak = 1
+  let prev = first
+  for (let i = 1; i < rows.length; i++) {
+    const idx = toDayIndex(rows[i].d)
+    if (idx === prev - 1) {
+      streak++
+      prev = idx
+    } else {
+      break
+    }
+  }
+  return streak
+}
+
 /** Date du dernier check-in (pour décider d'une relance). */
 export async function getLastCheckinAt(userId: number): Promise<string | null> {
   if (!isDbConfigured()) return null

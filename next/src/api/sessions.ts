@@ -4,7 +4,11 @@ export const sessionsApi = {
   save: (data: Record<string, unknown>) => api.post('/api/sessions/save', data),
   update: (data: Record<string, unknown>) => api.post('/api/sessions/update', data),
   planProgress: (data: { id: number | string; completed: number[]; bilan?: string }) =>
-    api.post('/api/sessions/plan-progress', data),
+    api.post('/api/sessions/plan-progress', data) as Promise<{
+      saved: boolean
+      progress: { completed: number[]; lastAddDate?: string | null }
+      cadenceLimited?: boolean
+    }>,
   my: (status?: string, limit?: number) => {
     const p = new URLSearchParams()
     if (status) p.set('status', status)

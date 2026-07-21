@@ -842,6 +842,8 @@
     "checkinRising": "crescita",
     "checkinFalling": "ritiro",
     "checkinCta": "Fare il mio check-in",
+    "checkinStreak": "Serie: {days} g",
+    "checkinStreakHint": "Giorni consecutivi con un eco piantato — ogni giorno guadagni linfa.",
     "coachGatewayBody": "Su {petal}, il tuo giardino ritorna spesso — un accompagnatore può aiutarti ad approfondire con cura.",
     "coachGatewayCta": "Vedi gli accompagnatori",
     "eclosionHubCta": "La storia del mio giardino"
@@ -904,6 +906,10 @@
     "journalTitleZen": "Ultimi passaggi",
     "journalDescZen": "Estrazioni, sessioni ed esplorazioni recenti — per data.",
     "detailsStatsLong": "Vedi clima completo e statistiche →",
+    "badgesLabel": "I miei badge da giardiniere",
+    "badgesMore": "Continua nella Prateria",
+    "badgesEmpty": "I tuoi badge da giardiniere appariranno qui: semina, annaffia e crea legami nella Prateria.",
+    "badgesEmptyCta": "Scopri la Prateria",
     "headerLineNewGarden": "Il tuo paesaggio affettivo si sta ancora disegnando — respira dolcemente entrando in questo spazio.",
     "headerLineDominantOnly": "Oggi {dominant} colora il tuo fiore più di tutti — fidati di quel segnale.",
     "headerLineDominantEcho": "{dominant} guida il momento; {echo} risponde come controcanto — ascolta il loro dialogo interiore.",
@@ -1910,7 +1916,8 @@
   "plan14Tracker": {
     "title": "I miei progressi",
     "completedTitle": "Piano completato — il tuo bilancio",
-    "bilanPlaceholder": "Cosa è cambiato in questi 14 giorni?"
+    "bilanPlaceholder": "Cosa è cambiato in questi 14 giorni?",
+    "cadenceLimit": "Un giorno alla volta 🌱 Il prossimo passo si sblocca domani — è il ritmo che fa la trasformazione."
   },
   "checkin": {
     "title": "L'eco del giorno",
@@ -1945,6 +1952,8 @@
     "drawLink": "Approfondire con una lettura su {petal} →",
     "alreadyToday": "Il tuo eco di oggi è già piantato.",
     "comeBackTomorrow": "Torna domani per un nuovo eco.",
+    "streakDays": "Serie di {days} giorni",
+    "sapReward": "+{amount} linfa guadagnata",
     "todayEchoLabel": "Il tuo eco di oggi",
     "limitError": "Un solo eco al giorno. Torna domani.",
     "lastEchoLabel": "Il tuo ultimo eco",
@@ -2324,6 +2333,14 @@
       "body": "Qualche minuto con la Guida per chiarire ciò che gira in te — senza giudizio, al tuo ritmo.",
       "actionLabel": "Aprire la conversazione interiore",
       "emailSubject": "Un momento di chiarezza interiore"
+    },
+    "earlyreturn": {
+      "title": "Una porta è rimasta socchiusa",
+      "body": "Sono passati alcuni giorni — niente di urgente, solo una porta socchiusa nel tuo giardino. Due minuti bastano per riprendere il filo dove l'hai lasciato.",
+      "highlight": "Il tuo petalo {{petal}} ti aspetta — un piccolo passo basta per mantenere lo slancio.",
+      "highlightGeneric": "Un check-in di 30 secondi basta per mantenere lo slancio.",
+      "actionLabel": "Riprendere il filo",
+      "emailSubject": "Una porta socchiusa nel tuo giardino"
     },
     "comeback": {
       "title": "Il giardino ti aspetta",

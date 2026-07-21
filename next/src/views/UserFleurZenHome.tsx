@@ -17,6 +17,7 @@ import {
   ZenHomePlan14jToday,
   ZenHomeCheckinPrompt,
   ZenHomeEvolutionHero,
+  ZenHomeBadges,
 } from '@/components/dashboard'
 import { DashboardTuteurFab } from '@/components/dashboard/DashboardTuteurFab'
 import { fetchDashboardData, dashboardApi } from '@/api/dashboard'
@@ -272,6 +273,7 @@ export function UserFleurZenHome() {
               baselinePetals={baselinePetals}
               currentPetals={normalizePetals(aggregate as Record<string, unknown>)}
               lastEcho={lastCheckinEcho}
+              streak={Number(data?.checkinStreak ?? 0)}
             />
           ) : null}
 
@@ -306,6 +308,7 @@ export function UserFleurZenHome() {
               />
               <ZenPetalLegend petals={displayPetals} />
               <ZenHomeMiniStats stats={stats as Record<string, unknown>} />
+              <ZenHomeBadges />
               <div className="flex justify-center xl:justify-start">
                 <Link
                   href={statsHref}

@@ -87,6 +87,12 @@ async function shouldSendInstantEmail(userId: number): Promise<boolean> {
   return true
 }
 
+/** L'utilisateur est-il actuellement dans ses heures calmes (fuseau Paris) ? */
+export async function isUserInQuietHours(userId: number): Promise<boolean> {
+  const prefs = await readUserPrefs(userId)
+  return inQuietHours(prefs.quiet_hours_start, prefs.quiet_hours_end)
+}
+
 export async function buildNotificationEmailHtml(params: {
   title: string
   body?: string | null

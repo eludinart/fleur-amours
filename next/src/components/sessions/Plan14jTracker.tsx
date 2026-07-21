@@ -11,32 +11,51 @@ type Props = {
   days: PlanDay[]
   initialCompleted?: number[]
   initialBilan?: string | null
+  initialLastAddDate?: string | null
+}
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10)
 }
 
 /**
  * Suivi de complétion du plan 14 jours : cocher chaque étape, voir la progression,
  * et saisir un bilan une fois le plan terminé. Persiste via /api/sessions/plan-progress.
+ * Cadence : un seul nouveau jour cochable par jour calendaire (rendez-vous quotidien).
  */
-export default function Plan14jTracker({ sessionId, days, initialCompleted = [], initialBilan }: Props) {
+export default function Plan14jTracker({
+  sessionId,
+  days,
+  initialCompleted = [],
+  initialBilan,
+  initialLastAddDate,
+}: Props) {
   const [completed, setCompleted] = useState<number[]>(initialCompleted)
   const [bilan, setBilan] = useState(initialBilan ?? '')
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
+  const [lastAddDate, setLastAddDate] = useState<string | null>(initialLastAddDate ?? null)
+  const [cadenceMsg, setCadenceMsg] = useState(false)
 
   const total = days.length
   const allDone = total > 0 && completed.length >= total
   const pct = total > 0 ? Math.round((completed.length / total) * 100) : 0
+  const addLockedToday = lastAddDate === todayIso()
 
   const dayNumbers = useMemo(() => days.map((d, i) => d.day ?? i + 1), [days])
 
   async function persist(nextCompleted: number[], nextBilan?: string) {
     setSaving(true)
     try {
-      await sessionsApi.planProgress({
+      const res = await sessionsApi.planProgress({
         id: sessionId,
         completed: nextCompleted,
         bilan: nextBilan,
       })
+      // Le serveur est la source de vérité (cadence appliquée côté API).
+      if (Array.isArray(res?.progress?.completed)) setCompleted(res.progress.completed)
+      if (res?.progress?.lastAddDate !== undefined) setLastAddDate(res.progress.lastAddDate ?? null)
+      if (res?.cadenceLimited) setCadenceMsg(true)
       setSavedAt(Date.now())
       setTimeout(() => setSavedAt(null), 2000)
     } catch {
@@ -47,10 +66,14 @@ export default function Plan14jTracker({ sessionId, days, initialCompleted = [],
   }
 
   function toggleDay(dayNum: number) {
-    const next = completed.includes(dayNum)
-      ? completed.filter((d) => d !== dayNum)
-      : [...completed, dayNum]
+    const isUncheck = completed.includes(dayNum)
+    if (!isUncheck && addLockedToday) {
+      setCadenceMsg(true)
+      return
+    }
+    const next = isUncheck ? completed.filter((d) => d !== dayNum) : [...completed, dayNum]
     setCompleted(next)
+    setCadenceMsg(false)
     void persist(next, bilan.trim() || undefined)
   }
 
@@ -68,16 +91,29 @@ export default function Plan14jTracker({ sessionId, days, initialCompleted = [],
       <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-violet-100 dark:bg-violet-900/40">
         <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${pct}%` }} />
       </div>
+      {cadenceMsg ? (
+        <p className="mb-2 rounded-lg border border-amber-300/60 bg-amber-50 px-2.5 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200">
+          {t('plan14Tracker.cadenceLimit')}
+        </p>
+      ) : null}
       <ul className="space-y-1">
         {days.map((d, i) => {
           const dayNum = dayNumbers[i]
           const isDone = completed.includes(dayNum)
+          const locked = !isDone && addLockedToday
           return (
             <li key={dayNum}>
-              <label className="flex cursor-pointer items-start gap-2 rounded-lg px-1 py-1 text-xs hover:bg-white/60 dark:hover:bg-slate-800/40">
+              <label
+                className={`flex items-start gap-2 rounded-lg px-1 py-1 text-xs ${
+                  locked
+                    ? 'cursor-not-allowed opacity-55'
+                    : 'cursor-pointer hover:bg-white/60 dark:hover:bg-slate-800/40'
+                }`}
+              >
                 <input
                   type="checkbox"
                   checked={isDone}
+                  disabled={locked}
                   onChange={() => toggleDay(dayNum)}
                   className="mt-0.5 h-4 w-4 shrink-0 accent-violet-600"
                 />

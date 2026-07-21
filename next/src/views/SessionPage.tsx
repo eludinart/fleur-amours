@@ -1005,6 +1005,7 @@ function IntroStep({
                                   days={expandedDetail.plan14j.plan_14j}
                                   initialCompleted={expandedDetail.step_data?.plan14j_progress?.completed || []}
                                   initialBilan={expandedDetail.step_data?.plan14j_progress?.bilan || ''}
+                                  initialLastAddDate={expandedDetail.step_data?.plan14j_progress?.lastAddDate || null}
                                 />
                               )}
                               {(!expandedDetail.plan14j.levers?.length && !expandedDetail.plan14j.plan_14j?.length && !expandedDetail.plan14j.synthesis) && (

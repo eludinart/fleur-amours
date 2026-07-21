@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Session introuvable' }, { status: 404 })
     }
 
-    const completed = Array.isArray(body.completed)
+    const requested = Array.isArray(body.completed)
       ? Array.from(new Set(body.completed.map((n) => parseInt(String(n), 10)).filter((n) => Number.isFinite(n))))
       : []
 
@@ -49,13 +49,30 @@ export async function POST(req: NextRequest) {
         ? (session.step_data as Record<string, unknown>)
         : {}
     const prevProgress =
-      (existingStepData.plan14j_progress as { bilan?: string; completedAt?: string } | undefined) ?? {}
+      (existingStepData.plan14j_progress as
+        | { completed?: number[]; bilan?: string; completedAt?: string; lastAddDate?: string }
+        | undefined) ?? {}
+
+    // Cadence : le plan est un rendez-vous quotidien — 1 nouveau jour cochable par jour calendaire.
+    // Décocher reste libre ; seuls les ajouts sont limités.
+    const prevCompleted = Array.isArray(prevProgress.completed) ? prevProgress.completed : []
+    const today = new Date().toISOString().slice(0, 10)
+    const newAdds = requested.filter((n) => !prevCompleted.includes(n)).sort((a, b) => a - b)
+    const allowedAdds = prevProgress.lastAddDate === today ? 0 : 1
+    const acceptedAdds = newAdds.slice(0, allowedAdds)
+    const cadenceLimited = newAdds.length > acceptedAdds.length
+    const completed = [
+      ...prevCompleted.filter((n) => requested.includes(n)),
+      ...acceptedAdds,
+    ]
+    const lastAddDate = acceptedAdds.length > 0 ? today : prevProgress.lastAddDate ?? null
 
     const isComplete = totalDays > 0 && completed.length >= totalDays
     const progress = {
       completed,
       bilan: typeof body.bilan === 'string' ? body.bilan.slice(0, 2000) : prevProgress.bilan ?? null,
       completedAt: isComplete ? prevProgress.completedAt ?? new Date().toISOString() : null,
+      lastAddDate,
       updatedAt: new Date().toISOString(),
     }
 
@@ -74,7 +91,7 @@ export async function POST(req: NextRequest) {
       }).catch(() => {})
     }
 
-    return NextResponse.json({ saved: true, progress })
+    return NextResponse.json({ saved: true, progress, cadenceLimited })
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string }
     return NextResponse.json({ error: e.message || 'Erreur' }, { status: e.status || 401 })

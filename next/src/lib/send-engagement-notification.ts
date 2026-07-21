@@ -2,7 +2,7 @@
  * Envoi unifié d'une relance d'engagement (notification + e-mail personnalisés).
  */
 import { createNotification } from './db-notifications'
-import { dispatchNotificationEmails } from './email'
+import { dispatchNotificationEmails, isUserInQuietHours } from './email'
 import { canSendEngagementRemindToEmail, isEngagementRemindAllowlistActive } from './notification-outbound'
 import { filterOutDemoUserIds } from './demo-accounts-filter'
 import type { EngagementCampaignId } from './engagement-templates'
@@ -71,6 +71,16 @@ export async function sendEngagementNotification(
 
   if (result.deliveries === 0) {
     return { sent: false, notification_id: result.notification_id }
+  }
+
+  // Push FCM (web/PWA + Android) — silencieux pendant les heures calmes de l'utilisateur.
+  try {
+    if (!(await isUserInQuietHours(input.userId))) {
+      const { sendFcmPush } = await import('./fcm')
+      await sendFcmPush(input.userId, email, template.title, template.body, template.action_url)
+    }
+  } catch {
+    /* push optionnel : ne bloque jamais la relance */
   }
 
   await dispatchNotificationEmails({

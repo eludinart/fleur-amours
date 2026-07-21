@@ -1,18 +1,25 @@
-// @ts-nocheck
 'use client'
 
-import { MATURITY_BADGE_DEFS } from '@/lib/community-maturity-data'
+import { MATURITY_BADGE_DEFS, type MaturityBadgeId } from '@/lib/community-maturity-data'
 import { t } from '@/i18n'
 
 /**
  * Badges de maturité communautaire (progression douce).
  */
-export function MaturityBadges({ badges = [], compact = false, className = '' }) {
+export function MaturityBadges({
+  badges = [],
+  compact = false,
+  className = '',
+}: {
+  badges?: string[]
+  compact?: boolean
+  className?: string
+}) {
   if (!badges?.length) return null
   return (
     <div className={`flex flex-wrap gap-1 ${className}`}>
       {badges.map((id) => {
-        const def = MATURITY_BADGE_DEFS[id]
+        const def = MATURITY_BADGE_DEFS[id as MaturityBadgeId]
         if (!def) return null
         return (
           <span

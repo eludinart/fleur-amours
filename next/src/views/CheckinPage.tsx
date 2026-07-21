@@ -70,6 +70,8 @@ export default function CheckinPage() {
   const [error, setError] = useState('')
   const [history, setHistory] = useState<CheckinDTO[]>([])
   const [context, setContext] = useState<CheckinContextDTO | null>(null)
+  const [streak, setStreak] = useState(0)
+  const [reward, setReward] = useState<{ streak: number; sapBonus: number } | null>(null)
 
   const load = useCallback(() => {
     checkinsApi
@@ -77,6 +79,7 @@ export default function CheckinPage() {
       .then((r) => {
         setHistory(r.checkins || [])
         setContext(r.context ?? null)
+        setStreak(Number(r.streak ?? 0))
       })
       .catch(() => {
         setHistory([])
@@ -124,12 +127,15 @@ export default function CheckinPage() {
     setSaving(true)
     setError('')
     try {
-      await checkinsApi.save({
+      const res = await checkinsApi.save({
         intention: intention.trim(),
         highlightPetal: echo.highlight_petal,
         aiResponse: echo,
         feltAfter: feltAfter ?? undefined,
       })
+      setReward(
+        res.sapBonus ? { streak: Number(res.streak ?? 0), sapBonus: Number(res.sapBonus) } : null
+      )
       setAct('done')
       setIntention('')
       setFeltAfter(null)
@@ -137,7 +143,7 @@ export default function CheckinPage() {
       setTimeout(() => {
         setAct('pose')
         setEcho(null)
-      }, 3200)
+      }, 6000)
     } catch (e) {
       const err = e as { message?: string; detail?: string; code?: string }
       const msg =
@@ -171,6 +177,13 @@ export default function CheckinPage() {
           </p>
           <h1 className="text-2xl sm:text-3xl font-light tracking-wide text-white/95">{t('checkin.title')}</h1>
           <p className="text-base text-white/80 max-w-md mx-auto leading-relaxed">{t('checkin.subtitle')}</p>
+          {streak >= 2 ? (
+            <p>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/35 bg-amber-950/35 px-3 py-1 text-xs font-semibold text-amber-200">
+                🔥 {t('checkin.streakDays', { days: streak })}
+              </span>
+            </p>
+          ) : null}
         </header>
 
         {checkedInToday ? (
@@ -467,9 +480,21 @@ export default function CheckinPage() {
 
         {/* Confirmation */}
         {act === 'done' ? (
-          <div className="rounded-3xl border border-emerald-400/30 bg-emerald-950/25 px-6 py-8 text-center space-y-2">
+          <div className="rounded-3xl border border-emerald-400/30 bg-emerald-950/25 px-6 py-8 text-center space-y-3">
             <p className="text-2xl">🌱</p>
             <p className="text-lg font-light text-emerald-100">{t('checkin.planted')}</p>
+            {reward ? (
+              <div className="flex flex-col items-center gap-1.5">
+                {reward.streak >= 2 ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-950/40 px-3 py-1 text-sm font-semibold text-amber-200">
+                    🔥 {t('checkin.streakDays', { days: reward.streak })}
+                  </span>
+                ) : null}
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-400/35 bg-teal-950/35 px-3 py-1 text-sm font-medium text-teal-100">
+                  💧 {t('checkin.sapReward', { amount: reward.sapBonus })}
+                </span>
+              </div>
+            ) : null}
             <p className="text-xs text-emerald-200/70">{t('checkin.plantedHint')}</p>
           </div>
         ) : null}

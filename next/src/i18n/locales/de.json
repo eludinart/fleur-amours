@@ -842,6 +842,8 @@
     "checkinRising": "Aufstieg",
     "checkinFalling": "Rückzug",
     "checkinCta": "Check-in machen",
+    "checkinStreak": "Serie: {days} T",
+    "checkinStreakHint": "Aufeinanderfolgende Tage mit einem gepflanzten Echo — jeder Tag bringt Saft.",
     "coachGatewayBody": "Bei {petal} kehrt dein Garten oft zurück — ein Begleiter kann dir behutsam helfen, tiefer zu gehen.",
     "coachGatewayCta": "Begleiter ansehen",
     "eclosionHubCta": "Die Geschichte meines Gartens"
@@ -904,6 +906,10 @@
     "journalTitleZen": "Letzte Einträge",
     "journalDescZen": "Aktuelle Ziehungen, Sitzungen und Erkundungen — nach Datum sortiert.",
     "detailsStatsLong": "Vollständiges Klima und Statistiken →",
+    "badgesLabel": "Meine Gärtner-Abzeichen",
+    "badgesMore": "Weiter in der Prärie",
+    "badgesEmpty": "Deine Gärtner-Abzeichen erscheinen hier: säe, gieße und knüpfe Verbindungen in der Prärie.",
+    "badgesEmptyCta": "Die Prärie entdecken",
     "headerLineNewGarden": "Dein emotionales Landschaftsbild formt sich noch — atme sanft, wenn du diesen Raum betrittst.",
     "headerLineDominantOnly": "Heute färbt {dominant} deine Blume am stärksten — vertrau diesem Signal.",
     "headerLineDominantEcho": "{dominant} führt den Moment; {echo} antwortet als Kontrapunkt — höre auf ihr inneres Gespräch.",
@@ -1910,7 +1916,8 @@
   "plan14Tracker": {
     "title": "Mein Fortschritt",
     "completedTitle": "Plan abgeschlossen — dein Fazit",
-    "bilanPlaceholder": "Was hat sich in diesen 14 Tagen verändert?"
+    "bilanPlaceholder": "Was hat sich in diesen 14 Tagen verändert?",
+    "cadenceLimit": "Ein Tag nach dem anderen 🌱 Der nächste Schritt wird morgen freigeschaltet — der Rhythmus macht die Transformation."
   },
   "checkin": {
     "title": "Das Echo des Tages",
@@ -1945,6 +1952,8 @@
     "drawLink": "Vertiefen mit einer Ziehung zu {petal} →",
     "alreadyToday": "Dein Echo des Tages ist bereits gepflanzt.",
     "comeBackTomorrow": "Komm morgen für ein neues Echo zurück.",
+    "streakDays": "{days}-Tage-Serie",
+    "sapReward": "+{amount} Saft erhalten",
     "todayEchoLabel": "Dein Echo von heute",
     "limitError": "Nur ein Echo pro Tag. Komm morgen wieder.",
     "lastEchoLabel": "Dein letztes Echo",
@@ -2324,6 +2333,14 @@
       "body": "Ein paar Minuten mit der Führung, um zu klären, was in dir kreist — ohne Urteil, in deinem Tempo.",
       "actionLabel": "Innere Unterhaltung öffnen",
       "emailSubject": "Ein Moment innerer Klarheit"
+    },
+    "earlyreturn": {
+      "title": "Eine Tür ist angelehnt geblieben",
+      "body": "Ein paar Tage sind vergangen — nichts Dringendes, nur eine angelehnte Tür in deinem Garten. Zwei Minuten genügen, um den Faden dort aufzunehmen, wo du ihn gelassen hast.",
+      "highlight": "Dein {{petal}}-Blütenblatt wartet — ein kleiner Schritt genügt, um den Schwung zu halten.",
+      "highlightGeneric": "Ein 30-Sekunden-Check-in genügt, um den Schwung zu halten.",
+      "actionLabel": "Den Faden aufnehmen",
+      "emailSubject": "Eine angelehnte Tür in deinem Garten"
     },
     "comeback": {
       "title": "Der Garten wartet auf dich",

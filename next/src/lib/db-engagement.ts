@@ -18,6 +18,7 @@ const ENGAGEMENT_TYPES = [
   'engagement_fleur',
   'engagement_session',
   'engagement_dreamscape',
+  'engagement_earlyreturn',
   'engagement_comeback',
 ] as const
 
@@ -108,6 +109,56 @@ async function findInactiveComebackCandidates(
       email: r.email ? String(r.email) : null,
       locale: 'fr',
       campaignId: 'comeback',
+    })
+    if (out.length >= limit) break
+  }
+  return out
+}
+
+/**
+ * Fenêtre critique de churn précoce : utilisateurs actifs récemment mais absents
+ * depuis 2 à 6 jours (avant que le comeback à 15 jours ne s'applique).
+ * Un utilisateur ne reste dans cette fenêtre que ~4 jours → max 1 relance par absence
+ * (le cooldown global évite tout doublon).
+ */
+async function findEarlyReturnCandidates(
+  earlyReturnMinDays: number,
+  earlyReturnMaxDays: number,
+  limit: number,
+  exclude: Set<number>
+): Promise<EngagementCandidate[]> {
+  if (!isDbConfigured()) return []
+  const pool = getPool()
+  const tUsers = table('users')
+  const tMeta = table('usermeta')
+  const excludeDemo = excludeDemoAccountsSql('u', tMeta)
+  const minDays = Math.min(Math.max(earlyReturnMinDays, 1), 14)
+  const maxDays = Math.min(Math.max(earlyReturnMaxDays, minDays + 1), 14)
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT u.ID AS user_id, u.user_email AS email
+       FROM ${tUsers} u
+       INNER JOIN ${tMeta} um_last
+         ON um_last.user_id = u.ID AND um_last.meta_key = 'fleur_last_login'
+      WHERE u.user_email IS NOT NULL AND TRIM(u.user_email) != ''
+        AND um_last.meta_value < DATE_FORMAT(DATE_SUB(NOW(), INTERVAL ? DAY), '%Y-%m-%d %H:%i:%s')
+        AND um_last.meta_value >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL ? DAY), '%Y-%m-%d %H:%i:%s')
+        ${excludeDemo}
+      ORDER BY um_last.meta_value ASC
+      LIMIT ${limit}`,
+    [minDays, maxDays]
+  )
+
+  const out: EngagementCandidate[] = []
+  for (const r of rows) {
+    const userId = Number(r.user_id)
+    if (!userId || exclude.has(userId)) continue
+    exclude.add(userId)
+    out.push({
+      userId,
+      email: r.email ? String(r.email) : null,
+      locale: 'fr',
+      campaignId: 'earlyreturn',
     })
     if (out.length >= limit) break
   }
@@ -373,6 +424,13 @@ export async function findEngagementCandidates(params: {
   const checkins = await findCheckinReminderCandidates({ activityDays, staleDays: 7, limit })
   for (const c of checkins) {
     push({ userId: c.userId, email: c.email, locale: 'fr', campaignId: 'checkin' })
+    if (out.length >= limit) return out
+  }
+
+  // Fenêtre critique J+2 → J+6 : rattraper les départs précoces avant qu'ils ne deviennent du churn.
+  const earlyReturns = await findEarlyReturnCandidates(2, 6, limit, assigned)
+  for (const c of earlyReturns) {
+    out.push(c)
     if (out.length >= limit) return out
   }
 

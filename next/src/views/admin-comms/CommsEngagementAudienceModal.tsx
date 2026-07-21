@@ -54,6 +54,7 @@ const CAMPAIGN_LABELS: Record<string, string> = {
   fleur: "Fleur d'AmOurs",
   session: 'Session porte',
   dreamscape: 'Conversation intérieure',
+  earlyreturn: 'Retour précoce (2-6 j)',
   comeback: 'Retour au jardin',
 }
 

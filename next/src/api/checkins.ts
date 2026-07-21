@@ -54,6 +54,7 @@ export const checkinsApi = {
     api.get('/api/checkins') as Promise<{
       checkins: CheckinDTO[]
       context: CheckinContextDTO | null
+      streak?: number
     }>,
   save: (data: {
     intention?: string
@@ -64,5 +65,12 @@ export const checkinsApi = {
     tension?: number
     note?: string
   }) =>
-    api.post('/api/checkins', data) as Promise<{ id: number; mood: number; tension: number; saved: boolean }>,
+    api.post('/api/checkins', data) as Promise<{
+      id: number
+      mood: number
+      tension: number
+      saved: boolean
+      streak?: number
+      sapBonus?: number
+    }>,
 }

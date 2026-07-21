@@ -891,6 +891,8 @@
     "checkinRising": "rising",
     "checkinFalling": "easing",
     "checkinCta": "Listen to the flower",
+    "checkinStreak": "Streak: {days}d",
+    "checkinStreakHint": "Consecutive days with a planted echo — each day earns sap.",
     "coachGatewayBody": "On {petal}, your garden keeps returning — a coach can help you go deeper with care.",
     "coachGatewayCta": "Browse coaches",
     "eclosionHubCta": "The story of my garden"
@@ -953,6 +955,10 @@
     "journalTitleZen": "Recent passages",
     "journalDescZen": "Recent draws, sessions and explorations — sorted by date.",
     "detailsStatsLong": "View full climate and statistics →",
+    "badgesLabel": "My gardener badges",
+    "badgesMore": "Keep going in the Prairie",
+    "badgesEmpty": "Your gardener badges will appear here: sow, water, and grow connections in the Prairie.",
+    "badgesEmptyCta": "Discover the Prairie",
     "headerLineNewGarden": "Your emotional landscape is still taking shape — breathe gently as you step into this space.",
     "headerLineDominantOnly": "Today {dominant} colors your flower most strongly — trust that signal.",
     "headerLineDominantEcho": "{dominant} leads the moment; {echo} answers as a counterpoint — listen to their inner conversation.",
@@ -2048,7 +2054,8 @@
   "plan14Tracker": {
     "title": "My progress",
     "completedTitle": "Plan complete — your review",
-    "bilanPlaceholder": "What changed during these 14 days?"
+    "bilanPlaceholder": "What changed during these 14 days?",
+    "cadenceLimit": "One day at a time 🌱 The next step unlocks tomorrow — the rhythm is what makes the transformation."
   },
   "checkin": {
     "title": "Today's echo",
@@ -2083,6 +2090,8 @@
     "drawLink": "Go deeper with a draw on {petal} →",
     "alreadyToday": "Today's echo is already planted.",
     "comeBackTomorrow": "Come back tomorrow for a new echo.",
+    "streakDays": "{days}-day streak",
+    "sapReward": "+{amount} sap earned",
     "todayEchoLabel": "Today's echo",
     "limitError": "Only one echo per day. Come back tomorrow.",
     "lastEchoLabel": "Your last echo",
@@ -2635,6 +2644,14 @@
       "body": "A few minutes with the Guide to clarify what's turning inside you — without judgment, at your pace.",
       "actionLabel": "Open inner conversation",
       "emailSubject": "A moment of inner clarity"
+    },
+    "earlyreturn": {
+      "title": "A door was left ajar",
+      "body": "A few days have gone by — nothing urgent, just a door left ajar in your garden. Two minutes is enough to pick up right where you left off.",
+      "highlight": "Your {{petal}} petal is waiting — one small step keeps the momentum going.",
+      "highlightGeneric": "A 30-second check-in is enough to keep the momentum going.",
+      "actionLabel": "Pick up the thread",
+      "emailSubject": "A door left ajar in your garden"
     },
     "comeback": {
       "title": "The garden is waiting for you",

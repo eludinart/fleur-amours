@@ -9,6 +9,7 @@ export function ZenHomeCheckinPrompt({
   baselinePetals,
   currentPetals,
   lastEcho,
+  streak = 0,
 }: {
   daysSinceLast: number | null
   baselinePetals?: Record<string, number> | null
@@ -18,9 +19,10 @@ export function ZenHomeCheckinPrompt({
     highlightPetal?: string | null
     echo?: string | null
   } | null
+  streak?: number
 }) {
   const showDaily = daysSinceLast === null || daysSinceLast >= 1
-  if (!showDaily && !lastEcho?.whisper) return null
+  if (!showDaily && !lastEcho?.whisper && streak < 2) return null
 
   const shiftedPetal = (() => {
     if (!baselinePetals || !currentPetals) return null
@@ -46,9 +48,19 @@ export function ZenHomeCheckinPrompt({
 
   return (
     <div className="mb-5 rounded-2xl border border-sky-500/30 bg-sky-950/25 px-4 py-4">
-      <p className="text-xs font-medium uppercase tracking-wider text-sky-300/85">
-        {t('dashboard.checkinWeeklyLabel')}
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium uppercase tracking-wider text-sky-300/85">
+          {t('dashboard.checkinWeeklyLabel')}
+        </p>
+        {streak >= 2 ? (
+          <span
+            className="inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-200"
+            title={t('dashboard.checkinStreakHint')}
+          >
+            🔥 {t('dashboard.checkinStreak', { days: streak })}
+          </span>
+        ) : null}
+      </div>
       {lastEcho?.whisper && !showDaily ? (
         <>
           {echoPetal ? (
