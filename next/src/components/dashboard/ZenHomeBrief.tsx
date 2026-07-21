@@ -93,8 +93,8 @@ function buildLocalBrief(
 function BriefSection({ label, text }: { label: string; text: string }) {
   return (
     <div className="space-y-1">
-      <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-white/70">{label}</p>
-      <p className="text-sm sm:text-[15px] text-violet-900 dark:text-violet-100/88 leading-relaxed">{text}</p>
+      <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-white/65">{label}</p>
+      <p className="text-sm sm:text-[15px] text-slate-700 dark:text-white/90 leading-relaxed">{text}</p>
     </div>
   )
 }
@@ -174,7 +174,7 @@ export function ZenHomeBrief({
     return (
       <div className="rounded-2xl border border-violet-200 dark:border-violet-400/25 bg-gradient-to-br from-violet-50 dark:from-violet-950/40 to-rose-50 dark:to-rose-950/20 backdrop-blur-sm px-4 py-5 mb-5 space-y-3">
         <p className="text-xs uppercase tracking-wider text-teal-700 dark:text-teal-300/75">{t('fleurZen.briefTitle')}</p>
-        <p className="text-sm text-violet-900 dark:text-violet-100/95 leading-relaxed font-medium">{t('fleurZen.briefNoDataWow')}</p>
+        <p className="text-sm text-slate-700 dark:text-white/90 leading-relaxed font-medium">{t('fleurZen.briefNoDataWow')}</p>
         <Link
           href="/a-deux/par-une-porte?welcome=1"
           className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-rose-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-500/20 hover:opacity-95 transition-opacity"
@@ -206,7 +206,7 @@ export function ZenHomeBrief({
       <p className="text-xs uppercase tracking-wider text-teal-700 dark:text-teal-300/75">{t('fleurZen.briefTitle')}</p>
 
       {summary.headline ? (
-        <p className="text-base sm:text-lg font-semibold text-violet-900 dark:text-violet-50/95 leading-snug">{summary.headline}</p>
+        <p className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white leading-snug">{summary.headline}</p>
       ) : null}
 
       {summary.profile ? (
