@@ -18,8 +18,10 @@ import { FLOWER_OFFSET } from '@/config/dreamscapeLayout'
 import { buildSlotsFromSaved, initSlots } from '@/lib/dreamscape-slots'
 import { captureDreamscapeDomToDataUrl } from '@/lib/dreamscape-snapshot-capture'
 import { ShareDreamscapeButton } from '@/components/ShareDreamscapeButton'
+import { DreamscapeClosingResult, DreamscapeClosingWait } from '@/components/DreamscapeClosingResult'
 import { t } from '@/i18n'
 import { useStore } from '@/store/useStore'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Fleur de référence complète (silhouette) pour l’effet « fleur double »
 const FULL_SILHOUETTE_PETALS = Object.fromEntries(
@@ -68,12 +70,15 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
   const [isTouchDevice, setIsTouchDevice] = useState(false)
   const [isCapturing, setIsCapturing] = useState(false)
   const [closeModalPreview, setCloseModalPreview] = useState(null)
-  const [closeModalStage, setCloseModalStage] = useState<'confirm' | 'saved'>('confirm')
+  const [closeModalStage, setCloseModalStage] = useState<'confirm' | 'waiting' | 'saved'>('confirm')
   const [closeModalSynthesis, setCloseModalSynthesis] = useState<string>('')
   const [closeModalSections, setCloseModalSections] = useState<any>(null)
   const [closeModalSavedId, setCloseModalSavedId] = useState<number | null>(null)
   const [closeModalShareToken, setCloseModalShareToken] = useState<string | null>(null)
+  const [closeModalEmailTo, setCloseModalEmailTo] = useState<string | null>(null)
+  const [closeWaitStep, setCloseWaitStep] = useState(0)
   const [hardCloseMessage, setHardCloseMessage] = useState<string>('')
+  const { user } = useAuth()
   const [dreamscapeConfig, setDreamscapeConfig] = useState(() => ({
     close_mode: 'auto', // cercle complet → invitation à clôturer
     max_cartes_par_tour: 1,
@@ -220,6 +225,8 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
     setCloseModalSections(null)
     setCloseModalSavedId(null)
     setCloseModalShareToken(null)
+    setCloseModalEmailTo(null)
+    setCloseWaitStep(0)
     revealOrderRef.current = 0
     autoEndFormTriggeredRef.current = false
     allRevealedRef.current = false
@@ -661,12 +668,74 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
     }
   }, [history, poeticReflection, slots, livePetals, resumeId, captureSnapshot])
 
+  const buildLocalClosingSections = useCallback((pathCards: string[]) => {
+    const userMsgs = history
+      .filter((m) => m.role === 'user')
+      .map((m) => String(m.content || '').trim())
+      .filter(Boolean)
+    const assistantMsgs = history
+      .filter((m) => m.role === 'assistant')
+      .map((m) => String(m.content || '').trim())
+      .filter(Boolean)
+    const intention = userMsgs[0]
+      ? `Tu es entré·e avec ceci : « ${userMsgs[0].slice(0, 280)}${userMsgs[0].length > 280 ? '…' : ''} »`
+      : 'Tu es venu·e explorer ton climat intérieur.'
+    const emergeBits = [
+      ...assistantMsgs.slice(-2),
+      poeticReflection?.trim() && poeticReflection !== assistantMsgs[assistantMsgs.length - 1]
+        ? poeticReflection.trim()
+        : '',
+    ].filter(Boolean)
+    const ce_qui_a_emerge =
+      emergeBits.join('\n\n').slice(0, 1200) ||
+      'Cette promenade a ouvert un espace d’écoute. Relis tes échanges et les cartes révélées pour prolonger ce qui a bougé.'
+    const citations = userMsgs.slice(-4).map((q) => {
+      const s = q.replace(/\s+/g, ' ').trim()
+      return `"${s.slice(0, 140)}${s.length > 140 ? '…' : ''}"`
+    })
+    const actions =
+      closingActions.length > 0
+        ? closingActions.slice(0, 5)
+        : [
+            'Je peux relire demain ce qui a émergé ici.',
+            'Je peux noter une phrase de cette conversation qui me reste.',
+            'Je peux honorer une petite action concrète liée à ce que j’ai nommé.',
+          ]
+    return {
+      intention_depart: intention,
+      ce_qui_a_emerge,
+      trajectoire_cartes: pathCards.length
+        ? `Chemin révélé : ${pathCards.join(' → ')}`
+        : 'Peu de cartes ont été retournées — le dialogue reste le fil principal.',
+      citations,
+      actions_a_oeuvrer: actions,
+    }
+  }, [history, poeticReflection, closingActions])
+
+  // Étapes d’attente rituelle pendant la synthèse IA
+  useEffect(() => {
+    if (closeModalStage !== 'waiting') {
+      setCloseWaitStep(0)
+      return
+    }
+    setCloseWaitStep(0)
+    const t1 = window.setTimeout(() => setCloseWaitStep(1), 2800)
+    const t2 = window.setTimeout(() => setCloseWaitStep(2), 5600)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+  }, [closeModalStage])
+
   const handleCloseAndSave = useCallback(async () => {
     if (!history.length && !poeticReflection?.trim()) {
       toast(t('dreamscapeCanvas.noReflection'), 'warning')
       return
     }
     setIsSaving(true)
+    setCloseModalStage('waiting')
+    setCloseModalEmailTo(null)
+    setShowCloseModal(true)
     try {
       const pathCards = slots
         .filter(s => !s.faceDown)
@@ -684,10 +753,28 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
         })
         synthesis = sumRes?.summary?.trim() || poeticReflection?.trim() || ''
         sections = sumRes?.sections ?? null
+        const thin =
+          !sections?.ce_qui_a_emerge?.trim() &&
+          !sections?.intention_depart?.trim() &&
+          !(Array.isArray(sections?.actions_a_oeuvrer) && sections.actions_a_oeuvrer.length)
+        if (thin) sections = buildLocalClosingSections(pathCards)
       } catch {
-        synthesis = poeticReflection?.trim() || ''
+        sections = buildLocalClosingSections(pathCards)
+        synthesis = [
+          sections.intention_depart,
+          sections.ce_qui_a_emerge,
+          sections.trajectoire_cartes,
+          ...(sections.actions_a_oeuvrer || []).map((a: string) => `• ${a}`),
+        ].filter(Boolean).join('\n\n')
       }
-      const closingEntry = { role: 'closing', content: synthesis, actions: closingActions, path: pathCards }
+
+      const closingEntry = {
+        role: 'closing',
+        content: synthesis,
+        actions: sections?.actions_a_oeuvrer?.length ? sections.actions_a_oeuvrer : closingActions,
+        path: pathCards,
+        sections,
+      }
       const snapshot = await captureSnapshot()
       const payload = {
         history: [...history, closingEntry],
@@ -714,8 +801,7 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
       setCloseModalSynthesis(synthesis)
       setCloseModalSections(sections)
       setCloseModalSavedId(savedId)
-      setCloseModalStage('saved')
-      setShowCloseModal(true)
+      if (snapshot) setCloseModalPreview(snapshot)
 
       if (savedId) {
         try {
@@ -726,14 +812,44 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
         }
       }
 
+      // Envoi e-mail du rendu (ne bloque pas l’affichage si échec)
+      try {
+        const mailRes = (await dreamscapeApi.sendClosingEmail({
+          sections: sections || {},
+          petals: livePetals,
+          path: pathCards,
+          slots: slots.map((s) => ({
+            position: s.position,
+            card: s.card,
+            faceDown: s.faceDown,
+            revealOrder: s.revealOrder ?? 0,
+          })),
+          snapshot: snapshot || closeModalPreview || null,
+          summary: synthesis,
+        })) as { sent?: boolean; email?: string; error?: string }
+        if (mailRes?.sent && mailRes.email) {
+          setCloseModalEmailTo(mailRes.email)
+        } else if (user?.email) {
+          // Afficher l’adresse prévue même si prefs/SMTP bloquent — transparence
+          setCloseModalEmailTo(null)
+          if (mailRes?.error) {
+            toast(t('dreamscapeCanvas.emailSendFailed'), 'warning')
+          }
+        }
+      } catch {
+        toast(t('dreamscapeCanvas.emailSendFailed'), 'warning')
+      }
+
+      setCloseModalStage('saved')
       toast(t('dreamscapeCanvas.closeSuccess'), 'success')
     } catch (e) {
       toast(e?.message || 'Impossible de sauvegarder', 'error')
+      setCloseModalStage('confirm')
       setShowCloseModal(true)
     } finally {
       setIsSaving(false)
     }
-  }, [history, poeticReflection, slots, livePetals, closingActions, router, resumeId, captureSnapshot])
+  }, [history, poeticReflection, slots, livePetals, closingActions, resumeId, captureSnapshot, buildLocalClosingSections, user?.email])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -970,7 +1086,11 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
                 animate={{ opacity: 1 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setShowCloseModal(true)}
+                onClick={() => {
+                  setCloseModalStage('confirm')
+                  setCloseModalEmailTo(null)
+                  setShowCloseModal(true)
+                }}
                 disabled={isSaving}
                 className="px-4 py-2 rounded-full text-sm font-medium bg-emerald-600/90 hover:bg-emerald-500 text-white border border-emerald-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 title={t('dreamscapeCanvas.closeWalkTitle')}
@@ -1076,6 +1196,8 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md"
           onClick={() => {
+            // Pendant l'assemblage, on ne ferme pas.
+            if (closeModalStage === 'waiting') return
             // Si la clôture est forcée, on ne permet pas d'annuler.
             if (forcedCloseActive) return
             // Si déjà enregistré (écran résumé), fermer = repartir sur une promenade vierge.
@@ -1091,180 +1213,154 @@ export function DreamscapeCanvas({ initialData = null, resumeId = null, onFirstU
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative flex flex-col gap-5 max-w-lg w-full max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 p-5 sm:p-6 shadow-2xl bg-[#1e293b]"
+            className={[
+              'relative flex flex-col gap-5 w-full max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 p-5 sm:p-6 shadow-2xl bg-[#1e293b]',
+              closeModalStage === 'saved' ? 'max-w-xl' : 'max-w-lg',
+            ].join(' ')}
             onClick={e => e.stopPropagation()}
           >
-            <h2 id="close-modal-title" className="text-lg sm:text-xl font-bold text-white">
-              {t('dreamscapeCanvas.closeModalTitle')}
-            </h2>
-            <p className="text-sm text-white/80 leading-relaxed">
-              {hardCloseMessage?.trim() ? hardCloseMessage : t('dreamscapeCanvas.closeModalDesc')}
-            </p>
-            <div className="rounded-xl bg-slate-800/60 border border-white/10 p-3">
-              <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
-                Parcours
-              </p>
-              <p className="text-sm text-white/90">
-                {history.filter(m => m.role === 'user').length} échange(s) · {slots.filter(s => !s.faceDown).length} carte(s) révélée(s)
-              </p>
-            </div>
-            {slots.some(s => !s.faceDown) && (
-              <div className="rounded-xl bg-slate-800/90 border border-white/10 p-3">
-                <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
-                  {t('dreamscapeCanvas.pathLabel')}
-                </p>
-                <p className="text-sm text-white/90">
-                  {slots.filter(s => !s.faceDown).map(s => s.card).join(' → ')}
-                </p>
-              </div>
-            )}
-            {closingActions.length > 0 && (
-              <div className="rounded-xl bg-slate-800/90 border border-white/10 p-3">
-                <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
-                  {t('dreamscapeCanvas.actionsLabel')}
-                </p>
-                <ul className="text-sm text-white/90 space-y-1 list-disc list-inside">
-                  {closingActions.map((a, i) => (
-                    <li key={i}>{a}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {closeModalStage === 'saved' && closeModalSynthesis?.trim() && (
-              <div className="rounded-xl bg-slate-800/90 border border-white/10 p-3">
-                <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
-                  Ce qui s’est joué
-                </p>
-                {closeModalSections ? (
-                  <div className="space-y-3">
-                    {closeModalSections.intention_depart ? (
-                      <div>
-                        <p className="text-[11px] font-bold text-violet-200 uppercase tracking-wider mb-1">Intention de départ</p>
-                        <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{String(closeModalSections.intention_depart)}</p>
-                      </div>
-                    ) : null}
-                    {closeModalSections.ce_qui_a_emerge ? (
-                      <div>
-                        <p className="text-[11px] font-bold text-violet-200 uppercase tracking-wider mb-1">Ce qui a émergé</p>
-                        <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{String(closeModalSections.ce_qui_a_emerge)}</p>
-                      </div>
-                    ) : null}
-                    {closeModalSections.trajectoire_cartes ? (
-                      <div>
-                        <p className="text-[11px] font-bold text-violet-200 uppercase tracking-wider mb-1">Trajectoire & cartes</p>
-                        <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{String(closeModalSections.trajectoire_cartes)}</p>
-                      </div>
-                    ) : null}
-                    {Array.isArray(closeModalSections.citations) && closeModalSections.citations.length ? (
-                      <div>
-                        <p className="text-[11px] font-bold text-violet-200 uppercase tracking-wider mb-1">Citations</p>
-                        <ul className="text-sm text-white/90 space-y-1 list-disc list-inside">
-                          {closeModalSections.citations.slice(0, 4).map((q: string, i: number) => (
-                            <li key={i}>{q}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                    {Array.isArray(closeModalSections.actions_a_oeuvrer) && closeModalSections.actions_a_oeuvrer.length ? (
-                      <div>
-                        <p className="text-[11px] font-bold text-emerald-200 uppercase tracking-wider mb-1">Actions à œuvrer</p>
-                        <ul className="text-sm text-white/90 space-y-1 list-disc list-inside">
-                          {closeModalSections.actions_a_oeuvrer.slice(0, 4).map((a: string, i: number) => (
-                            <li key={i}>{a}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">
-                    {closeModalSynthesis.trim()}
-                  </p>
-                )}
-              </div>
-            )}
-            {closeModalPreview && (
-              <div className="rounded-xl bg-slate-900/80 border border-violet-500/25 p-3">
-                <p className="text-xs font-semibold text-violet-300/90 uppercase tracking-wider mb-2">
-                  {t('dreamscapeHistorique.snapshot')}
-                </p>
-                <img
-                  src={closeModalPreview}
-                  alt=""
-                  className="w-full max-w-[240px] mx-auto rounded-lg object-contain ring-1 ring-white/10 shadow-lg"
+            {closeModalStage === 'waiting' ? (
+              <>
+                <h2 id="close-modal-title" className="sr-only">
+                  {t('dreamscapeCanvas.waitKicker')}
+                </h2>
+                <DreamscapeClosingWait stepIndex={closeWaitStep} />
+              </>
+            ) : closeModalStage === 'saved' ? (
+              <>
+                <h2 id="close-modal-title" className="sr-only">
+                  {t('dreamscapeCanvas.resultTitle')}
+                </h2>
+                <DreamscapeClosingResult
+                  sections={closeModalSections}
+                  synthesis={closeModalSynthesis}
+                  slots={slots}
+                  petals={livePetals}
+                  path={slots.filter(s => !s.faceDown).sort((a, b) => (a.revealOrder || 0) - (b.revealOrder || 0)).map(s => s.card)}
+                  previewUrl={closeModalPreview}
+                  emailSentTo={closeModalEmailTo}
                 />
-              </div>
+                {closeModalSavedId != null && (
+                  <div className="rounded-xl bg-slate-900/60 border border-white/10 p-3">
+                    <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
+                      {t('share.dreamscapeShareTitle')}
+                    </p>
+                    <p className="text-[11px] text-violet-200/95 leading-snug mb-3">
+                      {t('share.encourageDreamscape')}
+                    </p>
+                    {(() => {
+                      const raw =
+                        (closeModalSections?.intention_depart as string) ||
+                        (closeModalSections?.ce_qui_a_emerge as string) ||
+                        closeModalSynthesis ||
+                        ''
+                      const oneLine = String(raw).replace(/\s+/g, ' ').trim()
+                      const snippet = oneLine.length > 180 ? oneLine.slice(0, 179) + '…' : oneLine
+                      const actions = Array.isArray(closeModalSections?.actions_a_oeuvrer)
+                        ? closeModalSections.actions_a_oeuvrer.filter(Boolean).slice(0, 2)
+                        : []
+                      const actionsTxt = actions.length ? ` Actions: ${actions.join(' / ')}` : ''
+                      const override =
+                        (snippet ? `« ${snippet} »` : t('dreamscapeCanvas.shareFallback')) + actionsTxt
+                      return (
+                        <div className="flex flex-col items-stretch gap-2">
+                          <ShareDreamscapeButton
+                            savedId={closeModalSavedId}
+                            initialShareToken={closeModalShareToken}
+                            poeticReflection={poeticReflection?.trim() || null}
+                            shareTextOverride={override}
+                            appearance="onDark"
+                            menuAlign="left"
+                            showEncouragement={false}
+                          />
+                        </div>
+                      )
+                    })()}
+                    <p className="mt-2 text-[11px] text-white/50 leading-relaxed">
+                      {t('share.socialPlatformsHint')}
+                    </p>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-3 justify-end">
+                  <Link
+                    href="/dreamscape/historique"
+                    className="px-4 py-2 rounded-full text-sm font-medium border border-white/30 bg-white/10 text-white/90 hover:bg-white/20"
+                  >
+                    {t('dreamscapeCanvas.historyBtn')}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => resetWalk()}
+                    className="px-5 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-violet-600 to-rose-500 text-white hover:opacity-90"
+                  >
+                    {t('common.close')}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 id="close-modal-title" className="text-lg sm:text-xl font-bold text-white">
+                  {t('dreamscapeCanvas.closeModalTitle')}
+                </h2>
+                <p className="text-sm text-white/80 leading-relaxed">
+                  {hardCloseMessage?.trim() ? hardCloseMessage : t('dreamscapeCanvas.closeModalDesc')}
+                </p>
+                <div className="rounded-xl bg-slate-800/60 border border-white/10 p-3">
+                  <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
+                    Parcours
+                  </p>
+                  <p className="text-sm text-white/90">
+                    {history.filter(m => m.role === 'user').length} échange(s) · {slots.filter(s => !s.faceDown).length} carte(s) révélée(s)
+                  </p>
+                </div>
+                {slots.some(s => !s.faceDown) && (
+                  <div className="rounded-xl bg-slate-800/90 border border-white/10 p-3">
+                    <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
+                      {t('dreamscapeCanvas.pathLabel')}
+                    </p>
+                    <p className="text-sm text-white/90">
+                      {slots.filter(s => !s.faceDown).map(s => s.card).join(' → ')}
+                    </p>
+                  </div>
+                )}
+                {closingActions.length > 0 && (
+                  <div className="rounded-xl bg-slate-800/90 border border-white/10 p-3">
+                    <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
+                      {t('dreamscapeCanvas.actionsLabel')}
+                    </p>
+                    <ul className="text-sm text-white/90 space-y-1 list-disc list-inside">
+                      {closingActions.map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {user?.email ? (
+                  <p className="text-xs text-white/50 text-center leading-relaxed">
+                    {t('dreamscapeCanvas.emailWillSendHint', { email: String(user.email) })}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap gap-3 justify-end">
+                  {forcedCloseActive ? null : (
+                    <button
+                      type="button"
+                      onClick={() => setShowCloseModal(false)}
+                      className="px-4 py-2 rounded-full text-sm font-medium border border-white/30 bg-white/10 text-white/90 hover:bg-white/20"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleCloseAndSave}
+                    disabled={isSaving}
+                    className="px-5 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-violet-600 to-rose-500 text-white hover:opacity-90 disabled:opacity-50"
+                  >
+                    {t('dreamscapeCanvas.closeConfirm')}
+                  </button>
+                </div>
+              </>
             )}
-            {closeModalStage === 'saved' && closeModalSavedId != null && (
-              <div className="rounded-xl bg-slate-900/60 border border-white/10 p-3">
-                <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
-                  {t('share.dreamscapeShareTitle')}
-                </p>
-                <p className="text-[11px] text-violet-200/95 leading-snug mb-3">
-                  {t('share.encourageDreamscape')}
-                </p>
-                {(() => {
-                  const raw =
-                    (closeModalSections?.intention_depart as string) ||
-                    (closeModalSections?.ce_qui_a_emerge as string) ||
-                    closeModalSynthesis ||
-                    ''
-                  const oneLine = String(raw).replace(/\s+/g, ' ').trim()
-                  const snippet = oneLine.length > 180 ? oneLine.slice(0, 179) + '…' : oneLine
-                  const actions = Array.isArray(closeModalSections?.actions_a_oeuvrer)
-                    ? closeModalSections.actions_a_oeuvrer.filter(Boolean).slice(0, 2)
-                    : []
-                  const actionsTxt = actions.length ? ` Actions: ${actions.join(' / ')}` : ''
-                  const override =
-                    (snippet ? `« ${snippet} »` : t('dreamscapeCanvas.shareFallback')) + actionsTxt
-                  return (
-                    <div className="flex flex-col items-stretch gap-2">
-                      <ShareDreamscapeButton
-                        savedId={closeModalSavedId}
-                        initialShareToken={closeModalShareToken}
-                        poeticReflection={poeticReflection?.trim() || null}
-                        shareTextOverride={override}
-                        appearance="onDark"
-                        menuAlign="left"
-                        showEncouragement={false}
-                      />
-                    </div>
-                  )
-                })()}
-                <p className="mt-2 text-[11px] text-white/50 leading-relaxed">
-                  {t('share.socialPlatformsHint')}
-                </p>
-              </div>
-            )}
-            <div className="flex flex-wrap gap-3 justify-end">
-              {closeModalStage === 'saved' ? (
-                <button
-                  type="button"
-                  onClick={() => resetWalk()}
-                  className="px-4 py-2 rounded-full text-sm font-medium border border-white/30 bg-white/10 text-white/90 hover:bg-white/20"
-                >
-                  {t('common.close')}
-                </button>
-              ) : forcedCloseActive ? null : (
-                <button
-                  type="button"
-                  onClick={() => setShowCloseModal(false)}
-                  className="px-4 py-2 rounded-full text-sm font-medium border border-white/30 bg-white/10 text-white/90 hover:bg-white/20"
-                >
-                  {t('common.cancel')}
-                </button>
-              )}
-              {closeModalStage !== 'saved' && (
-                <button
-                  type="button"
-                  onClick={handleCloseAndSave}
-                  disabled={isSaving}
-                  className="px-5 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-violet-600 to-rose-500 text-white hover:opacity-90 disabled:opacity-50"
-                >
-                  {isSaving ? '…' : t('dreamscapeCanvas.closeConfirm')}
-                </button>
-              )}
-            </div>
           </motion.div>
         </div>
       )}

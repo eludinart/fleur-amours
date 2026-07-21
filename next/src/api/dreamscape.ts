@@ -11,4 +11,12 @@ export const dreamscapeApi = {
   share: (id: string) => api.post('/api/dreamscape/share', { id }),
   getShared: (token: string) =>
     api.get(`/api/dreamscape/shared?token=${encodeURIComponent(token)}`),
+  sendClosingEmail: (payload: {
+    sections: Record<string, unknown>
+    petals?: Record<string, number>
+    path?: string[]
+    slots?: Array<{ position?: string; card?: string; faceDown?: boolean; revealOrder?: number }>
+    snapshot?: string | null
+    summary?: string | null
+  }) => api.post('/api/dreamscape/closing-email', payload),
 }
