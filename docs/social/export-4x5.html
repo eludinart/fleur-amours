@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Export 4:5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Outfit:wght@300;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; background: #0f0a1e; }
+  .card {
+    width: 1080px; height: 1350px; position: relative; overflow: hidden;
+    background: #0f0a1e; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 96px 80px 110px; color: #faf9ff;
+    font-family: 'Outfit', system-ui, sans-serif;
+  }
+  .card::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 55% 45% at 78% 18%, rgba(168,85,247,0.22) 0%, transparent 62%),
+      radial-gradient(ellipse 48% 42% at 18% 82%, rgba(244,114,182,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 36% 32% at 50% 48%, rgba(99,102,241,0.12) 0%, transparent 65%);
+  }
+  .card::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 28px 28px; opacity: 0.45;
+  }
+  .inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 32px; }
+  .eyebrow { font-size: 18px; letter-spacing: 0.28em; text-transform: uppercase; color: #d2cce8; font-weight: 400; }
+  .flower { width: 520px; height: 520px; filter: drop-shadow(0 18px 40px rgba(0,0,0,0.35)); }
+  .flower svg { width: 100%; height: 100%; display: block; }
+  h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 78px; line-height: 1.05; letter-spacing: -0.02em; }
+  .tagline { font-size: 28px; font-weight: 300; line-height: 1.45; color: #d2cce8; }
+  .url { margin-top: 8px; font-size: 24px; font-weight: 500; letter-spacing: 0.04em; color: #f9a8d4; }
+</style>
+</head>
+<body>
+<article class="card">
+  <div class="inner">
+    <div class="eyebrow">Le Jardin d’AmOurs</div>
+    <div class="flower" id="flower"></div>
+    <h1>Fleur d’AmOurs</h1>
+    <p class="tagline">Un langage pour mieux s’aimer,<br>se relier, et grandir.</p>
+    <p class="url">app-fleurdamours.eludein.art</p>
+  </div>
+</article>
+<script>
+  const PETAL_DEFS = [
+    { id: 'agape', angle: 0, color: '#ec8698' },
+    { id: 'philautia', angle: 45, color: '#b8a2e8' },
+    { id: 'mania', angle: 90, color: '#e11d48' },
+    { id: 'storge', angle: 135, color: '#5fa06e' },
+    { id: 'pragma', angle: 180, color: '#4b7ab8' },
+    { id: 'philia', angle: 225, color: '#12c48e' },
+    { id: 'ludus', angle: 270, color: '#14c4e8' },
+    { id: 'eros', angle: 315, color: '#9559f2' },
+  ];
+  const SCORES = {
+    agape: 0.82, philautia: 0.7, mania: 0.4, storge: 0.55,
+    pragma: 0.48, philia: 0.75, ludus: 0.6, eros: 0.68,
+  };
+  function petalPath(halfLen, width) {
+    const tip = halfLen * 2;
+    return `M 0 0 C ${-width * 1.1} ${-halfLen * 0.4} ${-width * 0.8} ${-tip * 0.7} 0 ${-tip} C ${width * 0.8} ${-tip * 0.7} ${width * 1.1} ${-halfLen * 0.4} 0 0 Z`;
+  }
+  const c = 100, MIN = 18, MAX = 58, W = 18;
+  let petals = '';
+  PETAL_DEFS.forEach((p) => {
+    const i = Math.max(0, Math.min(1, SCORES[p.id] ?? 0));
+    const half = MIN + i * (MAX - MIN);
+    const op = (0.42 + i * 0.58).toFixed(3);
+    petals += `<g transform="translate(${c},${c}) rotate(${p.angle})"><path d="${petalPath(half, W)}" fill="${p.color}" stroke="${p.color}" stroke-width="0.8" stroke-opacity="0.55" opacity="${op}"/>${i > 0.05 ? `<circle cx="0" cy="${-(half * 2 + 3)}" r="2.2" fill="${p.color}" opacity="0.92"/>` : ''}</g>`;
+  });
+  document.getElementById('flower').innerHTML = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="gc" cx="35%" cy="35%" r="70%"><stop offset="0%" stop-color="#fdeef2" stop-opacity="0.95"/><stop offset="70%" stop-color="#efb0c0" stop-opacity="0.68"/><stop offset="100%" stop-color="#ec8698" stop-opacity="0.48"/></radialGradient><filter id="gs" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity="0.22"/></filter></defs><g filter="url(#gs)">${petals}<circle cx="100" cy="100" r="8.5" fill="url(#gc)" stroke="rgba(253,164,175,0.65)" stroke-width="0.8"/><circle cx="100" cy="100" r="3.2" fill="#ec8698" opacity="0.88"/></g></svg>`;
+</script>
+</body>
+</html>

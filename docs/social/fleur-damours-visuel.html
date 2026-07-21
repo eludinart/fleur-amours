@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleur d’AmOurs — Visuel réseaux sociaux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --dark: #0f0a1e;
+    --rose: #f472b6;
+    --violet: #a855f7;
+    --indigo: #6366f1;
+    --text: #faf9ff;
+    --muted: #d2cce8;
+  }
+
+  html, body {
+    background: #1a1428;
+    min-height: 100%;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    padding: 32px 16px 48px;
+    font-family: 'Outfit', system-ui, sans-serif;
+    color: var(--text);
+  }
+
+  .hint {
+    max-width: 1080px;
+    color: #a89fc4;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+  }
+  .hint code {
+    background: rgba(255,255,255,0.08);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  /* Carte maîtresse 1080×1080 */
+  .card {
+    width: 1080px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    background: var(--dark);
+    border-radius: 0;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 72px 80px 88px;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 55% 45% at 78% 18%, rgba(168,85,247,0.22) 0%, transparent 62%),
+      radial-gradient(ellipse 48% 42% at 18% 82%, rgba(244,114,182,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 36% 32% at 50% 48%, rgba(99,102,241,0.12) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    max-width: 860px;
+  }
+
+  .eyebrow {
+    font-size: 18px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+    opacity: 0.9;
+  }
+
+  .flower {
+    width: 460px;
+    height: 460px;
+    filter: drop-shadow(0 18px 40px rgba(0,0,0,0.35));
+    animation: breathe 6s ease-in-out infinite;
+  }
+  .flower svg { width: 100%; height: 100%; display: block; }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.025); }
+  }
+
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 72px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .tagline {
+    font-size: 26px;
+    font-weight: 300;
+    line-height: 1.45;
+    color: var(--muted);
+    max-width: 720px;
+  }
+
+  .url {
+    margin-top: 8px;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: #f9a8d4;
+  }
+
+  /* Variante portrait 1080×1350 (Instagram 4:5) */
+  .card.portrait {
+    width: 1080px;
+    height: 1350px;
+    padding: 96px 80px 110px;
+  }
+  .card.portrait .flower { width: 520px; height: 520px; }
+  .card.portrait h1 { font-size: 78px; }
+  .card.portrait .tagline { font-size: 28px; }
+
+  @media print {
+    body { background: white; padding: 0; gap: 0; }
+    .hint { display: none; }
+    .card { box-shadow: none; page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<p class="hint">
+  Visuel unique Fleur d’AmOurs — ouvrir en plein écran, zoomer à 100&nbsp;%, capturer la carte (1080×1080 ou 4:5).<br>
+  Fichier : <code>docs/social/fleur-damours-visuel.html</code>
+</p>
+
+<!-- IMAGE-MÈRE CARRÉE -->
+<article class="card" id="card-square" aria-label="Visuel réseaux Fleur d’AmOurs">
+  <div class="inner">
+    <div class="eyebrow">Le Jardin d’AmOurs</div>
+    <div class="flower" id="flower-square" aria-hidden="true"></div>
+    <h1>Fleur d’AmOurs</h1>
+    <p class="tagline">Un langage pour mieux s’aimer,<br>se relier, et grandir.</p>
+    <p class="url">app-fleurdamours.eludein.art</p>
+  </div>
+</article>
+
+<!-- VARIANTE 4:5 -->
+<article class="card portrait" id="card-portrait" aria-label="Visuel réseaux Fleur d’AmOurs 4:5">
+  <div class="inner">
+    <div class="eyebrow">Le Jardin d’AmOurs</div>
+    <div class="flower" id="flower-portrait" aria-hidden="true"></div>
+    <h1>Fleur d’AmOurs</h1>
+    <p class="tagline">Un langage pour mieux s’aimer,<br>se relier, et grandir.</p>
+    <p class="url">app-fleurdamours.eludein.art</p>
+  </div>
+</article>
+
+<script>
+  /* Géométrie alignée sur presentation_stand + FlowerSVG / petal-theme */
+  const PETAL_DEFS = [
+    { id: 'agape', angle: 0, color: '#ec8698' },
+    { id: 'philautia', angle: 45, color: '#b8a2e8' },
+    { id: 'mania', angle: 90, color: '#e11d48' },
+    { id: 'storge', angle: 135, color: '#5fa06e' },
+    { id: 'pragma', angle: 180, color: '#4b7ab8' },
+    { id: 'philia', angle: 225, color: '#12c48e' },
+    { id: 'ludus', angle: 270, color: '#14c4e8' },
+    { id: 'eros', angle: 315, color: '#9559f2' },
+  ];
+
+  /* Profil « luminous » — chaleureux, invitant pour les réseaux */
+  const SCORES = {
+    agape: 0.82, philautia: 0.7, mania: 0.4, storge: 0.55,
+    pragma: 0.48, philia: 0.75, ludus: 0.6, eros: 0.68,
+  };
+
+  const MIN_LEN = 18;
+  const MAX_LEN = 58;
+  const PETAL_W = 18;
+  const CENTER = 100;
+
+  function petalPath(halfLen, width) {
+    const tip = halfLen * 2;
+    return [
+      'M 0 0',
+      `C ${-width * 1.1} ${-halfLen * 0.4} ${-width * 0.8} ${-tip * 0.7} 0 ${-tip}`,
+      `C ${width * 0.8} ${-tip * 0.7} ${width * 1.1} ${-halfLen * 0.4} 0 0`,
+      'Z',
+    ].join(' ');
+  }
+
+  function buildFlowerSvg(scores) {
+    const uid = 'soc' + Math.random().toString(36).slice(2, 8);
+    const c = CENTER;
+    let petals = '';
+
+    PETAL_DEFS.forEach((p) => {
+      const intensity = Math.max(0, Math.min(1, scores[p.id] ?? 0));
+      const halfLen = MIN_LEN + intensity * (MAX_LEN - MIN_LEN);
+      const opacity = (0.42 + intensity * 0.58).toFixed(3);
+      petals += `
+        <g transform="translate(${c},${c}) rotate(${p.angle})">
+          <path d="${petalPath(halfLen, PETAL_W)}"
+            fill="${p.color}" stroke="${p.color}" stroke-width="0.8"
+            stroke-opacity="0.55" opacity="${opacity}" />
+          ${intensity > 0.05
+            ? `<circle cx="0" cy="${-(halfLen * 2 + 3)}" r="2.2" fill="${p.color}" opacity="0.92"/>`
+            : ''}
+        </g>`;
+    });
+
+    return `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fleur d’AmOurs">
+        <defs>
+          <radialGradient id="${uid}-c" cx="35%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#fdeef2" stop-opacity="0.95"/>
+            <stop offset="70%" stop-color="#efb0c0" stop-opacity="0.68"/>
+            <stop offset="100%" stop-color="#ec8698" stop-opacity="0.48"/>
+          </radialGradient>
+          <filter id="${uid}-s" x="-25%" y="-25%" width="150%" height="150%">
+            <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity="0.22"/>
+          </filter>
+        </defs>
+        <g filter="url(#${uid}-s)">
+          ${petals}
+          <circle cx="${c}" cy="${c}" r="8.5" fill="url(#${uid}-c)"
+            stroke="rgba(253,164,175,0.65)" stroke-width="0.8"/>
+          <circle cx="${c}" cy="${c}" r="3.2" fill="#ec8698" opacity="0.88"/>
+        </g>
+      </svg>`;
+  }
+
+  const svg = buildFlowerSvg(SCORES);
+  document.getElementById('flower-square').innerHTML = svg;
+  document.getElementById('flower-portrait').innerHTML = svg;
+</script>
+</body>
+</html>
