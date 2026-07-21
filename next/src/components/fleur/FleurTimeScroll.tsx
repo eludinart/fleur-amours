@@ -98,8 +98,8 @@ export function FleurTimeScroll({
             onClick={() => onSelect(-1)}
             className={`snap-center shrink-0 min-w-[4.5rem] rounded-2xl border px-3 py-2 text-left transition-all ${
               selectedIndex < 0
-                ? 'border-teal-400/50 bg-teal-500/15 text-teal-100 shadow-[0_0_20px_rgba(45,212,191,0.15)]'
-                : 'border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                ? 'border-teal-300 dark:border-teal-400/50 bg-teal-50 dark:bg-teal-500/15 text-teal-900 dark:text-teal-100 shadow-sm dark:shadow-[0_0_20px_rgba(45,212,191,0.15)]'
+                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
             whileTap={{ scale: 0.97 }}
           >
@@ -120,8 +120,8 @@ export function FleurTimeScroll({
                 onClick={() => onSelect(idx)}
                 className={`snap-center shrink-0 max-w-[9rem] rounded-2xl border px-3 py-2 text-left transition-all ${
                   active
-                    ? 'border-violet-400/45 bg-violet-500/12 text-violet-100 shadow-[0_0_18px_rgba(139,92,246,0.12)]'
-                    : 'border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                    ? 'border-violet-300 dark:border-violet-400/45 bg-violet-50 dark:bg-violet-500/12 text-violet-900 dark:text-violet-100 shadow-sm dark:shadow-[0_0_18px_rgba(139,92,246,0.12)]'
+                    : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
                 whileTap={{ scale: 0.97 }}
               >
@@ -147,14 +147,14 @@ export function FleurTimeScroll({
             step={1}
             value={selectedIndex}
             onChange={(e) => onSelect(Number(e.target.value))}
-            className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-teal-400/80 bg-white/10"
+            className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-teal-500 dark:accent-teal-400/80 bg-slate-200 dark:bg-white/10"
           />
           {showResumeAuto && onResumeAuto ? (
             <div className="flex justify-center">
               <button
                 type="button"
                 onClick={onResumeAuto}
-                className="text-xs uppercase tracking-[0.16em] text-teal-300/80 hover:text-teal-200 border border-teal-500/35 hover:border-teal-400/50 px-3 py-1.5 rounded-full transition-colors"
+                className="text-xs uppercase tracking-[0.16em] text-teal-700 dark:text-teal-300/80 hover:text-teal-800 dark:hover:text-teal-200 border border-teal-200 dark:border-teal-500/35 hover:border-teal-300 dark:hover:border-teal-400/50 px-3 py-1.5 rounded-full transition-colors"
               >
                 {t('fleurZen.timeResumeAuto')}
               </button>

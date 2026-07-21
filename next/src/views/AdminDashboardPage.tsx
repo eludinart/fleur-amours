@@ -561,7 +561,7 @@ export default function AdminDashboardPage() {
                       <span className="text-sm font-semibold text-red-600 dark:text-red-300">
                         {shadowStats.urgent} session{shadowStats.urgent > 1 ? 's' : ''} en détresse (niveau 4)
                       </span>
-                      <p className="text-xs text-red-400/70 mt-0.5">
+                      <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-0.5">
                         Ces personnes ont exprimé quelque chose d&apos;urgent — un contact est recommandé.
                       </p>
                     </div>
@@ -590,12 +590,12 @@ export default function AdminDashboardPage() {
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                       {shadowStats.recent_sessions.slice(0, 5).map((s: { id: string; created_at: string; first_words?: string; email?: string; shadow_urgent?: boolean; max_shadow_level?: number }) => {
                         const levelColor = s.shadow_urgent
-                          ? 'text-red-400 border-red-700/50 bg-red-950/30'
+                          ? 'text-red-700 dark:text-red-400 border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-950/30'
                           : (s.max_shadow_level ?? 0) >= 3
-                            ? 'text-rose-400 border-rose-700/40 bg-rose-950/20'
+                            ? 'text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-700/40 bg-rose-50 dark:bg-rose-950/20'
                             : (s.max_shadow_level ?? 0) >= 2
-                              ? 'text-orange-400 border-orange-700/40 bg-orange-950/20'
-                              : 'text-amber-400 border-amber-700/30 bg-amber-950/10'
+                              ? 'text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-700/40 bg-orange-50 dark:bg-orange-950/20'
+                              : 'text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700/30 bg-amber-50 dark:bg-amber-950/10'
                         const levelIcon = s.shadow_urgent ? '🔴' : (s.max_shadow_level ?? 0) >= 3 ? '🌑' : (s.max_shadow_level ?? 0) >= 2 ? '🌘' : '🌗'
                         return (
                           <Link

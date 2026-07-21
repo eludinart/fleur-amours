@@ -24,7 +24,7 @@ export function MaturityBadges({
         return (
           <span
             key={id}
-            className={`inline-flex items-center gap-0.5 rounded-md border border-slate-600/40 bg-slate-900/40 text-slate-300 ${
+            className={`inline-flex items-center gap-0.5 rounded-md border border-slate-200 dark:border-slate-600/40 bg-slate-100 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 ${
               compact ? 'px-1 py-0.5 text-[9px]' : 'px-1.5 py-0.5 text-[10px]'
             }`}
             title={t(def.descKey)}

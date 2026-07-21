@@ -47,14 +47,14 @@ export function ZenHomeCheckinPrompt({
     : null
 
   return (
-    <div className="mb-5 rounded-2xl border border-sky-500/30 bg-sky-950/25 px-4 py-4">
+    <div className="mb-5 rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-950/25 px-4 py-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-medium uppercase tracking-wider text-sky-300/85">
+        <p className="text-xs font-medium uppercase tracking-wider text-sky-700 dark:text-sky-300/85">
           {t('dashboard.checkinWeeklyLabel')}
         </p>
         {streak >= 2 ? (
           <span
-            className="inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-200"
+            className="inline-flex items-center gap-1 rounded-full border border-amber-200 dark:border-amber-400/40 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-200"
             title={t('dashboard.checkinStreakHint')}
           >
             🔥 {t('dashboard.checkinStreak', { days: streak })}
@@ -64,17 +64,17 @@ export function ZenHomeCheckinPrompt({
       {lastEcho?.whisper && !showDaily ? (
         <>
           {echoPetal ? (
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-sky-300/70">{echoPetal}</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300/70">{echoPetal}</p>
           ) : null}
-          <p className="text-sm text-sky-50/90 mt-1 leading-relaxed italic line-clamp-2">
+          <p className="text-sm text-sky-900 dark:text-sky-50/90 mt-1 leading-relaxed italic line-clamp-2">
             {lastEcho.echo || lastEcho.whisper}
           </p>
         </>
       ) : (
-        <p className="text-sm text-sky-50/95 mt-1 leading-relaxed">{t('dashboard.checkinWeeklyBody')}</p>
+        <p className="text-sm text-sky-900 dark:text-sky-50/95 mt-1 leading-relaxed">{t('dashboard.checkinWeeklyBody')}</p>
       )}
       {shiftedPetal ? (
-        <p className="mt-2 text-xs text-sky-200/75">
+        <p className="mt-2 text-xs text-sky-700 dark:text-sky-200/75">
           {t('dashboard.checkinBaselineHint', {
             petal: shiftedPetal.name,
             direction: shiftedPetal.delta > 0 ? t('dashboard.checkinRising') : t('dashboard.checkinFalling'),
@@ -83,7 +83,7 @@ export function ZenHomeCheckinPrompt({
       ) : null}
       <Link
         href="/checkin"
-        className="mt-3 inline-flex rounded-xl border border-sky-400/40 bg-sky-900/40 px-4 py-2 text-xs font-semibold text-sky-100 hover:bg-sky-800/50 transition-colors"
+        className="mt-3 inline-flex rounded-xl border border-sky-200 dark:border-sky-400/40 bg-sky-100 dark:bg-sky-900/40 px-4 py-2 text-xs font-semibold text-sky-900 dark:text-sky-100 hover:bg-sky-200/80 dark:hover:bg-sky-800/50 transition-colors"
       >
         {t('dashboard.checkinCta')} →
       </Link>

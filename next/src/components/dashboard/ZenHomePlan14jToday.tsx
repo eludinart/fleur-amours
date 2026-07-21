@@ -32,23 +32,23 @@ export function ZenHomePlan14jToday({ plan }: { plan: ActivePlan14j }) {
   }
 
   return (
-    <div className="mb-5 rounded-2xl border-2 border-emerald-500/35 bg-emerald-950/25 px-4 py-4">
+    <div className="mb-5 rounded-2xl border-2 border-emerald-200 dark:border-emerald-500/35 bg-emerald-50 dark:bg-emerald-950/25 px-4 py-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-emerald-300/85">
+          <p className="text-xs font-medium uppercase tracking-wider text-emerald-700 dark:text-emerald-300/85">
             {t('dashboard.plan14TodayLabel')}
           </p>
-          <p className="text-base font-semibold text-emerald-50 mt-0.5">
+          <p className="text-base font-semibold text-emerald-900 dark:text-emerald-50 mt-0.5">
             {t('dashboard.plan14TodayTitle', { day: plan.currentDay })}
           </p>
         </div>
-        <span className="text-xs text-emerald-200/60">{pct}%</span>
+        <span className="text-xs text-emerald-700 dark:text-emerald-200/60">{pct}%</span>
       </div>
       {plan.currentAction ? (
-        <p className="mt-2 text-sm text-emerald-100/90 leading-relaxed">{plan.currentAction}</p>
+        <p className="mt-2 text-sm text-emerald-900 dark:text-emerald-100/90 leading-relaxed">{plan.currentAction}</p>
       ) : null}
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-emerald-100">
+        <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-emerald-900 dark:text-emerald-100">
           <input
             type="checkbox"
             checked={isDone}
@@ -62,7 +62,7 @@ export function ZenHomePlan14jToday({ plan }: { plan: ActivePlan14j }) {
         </label>
         <Link
           href={`/session?open=${plan.sessionId}`}
-          className="text-xs text-emerald-300/90 hover:text-emerald-200 underline"
+          className="text-xs text-emerald-700 dark:text-emerald-300/90 hover:text-emerald-800 dark:hover:text-emerald-200 underline"
         >
           {t('dashboard.plan14ViewFull')}
         </Link>

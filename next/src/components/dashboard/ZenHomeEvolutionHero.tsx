@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { FlowerSVG, PETAL_DEFS } from '@/components/FlowerSVG'
 import { FleurTimeScroll, formatZenSnapshotDate } from '@/components/fleur/FleurTimeScroll'
 import { t } from '@/i18n'
+import { useStore } from '@/store/useStore'
 
 type Snapshot = {
   id: string
@@ -55,17 +56,18 @@ export function ZenHomeEvolutionHero({
   accentPetalColor: string | null
   locale: string
 }) {
+  const theme = useStore((s) => s.theme)
   return (
-    <section className="mb-8 rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-6 sm:px-6 sm:py-8 backdrop-blur-sm">
+    <section className="mb-8 rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-6 sm:px-6 sm:py-8 backdrop-blur-sm">
       <div className="text-center mb-5 space-y-2">
-        <p className="text-xs uppercase tracking-[0.25em] text-violet-300/80">{t('fleurZen.evolutionTitle')}</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-violet-700 dark:text-violet-300/80">{t('fleurZen.evolutionTitle')}</p>
         {whisper ? (
           <div className="mx-auto max-w-2xl space-y-1">
-            <p className="text-xs uppercase tracking-wider text-violet-300/55">{whisperSubhint}</p>
-            <p className="text-base sm:text-lg font-light text-violet-100/95 leading-relaxed italic">{whisper}</p>
+            <p className="text-xs uppercase tracking-wider text-violet-700 dark:text-violet-300/55">{whisperSubhint}</p>
+            <p className="text-base sm:text-lg font-light text-violet-900 dark:text-violet-100/95 leading-relaxed italic">{whisper}</p>
           </div>
         ) : snapshots.length >= 2 ? (
-          <p className="text-sm text-white/75">{t('fleurZen.readingLevel3HintTrend')}</p>
+          <p className="text-sm text-slate-600 dark:text-white/75">{t('fleurZen.readingLevel3HintTrend')}</p>
         ) : null}
       </div>
 
@@ -73,7 +75,7 @@ export function ZenHomeEvolutionHero({
         <div className="relative flex justify-center w-full isolate [&_.flower-svg]:max-w-[min(100%,340px)]">
           <div
             className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100%,320px)] aspect-square rounded-full bg-gradient-to-tr from-violet-600/35 via-teal-500/22 to-fuchsia-600/28 blur-3xl ${
-              reduceMotion ? 'opacity-70' : 'opacity-95 motion-safe:animate-[pulse_5s_ease-in-out_infinite]'
+              reduceMotion ? 'opacity-40 dark:opacity-70' : 'opacity-50 dark:opacity-95 motion-safe:animate-[pulse_5s_ease-in-out_infinite]'
             }`}
             aria-hidden
           />
@@ -85,7 +87,7 @@ export function ZenHomeEvolutionHero({
             showScores
             labelsOnHoverOnly
             pinnedLabelIds={labelAnchorIds}
-            labelTheme="dark"
+            labelTheme={theme === 'dark' ? 'dark' : 'default'}
             labelPeekMs={2800}
             visualPreset="zen"
             historicalView={timeIndex >= 0}
@@ -97,14 +99,14 @@ export function ZenHomeEvolutionHero({
           />
         </div>
 
-        <div className="w-full max-w-lg rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3 text-center">
-          <p className="text-xs uppercase tracking-wider text-violet-300/75">{t('fleurZen.snapshotLabel')}</p>
-          <div className="mt-1.5 text-sm text-violet-50/95 leading-relaxed" aria-live="polite">
+        <div className="w-full max-w-lg rounded-2xl border border-slate-200 dark:border-white/12 bg-slate-50 dark:bg-white/[0.05] px-4 py-3 text-center">
+          <p className="text-xs uppercase tracking-wider text-violet-700 dark:text-violet-300/75">{t('fleurZen.snapshotLabel')}</p>
+          <div className="mt-1.5 text-sm text-violet-900 dark:text-violet-50/95 leading-relaxed" aria-live="polite">
             {timeStateCaption.mode === 'present' ? (
               <p>{timeStateCaption.text}</p>
             ) : timeStateCaption.mode === 'snapshot' ? (
               <>
-                <p className="text-xs text-white/75">{timeStateCaption.date}</p>
+                <p className="text-xs text-slate-500 dark:text-white/75">{timeStateCaption.date}</p>
                 <p>{timeStateCaption.detail}</p>
               </>
             ) : timeStateCaption.mode === 'petalOnly' ? (
@@ -136,7 +138,7 @@ export function ZenHomeEvolutionHero({
       <div className="mt-5 flex justify-center">
         <Link
           href="/eclosion"
-          className="text-xs font-medium text-teal-300/90 hover:text-teal-200 border border-teal-500/35 px-4 py-2 rounded-full transition-colors"
+          className="text-xs font-medium text-teal-700 dark:text-teal-300/90 hover:text-teal-800 dark:hover:text-teal-200 border border-teal-200 dark:border-teal-500/35 px-4 py-2 rounded-full transition-colors"
         >
           {t('dashboard.eclosionHubCta')} →
         </Link>

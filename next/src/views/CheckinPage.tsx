@@ -61,6 +61,7 @@ function suggestionBadge(kind: CheckinContextDTO['suggestions'][0]['kind']): str
 
 export default function CheckinPage() {
   const locale = useStore((s) => s.locale) || 'fr'
+  const theme = useStore((s) => s.theme)
   const [act, setAct] = useState<Act>('pose')
   const [intention, setIntention] = useState('')
   const [echo, setEcho] = useState<CheckinEchoDTO | null>(null)
@@ -169,17 +170,17 @@ export default function CheckinPage() {
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto bg-gradient-to-b from-slate-950 via-[#0f0a1a] to-slate-950">
+    <div className="flex-1 min-h-0 overflow-y-auto bg-gradient-to-b from-slate-50 via-violet-50/40 to-slate-50 dark:from-slate-950 dark:via-[#0f0a1a] dark:to-slate-950">
       <div className="mx-auto max-w-xl px-4 py-8 sm:px-6 sm:py-10 pb-28">
         <header className="mb-8 text-center space-y-2">
-          <p className="text-xs font-medium uppercase tracking-widest text-violet-200/90">
+          <p className="text-xs font-medium uppercase tracking-widest text-violet-700 dark:text-violet-200/90">
             {t('checkin.eyebrow')}
           </p>
-          <h1 className="text-2xl sm:text-3xl font-light tracking-wide text-white/95">{t('checkin.title')}</h1>
-          <p className="text-base text-white/80 max-w-md mx-auto leading-relaxed">{t('checkin.subtitle')}</p>
+          <h1 className="text-2xl sm:text-3xl font-light tracking-wide text-slate-900 dark:text-white/95">{t('checkin.title')}</h1>
+          <p className="text-base text-slate-600 dark:text-white/80 max-w-md mx-auto leading-relaxed">{t('checkin.subtitle')}</p>
           {streak >= 2 ? (
             <p>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/35 bg-amber-950/35 px-3 py-1 text-xs font-semibold text-amber-200">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 dark:border-amber-400/35 bg-amber-50 dark:bg-amber-950/35 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-200">
                 🔥 {t('checkin.streakDays', { days: streak })}
               </span>
             </p>
@@ -188,16 +189,16 @@ export default function CheckinPage() {
 
         {checkedInToday ? (
           <section className="space-y-6">
-            <div className="rounded-2xl border border-emerald-400/25 bg-emerald-950/20 px-4 py-4 text-center">
-              <p className="text-sm text-emerald-100/95">{t('checkin.alreadyToday')}</p>
-              <p className="mt-1 text-xs text-emerald-100/85">{t('checkin.comeBackTomorrow')}</p>
+            <div className="rounded-2xl border border-emerald-200 dark:border-emerald-400/25 bg-emerald-50 dark:bg-emerald-950/20 px-4 py-4 text-center">
+              <p className="text-sm text-emerald-900 dark:text-emerald-100/95">{t('checkin.alreadyToday')}</p>
+              <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-100/85">{t('checkin.comeBackTomorrow')}</p>
             </div>
 
             {context?.todayEcho ? (
               <>
                 <div className="relative flex flex-col items-center">
                   <div
-                    className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100%,280px)] aspect-square rounded-full bg-gradient-to-tr from-violet-600/40 via-teal-500/20 to-fuchsia-600/30 blur-3xl opacity-90"
+                    className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100%,280px)] aspect-square rounded-full bg-gradient-to-tr from-violet-600/40 via-teal-500/20 to-fuchsia-600/30 blur-3xl opacity-40 dark:opacity-90"
                     aria-hidden
                   />
                   <FlowerSVG
@@ -211,13 +212,13 @@ export default function CheckinPage() {
                     }
                     pulsePetalId={context.todayEcho.highlightPetal}
                     visualPreset="zen"
-                    labelTheme="dark"
+                    labelTheme={theme === 'dark' ? 'dark' : 'default'}
                     svgClassName="relative z-[1]"
                   />
                 </div>
 
-                <div className="rounded-3xl border border-white/12 bg-white/[0.05] px-5 py-6 space-y-4">
-                  <p className="text-xs uppercase tracking-wider text-violet-200/85 text-center">
+                <div className="rounded-3xl border border-slate-200 dark:border-white/12 bg-white dark:bg-white/[0.05] px-5 py-6 space-y-4">
+                  <p className="text-xs uppercase tracking-wider text-violet-700 dark:text-violet-200/85 text-center">
                     {t('checkin.todayEchoLabel')}
                   </p>
                   {context.todayEcho.highlightPetal ? (
@@ -239,19 +240,19 @@ export default function CheckinPage() {
                     </div>
                   ) : null}
                   {context.todayEcho.intention ? (
-                    <p className="text-xs text-white/75 text-center italic">
+                    <p className="text-xs text-slate-600 dark:text-white/75 text-center italic">
                       « {context.todayEcho.intention} »
                     </p>
                   ) : null}
-                  <p className="text-base sm:text-lg font-light italic text-violet-50/95 leading-relaxed text-center">
+                  <p className="text-base sm:text-lg font-light italic text-violet-900 dark:text-violet-50/95 leading-relaxed text-center">
                     {context.todayEcho.echo || context.todayEcho.whisper}
                   </p>
                   {context.todayEcho.invitation ? (
-                    <div className="border-t border-white/8 pt-4">
-                      <p className="text-xs uppercase tracking-wider text-white/70 text-center mb-2">
+                    <div className="border-t border-slate-200 dark:border-white/8 pt-4">
+                      <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-white/70 text-center mb-2">
                         {t('checkin.invitationLabel')}
                       </p>
-                      <p className="text-sm text-white/80 text-center leading-relaxed">
+                      <p className="text-sm text-slate-600 dark:text-white/80 text-center leading-relaxed">
                         {context.todayEcho.invitation}
                       </p>
                     </div>
@@ -263,8 +264,8 @@ export default function CheckinPage() {
         ) : null}
 
         {!checkedInToday && context?.lastEcho && act === 'pose' ? (
-          <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
-            <p className="text-xs uppercase tracking-wider text-violet-200/85">{t('checkin.lastEchoLabel')}</p>
+          <div className="mb-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] px-4 py-4">
+            <p className="text-xs uppercase tracking-wider text-violet-700 dark:text-violet-200/85">{t('checkin.lastEchoLabel')}</p>
             {context.lastEcho.highlightPetal ? (
               <span
                 className="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
@@ -277,10 +278,10 @@ export default function CheckinPage() {
                 {petalName(context.lastEcho.highlightPetal)}
               </span>
             ) : null}
-            <p className="mt-2 text-sm italic text-violet-100/90 leading-relaxed">
+            <p className="mt-2 text-sm italic text-violet-900 dark:text-violet-100/90 leading-relaxed">
               {context.lastEcho.echo || context.lastEcho.whisper}
             </p>
-            <p className="mt-1 text-xs text-white/70">
+            <p className="mt-1 text-xs text-slate-500 dark:text-white/70">
               {formatDate(context.lastEcho.createdAt, locale)}
             </p>
           </div>
@@ -288,22 +289,22 @@ export default function CheckinPage() {
 
         {/* Acte 1 — Poser */}
         {!checkedInToday && act === 'pose' ? (
-          <section className="space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 backdrop-blur-sm">
+          <section className="space-y-5 rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-5 sm:p-6 backdrop-blur-sm">
             <div>
-              <label className="mb-2 block text-sm font-medium text-white/85">{t('checkin.intentionLabel')}</label>
+              <label className="mb-2 block text-sm font-medium text-slate-600 dark:text-white/85">{t('checkin.intentionLabel')}</label>
               <textarea
                 value={intention}
                 onChange={(e) => setIntention(e.target.value)}
                 maxLength={500}
                 rows={4}
                 placeholder={t('checkin.intentionPlaceholder')}
-                className="w-full rounded-2xl border border-white/12 bg-black/25 p-4 text-sm text-white/90 placeholder:text-white/55 focus:border-violet-400/50 focus:outline-none focus:ring-1 focus:ring-violet-400/30 resize-none"
+                className="w-full rounded-2xl border border-slate-200 dark:border-white/12 bg-slate-100 dark:bg-black/25 p-4 text-sm text-slate-900 dark:text-white/90 placeholder:text-slate-400 dark:placeholder:text-white/55 focus:border-violet-400/50 focus:outline-none focus:ring-1 focus:ring-violet-400/30 resize-none"
               />
             </div>
 
             {context?.suggestions?.length ? (
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-wide text-white/70">{t('checkin.suggestionsLabel')}</p>
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-white/70">{t('checkin.suggestionsLabel')}</p>
                 <div className="flex flex-col gap-2">
                   {context.suggestions.map((s, i) => {
                     const badge = suggestionBadge(s.kind)
@@ -312,11 +313,11 @@ export default function CheckinPage() {
                       key={`${s.kind}-${i}`}
                       type="button"
                       onClick={() => applySuggestion(s.text)}
-                      className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-left text-xs text-white/70 hover:border-violet-400/35 hover:bg-violet-950/25 hover:text-white/90 transition-colors"
+                      className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3 py-2.5 text-left text-xs text-slate-700 dark:text-white/70 hover:border-violet-300 dark:hover:border-violet-400/35 hover:bg-violet-50 dark:hover:bg-violet-950/25 hover:text-slate-900 dark:hover:text-white/90 transition-colors"
                     >
                       <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 mb-1">
                         {badge ? (
-                          <span className="text-xs font-medium uppercase tracking-wider text-violet-200/90">
+                          <span className="text-xs font-medium uppercase tracking-wider text-violet-700 dark:text-violet-200/90">
                             {badge}
                           </span>
                         ) : null}
@@ -338,7 +339,7 @@ export default function CheckinPage() {
             ) : null}
 
             {error ? (
-              <p className="rounded-xl border border-rose-400/30 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+              <p className="rounded-xl border border-rose-300 dark:border-rose-400/30 bg-rose-50 dark:bg-rose-950/30 px-4 py-3 text-sm text-rose-800 dark:text-rose-200">
                 {error}
               </p>
             ) : null}
@@ -359,7 +360,7 @@ export default function CheckinPage() {
           <section className="space-y-6">
             <div className="relative flex flex-col items-center">
               <div
-                className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100%,280px)] aspect-square rounded-full bg-gradient-to-tr from-violet-600/40 via-teal-500/20 to-fuchsia-600/30 blur-3xl opacity-90 motion-safe:animate-[pulse_4s_ease-in-out_infinite]"
+                className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(100%,280px)] aspect-square rounded-full bg-gradient-to-tr from-violet-600/40 via-teal-500/20 to-fuchsia-600/30 blur-3xl opacity-40 dark:opacity-90 motion-safe:animate-[pulse_4s_ease-in-out_infinite]"
                 aria-hidden
               />
               <FlowerSVG
@@ -371,7 +372,7 @@ export default function CheckinPage() {
                 pinnedLabelIds={highlightId ? [highlightId] : []}
                 pulsePetalId={highlightId}
                 visualPreset="zen"
-                labelTheme="dark"
+                labelTheme={theme === 'dark' ? 'dark' : 'default'}
                 svgClassName="relative z-[1]"
               />
             </div>
@@ -379,10 +380,10 @@ export default function CheckinPage() {
             {loadingEcho ? (
               <div className="text-center space-y-2 py-4">
                 <div className="mx-auto h-8 w-8 rounded-full border-2 border-violet-400/30 border-t-violet-300 animate-spin" />
-                <p className="text-sm text-violet-200/80 italic">{t('checkin.listening')}</p>
+                <p className="text-sm text-violet-700 dark:text-violet-200/80 italic">{t('checkin.listening')}</p>
               </div>
             ) : echo ? (
-              <div className="rounded-3xl border border-white/12 bg-white/[0.05] px-5 py-6 space-y-4">
+              <div className="rounded-3xl border border-slate-200 dark:border-white/12 bg-white dark:bg-white/[0.05] px-5 py-6 space-y-4">
                 {highlightId ? (
                   <div className="flex justify-center">
                     <span
@@ -401,15 +402,15 @@ export default function CheckinPage() {
                     </span>
                   </div>
                 ) : null}
-                <p className="text-ai-prose font-light italic text-violet-50/95 leading-relaxed text-center">
+                <p className="text-ai-prose font-light italic text-violet-900 dark:text-violet-50/95 leading-relaxed text-center">
                   {echo.echo}
                 </p>
                 {echo.invitation ? (
-                  <div className="border-t border-white/8 pt-4">
-                    <p className="text-xs uppercase tracking-wider text-white/70 text-center mb-2">
+                  <div className="border-t border-slate-200 dark:border-white/8 pt-4">
+                    <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-white/70 text-center mb-2">
                       {t('checkin.invitationLabel')}
                     </p>
-                    <p className="text-ai-prose text-white/80 text-center leading-relaxed">{echo.invitation}</p>
+                    <p className="text-ai-prose text-slate-600 dark:text-white/80 text-center leading-relaxed">{echo.invitation}</p>
                   </div>
                 ) : null}
               </div>
@@ -419,9 +420,9 @@ export default function CheckinPage() {
 
         {/* Acte 3 — Ancrer */}
         {!checkedInToday && act === 'anchor' && echo && !loadingEcho ? (
-          <section className="mt-6 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+          <section className="mt-6 space-y-5 rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-5 sm:p-6">
             <div>
-              <p className="mb-3 text-sm text-white/70 text-center">{t('checkin.feltLabel')}</p>
+              <p className="mb-3 text-sm text-slate-600 dark:text-white/70 text-center">{t('checkin.feltLabel')}</p>
               <div className="grid grid-cols-3 gap-2">
                 {FELT_OPTIONS.map((opt) => (
                   <button
@@ -431,8 +432,8 @@ export default function CheckinPage() {
                     aria-pressed={feltAfter === opt.value}
                     className={`rounded-2xl border px-2 py-3 text-center transition ${
                       feltAfter === opt.value
-                        ? 'border-violet-400/60 bg-violet-950/40 text-white'
-                        : 'border-white/10 bg-black/20 text-white/55 hover:border-white/25'
+                        ? 'border-violet-400 bg-violet-100 dark:bg-violet-950/40 text-violet-900 dark:text-white'
+                        : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-600 dark:text-white/55 hover:border-slate-300 dark:hover:border-white/25'
                     }`}
                   >
                     <span className="text-xl block mb-1">{opt.emoji}</span>
@@ -440,11 +441,11 @@ export default function CheckinPage() {
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-center text-white/80">{t('checkin.feltOptional')}</p>
+              <p className="mt-2 text-xs text-center text-slate-500 dark:text-white/80">{t('checkin.feltOptional')}</p>
             </div>
 
             {error ? (
-              <p className="rounded-xl border border-rose-400/30 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+              <p className="rounded-xl border border-rose-300 dark:border-rose-400/30 bg-rose-50 dark:bg-rose-950/30 px-4 py-3 text-sm text-rose-800 dark:text-rose-200">
                 {error}
               </p>
             ) : null}
@@ -453,7 +454,7 @@ export default function CheckinPage() {
               <button
                 type="button"
                 onClick={resetFlow}
-                className="flex-1 rounded-full border border-white/15 py-3 text-sm text-white/60 hover:bg-white/5 transition"
+                className="flex-1 rounded-full border border-slate-200 dark:border-white/15 py-3 text-sm text-slate-600 dark:text-white/60 hover:bg-slate-50 dark:hover:bg-white/5 transition"
               >
                 {t('checkin.back')}
               </button>
@@ -470,7 +471,7 @@ export default function CheckinPage() {
             <p className="text-center">
               <Link
                 href={`/tirage?petal=${echo.highlight_petal}`}
-                className="text-xs text-violet-200/90 hover:text-violet-200 underline-offset-2 hover:underline"
+                className="text-xs text-violet-700 dark:text-violet-200/90 hover:text-violet-800 dark:hover:text-violet-200 underline-offset-2 hover:underline"
               >
                 {t('checkin.drawLink', { petal: petalName(echo.highlight_petal) })}
               </Link>
@@ -480,29 +481,29 @@ export default function CheckinPage() {
 
         {/* Confirmation */}
         {act === 'done' ? (
-          <div className="rounded-3xl border border-emerald-400/30 bg-emerald-950/25 px-6 py-8 text-center space-y-3">
+          <div className="rounded-3xl border border-emerald-200 dark:border-emerald-400/30 bg-emerald-50 dark:bg-emerald-950/25 px-6 py-8 text-center space-y-3">
             <p className="text-2xl">🌱</p>
-            <p className="text-lg font-light text-emerald-100">{t('checkin.planted')}</p>
+            <p className="text-lg font-light text-emerald-900 dark:text-emerald-100">{t('checkin.planted')}</p>
             {reward ? (
               <div className="flex flex-col items-center gap-1.5">
                 {reward.streak >= 2 ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-950/40 px-3 py-1 text-sm font-semibold text-amber-200">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 dark:border-amber-400/40 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 text-sm font-semibold text-amber-800 dark:text-amber-200">
                     🔥 {t('checkin.streakDays', { days: reward.streak })}
                   </span>
                 ) : null}
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-400/35 bg-teal-950/35 px-3 py-1 text-sm font-medium text-teal-100">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 dark:border-teal-400/35 bg-teal-50 dark:bg-teal-950/35 px-3 py-1 text-sm font-medium text-teal-800 dark:text-teal-100">
                   💧 {t('checkin.sapReward', { amount: reward.sapBonus })}
                 </span>
               </div>
             ) : null}
-            <p className="text-xs text-emerald-200/70">{t('checkin.plantedHint')}</p>
+            <p className="text-xs text-emerald-700 dark:text-emerald-200/70">{t('checkin.plantedHint')}</p>
           </div>
         ) : null}
 
         {/* Historique */}
         {history.filter((c) => c.intention || c.aiResponse).length > 0 && (checkedInToday || act === 'pose') ? (
           <section className="mt-10">
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-white/70">
+            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-white/70">
               {t('checkin.historyTitle')}
             </h2>
             <ul className="space-y-3">
@@ -512,10 +513,10 @@ export default function CheckinPage() {
                 .map((c) => (
                   <li
                     key={c.id}
-                    className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3.5"
+                    className="rounded-2xl border border-slate-200 dark:border-white/8 bg-white dark:bg-white/[0.03] px-4 py-3.5"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <span className="text-xs text-white/70 shrink-0 pt-0.5">
+                      <span className="text-xs text-slate-500 dark:text-white/70 shrink-0 pt-0.5">
                         {formatDate(c.createdAt, locale)}
                       </span>
                       {c.highlightPetal ? (
@@ -527,11 +528,11 @@ export default function CheckinPage() {
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-1.5 text-sm text-white/75 leading-relaxed line-clamp-3">
+                    <p className="mt-1.5 text-sm text-slate-700 dark:text-white/75 leading-relaxed line-clamp-3">
                       {c.aiResponse?.whisper || c.intention}
                     </p>
                     {c.aiResponse?.echo && c.aiResponse.echo !== c.aiResponse.whisper ? (
-                      <p className="mt-1 text-xs italic text-white/75 line-clamp-2">{c.aiResponse.echo}</p>
+                      <p className="mt-1 text-xs italic text-slate-500 dark:text-white/75 line-clamp-2">{c.aiResponse.echo}</p>
                     ) : null}
                   </li>
                 ))}

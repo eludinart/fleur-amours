@@ -83,18 +83,21 @@ export function DashboardPowerPhrase({
 
   const zen =
     variant === 'zen'
-      ? 'w-full rounded-2xl border border-white/12 bg-white/[0.06] backdrop-blur-sm px-4 py-3.5 shadow-[0_0_40px_-12px_rgba(139,92,246,0.35)]'
+      ? 'w-full rounded-2xl border border-violet-200/70 dark:border-white/12 bg-violet-50/70 dark:bg-white/[0.06] backdrop-blur-sm px-4 py-3.5 shadow-sm dark:shadow-[0_0_40px_-12px_rgba(139,92,246,0.35)]'
       : 'w-full rounded-2xl border border-violet-200/55 dark:border-violet-800/50 bg-violet-50/50 dark:bg-violet-950/25 px-4 py-3.5'
 
   const labelCls =
     variant === 'zen'
-      ? 'text-xs uppercase tracking-[0.22em] text-teal-300/75 mb-2'
+      ? 'text-xs uppercase tracking-[0.22em] text-teal-700 dark:text-teal-300/75 mb-2'
       : 'text-xs uppercase tracking-wider text-violet-600/80 dark:text-violet-300/80 mb-2'
 
   const bodyCls =
     variant === 'zen'
-      ? 'text-sm sm:text-[15px] leading-relaxed text-violet-100/95 italic whitespace-pre-line text-center xl:text-left'
+      ? 'text-sm sm:text-[15px] leading-relaxed text-violet-900 dark:text-violet-100/95 italic whitespace-pre-line text-center xl:text-left'
       : 'text-sm sm:text-[15px] leading-relaxed text-slate-700 dark:text-slate-200 italic whitespace-pre-line'
+
+  const hintCls =
+    'text-xs text-teal-700/70 dark:text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left'
 
   if (loading && !phrase) {
     return (
@@ -105,9 +108,9 @@ export function DashboardPowerPhrase({
         className={`${zen} ${className}`}
       >
         <span className="sr-only">{t('dashboard.powerPhraseLoading')}</span>
-        <div className="h-3 w-24 rounded bg-white/10 dark:bg-white/10 animate-pulse mb-3" />
-        <div className="h-4 w-full rounded bg-white/8 dark:bg-slate-600/40 animate-pulse mb-2" />
-        <div className="h-4 w-[85%] max-w-md rounded bg-white/8 dark:bg-slate-600/40 animate-pulse" />
+        <div className="h-3 w-24 rounded bg-slate-200 dark:bg-white/10 animate-pulse mb-3" />
+        <div className="h-4 w-full rounded bg-slate-100 dark:bg-slate-600/40 animate-pulse mb-2" />
+        <div className="h-4 w-[85%] max-w-md rounded bg-slate-100 dark:bg-slate-600/40 animate-pulse" />
       </div>
     )
   }
@@ -119,12 +122,8 @@ export function DashboardPowerPhrase({
           <p id="dashboard-power-phrase-label" className={labelCls}>
             {titleLabel}
           </p>
-          {hintLabel ? (
-            <p className="text-xs text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left">
-              {hintLabel}
-            </p>
-          ) : null}
-          <p className="text-xs text-violet-200/70 leading-relaxed text-center xl:text-left">
+          {hintLabel ? <p className={hintCls}>{hintLabel}</p> : null}
+          <p className="text-xs text-violet-700 dark:text-violet-200/70 leading-relaxed text-center xl:text-left">
             {t('fleurZen.powerPhraseZenEmpty')}
           </p>
         </aside>
@@ -138,11 +137,7 @@ export function DashboardPowerPhrase({
       <p id="dashboard-power-phrase-label" className={labelCls}>
         {titleLabel}
       </p>
-      {hintLabel ? (
-        <p className="text-xs text-teal-200/55 uppercase tracking-wider mb-2 text-center xl:text-left">
-          {hintLabel}
-        </p>
-      ) : null}
+      {hintLabel ? <p className={hintCls}>{hintLabel}</p> : null}
       <p className={bodyCls}>{phrase}</p>
     </aside>
   )

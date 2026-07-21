@@ -18,7 +18,7 @@ export function ZenHomeMiniStats({ stats = {} }: { stats?: Record<string, unknow
 
   return (
     <div className="w-full space-y-2">
-      <p className="text-xs uppercase tracking-wider text-white/70 text-center xl:text-left">
+      <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-white/70 text-center xl:text-left">
         {t('fleurZen.miniStatsTitle')}
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -29,15 +29,15 @@ export function ZenHomeMiniStats({ stats = {} }: { stats?: Record<string, unknow
             <Link
               key={c.key}
               href={c.to}
-              className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] px-3 py-2.5 transition-colors min-w-0"
+              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.07] px-3 py-2.5 transition-colors min-w-0"
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg shrink-0" aria-hidden>
                   {c.icon}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-lg font-bold text-white/90 leading-none">{v}</p>
-                  <p className="text-xs text-white/75 truncate">{t(c.labelKey)}</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-white/90 leading-none">{v}</p>
+                  <p className="text-xs text-slate-600 dark:text-white/75 truncate">{t(c.labelKey)}</p>
                 </div>
               </div>
             </Link>

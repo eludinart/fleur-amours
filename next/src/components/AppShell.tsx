@@ -184,7 +184,7 @@ function ProtectedLayout({
 
   if (loading) {
     return (
-      <div className="flex-1 min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="flex-1 min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <span className="w-8 h-8 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
       </div>
     )
@@ -277,7 +277,7 @@ function AppRoutes() {
       )
     }
     return (
-      <div className="flex-1 min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="flex-1 min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <span className="w-8 h-8 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
       </div>
     )
@@ -308,7 +308,7 @@ function AppRoutes() {
   /* Pages publiques tirage/partage et dreamscape/partage : app/tirage/partage/[id] et app/dreamscape/partage/[token] */
 
   const PageFallback = () => (
-    <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-900">
+    <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
       <span className="w-8 h-8 border-2 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
     </div>
   )

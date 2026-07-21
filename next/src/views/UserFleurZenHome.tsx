@@ -207,7 +207,7 @@ export function UserFleurZenHome() {
 
   if (loading) {
     return (
-      <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-950">
+      <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="w-10 h-10 rounded-full border-2 border-teal-400/30 border-t-teal-400 animate-spin" aria-hidden />
       </div>
     )
@@ -215,12 +215,12 @@ export function UserFleurZenHome() {
 
   if (error) {
     return (
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 bg-slate-950 text-amber-300/90 text-sm text-center">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 bg-slate-50 dark:bg-slate-950 text-amber-700 dark:text-amber-300/90 text-sm text-center">
         <p>{error}</p>
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="mt-4 text-xs uppercase tracking-widest text-teal-400/90 border border-teal-500/40 px-4 py-2 rounded-full"
+          className="mt-4 text-xs uppercase tracking-widest text-teal-700 dark:text-teal-400/90 border border-teal-200 dark:border-teal-500/40 px-4 py-2 rounded-full"
         >
           {t('common.retry')}
         </button>
@@ -229,21 +229,21 @@ export function UserFleurZenHome() {
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_50%_38%,rgba(30,27,75,0.38),transparent)]" />
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative bg-gradient-to-b from-slate-50 via-violet-50/40 to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
+      <div className="pointer-events-none absolute inset-0 dark:bg-[radial-gradient(ellipse_80%_55%_at_50%_38%,rgba(30,27,75,0.38),transparent)]" />
 
       <div className="relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-contain">
         <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-6 sm:py-8 pb-28 sm:pb-32">
           <header className="text-center xl:text-left space-y-2 mb-4 sm:mb-5">
             <Breadcrumbs />
             {celebrate && hasPetals ? (
-              <div className="rounded-2xl border border-emerald-400/30 bg-emerald-950/30 px-4 py-3 mb-3 text-center xl:text-left">
-                <p className="text-sm font-semibold text-emerald-100">{t('fleurZen.celebrateTitle')}</p>
-                <p className="text-xs text-emerald-200/80 mt-1">{t('fleurZen.celebrateBody')}</p>
+              <div className="rounded-2xl border border-emerald-200 dark:border-emerald-400/30 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 mb-3 text-center xl:text-left">
+                <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">{t('fleurZen.celebrateTitle')}</p>
+                <p className="text-xs text-emerald-700 dark:text-emerald-200/80 mt-1">{t('fleurZen.celebrateBody')}</p>
               </div>
             ) : null}
-            <h1 className="text-xl sm:text-2xl font-light tracking-wider uppercase text-white/90">{t('fleurZen.title')}</h1>
-            <p className="text-sm text-white/80 font-light tracking-wide max-w-2xl mx-auto xl:mx-0 leading-relaxed">
+            <h1 className="text-xl sm:text-2xl font-light tracking-wider uppercase text-slate-900 dark:text-white/90">{t('fleurZen.title')}</h1>
+            <p className="text-sm text-slate-600 dark:text-white/80 font-light tracking-wide max-w-2xl mx-auto xl:mx-0 leading-relaxed">
               {t('fleurZen.subtitle')}
             </p>
           </header>
@@ -312,7 +312,7 @@ export function UserFleurZenHome() {
               <div className="flex justify-center xl:justify-start">
                 <Link
                   href={statsHref}
-                  className="text-sm font-medium text-teal-200 hover:text-teal-100 border border-teal-500/35 hover:border-teal-400/55 bg-teal-950/30 px-5 py-2.5 rounded-full transition-colors whitespace-nowrap"
+                  className="text-sm font-medium text-teal-700 dark:text-teal-200 hover:text-teal-800 dark:hover:text-teal-100 border border-teal-200 dark:border-teal-500/35 hover:border-teal-300 dark:hover:border-teal-400/55 bg-teal-50 dark:bg-teal-950/30 px-5 py-2.5 rounded-full transition-colors whitespace-nowrap"
                 >
                   {t('fleurZen.detailsStatsLong')}
                 </Link>
@@ -331,7 +331,7 @@ export function UserFleurZenHome() {
                   compact
                 />
               ) : (
-                <p className="text-sm text-white/70 text-center py-6">{t('fleurZen.zenHelpTimeEmpty')}</p>
+                <p className="text-sm text-slate-500 dark:text-white/70 text-center py-6">{t('fleurZen.zenHelpTimeEmpty')}</p>
               )}
             </section>
           </div>

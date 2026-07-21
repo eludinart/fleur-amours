@@ -135,7 +135,7 @@ export default function ProfileOnboardingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100svh] flex items-center justify-center bg-gradient-to-b from-[#050b1a] via-[#0a1630] to-[#070d22]">
+      <div className="min-h-[100svh] flex items-center justify-center bg-gradient-to-b from-violet-50 via-rose-50 to-amber-50 dark:from-[#050b1a] dark:via-[#0a1630] dark:to-[#070d22]">
         <span className="w-10 h-10 border-2 border-violet-400/40 border-t-violet-300 rounded-full animate-spin" />
       </div>
     )
@@ -144,8 +144,8 @@ export default function ProfileOnboardingPage() {
   const progress = ((step + 1) / STEPS) * 100
 
   return (
-    <div className="min-h-[100svh] flex flex-col bg-gradient-to-b from-[#050b1a] via-[#0a1630] to-[#070d22] text-slate-100">
-      <div className="h-1 bg-slate-800/80 shrink-0">
+    <div className="min-h-[100svh] flex flex-col bg-gradient-to-b from-violet-50 via-rose-50 to-amber-50 dark:from-[#050b1a] dark:via-[#0a1630] dark:to-[#070d22] text-slate-800 dark:text-slate-100">
+      <div className="h-1 bg-slate-200 dark:bg-slate-800/80 shrink-0">
         <div
           className="h-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-rose-400 transition-all duration-500"
           style={{ width: `${progress}%` }}
@@ -153,14 +153,14 @@ export default function ProfileOnboardingPage() {
       </div>
 
       <header className="shrink-0 px-4 py-4 flex items-center justify-between">
-        <p className="text-sm font-semibold uppercase tracking-wider text-violet-300/90">
+        <p className="text-sm font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300/90">
           {t('profileOnboarding.stepLabel', { current: step + 1, total: STEPS })}
         </p>
         <button
           type="button"
           onClick={() => finish(true)}
           disabled={saving}
-          className="text-sm text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50"
+          className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
         >
           {t('profileOnboarding.skipAll')}
         </button>
@@ -189,36 +189,36 @@ export default function ProfileOnboardingPage() {
                         variant="portrait"
                       />
                     </div>
-                    <h1 className="text-2xl font-bold text-amber-50">{t('profileOnboarding.welcomeTitle')}</h1>
-                    <p className="mt-2 text-sm text-slate-400 leading-relaxed">{t('profileOnboarding.welcomeBody')}</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-amber-50">{t('profileOnboarding.welcomeTitle')}</h1>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{t('profileOnboarding.welcomeBody')}</p>
                   </div>
-                  <ul className="space-y-2 text-sm text-slate-400">
-                    <li className="flex gap-2"><span className="text-emerald-400">✓</span>{t('profileOnboarding.bulletName')}</li>
-                    <li className="flex gap-2"><span className="text-emerald-400">✓</span>{t('profileOnboarding.bulletPseudo')}</li>
-                    <li className="flex gap-2"><span className="text-emerald-400">✓</span>{t('profileOnboarding.bulletAge')}</li>
-                    <li className="flex gap-2"><span className="text-emerald-400">✓</span>{t('profileOnboarding.bulletBio')}</li>
+                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    <li className="flex gap-2"><span className="text-emerald-600 dark:text-emerald-400">✓</span>{t('profileOnboarding.bulletName')}</li>
+                    <li className="flex gap-2"><span className="text-emerald-600 dark:text-emerald-400">✓</span>{t('profileOnboarding.bulletPseudo')}</li>
+                    <li className="flex gap-2"><span className="text-emerald-600 dark:text-emerald-400">✓</span>{t('profileOnboarding.bulletAge')}</li>
+                    <li className="flex gap-2"><span className="text-emerald-600 dark:text-emerald-400">✓</span>{t('profileOnboarding.bulletBio')}</li>
                   </ul>
                 </>
               )}
 
               {step === 1 && (
                 <>
-                  <h2 className="text-xl font-bold text-amber-50">{t('profileOnboarding.nameTitle')}</h2>
-                  <p className="text-sm text-slate-400">{t('profileOnboarding.quickProfileHint')}</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-amber-50">{t('profileOnboarding.nameTitle')}</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">{t('profileOnboarding.quickProfileHint')}</p>
                   <input
                     type="text"
                     value={form.name}
                     onChange={(e) => patch('name', e.target.value)}
                     placeholder={t('profileOnboarding.namePlaceholder')}
                     autoFocus
-                    className="w-full px-4 py-3 rounded-xl border border-slate-600/60 bg-slate-900/70 text-amber-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600/60 bg-white dark:bg-slate-900/70 text-slate-900 dark:text-amber-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                   />
                   <input
                     type="text"
                     value={form.pseudo}
                     onChange={(e) => patch('pseudo', e.target.value.replace(/\s/g, '').toLowerCase())}
                     placeholder={t('profileOnboarding.pseudoPlaceholder')}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-600/60 bg-slate-900/70 text-amber-50 font-mono placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600/60 bg-white dark:bg-slate-900/70 text-slate-900 dark:text-amber-50 font-mono placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                   />
                   <p className="text-sm text-slate-500">{t('profileOnboarding.pseudoFormat')}</p>
                 </>
@@ -226,8 +226,8 @@ export default function ProfileOnboardingPage() {
 
               {step === 2 && (
                 <>
-                  <h2 className="text-xl font-bold text-amber-50">{t('profileOnboarding.emojiTitle')}</h2>
-                  <p className="text-sm text-slate-400">{t('profileOnboarding.emojiHint')}</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-amber-50">{t('profileOnboarding.emojiTitle')}</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">{t('profileOnboarding.emojiHint')}</p>
                   <div className="flex justify-center py-2">
                     <FleurSociale
                       scores={previewScores}
@@ -246,14 +246,14 @@ export default function ProfileOnboardingPage() {
                         className={`w-11 h-11 rounded-xl text-xl transition-all hover:scale-110 ${
                           form.avatar_emoji === emoji
                             ? 'bg-violet-600 ring-2 ring-violet-400 scale-110'
-                            : 'bg-slate-800/80 hover:bg-slate-700/80'
+                            : 'bg-slate-200 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700/80'
                         }`}
                       >
                         {emoji}
                       </button>
                     ))}
                   </div>
-                  <label className="flex items-start gap-3 mt-2 p-4 rounded-xl border border-emerald-700/35 bg-emerald-950/20 cursor-pointer">
+                  <label className="flex items-start gap-3 mt-2 p-4 rounded-xl border border-emerald-200 dark:border-emerald-700/35 bg-emerald-50 dark:bg-emerald-950/20 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={form.profile_public}
@@ -261,15 +261,15 @@ export default function ProfileOnboardingPage() {
                       className="mt-1 rounded border-slate-500"
                     />
                     <span>
-                      <span className="block text-sm font-medium text-emerald-100">{t('profileOnboarding.publicTitle')}</span>
-                      <span className="block text-sm text-emerald-300/70 mt-0.5">{t('profileOnboarding.publicHint')}</span>
+                      <span className="block text-sm font-medium text-emerald-900 dark:text-emerald-100">{t('profileOnboarding.publicTitle')}</span>
+                      <span className="block text-sm text-emerald-700 dark:text-emerald-300/70 mt-0.5">{t('profileOnboarding.publicHint')}</span>
                     </span>
                   </label>
                 </>
               )}
 
               {error && (
-                <p className="rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-300">
+                <p className="rounded-xl border border-rose-300 dark:border-rose-500/40 bg-rose-50 dark:bg-rose-950/30 px-4 py-3 text-sm text-rose-800 dark:text-rose-300">
                   {error}
                 </p>
               )}
@@ -278,14 +278,14 @@ export default function ProfileOnboardingPage() {
         </div>
       </div>
 
-      <footer className="shrink-0 px-4 py-4 border-t border-slate-700/50 bg-slate-950/60 backdrop-blur-sm">
+      <footer className="shrink-0 px-4 py-4 border-t border-slate-200 dark:border-slate-700/50 bg-white/80 dark:bg-slate-950/60 backdrop-blur-sm">
         <div className="max-w-lg mx-auto flex gap-3">
           {step > 0 && (
             <button
               type="button"
               onClick={goBack}
               disabled={saving}
-              className="px-5 py-3 rounded-full border border-slate-600/60 text-sm font-medium text-slate-400 hover:bg-slate-800/60 disabled:opacity-50"
+              className="px-5 py-3 rounded-full border border-slate-300 dark:border-slate-600/60 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 disabled:opacity-50"
             >
               {t('onboarding.back')}
             </button>

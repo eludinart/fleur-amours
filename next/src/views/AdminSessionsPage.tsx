@@ -688,12 +688,12 @@ function SessionDetailModal({
               <div
                 className={`rounded-xl p-4 border ${
                   maxShadowLevel >= 4
-                    ? 'bg-red-950/30 border-red-700'
+                    ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-700'
                     : maxShadowLevel >= 3
-                      ? 'bg-rose-950/20 border-rose-700/50'
+                      ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-700/50'
                       : maxShadowLevel >= 2
-                        ? 'bg-orange-950/20 border-orange-700/40'
-                        : 'bg-amber-950/10 border-amber-700/30'
+                        ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-700/40'
+                        : 'bg-amber-50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-700/30'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -710,12 +710,12 @@ function SessionDetailModal({
                     <p
                       className={`font-bold text-sm ${
                         maxShadowLevel >= 4
-                          ? 'text-red-300'
+                          ? 'text-red-700 dark:text-red-300'
                           : maxShadowLevel >= 3
-                            ? 'text-rose-300'
+                            ? 'text-rose-700 dark:text-rose-300'
                             : maxShadowLevel >= 2
-                              ? 'text-orange-300'
-                              : 'text-amber-300'
+                              ? 'text-orange-700 dark:text-orange-300'
+                              : 'text-amber-700 dark:text-amber-300'
                       }`}
                     >
                       Niveau d&apos;ombre maximum : {maxShadowLevel}/4
@@ -741,12 +741,12 @@ function SessionDetailModal({
                     const lvl = ev.level ?? 0
                     const color =
                       lvl >= 4
-                        ? 'border-red-700/60 bg-red-950/20 text-red-300'
+                        ? 'border-red-200 dark:border-red-700/60 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300'
                         : lvl >= 3
-                          ? 'border-rose-700/50 bg-rose-950/20 text-rose-300'
+                          ? 'border-rose-200 dark:border-rose-700/50 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300'
                           : lvl >= 2
-                            ? 'border-orange-700/40 bg-orange-950/20 text-orange-300'
-                            : 'border-amber-700/30 bg-amber-950/10 text-amber-300'
+                            ? 'border-orange-200 dark:border-orange-700/40 bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300'
+                            : 'border-amber-200 dark:border-amber-700/30 bg-amber-50 dark:bg-amber-950/10 text-amber-700 dark:text-amber-300'
                     const icon =
                       lvl >= 4 ? '🔴' : lvl >= 3 ? '🌑' : lvl >= 2 ? '🌘' : '🌗'
                     return (
@@ -757,7 +757,7 @@ function SessionDetailModal({
                             Tour {ev.turn} — Niveau {lvl}
                           </span>
                           {ev.urgent && (
-                            <span className="ml-1 text-[10px] font-bold bg-red-700/40 px-1.5 rounded">
+                            <span className="ml-1 text-[10px] font-bold bg-red-200 dark:bg-red-700/40 px-1.5 rounded">
                               URGENT
                             </span>
                           )}
@@ -1091,32 +1091,32 @@ export default function AdminSessionsPage() {
                     ? {
                         icon: '🔴',
                         label: `Niv. ${shadowLvl}`,
-                        cls: 'bg-red-950/40 text-red-300 border border-red-700/50',
+                        cls: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700/50',
                       }
                     : shadowLvl >= 3
                       ? {
                           icon: '🌑',
                           label: `Niv. ${shadowLvl}`,
-                          cls: 'bg-rose-950/40 text-rose-300 border border-rose-700/40',
+                          cls: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-700/40',
                         }
                       : shadowLvl >= 2
                         ? {
                             icon: '🌘',
                             label: `Niv. ${shadowLvl}`,
-                            cls: 'bg-orange-950/30 text-orange-300 border border-orange-700/40',
+                            cls: 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700/40',
                           }
                         : shadowLvl >= 1
                           ? {
                               icon: '🌗',
                               label: `Niv. ${shadowLvl}`,
-                              cls: 'bg-amber-950/20 text-amber-300 border border-amber-700/30',
+                              cls: 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/30',
                             }
                           : null
                 return (
                   <tr
                     key={s.id}
                     className={`border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
-                      s.shadow_urgent ? 'bg-red-950/5' : ''
+                      s.shadow_urgent ? 'bg-red-50/60 dark:bg-red-950/5' : ''
                     }`}
                   >
                     <td className="px-4 py-3 text-xs text-slate-500">

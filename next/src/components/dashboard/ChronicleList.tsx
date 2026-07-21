@@ -31,12 +31,12 @@ function toneBorderClass(tone: string | undefined) {
 function toneSurfaceClass(tone: string | undefined, zen: boolean) {
   if (zen) {
     if (tone === 'shadow') {
-      return 'border-rose-900/50 bg-gradient-to-br from-rose-950/55 via-slate-950/90 to-slate-950 ring-1 ring-rose-500/20'
+      return 'border-rose-200/60 dark:border-rose-900/50 bg-gradient-to-br from-rose-50 to-white dark:from-rose-950/55 dark:via-slate-950/90 dark:to-slate-950 ring-1 ring-rose-200/50 dark:ring-rose-500/20'
     }
     if (tone === 'light') {
-      return 'border-amber-500/25 bg-gradient-to-br from-amber-500/15 via-amber-950/20 to-slate-950/80 ring-1 ring-amber-400/25'
+      return 'border-amber-200/70 dark:border-amber-500/25 bg-gradient-to-br from-amber-50 to-white dark:from-amber-500/15 dark:via-amber-950/20 dark:to-slate-950/80 ring-1 ring-amber-200/60 dark:ring-amber-400/25'
     }
-    return 'border-white/12 bg-white/[0.05] ring-1 ring-white/10'
+    return 'border-slate-200 dark:border-white/12 bg-white dark:bg-white/[0.05] ring-1 ring-slate-200/80 dark:ring-white/10'
   }
   if (tone === 'shadow') {
     return 'border-rose-200/50 dark:border-rose-900/60 bg-gradient-to-br from-rose-50/90 to-white dark:from-rose-950/35 dark:to-slate-950/90 ring-1 ring-rose-200/40 dark:ring-rose-900/40'
@@ -50,16 +50,16 @@ function toneSurfaceClass(tone: string | undefined, zen: boolean) {
 function toneBadgeClass(tone: string | undefined, zen: boolean) {
   if (tone === 'shadow') {
     return zen
-      ? 'bg-rose-600/35 text-rose-100 border border-rose-400/45'
+      ? 'bg-rose-100 dark:bg-rose-600/35 text-rose-900 dark:text-rose-100 border border-rose-300/60 dark:border-rose-400/45'
       : 'bg-rose-100 dark:bg-rose-950/60 text-rose-900 dark:text-rose-100 border border-rose-300/60 dark:border-rose-700/50'
   }
   if (tone === 'light') {
     return zen
-      ? 'bg-amber-500/30 text-amber-50 border border-amber-300/45'
+      ? 'bg-amber-100 dark:bg-amber-500/30 text-amber-950 dark:text-amber-50 border border-amber-300/55 dark:border-amber-300/45'
       : 'bg-amber-100 dark:bg-amber-950/50 text-amber-950 dark:text-amber-100 border border-amber-300/55 dark:border-amber-700/45'
   }
   return zen
-    ? 'bg-slate-600/35 text-slate-100 border border-slate-400/35'
+    ? 'bg-slate-200 dark:bg-slate-600/35 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-400/35'
     : 'bg-slate-200/90 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 border border-slate-300/70 dark:border-slate-600/60'
 }
 
@@ -69,26 +69,26 @@ function typeChipClass(
 ) {
   if (kind === 'fleur' || kind === 'fleur_duo' || kind === 'fleur_beta') {
     return zen
-      ? 'bg-fuchsia-600/28 text-fuchsia-50 border border-fuchsia-400/35'
+      ? 'bg-fuchsia-100 dark:bg-fuchsia-600/28 text-fuchsia-950 dark:text-fuchsia-50 border border-fuchsia-300/55 dark:border-fuchsia-400/35'
       : 'bg-fuchsia-100 dark:bg-fuchsia-950/50 text-fuchsia-950 dark:text-fuchsia-100 border border-fuchsia-300/55 dark:border-fuchsia-800/45'
   }
   if (kind === 'dreamscape') {
     return zen
-      ? 'bg-violet-600/30 text-violet-100 border border-violet-400/35'
+      ? 'bg-violet-100 dark:bg-violet-600/30 text-violet-900 dark:text-violet-100 border border-violet-300/60 dark:border-violet-400/35'
       : 'bg-violet-100 dark:bg-violet-950/55 text-violet-900 dark:text-violet-100 border border-violet-300/60 dark:border-violet-700/45'
   }
   if (kind === 'paper_draw') {
     return zen
-      ? 'bg-amber-600/28 text-amber-50 border border-amber-400/35'
+      ? 'bg-amber-100 dark:bg-amber-600/28 text-amber-950 dark:text-amber-50 border border-amber-300/55 dark:border-amber-400/35'
       : 'bg-amber-100 dark:bg-amber-950/50 text-amber-950 dark:text-amber-100 border border-amber-300/55 dark:border-amber-800/45'
   }
   if (kind === 'tirage') {
     return zen
-      ? 'bg-sky-600/25 text-sky-100 border border-sky-400/35'
+      ? 'bg-sky-100 dark:bg-sky-600/25 text-sky-950 dark:text-sky-100 border border-sky-300/55 dark:border-sky-400/35'
       : 'bg-sky-100 dark:bg-sky-950/50 text-sky-950 dark:text-sky-100 border border-sky-300/55 dark:border-sky-800/45'
   }
   return zen
-    ? 'bg-emerald-600/28 text-emerald-100 border border-emerald-400/35'
+    ? 'bg-emerald-100 dark:bg-emerald-600/28 text-emerald-950 dark:text-emerald-100 border border-emerald-300/55 dark:border-emerald-400/35'
     : 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-950 dark:text-emerald-100 border border-emerald-300/55 dark:border-emerald-800/45'
 }
 
@@ -141,14 +141,14 @@ export function ChronicleList({
   const whisperLabel = whisperLabelKey ? t(whisperLabelKey) : t('chronicle.tutorWhisperLabel')
   const zen = variant === 'zen'
   const shell = zen
-    ? 'rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm'
+    ? 'rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] backdrop-blur-sm'
     : 'rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50'
-  const titleCls = zen ? 'text-white/90' : 'text-slate-800 dark:text-slate-100'
-  const descCls = zen ? 'text-white/75' : 'text-slate-500 dark:text-slate-400'
-  const metaCls = zen ? 'text-white/75' : 'text-slate-400'
+  const titleCls = zen ? 'text-slate-900 dark:text-white/90' : 'text-slate-800 dark:text-slate-100'
+  const descCls = zen ? 'text-slate-600 dark:text-white/75' : 'text-slate-500 dark:text-slate-400'
+  const metaCls = zen ? 'text-slate-500 dark:text-white/75' : 'text-slate-400'
 
   const clampQuote = layout === 'grid'
-  const bodyCls = zen ? 'text-violet-50/95' : 'text-slate-800 dark:text-slate-100'
+  const bodyCls = zen ? 'text-slate-800 dark:text-violet-50/95' : 'text-slate-800 dark:text-slate-100'
   const quoteCls = `${bodyCls} text-sm leading-relaxed font-normal not-italic text-left [overflow-wrap:anywhere] ${
     clampQuote ? 'line-clamp-[10] min-h-0' : 'whitespace-pre-wrap break-words'
   }`
@@ -212,7 +212,7 @@ export function ChronicleList({
       <>
         {chips}
         <p className={quoteCls}>{item.synthesis}</p>
-        <p className={`text-xs mt-auto pt-2.5 flex items-center gap-1 shrink-0 border-t ${zen ? 'border-white/10' : 'border-slate-200/80 dark:border-slate-700/80'} ${metaCls}`}>
+        <p className={`text-xs mt-auto pt-2.5 flex items-center gap-1 shrink-0 border-t ${zen ? 'border-slate-200 dark:border-white/10' : 'border-slate-200/80 dark:border-slate-700/80'} ${metaCls}`}>
           <span className="opacity-80">{formatDate(item.created_at as string, locale)}</span>
         </p>
       </>
@@ -336,14 +336,14 @@ export function ChronicleList({
         {whisper ? (
           <div className="mb-4 border-l-2 border-violet-400/50 pl-3 space-y-1.5">
             {zen && whisperSubhint ? (
-              <p className="text-xs uppercase tracking-wider text-violet-300/60">{whisperSubhint}</p>
+              <p className="text-xs uppercase tracking-wider text-violet-600 dark:text-violet-300/60">{whisperSubhint}</p>
             ) : null}
-            <p className={`text-sm italic ${zen ? 'text-violet-200/90' : 'text-violet-700/90 dark:text-violet-200/90'}`}>
+            <p className={`text-sm italic ${zen ? 'text-violet-800 dark:text-violet-200/90' : 'text-violet-700/90 dark:text-violet-200/90'}`}>
               {whisper}
             </p>
           </div>
         ) : null}
-        <div className={`flex flex-col items-center justify-center py-10 ${zen ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'}`}>
+        <div className={`flex flex-col items-center justify-center py-10 ${zen ? 'text-slate-500 dark:text-white/70' : 'text-slate-400 dark:text-slate-500'}`}>
           <span className="text-4xl mb-2">📜</span>
           <p className="text-sm text-center">{t('chronicle.empty')}</p>
         </div>
@@ -373,23 +373,25 @@ export function ChronicleList({
         <div
           className={`mb-4 rounded-xl border px-3 py-2.5 ${
             zen
-              ? 'border-violet-400/25 bg-violet-500/10'
+              ? 'border-violet-200 dark:border-violet-400/25 bg-violet-50 dark:bg-violet-500/10'
               : 'border-violet-200/60 dark:border-violet-800/50 bg-violet-50/50 dark:bg-violet-950/25'
           }`}
         >
           <p
             className={`text-xs uppercase tracking-widest mb-1 ${
-              zen ? 'text-violet-200/70' : 'text-violet-600/80 dark:text-violet-300/80'
+              zen ? 'text-violet-700 dark:text-violet-200/70' : 'text-violet-600/80 dark:text-violet-300/80'
             }`}
           >
             {whisperLabel}
           </p>
           {zen && whisperSubhint ? (
-            <p className="text-xs uppercase tracking-wider text-violet-300/55 mb-2">{whisperSubhint}</p>
+            <p className="text-xs uppercase tracking-wider text-violet-600 dark:text-violet-300/55 mb-2">{whisperSubhint}</p>
           ) : null}
           <p
             className={`text-sm italic leading-relaxed ${
-              zen ? 'text-violet-100/90 line-clamp-4 sm:line-clamp-5' : 'text-violet-900/90 dark:text-violet-100/90'
+              zen
+                ? 'text-violet-900 dark:text-violet-100/90 line-clamp-4 sm:line-clamp-5'
+                : 'text-violet-900/90 dark:text-violet-100/90'
             }`}
           >
             {whisper}

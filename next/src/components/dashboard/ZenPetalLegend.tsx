@@ -12,8 +12,8 @@ function petalLabel(id: string): string {
 
 export function ZenPetalLegend({ petals }: { petals: Record<string, number> }) {
   return (
-    <div className="w-full rounded-xl border border-white/[0.08] bg-slate-950/40 px-3 py-3">
-      <p className="text-xs uppercase tracking-wide text-white/70 mb-2.5 text-center">
+    <div className="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-950/40 px-3 py-3">
+      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-white/70 mb-2.5 text-center">
         {t('fleurZen.petalLegendTitle')}
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2">
@@ -25,7 +25,7 @@ export function ZenPetalLegend({ petals }: { petals: Record<string, number> }) {
               <span className="truncate font-medium" style={{ color: color ?? undefined }}>
                 {petalLabel(id)}
               </span>
-              <span className="tabular-nums text-white/55 shrink-0">{pct} %</span>
+              <span className="tabular-nums text-slate-500 dark:text-white/55 shrink-0">{pct} %</span>
             </div>
           )
         })}
