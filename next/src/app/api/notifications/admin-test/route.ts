@@ -23,11 +23,20 @@ export const dynamic = 'force-dynamic'
 
 const CAMPAIGNS: EngagementCampaignId[] = [
   'plan14j',
+  'plan14j_closing',
   'checkin',
+  'checkin_echo',
   'tirage',
+  'carte_du_jour',
+  'carte_dimanche',
+  'serie_j2',
+  'serie_j3',
   'fleur',
   'session',
   'dreamscape',
+  'earlyreturn',
+  'comeback',
+  'duo_same_petal',
 ]
 
 export async function POST(req: NextRequest) {

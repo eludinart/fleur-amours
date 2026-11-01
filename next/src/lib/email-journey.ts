@@ -9,16 +9,26 @@ import type { EngagementCampaignId } from './engagement-templates'
 
 const ENGAGEMENT_CAMPAIGN_IDS = new Set<EngagementCampaignId>([
   'plan14j',
+  'plan14j_closing',
   'checkin',
+  'checkin_echo',
   'tirage',
+  'carte_du_jour',
+  'carte_dimanche',
+  'serie_j2',
+  'serie_j3',
   'fleur',
   'session',
   'dreamscape',
+  'earlyreturn',
+  'comeback',
+  'duo_same_petal',
 ])
 
 export function campaignIdFromNotificationType(type: string): EngagementCampaignId | undefined {
   if (type === 'plan14j_reminder') return 'plan14j'
   if (type === 'checkin_reminder') return 'checkin'
+  if (type === 'checkin_echo') return 'checkin_echo'
   const match = type.match(/^engagement_(.+)$/)
   if (!match) return undefined
   const id = match[1] as EngagementCampaignId
@@ -61,7 +71,10 @@ export function buildJourneyChips(
       }
       break
     }
-    case 'tirage': {
+    case 'tirage':
+    case 'carte_du_jour':
+    case 'carte_dimanche':
+    case 'serie_j2': {
       if (p.dailyCard?.name) {
         chips.push(tServer(locale, 'email.journey.cardOfDay', { card: p.dailyCard.name }))
       } else if (p.lastCardName) {

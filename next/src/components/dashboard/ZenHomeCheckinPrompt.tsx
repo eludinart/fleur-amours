@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { t } from '@/i18n'
 import { PETAL_DEFS } from '@/components/FlowerSVG'
+import { api } from '@/lib/api-client'
 
 export function ZenHomeCheckinPrompt({
   daysSinceLast,
@@ -21,6 +23,17 @@ export function ZenHomeCheckinPrompt({
   } | null
   streak?: number
 }) {
+  const [presence, setPresence] = useState<{ current: number; badge7: boolean } | null>(null)
+  useEffect(() => {
+    api
+      .get('/api/presence/streak')
+      .then((d) => {
+        const r = d as { current?: number; badge7?: boolean }
+        setPresence({ current: Number(r.current) || 0, badge7: !!r.badge7 })
+      })
+      .catch(() => {})
+  }, [])
+
   const showDaily = daysSinceLast === null || daysSinceLast >= 1
   if (!showDaily && !lastEcho?.whisper && streak < 2) return null
 
@@ -52,14 +65,26 @@ export function ZenHomeCheckinPrompt({
         <p className="text-xs font-medium uppercase tracking-wider text-sky-700 dark:text-sky-300/85">
           {t('dashboard.checkinWeeklyLabel')}
         </p>
-        {streak >= 2 ? (
-          <span
-            className="inline-flex items-center gap-1 rounded-full border border-amber-200 dark:border-amber-400/40 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-200"
-            title={t('dashboard.checkinStreakHint')}
-          >
-            🔥 {t('dashboard.checkinStreak', { days: streak })}
-          </span>
-        ) : null}
+        <div className="flex items-center gap-1.5">
+          {presence && presence.current >= 2 ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-emerald-200 dark:border-emerald-400/40 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-200"
+              title={t('dashboard.presenceStreakHint') || 'Fil de sève — présence dans le jardin'}
+            >
+              {presence.badge7 ? '🌿' : '💧'}{' '}
+              {t('dashboard.presenceStreak', { days: presence.current }) ||
+                `${presence.current} j. de présence`}
+            </span>
+          ) : null}
+          {streak >= 2 ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-amber-200 dark:border-amber-400/40 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-200"
+              title={t('dashboard.checkinStreakHint')}
+            >
+              🔥 {t('dashboard.checkinStreak', { days: streak })}
+            </span>
+          ) : null}
+        </div>
       </div>
       {lastEcho?.whisper && !showDaily ? (
         <>

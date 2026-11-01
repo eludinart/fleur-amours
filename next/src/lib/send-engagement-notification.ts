@@ -12,6 +12,7 @@ import {
   type EngagementTemplateVars,
 } from './engagement-templates'
 import type { EngagementPersonalization } from './engagement-context'
+import { assertCampaignAllowed } from './notification-prefs'
 
 export type SendEngagementInput = {
   userId: number
@@ -21,11 +22,18 @@ export type SendEngagementInput = {
   personalization: EngagementPersonalization
   source_id?: number | null
   skipDevGuard?: boolean
+  /** Push teaser court (sinon title/body complets). */
+  pushTitle?: string
+  pushBody?: string
 }
 
 export async function sendEngagementNotification(
   input: SendEngagementInput
-): Promise<{ sent: boolean; notification_id?: number }> {
+): Promise<{ sent: boolean; notification_id?: number; skippedReason?: string }> {
+  if (!(await assertCampaignAllowed(input.userId, input.campaignId))) {
+    return { sent: false, skippedReason: 'topic_disabled' }
+  }
+
   const vars: EngagementTemplateVars = {
     ...(input.vars ?? {}),
     personalization: input.personalization,
@@ -77,7 +85,9 @@ export async function sendEngagementNotification(
   try {
     if (!(await isUserInQuietHours(input.userId))) {
       const { sendFcmPush } = await import('./fcm')
-      await sendFcmPush(input.userId, email, template.title, template.body, template.action_url)
+      const pushTitle = input.pushTitle ?? template.pushTitle ?? template.title
+      const pushBody = input.pushBody ?? template.pushBody ?? template.body
+      await sendFcmPush(input.userId, email, pushTitle, pushBody, template.action_url)
     }
   } catch {
     /* push optionnel : ne bloque jamais la relance */

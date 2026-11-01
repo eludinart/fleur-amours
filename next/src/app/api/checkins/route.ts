@@ -10,6 +10,8 @@ import { getCheckinStreak, getMyCheckins, hasCheckinToday, saveCheckin } from '@
 import { recordTimelineEvent } from '@/lib/db-timeline'
 import { transactionalSapUpdate } from '@/lib/db-sap'
 import { buildCheckinContext, highlightPetalToArray, type CheckinEchoResponse } from '@/lib/checkin-echo'
+import { recordPresenceDay } from '@/lib/presence-streak'
+import { maybeQueueCheckinEcho } from '@/lib/checkin-echo-outbox'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,6 +109,19 @@ export async function POST(req: NextRequest) {
       await transactionalSapUpdate(uid, sapBonus, `checkin_bonus_${saved.id}`, 'bonus')
     } catch {
       sapBonus = 0
+    }
+
+    try {
+      await recordPresenceDay(uid, 'checkin')
+    } catch {
+      /* présence optionnelle */
+    }
+
+    try {
+      const user = await authMe(uid).catch(() => null)
+      void maybeQueueCheckinEcho(uid, user?.email ?? null).catch(() => {})
+    } catch {
+      /* echo optionnel */
     }
 
     return NextResponse.json({ ...saved, saved: true, streak, sapBonus }, { status: 201 })

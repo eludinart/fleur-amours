@@ -20,4 +20,11 @@ if (existsSync('public')) {
 copyFileSync('scripts/cron-engagement-remind.mjs', `${standaloneDir}/cron-engagement-remind.mjs`)
 copyFileSync('scripts/cron-engagement-remind.sh', `${standaloneDir}/cron-engagement-remind.sh`)
 chmodSync(`${standaloneDir}/cron-engagement-remind.sh`, 0o755)
+if (existsSync('scripts/cron-daily-card.mjs')) {
+  copyFileSync('scripts/cron-daily-card.mjs', `${standaloneDir}/cron-daily-card.mjs`)
+}
+if (existsSync('scripts/cron-daily-card.sh')) {
+  copyFileSync('scripts/cron-daily-card.sh', `${standaloneDir}/cron-daily-card.sh`)
+  chmodSync(`${standaloneDir}/cron-daily-card.sh`, 0o755)
+}
 console.log('postbuild: standalone prêt (static + public + cron)')

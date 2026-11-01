@@ -12,8 +12,8 @@ import { tServer } from './i18n-server'
 import { canSendEngagementRemindToEmail, canSendOutboundToEmail } from './notification-outbound'
 import { isSmtpConfigured, trySendSmtpMail } from './smtp'
 import { getUserLocalesBatch, resolveEmailLocale } from './user-locale'
+import { readNotificationPrefs } from './notification-prefs'
 
-const PREFS_META_KEY = 'fleur_notification_prefs'
 const APP_NAME = "Fleur d'AmOurs"
 
 type UserPrefs = {
@@ -21,13 +21,6 @@ type UserPrefs = {
   email_digest: string
   quiet_hours_start: number | null
   quiet_hours_end: number | null
-}
-
-const DEFAULT_PREFS: UserPrefs = {
-  email_enabled: true,
-  email_digest: 'instant',
-  quiet_hours_start: null,
-  quiet_hours_end: null,
 }
 
 function normalizeEmail(v: unknown): string {
@@ -52,30 +45,12 @@ function inQuietHours(start: number | null, end: number | null): boolean {
 }
 
 async function readUserPrefs(userId: number): Promise<UserPrefs> {
-  if (!isDbConfigured() || !userId) return { ...DEFAULT_PREFS }
-  const pool = getPool()
-  const tMeta = table('usermeta')
-  const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT meta_value FROM ${tMeta} WHERE user_id = ? AND meta_key = ? LIMIT 1`,
-    [userId, PREFS_META_KEY]
-  )
-  if (!rows?.length) return { ...DEFAULT_PREFS }
-  try {
-    const raw = JSON.parse(String(rows[0].meta_value ?? '{}')) as Record<string, unknown>
-    return {
-      email_enabled: raw.email_enabled !== false,
-      email_digest: String(raw.email_digest ?? 'instant'),
-      quiet_hours_start:
-        raw.quiet_hours_start != null && raw.quiet_hours_start !== ''
-          ? Math.min(23, Math.max(0, parseInt(String(raw.quiet_hours_start), 10)))
-          : null,
-      quiet_hours_end:
-        raw.quiet_hours_end != null && raw.quiet_hours_end !== ''
-          ? Math.min(23, Math.max(0, parseInt(String(raw.quiet_hours_end), 10)))
-          : null,
-    }
-  } catch {
-    return { ...DEFAULT_PREFS }
+  const p = await readNotificationPrefs(userId)
+  return {
+    email_enabled: p.email_enabled,
+    email_digest: p.email_digest,
+    quiet_hours_start: p.quiet_hours_start,
+    quiet_hours_end: p.quiet_hours_end,
   }
 }
 
@@ -123,7 +98,13 @@ export async function buildNotificationEmailHtml(params: {
   let hero =
     showGarden && p ? resolveEmailHero(p) : mode === 'admin' ? { type: 'none' as const } : { type: 'logo' as const }
   // Carte du jour : image de la carte (CID si PNG local, sinon URL eludein.art).
-  if (params.campaignId === 'tirage' && p?.dailyCard?.imageUrl) {
+  const cardHeroCampaigns = new Set([
+    'tirage',
+    'carte_du_jour',
+    'carte_dimanche',
+    'serie_j2',
+  ])
+  if (params.campaignId && cardHeroCampaigns.has(params.campaignId) && p?.dailyCard?.imageUrl) {
     hero = {
       type: 'image',
       src: p.dailyCard.imageUrl,

@@ -893,6 +893,8 @@
     "checkinCta": "Listen to the flower",
     "checkinStreak": "Streak: {days}d",
     "checkinStreakHint": "Consecutive days with a planted echo — each day earns sap.",
+    "presenceStreak": "Sap: {days}d",
+    "presenceStreakHint": "Days of presence in the garden (check-in, draw, session or conversation).",
     "coachGatewayBody": "On {petal}, your garden keeps returning — a coach can help you go deeper with care.",
     "coachGatewayCta": "Browse coaches",
     "eclosionHubCta": "The story of my garden"
@@ -1129,6 +1131,7 @@
     "pdfDownloaded": "PDF downloaded",
     "tirageShareText": "Discover Fleur d'AmOurs — Intuitive readings",
     "tirageNeedsServerId": "This draw isn’t saved on the server (offline or local id). Sign in to get a public link with a proper social preview.",
+    "offerCard": "Offer this card",
     "encourageTirage": "Send it to someone you trust or keep it as a bookmark — the link opens a page with your card and a rich social preview.",
     "encourageTirageTitle": "Share this reading (card + social preview)",
     "encourageTirageMenu": "Looks great on LinkedIn and Facebook — copy the link or use a button below.",
@@ -2655,10 +2658,13 @@
     "earlyreturn": {
       "title": "A door was left ajar",
       "body": "A few days have gone by — nothing urgent, just a door left ajar in your garden. Two minutes is enough to pick up right where you left off.",
+      "bodyWithDoor": "The door “{{door}}” was left ajar. Two minutes is enough to pick up the thread.",
       "highlight": "Your {{petal}} petal is waiting — one small step keeps the momentum going.",
       "highlightGeneric": "A 30-second check-in is enough to keep the momentum going.",
       "actionLabel": "Pick up the thread",
-      "emailSubject": "A door left ajar in your garden"
+      "emailSubject": "A door left ajar: {{door}}",
+      "pushTitle": "Door left ajar",
+      "pushBody": "{{door}} — pick up the thread."
     },
     "comeback": {
       "title": "The garden is waiting for you",
@@ -2666,7 +2672,73 @@
       "highlight": "Your {{petal}} petal is still here — a card can reopen the thread.",
       "highlightGeneric": "A reading, a check-in, your Flower: return at your own pace.",
       "actionLabel": "Return to the garden",
-      "emailSubject": "Your Fleur d'AmOurs garden is waiting"
+      "emailSubject": "Your Fleur d'AmOurs garden is waiting",
+      "pushTitle": "The garden is waiting",
+      "pushBody": "Two minutes to pick up the thread."
+    },
+    "carte_du_jour": {
+      "title": "Your card of the day",
+      "pushTitle": "Your card of the day is ready",
+      "pushBody": "Open the Garden to see it.",
+      "actionLabel": "Sign in and explore",
+      "emailSubject": "Your card of the day is waiting"
+    },
+    "carte_dimanche": {
+      "title": "A look at the week",
+      "titleWithCard": "Sunday — {{card}}",
+      "bodyWithCard": "To close the week, {{card}} walks with you.\n\n{{blurb}}\n\nSign in for a wider view of your garden.",
+      "actionLabel": "Open my Sunday card",
+      "emailSubject": "Your Sunday card",
+      "emailSubjectWithCard": "Sunday — {{card}}",
+      "pushTitle": "Sunday card",
+      "pushBody": "{{card}} to look at the week."
+    },
+    "serie_j2": {
+      "title": "Day 2 — a question for {{card}}",
+      "body": "Yesterday, {{card}} opened a thread. Today, one question:\n\n{{question}}",
+      "highlight": "{{question}}",
+      "questionFallback": "What is this card naming in you today?",
+      "actionLabel": "Answer in the Garden",
+      "emailSubject": "Day 2 — your thread question",
+      "pushTitle": "Day 2 of your thread",
+      "pushBody": "A short question awaits."
+    },
+    "serie_j3": {
+      "title": "Day 3 — a micro-action",
+      "body": "To ground these three days: {{geste}}",
+      "highlight": "{{geste}}",
+      "gesteFallback": "Take 30 seconds for a check-in: one tension, one resource.",
+      "actionLabel": "Do my check-in",
+      "emailSubject": "Day 3 — micro-action",
+      "pushTitle": "Day 3 — micro-action",
+      "pushBody": "A small step to ground the thread."
+    },
+    "checkin_echo": {
+      "title": "An echo for you",
+      "body": "Your recent check-ins show an intense thread. Two minutes with a card or a door can clarify what is moving.",
+      "highlight": "A card or a door — at your pace.",
+      "actionLabel": "Open my check-in",
+      "emailSubject": "An echo after your check-ins",
+      "pushTitle": "An echo for you",
+      "pushBody": "Two minutes to clarify the thread."
+    },
+    "plan14j_closing": {
+      "title": "Your 14-day plan is complete",
+      "body": "Well done — you carried the cycle through. You can start a new cycle, explore the flower as a duo, or an inner conversation.",
+      "highlight": "New cycle · Duo flower · Inner conversation",
+      "actionLabel": "See my session",
+      "emailSubject": "Closing your 14-day plan",
+      "pushTitle": "14-day plan complete",
+      "pushBody": "Three paths to continue."
+    },
+    "duo_same_petal": {
+      "title": "Same petal — {{petal}}",
+      "body": "You and your duo are highlighting {{petal}} right now. A shared door can let that thread circulate.",
+      "highlight": "Open À-deux when you are ready.",
+      "actionLabel": "Open À-deux",
+      "emailSubject": "Same petal in your duo: {{petal}}",
+      "pushTitle": "Same petal in your duo",
+      "pushBody": "{{petal}} — an À-deux invitation."
     }
   }
 }

@@ -1085,6 +1085,8 @@
     "checkinCta": "Écouter la fleur",
     "checkinStreak": "Série : {days} j",
     "checkinStreakHint": "Jours consécutifs avec un écho planté — chaque jour rapporte de la sève.",
+    "presenceStreak": "Sève : {days} j",
+    "presenceStreakHint": "Jours de présence dans le jardin (check-in, tirage, session ou conversation).",
     "coachGatewayBody": "Sur {petal}, votre jardin revient souvent — un accompagnant peut vous aider à approfondir avec bienveillance.",
     "coachGatewayCta": "Voir les accompagnants",
     "eclosionHubCta": "L'histoire de mon jardin"
@@ -1330,6 +1332,7 @@
     "pdfDownloaded": "PDF téléchargé",
     "tirageShareText": "Découvrez Fleur d'AmOurs — Tirages intuitifs",
     "tirageNeedsServerId": "Ce tirage n’est pas enregistré sur le serveur (hors connexion ou identifiant local). Connectez-vous pour obtenir un lien public avec aperçu sur les réseaux sociaux.",
+    "offerCard": "Offrir cette carte",
     "encourageTirage": "À envoyer à un proche ou à garder comme trace : le lien ouvre une page avec votre carte et un bel aperçu sur les réseaux.",
     "encourageTirageTitle": "Partager ce tirage (carte + aperçu sur les réseaux)",
     "encourageTirageMenu": "Beau rendu sur LinkedIn et Facebook — copiez le lien ou utilisez un bouton.",
@@ -2747,10 +2750,13 @@
     "earlyreturn": {
       "title": "Une porte est restée entrouverte",
       "body": "Quelques jours ont passé — rien d'urgent, juste une porte entrouverte dans votre jardin. Deux minutes suffisent pour reprendre le fil là où vous l'avez laissé.",
+      "bodyWithDoor": "La porte « {{door}} » est restée entrouverte. Deux minutes suffisent pour reprendre le fil.",
       "highlight": "Votre pétale {{petal}} vous attend — un petit pas suffit pour garder l'élan.",
       "highlightGeneric": "Un check-in de 30 secondes suffit pour garder l'élan.",
       "actionLabel": "Reprendre le fil",
-      "emailSubject": "Une porte entrouverte dans votre jardin"
+      "emailSubject": "Une porte entrouverte : {{door}}",
+      "pushTitle": "Porte entrouverte",
+      "pushBody": "{{door}} — reprenez le fil."
     },
     "comeback": {
       "title": "Le jardin vous attend",
@@ -2758,7 +2764,75 @@
       "highlight": "Votre pétale {{petal}} est toujours là — une carte peut rouvrir le fil.",
       "highlightGeneric": "Un tirage, un check-in, votre Fleur : reprenez à votre rythme.",
       "actionLabel": "Revenir dans le jardin",
-      "emailSubject": "Votre jardin Fleur d'AmOurs vous attend"
+      "emailSubject": "Votre jardin Fleur d'AmOurs vous attend",
+      "pushTitle": "Le jardin vous attend",
+      "pushBody": "Deux minutes pour reprendre le fil."
+    },
+    "carte_du_jour": {
+      "title": "Votre carte du jour",
+      "titleWithCard": "Votre carte du jour : {{card}}",
+      "body": "Une carte pour éclairer ce qui compte aujourd'hui.",
+      "actionLabel": "Se connecter et explorer",
+      "emailSubject": "Votre carte du jour vous attend",
+      "pushTitle": "Votre carte du jour est prête",
+      "pushBody": "Ouvrez le Jardin pour la découvrir."
+    },
+    "carte_dimanche": {
+      "title": "Regard sur la semaine",
+      "titleWithCard": "Dimanche — {{card}}",
+      "bodyWithCard": "Pour clore la semaine, {{card}} vous accompagne.\n\n{{blurb}}\n\nConnectez-vous pour un regard plus ample sur votre jardin.",
+      "actionLabel": "Ouvrir ma carte du dimanche",
+      "emailSubject": "Votre carte du dimanche",
+      "emailSubjectWithCard": "Dimanche — {{card}}",
+      "pushTitle": "Carte du dimanche",
+      "pushBody": "{{card}} pour regarder la semaine."
+    },
+    "serie_j2": {
+      "title": "Jour 2 — une question pour {{card}}",
+      "body": "Hier, {{card}} a ouvert un fil. Aujourd'hui, une question :\n\n{{question}}",
+      "highlight": "{{question}}",
+      "questionFallback": "Qu'est-ce que cette carte vient nommer en vous aujourd'hui ?",
+      "actionLabel": "Répondre dans le Jardin",
+      "emailSubject": "Jour 2 — votre question du fil",
+      "pushTitle": "Jour 2 de votre fil",
+      "pushBody": "Une question courte vous attend."
+    },
+    "serie_j3": {
+      "title": "Jour 3 — un micro-geste",
+      "body": "Pour ancrer le fil de ces trois jours : {{geste}}",
+      "highlight": "{{geste}}",
+      "gesteFallback": "Prenez 30 secondes pour un check-in : une tension, une ressource.",
+      "actionLabel": "Faire mon check-in",
+      "emailSubject": "Jour 3 — micro-geste",
+      "pushTitle": "Jour 3 — micro-geste",
+      "pushBody": "Un petit pas pour ancrer le fil."
+    },
+    "checkin_echo": {
+      "title": "Un écho pour vous",
+      "body": "Vos derniers check-ins montrent un fil intense. Deux minutes pour un tirage ou une porte peuvent clarifier ce qui circule.",
+      "highlight": "Une carte ou une porte — à votre rythme.",
+      "actionLabel": "Ouvrir mon check-in",
+      "emailSubject": "Un écho après vos check-ins",
+      "pushTitle": "Un écho pour vous",
+      "pushBody": "Deux minutes pour clarifier le fil."
+    },
+    "plan14j_closing": {
+      "title": "Votre plan 14 jours est achevé",
+      "body": "Bravo : vous avez mené le cycle jusqu'au bout. Vous pouvez ouvrir un nouveau cycle, explorer la fleur à deux, ou une conversation intérieure.",
+      "highlight": "Nouveau cycle · Fleur à deux · Conversation intérieure",
+      "actionLabel": "Voir ma session",
+      "emailSubject": "Clôture de votre plan 14 jours",
+      "pushTitle": "Plan 14 jours terminé",
+      "pushBody": "Trois chemins pour continuer."
+    },
+    "duo_same_petal": {
+      "title": "Même pétale — {{petal}}",
+      "body": "Vous et votre duo mettez en lumière {{petal}} en ce moment. Une porte à deux peut faire circuler ce fil.",
+      "highlight": "Ouvrez l'espace À-deux quand vous êtes prêts.",
+      "actionLabel": "Ouvrir À-deux",
+      "emailSubject": "Même pétale dans votre duo : {{petal}}",
+      "pushTitle": "Même pétale dans votre duo",
+      "pushBody": "{{petal}} — une invitation À-deux."
     }
   },
   "myceliumLanding": {

@@ -8,6 +8,7 @@ import { save } from '@/lib/db-tarot'
 import { isDbConfigured } from '@/lib/db'
 import { incrementMonthlyUsage } from '@/lib/db-usage'
 import { recordTimelineEvent } from '@/lib/db-timeline'
+import { recordPresenceDay } from '@/lib/presence-streak'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,6 +51,8 @@ export async function POST(req: NextRequest) {
       title: type === 'four' ? 'Tirage des 4 Portes' : 'Tirage de carte',
       summary: null,
     }).catch(() => {})
+
+    void recordPresenceDay(uid, 'tirage').catch(() => {})
 
     return NextResponse.json(saved, { status: 201 })
   } catch (err: unknown) {

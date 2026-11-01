@@ -21,13 +21,20 @@ type EngagementPreview = {
 
 const CAMPAIGN_LABELS: Record<string, string> = {
   plan14j: 'Plan 14 jours',
+  plan14j_closing: 'Clôture plan 14j',
   checkin: 'Check-in',
-  tirage: 'Carte du jour',
+  checkin_echo: 'Écho check-in',
+  tirage: 'Tirage (relance stale)',
+  carte_du_jour: 'Carte du jour (quotidien)',
+  carte_dimanche: 'Carte du dimanche',
+  serie_j2: 'Série J2',
+  serie_j3: 'Série J3',
   fleur: "Fleur d'AmOurs",
   session: 'Session porte',
   dreamscape: 'Conversation intérieure',
   earlyreturn: 'Retour précoce (absent 2-6 j)',
   comeback: 'Retour au jardin (peu connectés)',
+  duo_same_petal: 'Duo même pétale',
 }
 
 const COOLDOWN_PRESET_LABELS: Record<string, string> = {

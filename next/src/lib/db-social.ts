@@ -12,6 +12,8 @@ import { getSocialMeteo } from './community-meteo'
 import { fetchMaturityStats, computeMaturityBadges, fetchMaturityStatsBatch, type MaturityBadgeId } from './community-maturity'
 import { CLAIRIERE_REACTION_EMOJIS, type MessageReactionSummary } from './clairiere-reactions'
 import { isOnlineFromLastSeen } from './social-presence'
+import { isTopicEnabled } from './notification-prefs'
+import { sendFcmPush } from './fcm'
 
 async function touchSocialPresence(pool: Awaited<ReturnType<typeof getPool>>, userId: number): Promise<void> {
   if (userId <= 0) return
@@ -743,8 +745,9 @@ export async function createClairiereMessageNotification(
       }
     }
     try {
-      const { sendFcmPush } = await import('./fcm')
-      await sendFcmPush(recipientId, recipientEmail, title, bodyText, actionUrl)
+      if (await isTopicEnabled(recipientId, 'social')) {
+        await sendFcmPush(recipientId, recipientEmail, title, bodyText, actionUrl)
+      }
     } catch {
       /* push optionnel */
     }

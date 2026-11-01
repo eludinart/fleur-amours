@@ -22,6 +22,8 @@ import {
 } from '@/lib/engagement-remind-explain'
 import { buildEngagementTemplate, type EngagementCampaignId } from '@/lib/engagement-templates'
 import { cooldownPresetId, resolveEngagementRemindInput } from '@/lib/db-engagement-config'
+import { runDuoSamePetalNudges } from '@/lib/engagement-duo-petal'
+import { runPlan14jClosingNudges } from '@/lib/engagement-plan14j-closing'
 
 export type EngagementRemindInput = {
   limit?: number
@@ -369,6 +371,27 @@ export async function runEngagementRemind(
     } catch {
       skipped++
     }
+  }
+
+  // Duo même pétale + clôtures plan 14j (compléments hors file principale)
+  try {
+    const duo = await runDuoSamePetalNudges({ limit: 30, dryRun: false })
+    sent += duo.sent
+    skipped += duo.skipped
+    if (duo.sent) byCampaign.duo_same_petal = (byCampaign.duo_same_petal ?? 0) + duo.sent
+  } catch {
+    /* table pairing absente = ok */
+  }
+
+  try {
+    const closing = await runPlan14jClosingNudges({ limit: 40 })
+    sent += closing.sent
+    skipped += closing.skipped
+    if (closing.sent) {
+      byCampaign.plan14j_closing = (byCampaign.plan14j_closing ?? 0) + closing.sent
+    }
+  } catch {
+    /* optionnel */
   }
 
   return {

@@ -37,8 +37,10 @@ function buildShareText(r: {
 
   if (r.type === 'simple' && r.card?.name) {
     const cardLine = r.card.name
-    const synthSnippet = r.card.synth ? ` — « ${r.card.synth.slice(0, 80)}${r.card.synth.length > 80 ? '…' : ''} »` : ''
-    return `J'ai tiré ${cardLine}${synthSnippet}\n\nTirage ${typeLabel} — Fleur d'AmOurs 🌸`
+    const synthSnippet = r.card.synth
+      ? ` — « ${r.card.synth.slice(0, 80)}${r.card.synth.length > 80 ? '…' : ''} »`
+      : ''
+    return `Je t'offre la carte ${cardLine}${synthSnippet}\n\nOuvre-la dans le Jardin Fleur d'AmOurs :`
   }
 
   if (r.type === 'four' && r.cards?.length) {
@@ -144,10 +146,21 @@ export function ShareTirageButton({
   }, [publicPageUrl, text])
 
   const shareTitle = showEncouragement ? t('share.encourageTirageTitle') : t('common.share')
+  const offerLabel = t('share.offerCard') || 'Offrir cette carte'
 
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <div className="relative">
+      <div className="relative flex flex-wrap items-center justify-center gap-2">
+      <button
+        type="button"
+        onClick={handleShare}
+        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors`}
+        title={offerLabel}
+        aria-label={offerLabel}
+      >
+        <span>🎁</span>
+        {showLabel && <span>{offerLabel}</span>}
+      </button>
       <button
         type="button"
         onClick={handleShare}
