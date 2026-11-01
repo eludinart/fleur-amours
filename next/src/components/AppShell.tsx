@@ -170,17 +170,34 @@ function ProtectedLayout({
   const { user, loading, isAdmin, isCoach, isManager, isRh } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     if (loading) return
     if (!user) {
-      router.replace(`/login?from=${encodeURIComponent(pathname || '/')}`)
+      // Conserver la query (ex. /tirage?landing_card=…) pour le retour post-login.
+      const q = searchParams?.toString()
+      const dest = `${pathname || '/'}${q ? `?${q}` : ''}`
+      router.replace(`/login?from=${encodeURIComponent(dest)}`)
       return
     }
     if (adminOnly && !isAdmin) router.replace('/')
     if (adminOrCoach && !isAdmin && !isCoach) router.replace('/')
     if (managerOrRh && !isAdmin && !isManager && !isRh) router.replace('/')
-  }, [user, loading, isAdmin, isCoach, isManager, isRh, adminOnly, adminOrCoach, managerOrRh, router, pathname])
+  }, [
+    user,
+    loading,
+    isAdmin,
+    isCoach,
+    isManager,
+    isRh,
+    adminOnly,
+    adminOrCoach,
+    managerOrRh,
+    router,
+    pathname,
+    searchParams,
+  ])
 
   if (loading) {
     return (

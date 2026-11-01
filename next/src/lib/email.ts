@@ -122,10 +122,19 @@ export async function buildNotificationEmailHtml(params: {
   const showGarden = params.showGarden !== false && mode === 'user' && !!p
   let hero =
     showGarden && p ? resolveEmailHero(p) : mode === 'admin' ? { type: 'none' as const } : { type: 'logo' as const }
+  // Carte du jour : image de la carte (CID si PNG local, sinon URL eludein.art).
+  if (params.campaignId === 'tirage' && p?.dailyCard?.imageUrl) {
+    hero = {
+      type: 'image',
+      src: p.dailyCard.imageUrl,
+      alt: p.dailyCard.name,
+      width: 220,
+    }
+  }
   const journeyChips = showGarden && p ? buildJourneyChips(p.locale, p, params.campaignId) : undefined
 
   const inlineImages: EmailInlineAttachment[] = []
-  if (hero.type === 'flower' || hero.type === 'logo') {
+  if (hero.type === 'flower' || hero.type === 'logo' || hero.type === 'image') {
     const resolved = await resolveHeroInlineAttachments(hero)
     hero = resolved.hero
     inlineImages.push(...resolved.attachments)

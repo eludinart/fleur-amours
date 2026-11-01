@@ -1785,7 +1785,23 @@ export default function TarotPage() {
   const petalSuggestedIntention = isPetalFlow ? t(`tarot.petalIntent.${petalKeyRaw}`) : ''
   const resolvedLandingName = landingCardName || null
   const landingCardObj = resolvedLandingName
-    ? (ALL_CARDS.find((c) => c.name === decodeURIComponent(resolvedLandingName)) ?? null)
+    ? (() => {
+        const raw = decodeURIComponent(resolvedLandingName).trim()
+        const norm = (s: string) =>
+          s
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '')
+        const rawNorm = norm(raw)
+        return (
+          ALL_CARDS.find((c) => c.name === raw) ??
+          ALL_CARDS.find((c) => norm(String(c.name ?? '')) === rawNorm) ??
+          ALL_CARDS.find((c) => norm(String((c as { slug?: string }).slug ?? '')) === rawNorm) ??
+          null
+        )
+      })()
     : null
   const landingCardTranslated = landingCardObj
     ? (getCardTranslated(landingCardObj, locale) ?? landingCardObj)

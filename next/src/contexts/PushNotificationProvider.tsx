@@ -34,22 +34,23 @@ export function PushNotificationProvider({ children }: { children: React.ReactNo
         if (!u?.id && !u?.email) return
 
         const sendToken = async (token: string) => {
-          if (cancelled || registeredRef.current) return
+          if (cancelled || !token) return
           try {
             await notificationsApi.registerPushToken({
               token,
-              platform: 'android',
+              platform: Capacitor.getPlatform() === 'ios' ? 'ios' : 'android',
               user_id: u?.id ? parseInt(String(u.id), 10) : null,
               user_email: u?.email || null,
             })
             registeredRef.current = true
+            if (!cancelled) setRegistered(true)
           } catch {
             /* ignore */
           }
         }
 
         const regListener = await PushNotifications.addListener('registration', (ev) => {
-          sendToken(ev.value)
+          void sendToken(ev.value)
         })
         listeners.push(regListener)
 
@@ -71,12 +72,12 @@ export function PushNotificationProvider({ children }: { children: React.ReactNo
         )
         listeners.push(actionListener)
 
-        const permStatus = await PushNotifications.checkPermissions()
+        let permStatus = await PushNotifications.checkPermissions()
         if (permStatus.receive === 'prompt') {
-          await PushNotifications.requestPermissions()
+          permStatus = await PushNotifications.requestPermissions()
         }
 
-        if (permStatus.receive === 'denied') return
+        if (permStatus.receive !== 'granted') return
 
         await PushNotifications.createChannel({
           id: 'fleur_default',

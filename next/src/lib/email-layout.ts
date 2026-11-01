@@ -36,7 +36,7 @@ export type FleurEmailHero =
   | { type: 'none' }
   | { type: 'logo'; cid?: string }
   | { type: 'flower'; scores: Record<string, number>; caption?: string; cid?: string }
-  | { type: 'image'; src: string; alt: string; width?: number }
+  | { type: 'image'; src: string; alt: string; width?: number; cid?: string }
 
 export type FleurEmailLayoutParams = {
   locale?: string
@@ -103,9 +103,14 @@ function buildHeroBlock(hero: FleurEmailHero, locale: ServerLocale): string {
   }
   if (hero.type === 'image') {
     const w = hero.width ?? 560
+    const src = hero.cid ? `cid:${hero.cid}` : hero.src
+    const imgStyle =
+      w <= 280
+        ? `display:block;margin:0 auto;width:${w}px;max-width:100%;height:auto;max-height:${MAX_BODY_IMAGE_HEIGHT}px;object-fit:contain;border-radius:12px;border:0;outline:none`
+        : `display:block;margin:0 auto;max-width:100%;width:100%;height:auto;max-height:${MAX_BODY_IMAGE_HEIGHT}px;object-fit:contain;border-radius:12px;border:0;outline:none`
     return (
       `<tr><td style="padding:20px 28px 8px;text-align:center">` +
-      `<img src="${escapeEmailHtml(hero.src)}" alt="${escapeEmailHtml(hero.alt)}" width="${w}" style="display:block;margin:0 auto;max-width:100%;width:100%;height:auto;max-height:${MAX_BODY_IMAGE_HEIGHT}px;object-fit:contain;border-radius:12px"/>` +
+      `<img src="${escapeEmailHtml(src)}" alt="${escapeEmailHtml(hero.alt)}" width="${w}" style="${imgStyle}"/>` +
       `</td></tr>`
     )
   }

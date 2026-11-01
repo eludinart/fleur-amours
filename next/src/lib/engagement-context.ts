@@ -13,6 +13,7 @@ import { resolveUserPetalsProfile } from './resolve-user-petals'
 import { detectCoachGateway } from './petal-persistence'
 import { getUserLocalesBatch } from './user-locale'
 import { tServer, type ServerLocale } from './i18n-server'
+import { pickDailyCardForUser, type DailyCardPick } from './daily-card'
 
 export type EngagementPersonalization = {
   locale: ServerLocale
@@ -22,6 +23,8 @@ export type EngagementPersonalization = {
   dominantPetalName: string | null
   shadowPetalName: string | null
   lastCardName: string | null
+  /** Carte du jour déterministe (userId + date UTC). */
+  dailyCard: DailyCardPick | null
   inProgressSessionId: number | null
   inProgressDoor: string | null
   petalScores: Record<string, number> | null
@@ -117,6 +120,8 @@ export async function loadEngagementPersonalization(
     ? Math.floor((Date.now() - new Date(lastCheckinAt).getTime()) / 86400000)
     : null
 
+  const dailyCard = await pickDailyCardForUser(userId)
+
   return {
     locale,
     displayName: nameForGreeting,
@@ -125,6 +130,7 @@ export async function loadEngagementPersonalization(
     dominantPetalName,
     shadowPetalName,
     lastCardName,
+    dailyCard,
     inProgressSessionId,
     inProgressDoor,
     petalScores,
@@ -141,6 +147,7 @@ const EMPTY_PERSONALIZATION_FIELDS = {
   dominantPetalName: null,
   shadowPetalName: null,
   lastCardName: null,
+  dailyCard: null,
   inProgressSessionId: null,
   inProgressDoor: null,
   petalScores: null,

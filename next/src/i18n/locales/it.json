@@ -2192,6 +2192,7 @@
       "plan14j": "Giorno {{day}}/14",
       "plan14jProgress": "Piano 14 g · {{progress}} %",
       "lastTirage": "Ultima estrazione: {{card}}",
+      "cardOfDay": "Carta del giorno: {{card}}",
       "dominantPetalChip": "{{petal}} in risveglio",
       "checkinPending": "Check-in da fare",
       "discoverFleur": "Fiore da rivelare",
@@ -2306,11 +2307,17 @@
     },
     "tirage": {
       "title": "Una estrazione per illuminare la giornata",
+      "titleWithCard": "La tua carta del giorno: {{card}}",
       "body": "Una carta, una domanda — due minuti per situare ciò che conta oggi nel tuo giardino interiore.",
+      "bodyWithCard": "Oggi, {{card}} ti accompagna.\n\n{{blurb}}\n\nAccedi al Giardino per approfondire questa carta e continuare l'esplorazione.",
+      "bodyFallback": "Una carta per illuminare ciò che conta oggi nel tuo giardino interiore.",
+      "highlightInvite": "Bastano due minuti per aprire il filo nell'app.",
       "highlightLastCard": "La tua ultima carta era {{card}} — una nuova prospettiva ti aspetta.",
       "highlightPetal": "Il petalo {{petal}} torna spesso: lascia che una carta ti illumini.",
       "actionLabel": "Pescare una carta",
-      "emailSubject": "La tua carta del giorno ti aspetta"
+      "actionLabelConnect": "Accedi ed esplora",
+      "emailSubject": "La tua carta del giorno ti aspetta",
+      "emailSubjectWithCard": "La tua carta del giorno: {{card}}"
     },
     "fleur": {
       "title": "Rivelare il tuo Fiore — 10 minuti",

@@ -4,6 +4,7 @@
  */
 import { buildNotificationEmailHtml } from './email'
 import { embedInlineImagesForPreview } from './email-inline-attachments'
+import { dailyCardLoginPath } from './daily-card'
 import { tServer } from './i18n-server'
 import type { ServerLocale } from './i18n-server'
 import type { EngagementPersonalization } from './engagement-context'
@@ -79,8 +80,11 @@ function resolveActionUrl(
     }
     case 'checkin':
       return '/checkin'
-    case 'tirage':
-      return '/tirage'
+    case 'tirage': {
+      // Nom exact requis par TarotPage (?landing_card=) — fallback slug.
+      const cardKey = p?.dailyCard?.name || p?.dailyCard?.slug
+      return cardKey ? dailyCardLoginPath(cardKey) : '/tirage'
+    }
     case 'fleur':
       return '/a-deux/par-une-porte?welcome=1'
     case 'session':
@@ -126,6 +130,22 @@ function buildRichBody(
       return { body: lines.join('\n\n'), highlight: null }
     }
     case 'tirage': {
+      const card = p?.dailyCard
+      if (card) {
+        const blurb =
+          card.shortDescription ||
+          tServer(locale, `${baseKey}.bodyFallback`, {})
+        lines.push(
+          tServer(locale, `${baseKey}.bodyWithCard`, {
+            card: card.name,
+            blurb,
+          })
+        )
+        return {
+          body: lines.join('\n\n'),
+          highlight: tServer(locale, `${baseKey}.highlightInvite`),
+        }
+      }
       lines.push(tServer(locale, `${baseKey}.body`, {}))
       if (p?.lastCardName) {
         return {
@@ -185,13 +205,22 @@ export function buildEngagementTemplate(
   const baseKey = `engagement.${campaignId}`
   const { body, highlight } = buildRichBody(loc, campaignId, vars)
 
-  const titleVars: Record<string, string | number> = { day: vars.day ?? 1 }
-  const title = tServer(loc, `${baseKey}.title`, titleVars)
+  const dailyCard = vars.personalization?.dailyCard
+  const titleVars: Record<string, string | number> = {
+    day: vars.day ?? 1,
+    card: dailyCard?.name ?? '',
+  }
+  const title =
+    campaignId === 'tirage' && dailyCard
+      ? tServer(loc, `${baseKey}.titleWithCard`, titleVars)
+      : tServer(loc, `${baseKey}.title`, titleVars)
   const action_url = resolveActionUrl(campaignId, vars)
   const action_label =
     campaignId === 'session' && vars.personalization?.inProgressSessionId
       ? tServer(loc, `${baseKey}.actionLabelResume`)
-      : tServer(loc, `${baseKey}.actionLabel`)
+      : campaignId === 'tirage' && dailyCard
+        ? tServer(loc, `${baseKey}.actionLabelConnect`)
+        : tServer(loc, `${baseKey}.actionLabel`)
 
   return {
     type:
@@ -205,7 +234,10 @@ export function buildEngagementTemplate(
     action_url,
     action_label,
     priority: campaignId === 'fleur' || campaignId === 'earlyreturn' ? 'normal' : 'low',
-    emailSubject: tServer(loc, `${baseKey}.emailSubject`, titleVars),
+    emailSubject:
+      campaignId === 'tirage' && dailyCard
+        ? tServer(loc, `${baseKey}.emailSubjectWithCard`, titleVars)
+        : tServer(loc, `${baseKey}.emailSubject`, titleVars),
     emailHighlight: highlight,
     locale: loc,
   }
@@ -249,6 +281,14 @@ export const PLAN14J_PREVIEW_VARS: EngagementTemplateVars = {
     dominantPetalName: 'Agapè',
     shadowPetalName: null,
     lastCardName: 'Philia',
+    dailyCard: {
+      slug: 'philia',
+      name: 'PHILIA',
+      imageFile: 'philia.png',
+      shortDescription:
+        "Représente l'amour fraternel, l'amitié sincère et le lien d'âme à âme. Une invitation à cultiver la confiance et le partage.",
+      imageUrl: 'https://eludein.art/cartes/philia.png',
+    },
     inProgressSessionId: null,
     inProgressDoor: null,
     petalScores: {

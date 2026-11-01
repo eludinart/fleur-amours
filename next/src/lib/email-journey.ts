@@ -62,7 +62,9 @@ export function buildJourneyChips(
       break
     }
     case 'tirage': {
-      if (p.lastCardName) {
+      if (p.dailyCard?.name) {
+        chips.push(tServer(locale, 'email.journey.cardOfDay', { card: p.dailyCard.name }))
+      } else if (p.lastCardName) {
         chips.push(tServer(locale, 'email.journey.lastTirage', { card: p.lastCardName }))
       } else if (p.dominantPetalName) {
         chips.push(tServer(locale, 'email.journey.dominantPetalChip', { petal: p.dominantPetalName }))

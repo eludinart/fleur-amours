@@ -228,29 +228,43 @@ export async function sendFcmPush(
   const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`
   let sent = 0
   for (const { token, platform } of tokenRows) {
-    // Tous les tokens enregistrés via le navigateur sont de type web,
-    // même si platform='android' par défaut (ancien schéma)
-    const isWebToken = platform === 'web' || platform == null || platform === 'android'
+    const plat = String(platform ?? '').toLowerCase()
+    // Capacitor enregistre platform='android'/'ios' ; le navigateur enregistre 'web'.
+    const isNative = plat === 'android' || plat === 'ios'
+    const isWebToken = !isNative
     const message: Record<string, unknown> = {
       token,
       notification: { title, body },
-      data: { action_url: actionUrl ?? '' },
-    }
-    // Bloc webpush : toujours présent pour les tokens FCM web (PWA)
-    const webpushBlock: Record<string, unknown> = {
-      headers: { Urgency: 'high' },
-      notification: {
+      data: {
+        action_url: actionUrl ?? '',
         title,
         body,
-        icon,
-        badge: icon,
-        requireInteraction: false,
-        tag: 'fleur-message',
-        renotify: true,
       },
     }
-    if (link) webpushBlock.fcm_options = { link }
-    if (isWebToken) message.webpush = webpushBlock
+    if (isWebToken) {
+      const webpushBlock: Record<string, unknown> = {
+        headers: { Urgency: 'high' },
+        notification: {
+          title,
+          body,
+          icon,
+          badge: icon,
+          requireInteraction: false,
+          tag: 'fleur-message',
+          renotify: true,
+        },
+      }
+      if (link) webpushBlock.fcm_options = { link }
+      message.webpush = webpushBlock
+    } else if (plat === 'android') {
+      // Capacitor Android — canal créé côté app (PushNotificationProvider).
+      message.android = {
+        priority: 'HIGH',
+        notification: {
+          channel_id: 'fleur_default',
+        },
+      }
+    }
     const res = await fetch(url, {
       method: 'POST',
       headers: {
@@ -269,6 +283,18 @@ export async function sendFcmPush(
     } else {
       const errText = await res.text().catch(() => '')
       console.warn('[FCM] HTTP error', res.status, token.slice(0, 20), errText.slice(0, 200))
+      // Token mort (app désinstallée, cache vidé, rotation) → purge pour éviter les 404 répétés.
+      if (
+        res.status === 404 ||
+        /NotRegistered|UNREGISTERED|INVALID_ARGUMENT|Requested entity was not found/i.test(errText)
+      ) {
+        try {
+          await pool.execute(`DELETE FROM ${t} WHERE token = ?`, [token])
+          console.warn('[FCM] Token invalide supprimé', token.slice(0, 20))
+        } catch {
+          /* purge best-effort */
+        }
+      }
     }
   }
   return sent

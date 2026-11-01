@@ -2488,6 +2488,7 @@
       "plan14j": "Day {{day}}/14",
       "plan14jProgress": "14-day plan · {{progress}}%",
       "lastTirage": "Last draw: {{card}}",
+      "cardOfDay": "Card of the day: {{card}}",
       "dominantPetalChip": "{{petal}} awakening",
       "checkinPending": "Check-in due",
       "discoverFleur": "Flower to reveal",
@@ -2617,11 +2618,17 @@
     },
     "tirage": {
       "title": "A reading to light up your day",
+      "titleWithCard": "Your card of the day: {{card}}",
       "body": "One card, one question — two minutes to name what matters today in your inner garden.",
+      "bodyWithCard": "Today, {{card}} walks with you.\n\n{{blurb}}\n\nSign in to the Garden to go deeper with this card and continue your exploration.",
+      "bodyFallback": "A card to light up what matters today in your inner garden.",
+      "highlightInvite": "Two minutes are enough to open the thread in the app.",
       "highlightLastCard": "Your last card was {{card}} — a fresh perspective awaits.",
       "highlightPetal": "The {{petal}} petal keeps returning: let a card shed light.",
       "actionLabel": "Draw a card",
-      "emailSubject": "Your card of the day is waiting"
+      "actionLabelConnect": "Sign in and explore",
+      "emailSubject": "Your card of the day is waiting",
+      "emailSubjectWithCard": "Your card of the day: {{card}}"
     },
     "fleur": {
       "title": "Reveal your Flower — 10 minutes",

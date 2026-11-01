@@ -4,10 +4,12 @@
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { renderEmailFlowerPng, EMAIL_FLOWER_DISPLAY_SIZE } from './email-flower-png'
+import { resolveLocalCardImagePath } from './daily-card'
 import type { FleurEmailHero } from './email-layout'
 
 export const EMAIL_FLOWER_CID = 'fleur-hero@fleurdamours'
 export const EMAIL_LOGO_CID = 'fleur-logo@fleurdamours'
+export const EMAIL_CARD_CID = 'fleur-card@fleurdamours'
 
 export type EmailInlineAttachment = {
   cid: string
@@ -45,7 +47,23 @@ export async function buildLogoInlineAttachment(): Promise<EmailInlineAttachment
   }
 }
 
-/** Prépare le héros + pièces jointes CID (fleur ou logo). */
+/** Inline la carte du jour si le PNG est disponible en local. */
+export async function buildCardInlineAttachment(
+  imageFile: string
+): Promise<EmailInlineAttachment | null> {
+  const localPath = await resolveLocalCardImagePath(imageFile)
+  if (!localPath) return null
+  const content = await readFile(localPath)
+  const safeName = String(imageFile).replace(/[^\w.-]+/g, '_') || 'carte.png'
+  return {
+    cid: EMAIL_CARD_CID,
+    filename: safeName.endsWith('.png') ? safeName : `${safeName}.png`,
+    content,
+    contentType: 'image/png',
+  }
+}
+
+/** Prépare le héros + pièces jointes CID (fleur, logo ou carte). */
 export async function resolveHeroInlineAttachments(
   hero: FleurEmailHero
 ): Promise<{ hero: FleurEmailHero; attachments: EmailInlineAttachment[] }> {
@@ -61,6 +79,19 @@ export async function resolveHeroInlineAttachments(
     return {
       hero: { type: 'logo', cid: EMAIL_LOGO_CID },
       attachments: [attachment],
+    }
+  }
+  if (hero.type === 'image' && !hero.cid) {
+    const fileMatch = hero.src.match(/\/cartes\/([^/?#]+)$/i)
+    const imageFile = fileMatch?.[1]
+    if (imageFile) {
+      const attachment = await buildCardInlineAttachment(decodeURIComponent(imageFile))
+      if (attachment) {
+        return {
+          hero: { ...hero, cid: EMAIL_CARD_CID },
+          attachments: [attachment],
+        }
+      }
     }
   }
   return { hero, attachments: [] }

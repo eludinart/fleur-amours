@@ -96,7 +96,7 @@ type EngagementPreview = {
 const CAMPAIGN_LABELS: Record<string, string> = {
   plan14j: 'Plan 14 jours',
   checkin: 'Check-in',
-  tirage: 'Tirage carte',
+  tirage: 'Carte du jour',
   fleur: 'Fleur d\'AmOurs',
   session: 'Session porte',
   dreamscape: 'Conversation intérieure',

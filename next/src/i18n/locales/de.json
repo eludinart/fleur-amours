@@ -2192,6 +2192,7 @@
       "plan14j": "Tag {{day}}/14",
       "plan14jProgress": "14-Tage-Plan · {{progress}} %",
       "lastTirage": "Letzte Ziehung: {{card}}",
+      "cardOfDay": "Karte des Tages: {{card}}",
       "dominantPetalChip": "{{petal}} im Erwachen",
       "checkinPending": "Check-in fällig",
       "discoverFleur": "Blume zu entdecken",
@@ -2306,11 +2307,17 @@
     },
     "tirage": {
       "title": "Eine Ziehung für deinen Tag",
+      "titleWithCard": "Deine Karte des Tages: {{card}}",
       "body": "Eine Karte, eine Frage — zwei Minuten, um zu benennen, was heute in deinem inneren Garten zählt.",
+      "bodyWithCard": "Heute begleitet dich {{card}}.\n\n{{blurb}}\n\nMelde dich im Garten an, um diese Karte zu vertiefen und deine Erkundung fortzusetzen.",
+      "bodyFallback": "Eine Karte, die erhellt, was heute in deinem inneren Garten zählt.",
+      "highlightInvite": "Zwei Minuten genügen, um den Faden in der App zu öffnen.",
       "highlightLastCard": "Deine letzte Karte war {{card}} — eine neue Perspektive wartet.",
       "highlightPetal": "Das Blatt {{petal}} kehrt oft zurück: lass eine Karte Licht bringen.",
       "actionLabel": "Eine Karte ziehen",
-      "emailSubject": "Deine Karte des Tages wartet"
+      "actionLabelConnect": "Anmelden und erkunden",
+      "emailSubject": "Deine Karte des Tages wartet",
+      "emailSubjectWithCard": "Deine Karte des Tages: {{card}}"
     },
     "fleur": {
       "title": "Deine Blume enthüllen — 10 Minuten",
